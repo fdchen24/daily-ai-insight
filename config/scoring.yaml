@@ -145,6 +145,18 @@ validate:
     limitations: [40, 300]
     insights: [40, 300]
 
-# 单价（元 / 百万 token）首周实测后填入，脚本据此把 token 折算成每日成本。
-# 不预填未核实的数字：DeepSeek 调价频繁，写死会让 metrics 里的成本失真。
-pricing: {}
+# 单价按官方价目表填（https://api-docs.deepseek.com/zh-cn/quick_start/pricing/，
+# 2026-11-23 核对）。DeepSeek 分时计价：空闲时段恰好是高峰的一半，北京时间
+# 周一至周五 9:00-12:00、14:00-18:00 为高峰，其余时段（含周末与法定节假日）
+# 为空闲。节假日判不出来，脚本一律按工作日算，宁可把成本记高不记低。
+pricing:
+  currency: CNY
+  # 高峰时段（北京时间整点区间，左闭右开）
+  peak_hours_cn: [[9, 12], [14, 18]]
+  models:
+    deepseek-flash:
+      peak: {input_per_mtok: 2, cache_hit_per_mtok: 0.04, output_per_mtok: 8}
+      off_peak: {input_per_mtok: 1, cache_hit_per_mtok: 0.02, output_per_mtok: 4}
+    deepseek-v4-pro:
+      peak: {input_per_mtok: 9.0, cache_hit_per_mtok: 0.30, output_per_mtok: 27.0}
+      off_peak: {input_per_mtok: 4.5, cache_hit_per_mtok: 0.15, output_per_mtok: 13.5}

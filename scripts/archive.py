@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from .common import (
@@ -188,7 +188,7 @@ def write_metrics(batch: date, *, llm: dict[str, Any], output: dict[str, int],
             "link_failures": len(validation.get("link_failures") or []),
             "warnings": len(validation.get("warnings") or []),
         },
-        "cost": _cost(llm),
+        "cost": _cost(llm, duration_seconds),
         "pipeline_duration_seconds": round(duration_seconds, 1),
         "status": status,
         "notes": notes or [],
@@ -200,19 +200,29 @@ def write_metrics(batch: date, *, llm: dict[str, Any], output: dict[str, int],
     return row
 
 
-def _cost(llm: dict[str, Any]) -> dict[str, Any]:
+def _cost(llm: dict[str, Any], duration_seconds: float) -> dict[str, Any]:
     """按 scoring.yaml 的 `pricing` 折算金额。单价未填就如实写未知。
 
-    不预填单价：DeepSeek 调价频繁，写死一个猜的数字会让 metrics 里的成本
-    看起来可信但是错的。首周实测后填入 pricing 段，这里自动开始出金额。
+    DeepSeek 分时计价，空闲时段是高峰的一半，所以算钱必须知道这些 token 是
+    什么时候花的：取本次运行的中点（调用散布在整段运行里，比用结束时刻更接近
+    真实），换成北京时间后落在 `peak_hours_cn` 里就按高峰算。节假日官方按空闲
+    计费，但日历判不出来，这里一律按工作日——成本宁可记高不记低。
     """
-    pricing = load_config("scoring").get("pricing") or {}
-    if not pricing:
+    cfg = load_config("scoring").get("pricing") or {}
+    models = cfg.get("models") or {}
+    if not models:
         return {"currency": "CNY", "amount": None,
-                "note": "pricing 未配置，成本待首周实测单价后折算"}
+                "note": "pricing 未配置，成本待填入官方单价后折算"}
+
+    middle = utcnow() - timedelta(seconds=max(duration_seconds, 0) / 2)
+    window = _price_window(middle, cfg.get("peak_hours_cn") or [])
     total = 0.0
+    unpriced: list[str] = []
     for model, usage in llm.items():
-        rate = pricing.get(model) or {}
+        rate = ((models.get(model) or {}).get(window)) or {}
+        if not rate:
+            unpriced.append(model)
+            continue
         rate_in = float(rate.get("input_per_mtok") or 0.0)
         rate_out = float(rate.get("output_per_mtok") or 0.0)
         rate_cached = float(rate.get("cache_hit_per_mtok") or rate_in)
@@ -220,4 +230,17 @@ def _cost(llm: dict[str, Any]) -> dict[str, Any]:
         miss = max(int(usage.get("tokens_in") or 0) - hit, 0)
         total += (miss * rate_in + hit * rate_cached
                   + int(usage.get("tokens_out") or 0) * rate_out) / 1_000_000
-    return {"currency": "CNY", "amount": round(total, 4)}
+    out = {"currency": cfg.get("currency") or "CNY", "amount": round(total, 4),
+           "price_window": window}
+    if unpriced:
+        out["note"] = f"{'、'.join(unpriced)} 未配置单价，未计入金额"
+    return out
+
+
+def _price_window(moment: datetime, peak_hours: list) -> str:
+    """判定高峰/空闲。中国不用夏令时，直接按固定 UTC+8 换算，不依赖 tzdata。"""
+    local = moment.astimezone(timezone(timedelta(hours=8)))
+    if local.weekday() >= 5:
+        return "off_peak"
+    return "peak" if any(int(a) <= local.hour < int(b)
+                         for a, b in peak_hours) else "off_peak"
