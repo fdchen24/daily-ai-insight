@@ -84,13 +84,17 @@ jobs:
             ${{ inputs.lookback && format('--lookback {0}', inputs.lookback) || '' }} \
             2>&1 | tee run.log
 
-      # 候选池不进 data 分支（单批次约 8MB 且可重算），用 artifact 递给下一个 job
+      # 候选池不进 data 分支（单批次约 8MB 且可重算），用 artifact 递给下一个 job。
+      # 一并带上 raw/<批次>/arxiv.json：校验层的元数据核验优先读它，省掉对
+      # 刚被限流的 export.arxiv.org 再发一轮回查。
       - name: 上传候选池
         if: steps.collect.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: candidates
-          path: .data-branch/data/candidates
+          name: pool
+          path: |
+            .data-branch/data/candidates
+            .data-branch/data/raw/*/arxiv.json
           retention-days: 2
 
       # 即使采集失败也要 push：公共仓库 60 天无 push 会被 GitHub 自动
@@ -123,11 +127,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/data-branch.sh prepare
 
+      # artifact 的根是两个上传路径的公共父目录，即 data/，照原样铺回去
       - name: 取回候选池
         uses: actions/download-artifact@v4
         with:
-          name: candidates
-          path: .data-branch/data/candidates
+          name: pool
+          path: .data-branch/data
 
       - uses: actions/setup-python@v5
         with:
