@@ -1,17 +1,17 @@
 {
   "2026-11-23": {
     "arxiv_announce_date": "2026-11-23",
-    "generated_at": "2026-11-23T14:09:31.635339+00:00",
-    "stage": "daily",
+    "generated_at": "2026-11-23T14:43:17.926840+00:00",
+    "stage": "collect",
     "collect_status": "ok",
     "sources": {
       "arxiv": {
         "ok": true,
-        "count": 911,
+        "count": 912,
         "stats": {
-          "fetched": 1313,
+          "fetched": 1315,
           "deleted": 0,
-          "kept": 911,
+          "kept": 912,
           "requests": 2,
           "days": [
             "2026-11-23"
@@ -21,10 +21,10 @@
             "2026-11-21"
           ],
           "by_day": {
-            "2026-11-23": 911
+            "2026-11-23": 912
           },
           "by_set": {
-            "cs": 905,
+            "cs": 906,
             "stat": 6
           },
           "empty_days": []
@@ -46,29 +46,29 @@
       },
       "github": {
         "ok": true,
-        "count": 993,
+        "count": 995,
         "stats": {
           "trending": 27,
-          "baseline": 2544,
+          "baseline": 2543,
           "authenticated": true,
-          "requests": 2615,
+          "requests": 71,
           "detail_failures": 0,
-          "kept": 993
+          "kept": 995
         }
       },
       "openalex": {
         "ok": true,
         "count": 388,
         "stats": {
-          "requested": 972,
-          "from_cache": 0,
-          "queried": 972,
-          "requests": 20,
-          "resolved": 388,
-          "unindexed": 584,
+          "requested": 973,
+          "from_cache": 388,
+          "queried": 585,
+          "requests": 12,
+          "resolved": 0,
+          "unindexed": 585,
           "failed_batches": 0,
-          "batches": 20,
-          "hit_rate": 0.399
+          "batches": 12,
+          "hit_rate": 0.0
         }
       },
       "semanticscholar": {
@@ -80,33 +80,33 @@
       }
     },
     "normalize": {
-      "arxiv": 911,
+      "arxiv": 912,
       "hf_merged": 8,
       "hf_new": 61,
       "repo_merged": 1,
-      "repo_standalone": 992,
+      "repo_standalone": 994,
       "citations_attached": 388,
       "channels": {
         "revision": 240,
-        "stale": 1056,
+        "stale": 1058,
         "catchup": 25,
-        "primary": 643
+        "primary": 644
       },
       "topic_sources": {
-        "rule": 1605,
-        "pending_llm": 359
+        "rule": 1609,
+        "pending_llm": 358
       },
-      "total": 1964
+      "total": 1967
     },
     "dedup": {
-      "input": 1964,
+      "input": 1967,
       "by_doi": 0,
       "by_title": 0,
       "by_project": 0,
-      "output": 1964,
+      "output": 1967,
       "review_pairs": 1
     },
-    "duration_seconds": 3533.7,
+    "duration_seconds": 271.7,
     "llm": {
       "deepseek-flash": {
         "calls": 22,
