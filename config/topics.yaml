@@ -1,0 +1,86 @@
+# 二级研究主题的关键词规则
+# 命中逻辑：对 title + abstract 做小写匹配，any/all 组合
+# 规则命中记 topics_source=rule；全部未命中才交 L1 模型兜底
+
+min_abstract_chars: 300
+
+# 每条最多挂几个主题（按关键词命中强度排序后截断）。
+# 取 2：这是展示用的二级标签，也是阶段五多样性约束的计数维度；挂满五个
+# 等于让"单主题不超过 4 篇"在选到第 4 条时就把整池封死。
+max_topics_per_item: 2
+
+topics:
+  - name: "LLM 与推理"
+    any: ["large language model", "llm", "chain-of-thought", "chain of thought",
+          "reasoning", "in-context learning", "instruction tuning",
+          "long context", "kv cache", "tokenizer", "mixture-of-experts",
+          "moe", "test-time compute", "self-consistency"]
+    boost: 1.0
+
+  - name: "强化学习与后训练"
+    any: ["reinforcement learning", "rlhf", "rlaif", "dpo", "grpo", "ppo",
+          "policy optimization", "reward model", "preference optimization",
+          "post-training", "off-policy", "online rl", "self-play",
+          "verifiable reward", "rlvr"]
+    boost: 1.0
+
+  - name: "图像/视频/多模态生成"
+    any: ["video generation", "image generation", "text-to-video",
+          "text-to-image", "text-to-3d", "multimodal", "vision-language",
+          "vlm", "image editing", "video editing", "talking head", "avatar",
+          "audio-driven", "autoregressive video", "i2v", "t2v"]
+    boost: 1.0
+
+  - name: "Agent 与工具使用"
+    any: ["agent", "tool use", "tool calling", "function calling",
+          "multi-agent", "computer use", "gui agent", "web agent",
+          "planning", "react framework", "memory module", "mcp"]
+    boost: 1.0
+
+  - name: "World Models 与具身智能"
+    any: ["world model", "embodied", "robotic", "manipulation",
+          "navigation", "vision-language-action", "vla", "sim-to-real",
+          "dreamer", "latent dynamics", "action-conditioned"]
+    boost: 1.0
+
+  - name: "扩散模型与 Flow Matching"
+    any: ["diffusion", "flow matching", "rectified flow", "ddpm", "ddim",
+          "score-based", "consistency model", "distillation sampling",
+          "denoising", "ode solver", "sde", "schedule", "cfg",
+          "classifier-free guidance"]
+    boost: 1.0
+
+  - name: "架构/训练/推理加速"
+    any: ["attention", "architecture", "quantization", "pruning",
+          "sparsity", "speculative decoding", "parallelism", "throughput",
+          "latency", "memory efficient", "flash attention", "linear attention",
+          "state space model", "mamba", "caching", "distillation",
+          "pretraining", "scaling law", "optimizer"]
+    boost: 0.9
+
+  - name: "AI 安全与评估"
+    any: ["safety", "alignment", "jailbreak", "red team", "hallucination",
+          "interpretability", "watermark", "privacy", "bias", "fairness",
+          "adversarial", "calibration", "guardrail", "harmful"]
+    # 这几个词几乎每篇论文的摘要里都有，只在标题里出现才算这个主题
+    title_any: ["benchmark", "evaluation", "evaluating", "robustness",
+                "uncertainty", "audit"]
+    boost: 0.9
+
+# 综述识别规则（供阶段二分池使用）
+survey_patterns:
+  title_any: ["survey", "a review", "review of", "overview of",
+              "systematic review", "tutorial on", "position paper",
+              "retrospective", "taxonomy of", "landscape of"]
+  abstract_any: ["we survey", "this survey", "we review",
+                 "comprehensive review", "this paper reviews",
+                 "we provide an overview", "systematically review"]
+  min_reference_count: 60
+
+# 明显低质量特征，初筛直接丢弃
+low_quality_patterns:
+  title_any: ["extended abstract", "workshop abstract", "withdrawn",
+              "comment on", "reply to", "erratum", "corrigendum"]
+  abstract_any: ["this paper has been withdrawn",
+                 "withdrawn by the author"]
+

@@ -1,0 +1,25 @@
+# Secrets — never commit
+# 连 .env.example 一起忽略：本地常有人直接把真实 key 填进模板，而这个仓库
+# 要公开发布，一旦提交就是公网泄露。需要的变量清单写在 README，不靠模板文件。
+llm_api_key.txt
+.env
+.env.*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+web/dist/
+
+# Local run artifacts
+.cache/
+*.log
+
+# 数据一律不进 main：成品、引用缓存、日志每天都变，混进代码历史会让
+# clone 体积逐日膨胀。CI 把 data 分支检出到 .data-branch/ 并用
+# DAI_DATA_DIR 指向它；本地 ./data 仅作运行产物。
+/data/
+/.data-branch/

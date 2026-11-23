@@ -1,0 +1,126 @@
+# 每日流水线：采集 → 筛选排序 → L2 解读 → 校验 → 写回仓库
+#
+# 不挂 pull_request 触发：PR 事件下 secrets 不可用，且 fork PR 不应拿到写权限。
+# deploy job 在阶段三（前端）落地后再加，届时单独授予 pages 权限。
+#
+# 配置来自仓库 Settings → Secrets and variables → Actions：
+#   Secrets   DEEPSEEK_API_KEY（必需）、S2_API_KEY（可选）
+#   Variables DAI_LOOKBACK、DAI_SUMMARIZE_LIMIT、DAI_LOG_LEVEL、
+#             DAI_SKIP_GITHUB、DAI_SKIP_BASELINE、DAI_SKIP_CITATIONS、
+#             DAI_DRY_RUN、OPENALEX_MAILTO
+# 未设置的 Variable 会展开成空字符串，脚本按"未设置"处理，所以不必全部填。
+
+name: daily
+
+on:
+  schedule:
+    # arXiv 20:00 ET 公告，UTC 02:30 稳定落在其后（北京时间 10:30）
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "重跑指定批次日 YYYY-MM-DD（留空为当期）"
+        required: false
+        type: string
+      lookback:
+        description: "回溯天数（留空用配置默认值）"
+        required: false
+        type: string
+
+# 同一时刻只跑一个，避免手动触发与定时任务并发写同一批次文件
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      # 非敏感配置统一走 Variables：调一个开关不必改 YAML，也不会进代码历史。
+      # DAI_DATA_DIR 让 scripts.common 的 DATA_DIR 指向 data 分支的工作区。
+      DAI_DATA_DIR: ${{ github.workspace }}/.data-branch/data
+      DAI_LOOKBACK: ${{ vars.DAI_LOOKBACK }}
+      DAI_SUMMARIZE_LIMIT: ${{ vars.DAI_SUMMARIZE_LIMIT }}
+      DAI_LOG_LEVEL: ${{ vars.DAI_LOG_LEVEL }}
+      DAI_SKIP_GITHUB: ${{ vars.DAI_SKIP_GITHUB }}
+      DAI_SKIP_BASELINE: ${{ vars.DAI_SKIP_BASELINE }}
+      DAI_SKIP_CITATIONS: ${{ vars.DAI_SKIP_CITATIONS }}
+      DAI_DRY_RUN: ${{ vars.DAI_DRY_RUN }}
+      OPENALEX_MAILTO: ${{ vars.OPENALEX_MAILTO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 数据放在孤立分支 data：成品、引用缓存、日志每天都变，混进 main
+      # 的历史会让代码仓库的 clone 体积逐日膨胀。首次运行自动建分支。
+      - name: 准备 data 分支工作区
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p .data-branch
+          cd .data-branch
+          git init -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch -q --depth 1 origin data; then
+            git checkout -q -B data FETCH_HEAD
+          else
+            echo "data 分支尚不存在，本次运行将创建"
+          fi
+          # data 分支自带忽略规则：raw/ 与 candidates/ 是可由 collect_all
+          # 重算的中间产物，单批次约 8MB，不入库
+          mkdir -p data
+          printf 'raw/\ncandidates/\n' > data/.gitignore
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 采集
+        id: collect
+        env:
+          # Actions 内置 token 即可满足 Search 30/min 与 Core 5000/hr
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          S2_API_KEY: ${{ secrets.S2_API_KEY }}
+        # 显式声明才会带上 pipefail；默认的 `bash -e` 下 `| tee` 会把
+        # python 的非零退出码吞掉，collect 步骤永远判定为成功
+        shell: bash
+        run: |
+          python -m scripts.collect_all \
+            ${{ inputs.date && format('--date {0}', inputs.date) || '' }} \
+            ${{ inputs.lookback && format('--lookback {0}', inputs.lookback) || '' }} \
+            2>&1 | tee run.log
+
+      # 解读是唯一花钱的环节，所以只在采集成功时跑：采集失败时候选池是空的
+      # 或者是上一期的，拿去解读既浪费 token 又会把旧内容当新一期投放。
+      - name: 筛选、解读与校验
+        id: daily
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          S2_API_KEY: ${{ secrets.S2_API_KEY }}
+        if: steps.collect.outcome == 'success'
+        shell: bash
+        run: |
+          python -m scripts.run_daily \
+            ${{ inputs.date && format('--date {0}', inputs.date) || '' }} \
+            2>&1 | tee -a run.log
+
+      # 即使上一步失败也要 push：公共仓库 60 天无 push 会被 GitHub 自动
+      # 停用 scheduled workflow，静默停掉整个站点的更新。
+      - name: 写回数据与日志
+        if: always()
+        working-directory: .data-branch
+        run: |
+          mkdir -p data/logs
+          tail -c 200000 ../run.log > "data/logs/$(date -u +%Y-%m-%d).log" || true
+          git add -A data
+          git diff --cached --quiet && echo "无变更，跳过提交" && exit 0
+          git commit -q -m "chore(data): 批次 $(date -u +%Y-%m-%d)${{ steps.collect.outcome == 'success' && steps.daily.outcome == 'success' && '' || '（流水线未全部成功，见 logs/）' }}"
+          git push -u origin data

@@ -1,0 +1,91 @@
+# 数据源配置
+
+timezone: Asia/Shanghai
+
+arxiv:
+  enabled: true
+  # export.arxiv.org/oai2 会 301 到此地址，直接用终点省一次跳转
+  oai_endpoint: "https://oaipmh.arxiv.org/oai"
+  metadata_prefix: arXivRaw
+  # OAI-PMH 只支持顶层 set，细分类在本地按 categories 过滤
+  sets: [cs, stat]
+  request_interval_seconds: 5.0
+  max_retries: 3
+  timeout_seconds: 60
+  # 高优先级分类：命中其中之一即纳入候选
+  categories_high: [cs.AI, cs.CV, cs.CL, cs.LG, stat.ML]
+  # 中优先级：需同时命中高优先级或主题规则才纳入
+  categories_medium: [cs.RO, cs.MA, cs.IR, cs.NE]
+  # 采集窗口（天）：覆盖 announce 日前后，避免边界遗漏
+  lookback_days: 2
+
+huggingface:
+  enabled: true
+  # 非官方未文档化端点，失败只跳过本源。
+  # huggingface.co 在部分网络（如中国大陆）不可达，故按序尝试镜像；
+  # GitHub Actions 的 runner 上第一个即可用。
+  hosts: ["https://huggingface.co", "https://hf-mirror.com"]
+  daily_papers_path: "/api/daily_papers"
+  request_interval_seconds: 1.0
+  max_retries: 2
+  timeout_seconds: 30
+  # 逐日回溯：周末 HF 可能返回空数组，属正常情况
+  lookback_days: 3
+
+github:
+  enabled: true
+  api_base: "https://api.github.com"
+  trending_url: "https://github.com/trending"
+  trending_windows: [daily, weekly]
+  request_interval_seconds: 1.0
+  max_retries: 3
+  timeout_seconds: 30
+  # 基线池：按 star 区间分段绕过单次 1000 条返回上限
+  star_buckets: ["100..500", "500..2000", "2000..10000", ">10000"]
+  keywords: [llm, "large language model", diffusion, transformer, agent,
+             multimodal, "video generation", "reinforcement learning",
+             vlm, "world model", inference, rag, finetune]
+  pushed_within_days: 30
+  baseline_target: 2500
+  # awesome/list 类仓库过滤
+  exclude_name_patterns: ["awesome", "-list", "roadmap", "tutorial",
+                          "interview", "cheatsheet", "papers"]
+
+openalex:
+  enabled: true
+  api_base: "https://api.openalex.org"
+  # 不需要 key：UA 里带 mailto 即进入 polite pool，10 万次/天、10 次/秒
+  mailto: "fdchen24@users.noreply.github.com"
+  request_interval_seconds: 0.2
+  # 一次请求用 filter=doi:a|b|c 查 50 篇；arXiv 自 2022 年起给每篇论文分配
+  # DataCite DOI（10.48550/arxiv.XXXX.XXXXX），因此可直接按 DOI 批量查
+  batch_size: 50
+  max_retries: 3
+  timeout_seconds: 30
+  # 缓存有效期：近期论文引用数每天都在动，老论文基本不变
+  cache_ttl_recent_days: 7
+  cache_ttl_old_days: 30
+  recent_months: 2
+  select: [doi, cited_by_count, referenced_works_count, publication_year, type,
+           primary_location, counts_by_year, fwci,
+           citation_normalized_percentile, topics]
+
+semanticscholar:
+  # 降级为可选增强：只在配了 S2_API_KEY 时启用，且只为最终入选条目补
+  # tldr 与 influentialCitationCount（OpenAlex 没有这两项）。引用数一律
+  # 以 OpenAlex 为准，所以没有 key 不影响任何验收项。
+  enabled: true
+  require_api_key: true
+
+  api_base: "https://api.semanticscholar.org/graph/v1"
+  # 无 key 约 100 请求/5 分钟；设 S2_API_KEY 可提高额度
+  request_interval_seconds: 3.5
+  batch_size: 100
+  # 共享池忙时 429 会连着来，退避到 5/10/20/40/80s；重试次数不足会整批丢掉
+  # 100 篇论文的引用数据，而重试的代价只是多等几十秒
+  max_retries: 5
+  timeout_seconds: 30
+  fields: [citationCount, influentialCitationCount, tldr, fieldsOfStudy,
+           publicationVenue, referenceCount, year]
+
+user_agent: "DailyAIInsight/2.0 (+https://github.com/fdchen24/daily-ai-insight)"

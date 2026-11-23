@@ -1,0 +1,144 @@
+# 初筛、排序、配额与成本配置
+#
+# 模型名与能力已对 DeepSeek /models 核实：deepseek-flash = DeepSeek-V4.1-Flash，
+# deepseek-v4-pro = DeepSeek-V4-Pro，二者均为 1M 上下文 / 393K 最大输出，
+# effort 仅支持 low / high / max（没有 medium）。
+
+# ---------------------------------------------------------- 阶段三：规则初筛
+filter:
+  # 短摘要多是占位稿或 workshop abstract，无法支撑解读
+  min_abstract_chars: 300
+  # 只有这些通道进入候选池；stale 与 unknown 直接丢弃
+  channels: [primary, catchup, revision]
+  # 规则未命中主题的条目仍可进池（交 L1 兜底），但排在命中者之后
+  require_topic_hit: false
+  # 撤稿与占位稿特征，命中即丢
+  drop_patterns:
+    - "this paper has been withdrawn"
+    - "paper withdrawn"
+    - "withdrawn by the author"
+    - "placeholder"
+    - "this submission has been removed"
+  # 冷却期：最近 N 天推荐过的不再出现
+  cooldown_days: 90
+  # 各池初筛后的目标规模（DESIGN 4.3：合计 100–150）
+  pool_target:
+    frontier: 120
+    survey: 20
+    classic: 10
+  # 前沿池名额按通道切分：当天公告的新论文客观信号必然为 0，若与
+  # catchup 同池按信号排序会被整体挤掉，前沿频道就失去了意义
+  frontier_channel_share:
+    primary: 0.70
+    catchup: 0.20
+    revision: 0.10
+  # 综述识别：命中模式且参考文献数达门槛（OpenAlex 未入库时不卡这一项）
+  survey_patterns:
+    - "survey"
+    - "a review"
+    - "review of"
+    - "overview of"
+    - "systematic review"
+    - "comprehensive study"
+    - "tutorial on"
+  survey_min_references: 60
+
+# ---------------------------------------------------------- 阶段四：L1 排序
+rank:
+  model: deepseek-flash
+  effort: low
+  # 排序要可复现：DESIGN 十一的验收项要求同输入两次运行 top-10 重叠 ≥ 8。
+  # 实测同一批 120 条前沿候选，默认 temperature(1.0) 两次只重叠 8/10、
+  # tier 一致 32/36；temperature=0 时重叠 9/10、tier 一致 33/35，经典池
+  # 8 条顺序与 tier 完全一致。残余波动来自服务端，不是参数能消掉的。
+  temperature: 0
+  # 一批 15 条做批内相对排序：批太大则模型注意力摊薄，太小则跨批不可比
+  batch_size: 15
+  # 排序后各池保留条数（DESIGN 4.4：前沿 30–40）
+  keep:
+    frontier: 40
+    survey: 8
+    classic: 8
+  # 单次调用上限，超出按失败处理（防止模型长篇大论烧 token）
+  max_output_tokens: 8192
+
+# ------------------------------------------------- 综合得分权重（DESIGN 4.4）
+weights:
+  research_value: 0.30     # L1/L2 判定
+  novelty: 0.25            # L1/L2 判定
+  technical_depth: 0.20    # 仅 L2 深度分析过的条目有此项
+  impact: 0.15             # OpenAlex 引用 + HF upvotes + GitHub 增量（客观）
+  completeness: 0.10       # 规则：摘要长度、有无代码与项目页
+
+# L1 的 tier 映射到 0–100 基准分，批内 rank 在 tier 区间内线性插值
+tier_scores:
+  A: 90
+  B: 75
+  C: 55
+
+# 客观信号归一化：按 log1p(x)/log1p(full) 折算到 0–100，再取三项最大值。
+# 取最大而非求和：任一维度爆发都算有影响力，求和会让三项都平庸的条目反超。
+# 缺信号按 0 计 —— 当天公告的论文引用必然为 0，池内彼此公平，不另作补偿。
+impact_signals:
+  hf_upvotes_full: 100
+  citation_count_full: 50
+  repo_stars_7d_full: 500
+
+# ------------------------------------------------- 阶段五：配额与多样性重排
+quotas:
+  frontier_per_day: 10
+  survey_per_week: 5
+  classic_per_week: 5
+  # 周配额单日投放上限：避免周一一次放完，后面六天没内容
+  weekly_daily_cap: 2
+
+diversity:
+  max_per_topic: 4
+  max_per_affiliation: 3
+  # 落在该相似度区间的两条视为高度相似研究，只保留得分高的
+  dup_similarity_range: [0.75, 0.90]
+
+# ---------------------------------------------- 阶段六：L2 深度分析与解读
+summarize:
+  # 解读也用 flash：同为 1M 上下文、393K 最大输出，全文取材放得下，
+  # effort=high 下的解读质量够用，而单价远低于 pro。模型名进解读缓存键，
+  # 换模型不会悄悄复用上一个模型生成的解读。
+  model: deepseek-flash
+  effort: high
+  # 解读也取 0：同一篇论文重跑要能命中 content_hash 缓存并得到一致的校验结果，
+  # 文风由 prompt 的硬性约束控制，不靠采样随机性制造"多样表达"。
+  temperature: 0
+  # 用 intro_conclusion 取材做 L2 初筛的条数，再从中选最终入选项取全文
+  screen_count: 30
+  final_count: 12
+  max_output_tokens: 16384
+  # 取材字符上限（约 4 字符/token）
+  material:
+    intro_conclusion_chars: 24000
+    fulltext_chars: 120000
+  # 单次运行的硬上限，超出即停止并保留已完成部分
+  budget:
+    tokens_in_per_run: 1500000
+    tokens_out_per_run: 200000
+
+# ---------------------------------------------------- 第六节：机械化事实校验
+validate:
+  # 单条目丢弃的 claim 超过此比例，整条降级为 evidence_level: abstract
+  max_dropped_claim_ratio: 0.30
+  # 当期内两条解读的 3-gram 重叠率超过此值告警
+  ngram_overlap_warn: 0.40
+  # 连续多少个 ASCII 单词视为未翻译残留
+  untranslated_ascii_words: 8
+  link_timeout_seconds: 10
+  # 各字段字数上下限（中文字符数）
+  lengths:
+    why_read: [60, 200]
+    motivation: [80, 400]
+    method: [80, 500]
+    results: [60, 400]
+    limitations: [40, 300]
+    insights: [40, 300]
+
+# 单价（元 / 百万 token）首周实测后填入，脚本据此把 token 折算成每日成本。
+# 不预填未核实的数字：DeepSeek 调价频繁，写死会让 metrics 里的成本失真。
+pricing: {}

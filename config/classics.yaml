@@ -1,0 +1,397 @@
+# 经典论文池（阶段三 classic_pool 的唯一输入）
+#
+# 本文件由 arXiv API 生成后人工补主题与说明：title / authors / published_at
+# 全部取自 export.arxiv.org 的返回值，逐条比对过标题，没有手抄的 ID。
+# 不预填 citation_count —— 引用数由 OpenAlex 按 DOI 回填，写死会立刻过期。
+#
+# DESIGN 3.5 的目标是 150 篇起步、半自动扩到 400+；当前 55 篇是首批种子，
+# 按 5 篇/周、180 天冷却计算，这批够排约 11 周。
+
+cooldown_days: 180
+
+papers:
+  - arxiv_id: "1706.03762"
+    title: "Attention Is All You Need"
+    authors: ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar"]
+    published_at: "2017-06-12"
+    year: 2017
+    topics: ["架构/训练/推理加速", "LLM 与推理"]
+    note: "Transformer 原始论文：self-attention 完全替代循环与卷积，确立了此后序列建模的默认架构。"
+  - arxiv_id: "1810.04805"
+    title: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+    authors: ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee"]
+    published_at: "2018-10-11"
+    year: 2018
+    topics: ["LLM 与推理"]
+    note: "掩码语言建模加双向编码器，把预训练—微调确立为 NLP 的标准范式。"
+  - arxiv_id: "2005.14165"
+    title: "Language Models are Few-Shot Learners"
+    authors: ["Tom B. Brown", "Benjamin Mann", "Nick Ryder"]
+    published_at: "2020-05-28"
+    year: 2020
+    topics: ["LLM 与推理"]
+    note: "175B 参数下 in-context learning 成为可用能力，把规模本身变成了方法。"
+  - arxiv_id: "2010.11929"
+    title: "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"
+    authors: ["Alexey Dosovitskiy", "Lucas Beyer", "Alexander Kolesnikov"]
+    published_at: "2020-10-22"
+    year: 2020
+    topics: ["架构/训练/推理加速", "图像/视频/多模态生成"]
+    note: "把图像切成 patch 序列直接喂给 Transformer，证明视觉任务不必依赖卷积先验。"
+  - arxiv_id: "2006.11239"
+    title: "Denoising Diffusion Probabilistic Models"
+    authors: ["Jonathan Ho", "Ajay Jain", "Pieter Abbeel"]
+    published_at: "2020-06-19"
+    year: 2020
+    topics: ["扩散模型与 Flow Matching"]
+    note: "把扩散模型的训练目标简化成噪声预测，是当代图像与视频生成的技术起点。"
+  - arxiv_id: "1512.03385"
+    title: "Deep Residual Learning for Image Recognition"
+    authors: ["Kaiming He", "Xiangyu Zhang", "Shaoqing Ren"]
+    published_at: "2015-12-10"
+    year: 2015
+    topics: ["架构/训练/推理加速"]
+    note: "残差连接让上百层网络可训练，残差块至今仍是几乎所有骨干网络的基本单元。"
+  - arxiv_id: "1406.2661"
+    title: "Generative Adversarial Networks"
+    authors: ["Ian J. Goodfellow", "Jean Pouget-Abadie", "Mehdi Mirza"]
+    published_at: "2014-06-10"
+    year: 2014
+    topics: ["图像/视频/多模态生成"]
+    note: "生成器与判别器的对抗训练框架，在扩散模型之前主导了十年生成式视觉研究。"
+  - arxiv_id: "1312.6114"
+    title: "Auto-Encoding Variational Bayes"
+    authors: ["Diederik P Kingma", "Max Welling"]
+    published_at: "2013-12-20"
+    year: 2013
+    topics: ["扩散模型与 Flow Matching"]
+    note: "重参数化技巧让变分推断可用梯度优化，隐空间生成的思想贯穿后续所有生成模型。"
+  - arxiv_id: "2201.11903"
+    title: "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+    authors: ["Jason Wei", "Xuezhi Wang", "Dale Schuurmans"]
+    published_at: "2022-01-28"
+    year: 2022
+    topics: ["LLM 与推理"]
+    note: "在提示里给出推理步骤即可大幅提升多步推理，是 test-time compute 这条线的开端。"
+  - arxiv_id: "2203.02155"
+    title: "Training language models to follow instructions with human feedback"
+    authors: ["Long Ouyang", "Jeff Wu", "Xu Jiang"]
+    published_at: "2022-03-04"
+    year: 2022
+    topics: ["强化学习与后训练"]
+    note: "RLHF 的工程化落地：对齐人类偏好比继续放大参数更能提升实际可用性。"
+  - arxiv_id: "2112.10752"
+    title: "High-Resolution Image Synthesis with Latent Diffusion Models"
+    authors: ["Robin Rombach", "Andreas Blattmann", "Dominik Lorenz"]
+    published_at: "2021-12-20"
+    year: 2021
+    topics: ["扩散模型与 Flow Matching", "图像/视频/多模态生成"]
+    note: "把扩散过程搬到 VAE 隐空间，让高分辨率生成的算力需求降到消费级显卡。"
+  - arxiv_id: "2103.00020"
+    title: "Learning Transferable Visual Models From Natural Language Supervision"
+    authors: ["Alec Radford", "Jong Wook Kim", "Chris Hallacy"]
+    published_at: "2021-02-26"
+    year: 2021
+    topics: ["图像/视频/多模态生成"]
+    note: "四亿图文对的对比学习，产出了此后多模态与生成模型普遍依赖的共享表征。"
+  - arxiv_id: "2302.13971"
+    title: "LLaMA: Open and Efficient Foundation Language Models"
+    authors: ["Hugo Touvron", "Thibaut Lavril", "Gautier Izacard"]
+    published_at: "2023-02-27"
+    year: 2023
+    topics: ["LLM 与推理"]
+    note: "用公开数据训出可对标闭源的基座模型，开源 LLM 生态由此成形。"
+  - arxiv_id: "2106.09685"
+    title: "LoRA: Low-Rank Adaptation of Large Language Models"
+    authors: ["Edward J. Hu", "Yelong Shen", "Phillip Wallis"]
+    published_at: "2021-06-17"
+    year: 2021
+    topics: ["架构/训练/推理加速"]
+    note: "低秩增量替代全参数微调，使单卡适配大模型成为常规操作。"
+  - arxiv_id: "2305.14314"
+    title: "QLoRA: Efficient Finetuning of Quantized LLMs"
+    authors: ["Tim Dettmers", "Artidoro Pagnoni", "Ari Holtzman"]
+    published_at: "2023-05-23"
+    year: 2023
+    topics: ["架构/训练/推理加速"]
+    note: "4-bit 量化配合 LoRA，在单张 48GB 卡上完成 65B 模型微调。"
+  - arxiv_id: "1312.5602"
+    title: "Playing Atari with Deep Reinforcement Learning"
+    authors: ["Volodymyr Mnih", "Koray Kavukcuoglu", "David Silver"]
+    published_at: "2013-12-19"
+    year: 2013
+    topics: ["强化学习与后训练"]
+    note: "经验回放与目标网络让 Q-learning 在像素输入下稳定收敛，深度强化学习的起点。"
+  - arxiv_id: "1707.06347"
+    title: "Proximal Policy Optimization Algorithms"
+    authors: ["John Schulman", "Filip Wolski", "Prafulla Dhariwal"]
+    published_at: "2017-07-20"
+    year: 2017
+    topics: ["强化学习与后训练"]
+    note: "用裁剪目标换掉 TRPO 的二阶约束，至今仍是 RLHF 的默认优化器。"
+  - arxiv_id: "2001.08361"
+    title: "Scaling Laws for Neural Language Models"
+    authors: ["Jared Kaplan", "Sam McCandlish", "Tom Henighan"]
+    published_at: "2020-01-23"
+    year: 2020
+    topics: ["LLM 与推理"]
+    note: "损失随参数、数据、算力呈幂律下降，为后续所有规模决策提供了外推依据。"
+  - arxiv_id: "2203.15556"
+    title: "Training Compute-Optimal Large Language Models"
+    authors: ["Jordan Hoffmann", "Sebastian Borgeaud", "Arthur Mensch"]
+    published_at: "2022-03-29"
+    year: 2022
+    topics: ["LLM 与推理"]
+    note: "修正了此前的参数与数据配比：同等算力下模型应更小、训练数据应更多。"
+  - arxiv_id: "2205.14135"
+    title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
+    authors: ["Tri Dao", "Daniel Y. Fu", "Stefano Ermon"]
+    published_at: "2022-05-27"
+    year: 2022
+    topics: ["架构/训练/推理加速"]
+    note: "按显存 IO 代价重写 attention kernel，精确计算下仍大幅省显存并提速。"
+  - arxiv_id: "2312.00752"
+    title: "Mamba: Linear-Time Sequence Modeling with Selective State Spaces"
+    authors: ["Albert Gu", "Tri Dao"]
+    published_at: "2023-12-01"
+    year: 2023
+    topics: ["架构/训练/推理加速"]
+    note: "选择性状态空间模型，在长序列上以线性复杂度逼近 Transformer 的质量。"
+  - arxiv_id: "2303.08774"
+    title: "GPT-4 Technical Report"
+    authors: ["OpenAI", "Josh Achiam", "Steven Adler"]
+    published_at: "2023-03-15"
+    year: 2023
+    topics: ["LLM 与推理", "AI 安全与评估"]
+    note: "不公开架构细节但系统披露能力与风险评估，是技术报告这一体裁的范本。"
+  - arxiv_id: "1409.3215"
+    title: "Sequence to Sequence Learning with Neural Networks"
+    authors: ["Ilya Sutskever", "Oriol Vinyals", "Quoc V. Le"]
+    published_at: "2014-09-10"
+    year: 2014
+    topics: ["LLM 与推理"]
+    note: "编码器—解码器把序列到序列任务统一成一个可端到端训练的问题。"
+  - arxiv_id: "1409.0473"
+    title: "Neural Machine Translation by Jointly Learning to Align and Translate"
+    authors: ["Dzmitry Bahdanau", "Kyunghyun Cho", "Yoshua Bengio"]
+    published_at: "2014-09-01"
+    year: 2014
+    topics: ["LLM 与推理"]
+    note: "首次用注意力破解定长向量瓶颈，是 Transformer 的直接思想前身。"
+  - arxiv_id: "2005.11401"
+    title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+    authors: ["Patrick Lewis", "Ethan Perez", "Aleksandra Piktus"]
+    published_at: "2020-05-22"
+    year: 2020
+    topics: ["Agent 与工具使用", "LLM 与推理"]
+    note: "检索与生成联合训练，确立了用外部知识补模型参数记忆的范式。"
+  - arxiv_id: "2210.03629"
+    title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+    authors: ["Shunyu Yao", "Jeffrey Zhao", "Dian Yu"]
+    published_at: "2022-10-06"
+    year: 2022
+    topics: ["Agent 与工具使用"]
+    note: "推理与动作交替生成，是此后几乎所有 LLM Agent 框架的骨架。"
+  - arxiv_id: "1503.02531"
+    title: "Distilling the Knowledge in a Neural Network"
+    authors: ["Geoffrey Hinton", "Oriol Vinyals", "Jeff Dean"]
+    published_at: "2015-03-09"
+    year: 2015
+    topics: ["架构/训练/推理加速"]
+    note: "用软标签把大模型的知识迁进小模型，蒸馏从此成为部署的标准手段。"
+  - arxiv_id: "2101.03961"
+    title: "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity"
+    authors: ["William Fedus", "Barret Zoph", "Noam Shazeer"]
+    published_at: "2021-01-11"
+    year: 2021
+    topics: ["架构/训练/推理加速"]
+    note: "单专家路由把 MoE 简化到可稳定训练，参数量与单次计算量由此解耦。"
+  - arxiv_id: "1502.03167"
+    title: "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift"
+    authors: ["Sergey Ioffe", "Christian Szegedy"]
+    published_at: "2015-02-11"
+    year: 2015
+    topics: ["架构/训练/推理加速"]
+    note: "归一化中间激活以稳定训练，现代网络普遍带归一化层的习惯由此开始。"
+  - arxiv_id: "1412.6980"
+    title: "Adam: A Method for Stochastic Optimization"
+    authors: ["Diederik P. Kingma", "Jimmy Ba"]
+    published_at: "2014-12-22"
+    year: 2014
+    topics: ["架构/训练/推理加速"]
+    note: "自适应矩估计优化器，十年之后仍是深度学习的默认选择。"
+  - arxiv_id: "2010.02502"
+    title: "Denoising Diffusion Implicit Models"
+    authors: ["Jiaming Song", "Chenlin Meng", "Stefano Ermon"]
+    published_at: "2020-10-06"
+    year: 2020
+    topics: ["扩散模型与 Flow Matching"]
+    note: "确定性采样把扩散推理从上千步压到几十步，并给出可编辑的隐变量。"
+  - arxiv_id: "2207.12598"
+    title: "Classifier-Free Diffusion Guidance"
+    authors: ["Jonathan Ho", "Tim Salimans"]
+    published_at: "2022-07-26"
+    year: 2022
+    topics: ["扩散模型与 Flow Matching"]
+    note: "去掉外部分类器，用条件与无条件预测的外推控制生成强度，CFG 成为通用开关。"
+  - arxiv_id: "2204.06125"
+    title: "Hierarchical Text-Conditional Image Generation with CLIP Latents"
+    authors: ["Aditya Ramesh", "Prafulla Dhariwal", "Alex Nichol"]
+    published_at: "2022-04-13"
+    year: 2022
+    topics: ["图像/视频/多模态生成"]
+    note: "以 CLIP 隐空间为桥的两阶段文生图，把生成质量推到公众可感知的门槛。"
+  - arxiv_id: "2212.04356"
+    title: "Robust Speech Recognition via Large-Scale Weak Supervision"
+    authors: ["Alec Radford", "Jong Wook Kim", "Tao Xu"]
+    published_at: "2022-12-06"
+    year: 2022
+    topics: ["图像/视频/多模态生成"]
+    note: "68 万小时弱监督训练换来跨语言零样本鲁棒性，弱监督规模化的代表作。"
+  - arxiv_id: "2304.02643"
+    title: "Segment Anything"
+    authors: ["Alexander Kirillov", "Eric Mintun", "Nikhila Ravi"]
+    published_at: "2023-04-05"
+    year: 2023
+    topics: ["图像/视频/多模态生成"]
+    note: "可提示分割任务配合十亿掩码数据引擎，视觉基础模型的数据方法论样本。"
+  - arxiv_id: "1505.04597"
+    title: "U-Net: Convolutional Networks for Biomedical Image Segmentation"
+    authors: ["Olaf Ronneberger", "Philipp Fischer", "Thomas Brox"]
+    published_at: "2015-05-18"
+    year: 2015
+    topics: ["架构/训练/推理加速"]
+    note: "跳连编解码结构，今天仍是扩散模型去噪网络的主干形态。"
+  - arxiv_id: "2307.09288"
+    title: "Llama 2: Open Foundation and Fine-Tuned Chat Models"
+    authors: ["Hugo Touvron", "Louis Martin", "Kevin Stone"]
+    published_at: "2023-07-18"
+    year: 2023
+    topics: ["强化学习与后训练", "LLM 与推理"]
+    note: "公开了完整的 SFT 加 RLHF 对齐流程与安全评估细节，开源对齐的实践基线。"
+  - arxiv_id: "2104.09864"
+    title: "RoFormer: Enhanced Transformer with Rotary Position Embedding"
+    authors: ["Jianlin Su", "Yu Lu", "Shengfeng Pan"]
+    published_at: "2021-04-20"
+    year: 2021
+    topics: ["架构/训练/推理加速"]
+    note: "旋转位置编码把相对位置写进注意力内积，几乎所有现代 LLM 都在用。"
+  - arxiv_id: "1911.02150"
+    title: "Fast Transformer Decoding: One Write-Head is All You Need"
+    authors: ["Noam Shazeer"]
+    published_at: "2019-11-06"
+    year: 2019
+    topics: ["架构/训练/推理加速"]
+    note: "共享 K/V 头把解码时的 KV Cache 带宽降一个量级，是 MQA 与 GQA 的源头。"
+  - arxiv_id: "2302.04761"
+    title: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+    authors: ["Timo Schick", "Jane Dwivedi-Yu", "Roberto Dessì"]
+    published_at: "2023-02-09"
+    year: 2023
+    topics: ["Agent 与工具使用"]
+    note: "用自监督让模型自己标注何时调 API，工具使用从提示工程转为训练问题。"
+  - arxiv_id: "2212.10560"
+    title: "Self-Instruct: Aligning Language Models with Self-Generated Instructions"
+    authors: ["Yizhong Wang", "Yeganeh Kordi", "Swaroop Mishra"]
+    published_at: "2022-12-20"
+    year: 2022
+    topics: ["LLM 与推理"]
+    note: "用模型自己生成指令数据做对齐，开启了合成数据驱动的后训练路线。"
+  - arxiv_id: "1801.01290"
+    title: "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor"
+    authors: ["Tuomas Haarnoja", "Aurick Zhou", "Pieter Abbeel"]
+    published_at: "2018-01-04"
+    year: 2018
+    topics: ["强化学习与后训练"]
+    note: "最大熵框架下的 off-policy actor-critic，连续控制任务的长期强基线。"
+  - arxiv_id: "1509.02971"
+    title: "Continuous control with deep reinforcement learning"
+    authors: ["Timothy P. Lillicrap", "Jonathan J. Hunt", "Alexander Pritzel"]
+    published_at: "2015-09-09"
+    year: 2015
+    topics: ["强化学习与后训练"]
+    note: "把 DQN 的思路搬到连续动作空间，确定性策略梯度的代表实现。"
+  - arxiv_id: "2403.03206"
+    title: "Scaling Rectified Flow Transformers for High-Resolution Image Synthesis"
+    authors: ["Patrick Esser", "Sumith Kulal", "Andreas Blattmann"]
+    published_at: "2024-03-05"
+    year: 2024
+    topics: ["扩散模型与 Flow Matching", "图像/视频/多模态生成"]
+    note: "系统比较了多种 flow 轨迹与采样器，并给出 MMDiT 双流架构。"
+  - arxiv_id: "2210.02747"
+    title: "Flow Matching for Generative Modeling"
+    authors: ["Yaron Lipman", "Ricky T. Q. Chen", "Heli Ben-Hamu"]
+    published_at: "2022-10-06"
+    year: 2022
+    topics: ["扩散模型与 Flow Matching"]
+    note: "以条件向量场回归替代随机微分方程训练，更直的轨迹换来更少的采样步。"
+  - arxiv_id: "2212.09748"
+    title: "Scalable Diffusion Models with Transformers"
+    authors: ["William Peebles", "Saining Xie"]
+    published_at: "2022-12-19"
+    year: 2022
+    topics: ["扩散模型与 Flow Matching", "图像/视频/多模态生成"]
+    note: "用 Transformer 替换 U-Net 并验证其扩散缩放律，是后续视频生成架构的基础。"
+  - arxiv_id: "1810.00826"
+    title: "How Powerful are Graph Neural Networks?"
+    authors: ["Keyulu Xu", "Weihua Hu", "Jure Leskovec"]
+    published_at: "2018-10-01"
+    year: 2018
+    topics: ["架构/训练/推理加速"]
+    note: "以 WL 检验刻画 GNN 表达能力的上界，图神经网络的理论基准。"
+  - arxiv_id: "2501.12948"
+    title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning"
+    authors: ["DeepSeek-AI", "Daya Guo", "Dejian Yang"]
+    published_at: "2025-01-22"
+    year: 2025
+    topics: ["强化学习与后训练", "LLM 与推理"]
+    note: "纯强化学习激励即可涌现长链推理，并通过蒸馏把能力传给小模型。"
+  - arxiv_id: "2402.03300"
+    title: "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"
+    authors: ["Zhihong Shao", "Peiyi Wang", "Qihao Zhu"]
+    published_at: "2024-02-05"
+    year: 2024
+    topics: ["强化学习与后训练"]
+    note: "提出 GRPO，去掉价值网络改用组内相对优势，已成为推理训练的常用算法。"
+  - arxiv_id: "2206.07682"
+    title: "Emergent Abilities of Large Language Models"
+    authors: ["Jason Wei", "Yi Tay", "Rishi Bommasani"]
+    published_at: "2022-06-15"
+    year: 2022
+    topics: ["LLM 与推理", "AI 安全与评估"]
+    note: "记录能力随规模的不连续跃变，也引出了度量方式是否制造涌现的后续争论。"
+  - arxiv_id: "1706.03741"
+    title: "Deep reinforcement learning from human preferences"
+    authors: ["Paul Christiano", "Jan Leike", "Tom B. Brown"]
+    published_at: "2017-06-12"
+    year: 2017
+    topics: ["强化学习与后训练", "AI 安全与评估"]
+    note: "用成对偏好训练奖励模型再优化策略，RLHF 的原始论文。"
+  - arxiv_id: "2305.18290"
+    title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model"
+    authors: ["Rafael Rafailov", "Archit Sharma", "Eric Mitchell"]
+    published_at: "2023-05-29"
+    year: 2023
+    topics: ["强化学习与后训练"]
+    note: "把 RLHF 最优策略的解析解改写成分类损失，省掉奖励模型与在线采样。"
+  - arxiv_id: "2309.17453"
+    title: "Efficient Streaming Language Models with Attention Sinks"
+    authors: ["Guangxuan Xiao", "Yuandong Tian", "Beidi Chen"]
+    published_at: "2023-09-29"
+    year: 2023
+    topics: ["架构/训练/推理加速"]
+    note: "发现 attention sink 现象，保留开头少量 token 即可无限长流式解码。"
+  - arxiv_id: "1607.06450"
+    title: "Layer Normalization"
+    authors: ["Jimmy Lei Ba", "Jamie Ryan Kiros", "Geoffrey E. Hinton"]
+    published_at: "2016-07-21"
+    year: 2016
+    topics: ["架构/训练/推理加速"]
+    note: "逐样本归一化不依赖 batch 统计，是 Transformer 能稳定训练的前提之一。"
+  - arxiv_id: "2309.06180"
+    title: "Efficient Memory Management for Large Language Model Serving with PagedAttention"
+    authors: ["Woosuk Kwon", "Zhuohan Li", "Siyuan Zhuang"]
+    published_at: "2023-09-12"
+    year: 2023
+    topics: ["架构/训练/推理加速"]
+    note: "借虚拟内存分页思想管理 KV Cache，吞吐提升数倍，现代推理引擎的事实标准。"
