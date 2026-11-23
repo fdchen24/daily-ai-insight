@@ -1,0 +1,18 @@
+{
+"1312.6114": {
+"citation_count": 45017,
+"reference_count": 17,
+"venue": "UvA-DARE (University of Amsterdam)",
+"year": 2013,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6407,
+"2025": 7679
+},
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

@@ -1,0 +1,18 @@
+{
+"2411.01973": {
+"citation_count": 3,
+"reference_count": 14,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Imbalanced Data Classification Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

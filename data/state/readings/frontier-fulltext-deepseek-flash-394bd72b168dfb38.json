@@ -1,0 +1,101 @@
+{
+  "title_zh": "On-Policy Self-Distillation：单模型双上下文自蒸馏的推理后训练",
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把 on-policy distillation 对外部教师的依赖替换为同一模型的 privileged-context 自蒸馏，并利用 ground-truth solution 提供 dense token 监督；对降低推理后训练采样成本有实际意义。",
+    "novelty": 76,
+    "novelty_reason": "核心是 context/self-distillation 与 on-policy soft distillation 的组合；单模型双上下文、full-vocab forward KL 与 pointwise clipping 是具体设计，但相对 GKD、STaR 及并发 SDPO/SDFT 属增量创新。",
+    "technical_depth": 84,
+    "technical_depth_reason": "包含 forward/reverse KL/JSD、pointwise clipping、生成长度、full-vocab 与 sampled-token 的消融，覆盖三个模型规模和多个数学 benchmark；但固定初始 teacher、LoRA-only 与峰值检查点选择限制了结论强度。"
+  },
+  "reading": {
+    "why_read": "值得读的是把 on-policy distillation 的 teacher 从外部大模型换成同一模型的 privileged-context 副本：student 只看题，teacher 看题加 verified solution，在 student 自己的 rollout 上做 full-vocab forward KL。Qwen3-1.7B 的 AIME25 Avg@k 从 36.7 升到 43.9（step 50），而每问题只需 1024 sampled tokens、100 步内收敛；GRPO 则要 8 条 16k rollout。这个 token 效率对比是核心卖点。",
+    "motivation": "RLVR 依赖 group sampling 和二值 outcome reward：同组全对或全错时 advantage 为零，且序列级奖励把所有 token 赋予相同 credit；SFT 是 off-policy，存在 exposure bias 和较弱泛化。On-policy distillation 用学生自己的轨迹获得 dense token 监督，但仍需一个独立且通常更大的 teacher，也没有显式利用推理数据集中已有的 ground-truth solution。OPSD 的动机是：能力足够的模型在看到 verified reasoning trace 后，可以通过 rationalization 扮演自己的 teacher，从而同时获得 on-policy 数据、dense 监督和免外部 teacher 三个好处。",
+    "innovations": [
+      {
+        "point": "单模型双上下文自蒸馏",
+        "detail": "同一组参数 θ 用两个 prompt 实例化 student pS(·|x) 与 teacher pT(·|x,y*)。teacher 只通过 prefill 读取 reference solution 并隐式 rationalize，不生成额外 token；梯度只回传 student，因此无需 external teacher 或 PRM。"
+      },
+      {
+        "point": "在 student rollout 上做 full-vocab token-level soft distillation",
+        "detail": "student 先采样自己的轨迹，teacher 与 student 对同一前缀输出 next-token 分布，最小化逐 token forward KL；相比 sampled-token policy-gradient 目标，full-vocab 暴露整个 teacher 分布，作者报告在中等规模模型上两项数学 benchmark 的 pass 指标更高，但显存开销更大。"
+      },
+      {
+        "point": "per-token pointwise KL clipping 抑制 style token 支配",
+        "detail": "作者观察到 stylistic token 的 KL 可远高于数学 token，导致训练信号偏斜；对每个词表项的 f-divergence 贡献做 min(·,τ) 截断，稳定训练并防止性能退化。该设计直接针对 full-vocab soft distillation 的重尾问题。"
+      }
+    ],
+    "method": "给定 (x,y*)，student 只条件于 x，teacher 条件于 x 与 y*；teacher prompt 加入 reference solution 并要求其用自己的方法重解，但只做一次前向 prefill，不生成 token。student 采样 \\hat y 后，两个策略在同一个 student 前缀上计算 next-token 分布，损失是轨迹平均的逐 token divergence，梯度只穿过 student logits。主实验用 full-vocabulary forward KL；逐词表项做 pointwise clipping 以限制 style token。作者还给出 sampled-token policy-gradient 变体：只在 student 采样 token 上取 teacher-student log-prob 差作为 advantage，计算更省但监督更稀疏。关键取舍是把 teacher 固定为初始策略以稳定训练并起正则作用，而不是随 student 同步更新。",
+    "results": "评测用 Avg@k 与 pass 指标，基线为同数据 SFT 和 GRPO。作者报告在三个 Qwen3 规模上 OPSD 的峰值平均分都不低于 GRPO，小模型收益最大；但固定步数检查点在较大模型上低于 GRPO，说明峰值选择会影响结论。AIME25 消融中 forward KL 把 36.7 提到 43.9（step 50），reverse KL 与 JSD 仅 37.5 与 36.9；full-vocabulary 在中等规模模型上两项数学 benchmark 的 pass 指标均高于 sampled-token 变体。token 效率上，OPSD 每问题一条 1024 sampled tokens 且 100 步内收敛，GRPO 需 8 条 16k rollout。",
+    "limitations": "作者承认 full-vocabulary 需要保存词表级 logits，峰值显存更高；teacher 固定为初始策略虽稳定，却限制其随 student 改进而调整。验证只覆盖数学推理、Qwen3 系列和 LoRA 微调，尚未证明在代码、开放域或全参数训练上的可迁移性。OPSD 依赖 verified solution 作为 privileged information，无答案或不可验证任务不适用；同一模型自教还假设基础能力足以 rationalize 参考解，弱模型可能无法提供有效监督。主结果的峰值检查点与固定步数检查点存在落差，削弱了“匹配 GRPO”的稳健性。",
+    "insights": "可把 privileged information 从 ground-truth solution 扩展到工具调用结果、环境反馈或检索证据，使自蒸馏覆盖不可验证任务；也可研究 teacher 更新策略（EMA、周期同步）与 clipping 的交互。把 dense token-level 信号与 RLVR 的 outcome reward 结合，可能同时缓解 zero-advantage 和稀疏 credit。另一个方向是显式分离 style token 与 reasoning token 的监督强度，并在 full-vocab 与 sampled-token 之间做计算预算感知的折中。"
+  },
+  "claims": [
+    {
+      "claim": "实验在 Qwen3-1.7B 上报告 AIME25 的 Avg@k",
+      "numbers": [
+        "1.7"
+      ],
+      "source_span": "Table 3 caption",
+      "quote": "Comparison of divergence objectives on AIME25 with Qwen3-1.7B"
+    },
+    {
+      "claim": "forward KL 将 AIME25 的 Avg@k 从 36.7 提升到 43.9（step 50）",
+      "numbers": [
+        "36.7",
+        "43.9",
+        "50"
+      ],
+      "source_span": "Section 4.3.1",
+      "quote": "improving performance from 36.7 to 43.9 at step 50"
+    },
+    {
+      "claim": "OPSD 每问题只需 1024 sampled tokens",
+      "numbers": [
+        "1024"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "1024 sampled tokens"
+    },
+    {
+      "claim": "OPSD 在 100 步内收敛",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "converges within 100 steps"
+    },
+    {
+      "claim": "GRPO 需要 8 条 rollout",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "GRPO requires 8"
+    },
+    {
+      "claim": "GRPO 每条 rollout 上限为 16k tokens",
+      "numbers": [
+        "16"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "16k tokens each"
+    },
+    {
+      "claim": "reverse KL 在 AIME25 上的 Avg@k 为 37.5",
+      "numbers": [
+        "37.5"
+      ],
+      "source_span": "Table 3, row 'Reverse KL'",
+      "quote": "37.5"
+    },
+    {
+      "claim": "JSD 在 AIME25 上的 Avg@k 为 36.9",
+      "numbers": [
+        "36.9"
+      ],
+      "source_span": "Table 3, row 'JSD'",
+      "quote": "36.9"
+    }
+  ]
+}

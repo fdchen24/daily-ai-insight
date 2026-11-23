@@ -1,0 +1,102 @@
+{
+  "title_zh": "AutoMaster：让固定模型成为更好教师的自主后训练",
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把后训练的核心问题从“筛选成功轨迹”推进到“塑造教师演示行为”，在三个 agent 任务域上给出一致但幅度有限的增益，问题重要且可检验。",
+    "novelty": 76,
+    "novelty_reason": "Skill-FT 的“先用自然语言 skill 改写 teacher rollout，再做 SFT”以及保留 skill context 的受控发现，相对只做轨迹选择或失败恢复有实质差异；但 skill prompting 与 agent 自动实验均有先例。",
+    "technical_depth": 80,
+    "technical_depth_reason": "固定 teacher、task pool、训练集规模与 SFT recipe，设置 Vanilla SFT、Task-Matched SFT 和两个组件消融，并用轨迹案例支撑行为变化；不足是单一 teacher/agent、重复评测有限，同模型自教未验证。"
+  },
+  "reading": {
+    "why_read": "核心不只是筛选成功轨迹，而是先用自然语言 skill 改写 teacher 的 rollout 行为，再把 skill 指令保留在 SFT 输入里。Terminal-Bench 2.1 的较大学生相对 Vanilla SFT 提升 8.99 个百分点；Keep 相比 Remove 在六组设置高 2.15–4.01 个百分点，说明“训练时保留行为上下文”本身有作用。",
+    "motivation": "成功轨迹的 SFT 隐含把“任务成功”等同于“值得学习的行为”，但 teacher 可能带着无依据假设、重复尝试或浅层验证也能做对；当有效行为在 unguided rollout 中很少出现时，只靠筛选成功样本无法补足。已有轨迹选择与失败恢复工作关注“选哪些轨迹”，较少主动改变 teacher 如何生成演示。因此需要把后训练的数据问题前移为行为生成问题：既塑造演示，又选择演示。",
+    "innovations": [
+      {
+        "point": "Skill-FT：用 skill 塑造 teacher rollout 行为",
+        "detail": "把自然语言 skill 追加到 base system prompt，针对跨任务复现的情境规定如何推理或行动，抑制不良习惯并引出 unguided rollout 中少见的行为；即使 teacher 已能解的任务也可干预。随后在选中轨迹上做标准 SFT，并保留原 system prompt（含 skill 指令），评测时去掉生成 skill。"
+      },
+      {
+        "point": "AutoMaster：双层自主实验闭环",
+        "detail": "内层由 LLM agent 分析轨迹、设计并分配 skill、做 pilot teacher rollout、按需修改 skill 或适用范围，再扩大批次并选择演示；外层从同一初始 checkpoint 训练学生，用评测分数和学生轨迹反馈下一轮。agent 通过 MCP 提交 rollout/SFT/评测任务，实验记录可追溯到训练集与 skill。"
+      },
+      {
+        "point": "保留 skill context 促进行为内化",
+        "detail": "在相同轨迹与 SFT recipe 下比较 Keep 与 Remove：Keep 在训练输入中保留指导 teacher 的 skill 指令，Remove 删除但监督输出不变。六组设置中 Keep 均更高，且所有学生评测时都不带 skill；作者解释为显式规则及其适用条件、输入指导与监督输出对应关系被保留。"
+      }
+    ],
+    "method": "给定固定 teacher、固定训练任务池和固定初始学生 checkpoint，AutoMaster 让 agent 先看 unguided teacher 与初始学生的轨迹，找应抑制的习惯和应补足的行为；为任务子集设计 skill s，把它拼到系统提示 p 后生成 teacher 轨迹 τ ~ Rollout(π_T, x; p⊕s)。Pilot rollout 检验 skill 是否引出目标行为且不引入新问题，再扩展到大批次，并由 agent 结合任务结果与行为质量选轨迹。外层每轮都从同一初始 checkpoint 做全参数 SFT，避免轮次累积；训练输入保留 teacher 用过的 skill 指令，评测按官方协议不带 skill。对照包括 Base、在成功 unguided teacher 轨迹上做 SFT 的 Vanilla SFT、匹配任务 ID 与每任务样本数的 Task-Matched SFT，以及分别去掉 skill guidance 或 agent 数据选择的消融。",
+    "results": "Table 1 中 AutoMaster 在六个 benchmark–model 组合均为最高。Terminal-Bench 2.1 上，较小学生由 22.47 升至 28.09，较大学生由 26.59 升至 35.58；BrowseComp 与 Doc2Repo 也一致高于 Vanilla SFT。相对 Vanilla SFT 的平均增益为 1.42–8.99 个百分点，且较大学生增益更大。消融显示去掉 skill guidance 或 agent 选择数据在六组均下降；Task-Matched SFT 固定任务组成后仍低 1.08–10.11 个百分点。Keep 相比 Remove 高 2.15–4.01 个百分点，尽管评测无 skill。",
+    "limitations": "作者未设专门 limitations。读出的主要问题是：标题的“same model”实际指同一固定 teacher，而非学生自教；实验中 teacher 是 DeepSeek-V4-Pro-Preview、学生是 Qwen3.5，不能直接支持同模型自蒸馏或自提升。系统依赖强外部 agent（GPT-6 Astra）以及 rollout、SFT、评测集群，agent 决策质量、调用成本与失败恢复未被量化。评测覆盖单一 teacher/agent/任务池，重复运行有限，正文只给均值与标准差，配对区间在未展开的附录。较小模型上收益并不稳定，并非所有轮次都超过 Vanilla SFT。skill 由 agent 自然语言生成，难以审计和最小化；Keep 更优的解释仍是事后轨迹分析，未隔离“输入-输出对应”与“训练分布匹配”等机制。",
+    "insights": "把后训练的数据问题前移为行为生成问题：先塑造 teacher 再筛选，比只做 trajectory selection 多一层杠杆。训练输入保留行为上下文可能是一种低成本条件化，值得在 agent SFT 与 distillation 中系统研究，但要区分显式规则、输入输出对应和分布匹配的贡献。后续需要同模型 self-teacher 实验、跨教师迁移、skill 自动审计与成本约束，才能判断 autonomous post-training 的真实边界。"
+  },
+  "claims": [
+    {
+      "claim": "AutoMaster 相对 Vanilla SFT 的平均增益为 1.42–8.99 个百分点",
+      "numbers": [
+        "1.42",
+        "8.99"
+      ],
+      "source_span": "Abstract",
+      "quote": "by 1.42-8.99 percentage points"
+    },
+    {
+      "claim": "Keep 相比 Remove 在六组设置上平均高 2.15–4.01 个百分点",
+      "numbers": [
+        "2.15",
+        "4.01"
+      ],
+      "source_span": "Section 5.2 / Figure 6",
+      "quote": "by 2.15–4.01 percentage points"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 上较小学生的 Vanilla SFT 得分为 22.47",
+      "numbers": [
+        "22.47"
+      ],
+      "source_span": "Table 1, Terminal-Bench 2.1, Vanilla SFT 4B",
+      "quote": "22.47 ± 1.12"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 上较小学生的 AutoMaster 得分为 28.09",
+      "numbers": [
+        "28.09"
+      ],
+      "source_span": "Table 1, Terminal-Bench 2.1, AutoMaster 4B",
+      "quote": "28.09 ± 2.25"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 上较大学生的 Vanilla SFT 得分为 26.59",
+      "numbers": [
+        "26.59"
+      ],
+      "source_span": "Table 1, Terminal-Bench 2.1, Vanilla SFT 9B",
+      "quote": "26.59 ± 1.30"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 上较大学生的 AutoMaster 得分为 35.58",
+      "numbers": [
+        "35.58"
+      ],
+      "source_span": "Table 1, Terminal-Bench 2.1, AutoMaster 9B",
+      "quote": "35.58 ± 1.30"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 的较大学生相对 Vanilla SFT 提升 8.99 个百分点",
+      "numbers": [
+        "8.99"
+      ],
+      "source_span": "Table 1, ∆ row, Terminal-Bench 2.1, 9B",
+      "quote": "8.99"
+    },
+    {
+      "claim": "Task-Matched SFT 固定任务组成后仍低 1.08–10.11 个百分点",
+      "numbers": [
+        "1.08",
+        "10.11"
+      ],
+      "source_span": "Section 4.3 / Figure 4 caption",
+      "quote": "by 1.08–10.11 percentage points"
+    }
+  ]
+}

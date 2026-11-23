@@ -1,0 +1,62 @@
+{
+"2511.17450": {
+"citation_count": 12,
+"reference_count": 42,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 12
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2511.00086": {
+"citation_count": 6,
+"reference_count": 57,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2511.14262": {
+"citation_count": 4,
+"reference_count": 39,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2511.19706": {
+"citation_count": 1,
+"reference_count": 32,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Image Retrieval and Classification Techniques",
+"Mathematical Analysis and Transform Methods"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

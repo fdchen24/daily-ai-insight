@@ -1,0 +1,50 @@
+{
+"2409.01382": {
+"citation_count": 21,
+"reference_count": 101,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 13,
+"2025": 8
+},
+"oa_topics": [
+"Software Engineering Research",
+"Authorship Attribution and Profiling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2409.11960": {
+"citation_count": 16,
+"reference_count": 40,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 5
+},
+"oa_topics": [
+"Hand Gesture Recognition Systems",
+"Human Pose and Action Recognition"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2409.03962": {
+"citation_count": 6,
+"reference_count": 42,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4,
+"2025": 2
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Bayesian Modeling and Causal Inference"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

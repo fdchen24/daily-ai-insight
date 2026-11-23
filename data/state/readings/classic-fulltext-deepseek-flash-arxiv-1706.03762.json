@@ -1,0 +1,124 @@
+{
+  "title_zh": "Attention 就是全部：Transformer 序列转换架构",
+  "scores": {
+    "research_value": 98,
+    "research_value_reason": "论文定义的 scaled dot-product attention、multi-head attention、masked self-attention 与位置编码仍是序列建模系统的默认层接口，复杂度比较也仍是架构分析的常用语言。",
+    "novelty": 96,
+    "novelty_reason": "在 attention 普遍依附于 RNN 的背景下，它把 recurrence 与 convolution 一并移除，只用 self-attention 堆叠完成 encoder-decoder 序列转换，并形式化 multi-head 与 sinusoidal 位置表示。",
+    "technical_depth": 91,
+    "technical_depth_reason": "除架构定义外，论文用每层复杂度、最小串行操作数和最大路径长度做层类型比较，并给出翻译主实验、组件消融与成分句法分析跨任务验证。"
+  },
+  "reading": {
+    "why_today": "今天读它，重点不是复述“Transformer 很强”，而是看它如何把序列建模的计算路径从随序列长度增长的循环步数压到常数级，并用 multi-head、masked self-attention、positional encoding 把“无循环”变成可训练架构。做长序列、并行训练、推理缓存或架构消融时，文中的复杂度对比与消融设计仍是可直接借用的分析框架。",
+    "historical_context": "发表时，序列转换的主流是 encoder-decoder 的 RNN/LSTM/GRU，attention 通常作为辅助模块接在循环网络之上。循环按位置逐步计算隐藏状态，训练样本内部无法并行，长序列受内存和串行步数限制；ConvS2S、ByteNet 用卷积提高并行度，但任意两位置间的操作数随距离线性或对数增长。Transformer 的出发点是去掉循环与卷积，让任意两位置只经过常数级操作，同时保留 encoder-decoder 的总体接口。",
+    "problem_then": "核心问题是：能否在不使用 sequence-aligned RNN 或 convolution 的前提下，仍然完成高质量序列转换？具体要同时解决三件事：让远距离依赖的路径变短、让训练在序列维度上可并行、以及在没有循环/卷积时仍向模型注入位置信息并保持自回归解码的因果性。",
+    "contributions": [
+      {
+        "point": "以 self-attention 作为唯一的序列混合算子",
+        "detail": "encoder 与 decoder 的每层由 multi-head self-attention 和 position-wise FFN 组成，彻底移除循环与卷积；decoder 的 self-attention 用 masking 保持自回归性，encoder-decoder attention 负责跨序列对齐。"
+      },
+      {
+        "point": "提出 Multi-Head Attention 与 scaled dot-product attention",
+        "detail": "把 Q/K/V 投影到多个子空间并行做 attention，再将各头输出拼接后投影；点积除以 sqrt(dk) 以控制大维度下 softmax 的梯度，multi-head 则避免单头平均化带来的表示瓶颈。"
+      },
+      {
+        "point": "给出架构级复杂度比较并验证跨任务泛化",
+        "detail": "论文用每层计算复杂度、最小串行操作数与最大路径长度比较 self-attention、recurrent、convolutional 层；除翻译外，还在 English constituency parsing 上验证同一架构的通用性，而非只做单一任务调参。"
+      }
+    ],
+    "core_idea": "模型是 encoder-decoder：encoder 与 decoder 各堆叠 6 个相同层，dmodel = 512。每层包含 multi-head self-attention 与 position-wise FFN（内层 dff = 2048），每个子层外接 residual connection 和 layer normalization。Attention 写成 softmax(QK^T/√dk)V；Multi-Head 用 h = 8 组独立投影，每组 dk = dv = 64，拼接后再投影。Decoder 的 self-attention 用 -∞ mask 阻断对未来位置的注意，encoder-decoder attention 的 K/V 来自 encoder 输出。由于没有循环/卷积，输入嵌入加上 sinusoidal positional encoding；embedding 与 pre-softmax 线性层共享权重。训练用 Adam、warmup 与 dropout/label smoothing。",
+    "influence": "论文把 self-attention、multi-head attention、masked decoder self-attention、sinusoidal positional encoding 形式化为可组合的层接口，并开源 tensor2tensor。它明确把 restricted/local self-attention 与文本之外的图像、音频、视频模态列为扩展方向；后续序列转换工作可以在这个 encoder-decoder 骨架上替换任务头或注意力范围，而不必重新引入循环。",
+    "modern_reading": "今天看，“完全替代循环”已被接受，但原文结论要加限定。翻译主结果中 big model 在 EN-DE 报告 28.4 BLEU，训练 3.5 天、8 块 P100；EN-FR 摘要与结果表为 41.8，正文结果段落却写 41.0，引用需核对版本。消融显示 single-head 比最佳 multi-head 差 0.9 BLEU，sinusoidal 与 learned positional embedding 几乎相同；解析任务超过 BerkeleyParser，但仍低于 RNNG 的 93.3，说明通用架构并非所有任务都 SOTA。"
+  },
+  "claims": [
+    {
+      "claim": "encoder 与 decoder 各堆叠 6 个相同层",
+      "numbers": [
+        "6"
+      ],
+      "source_span": "Section 3.1",
+      "quote": "stack of N = 6 identical layers"
+    },
+    {
+      "claim": "模型宽度为 dmodel = 512",
+      "numbers": [
+        "512"
+      ],
+      "source_span": "Section 3.1",
+      "quote": "dmodel = 512"
+    },
+    {
+      "claim": "FFN 内层维度为 dff = 2048",
+      "numbers": [
+        "2048"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "dff = 2048"
+    },
+    {
+      "claim": "Multi-Head 使用 h = 8 个注意力头",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Section 3.2.2",
+      "quote": "h = 8 parallel attention layers, or heads"
+    },
+    {
+      "claim": "每个头的 key/value 维度为 dk = dv = 64",
+      "numbers": [
+        "64"
+      ],
+      "source_span": "Section 3.2.2",
+      "quote": "dk = dv = dmodel/h = 64"
+    },
+    {
+      "claim": "EN-DE 翻译报告 28.4 BLEU",
+      "numbers": [
+        "28.4"
+      ],
+      "source_span": "Section 6.1; Table 2",
+      "quote": "state-of-the-art BLEU score of 28.4"
+    },
+    {
+      "claim": "big model 训练 3.5 天、使用 8 块 P100",
+      "numbers": [
+        "3.5",
+        "8"
+      ],
+      "source_span": "Section 6.1",
+      "quote": "3.5 days on 8 P100 GPUs"
+    },
+    {
+      "claim": "摘要与结果表报告 EN-FR 41.8",
+      "numbers": [
+        "41.8"
+      ],
+      "source_span": "Abstract; Table 2",
+      "quote": "41.8"
+    },
+    {
+      "claim": "正文结果段落写 EN-FR 41.0",
+      "numbers": [
+        "41.0"
+      ],
+      "source_span": "Section 6.1",
+      "quote": "41.0"
+    },
+    {
+      "claim": "single-head 比最佳 multi-head 差 0.9 BLEU",
+      "numbers": [
+        "0.9"
+      ],
+      "source_span": "Section 6.2",
+      "quote": "single-head attention is 0.9 BLEU worse than the best setting"
+    },
+    {
+      "claim": "解析任务仍低于 RNNG 的 93.3",
+      "numbers": [
+        "93.3"
+      ],
+      "source_span": "Table 4",
+      "quote": "93.3"
+    }
+  ]
+}

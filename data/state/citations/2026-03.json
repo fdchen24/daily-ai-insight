@@ -1,0 +1,185 @@
+{
+"2603.14578": {
+"citation_count": 4,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.16849": {
+"citation_count": 3,
+"reference_count": 45,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Advanced Graph Neural Networks"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.20521": {
+"citation_count": 3,
+"reference_count": 14,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.13429": {
+"citation_count": 1,
+"reference_count": 92,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Industrial Vision Systems and Defect Detection",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.18771": {
+"citation_count": 1,
+"reference_count": 51,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Social Robot Interaction and HRI",
+"Human Motion and Animation"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.03405": {
+"citation_count": 0,
+"reference_count": 17,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Machine Learning and Data Classification"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.09427": {
+"citation_count": 0,
+"reference_count": 12,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Simulation Techniques and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.15919": {
+"citation_count": 0,
+"reference_count": 32,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.23864": {
+"citation_count": 8,
+"reference_count": 71,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.27910": {
+"citation_count": 4,
+"reference_count": 11,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Topic Modeling",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.25063": {
+"citation_count": 3,
+"reference_count": 62,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topological and Geometric Data Analysis",
+"Scientific Computing and Data Management"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.20526": {
+"citation_count": 2,
+"reference_count": 11,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Advanced Bandit Algorithms Research"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2603.29507": {
+"citation_count": 0,
+"reference_count": 62,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image Enhancement Techniques",
+"Advanced Image Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

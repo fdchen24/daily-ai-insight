@@ -1,0 +1,18 @@
+{
+"2201.10838": {
+"citation_count": 15,
+"reference_count": 18,
+"venue": "arXiv (Cornell University)",
+"year": 2022,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2024": 6
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

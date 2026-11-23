@@ -1,0 +1,581 @@
+{
+"2610.03169": {
+"citation_count": 1,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Topological and Geometric Data Analysis",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.05935": {
+"citation_count": 1,
+"reference_count": 38,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.00447": {
+"citation_count": 0,
+"reference_count": 49,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Computer Graphics and Visualization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.02208": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.05570": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Numerical Solvers for Ordinary Differential Equations"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.06751": {
+"citation_count": 0,
+"reference_count": 37,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Sparse and Compressive Sensing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.02366": {
+"citation_count": 0,
+"reference_count": 57,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.10285": {
+"citation_count": 0,
+"reference_count": 14,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.07990": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.08871": {
+"citation_count": 0,
+"reference_count": 11,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Spam and Phishing Detection",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.11957": {
+"citation_count": 0,
+"reference_count": 21,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.13465": {
+"citation_count": 0,
+"reference_count": 36,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.12985": {
+"citation_count": 0,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Chemical Physics Studies",
+"Quantum Computing Algorithms and Architecture"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.14918": {
+"citation_count": 0,
+"reference_count": 12,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence Applications",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.15968": {
+"citation_count": 0,
+"reference_count": 17,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.16653": {
+"citation_count": 0,
+"reference_count": 16,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.26825": {
+"citation_count": 3,
+"reference_count": 48,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.31778": {
+"citation_count": 3,
+"reference_count": 21,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Software Engineering Research",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.28587": {
+"citation_count": 2,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Neural Networks and Applications",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.35254": {
+"citation_count": 2,
+"reference_count": 34,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Academic Writing and Publishing",
+"Ethics and Social Impacts of AI"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.29968": {
+"citation_count": 1,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.30884": {
+"citation_count": 1,
+"reference_count": 23,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.36150": {
+"citation_count": 1,
+"reference_count": 54,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Vision and Imaging",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.22187": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Computational and Text Analysis Methods",
+"Sentiment Analysis and Opinion Mining"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.21887": {
+"citation_count": 0,
+"reference_count": 17,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Evolutionary Algorithms and Applications",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.23297": {
+"citation_count": 0,
+"reference_count": 66,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Image Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.25356": {
+"citation_count": 0,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Games",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.25760": {
+"citation_count": 0,
+"reference_count": 28,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.24359": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Privacy, Security, and Data Protection"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.27998": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Teleoperation and Haptic Systems",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.28087": {
+"citation_count": 0,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Digital Media Forensic Detection",
+"Misinformation and Its Impacts"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.29378": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.30691": {
+"citation_count": 0,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.30963": {
+"citation_count": 0,
+"reference_count": 73,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Spam and Phishing Detection",
+"Misinformation and Its Impacts"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.32965": {
+"citation_count": 0,
+"reference_count": 39,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.34626": {
+"citation_count": 0,
+"reference_count": 44,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Data Quality and Management",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.34845": {
+"citation_count": 0,
+"reference_count": 53,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.35985": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.36858": {
+"citation_count": 0,
+"reference_count": 39,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Face recognition and analysis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.35272": {
+"citation_count": 0,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and Audio Processing"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.39278": {
+"citation_count": 0,
+"reference_count": 45,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.39232": {
+"citation_count": 0,
+"reference_count": 36,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.38951": {
+"citation_count": 0,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.40112": {
+"citation_count": 0,
+"reference_count": 20,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Recommender Systems and Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.40056": {
+"citation_count": 0,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Advanced Causal Inference Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2610.38016": {
+"citation_count": 0,
+"reference_count": 29,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

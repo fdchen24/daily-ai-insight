@@ -1,0 +1,20 @@
+{
+"1706.03762": {
+"citation_count": 152843,
+"reference_count": 96,
+"venue": "neural information processing systems",
+"year": 2017,
+"work_type": "conference-paper",
+"fwci": 1140.21,
+"citation_percentile": 1.0,
+"citations_by_year": {
+"2026": 19037,
+"2025": 32254
+},
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

@@ -1,0 +1,33 @@
+{
+"2501.06926": {
+"citation_count": 14,
+"reference_count": 95,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 7
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2501.03306": {
+"citation_count": 1,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2025": 1
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

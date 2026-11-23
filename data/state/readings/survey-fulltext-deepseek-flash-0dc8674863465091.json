@@ -1,0 +1,97 @@
+{
+  "title_zh": "LLM Agent 的长期记忆安全：跨越记忆生命周期的攻击、防御与治理",
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "把 prompt 注入、RAG 投毒、多 agent 传染、卸载与回滚这几支互不引用的文献统一到一条跨会话攻击链上，并用对比表指出既有综述在生命周期分析与治理要求上的缺位。",
+    "novelty": 78,
+    "novelty_reason": "不止于文献罗列：除六阶段与四类目标的交叉分类外，把治理落成五条带谓词定义和评测指标的合取条件，并附加效用硬约束，是可被检验的组织方式。",
+    "technical_depth": 76,
+    "technical_depth_reason": "对具体机制讲到实现层，如图合并攻击如何借实体归并靠近同一锚点、KV 状态复用为何让同文本得到不同决策、按依赖图级联删除；并逐条标注评测条件，但防御侧多数只给一段功能描述，缺横向实验对比。"
+  },
+  "reading": {
+    "why_read": "如果你对 agent 的记忆安全理解仍停留在“prompt injection 要过滤”，这篇会把记忆投毒、RAG 污染、多 agent 传染、卸载失败放到同一条跨会话链上，并给出五条可写成谓词的治理要求，省掉你按生命周期重新归位这批文献、以及判断某条防御究竟堵住链条哪一段的工作。",
+    "scope": "覆盖 LLM Agent 获得可写、跨会话持久记忆之后的安全问题：把 Write、Store、Retrieve、Execute、Share & Propagate、Forget & Rollback 六个阶段与完整性、机密性、可用性、治理四类目标交叉，逐阶段梳理代表性攻击与防御，最后提出 Verifiable Memory Governance 的五条可判定要求。不覆盖参数化在权重中的知识安全（只作对照），也不做穷尽式普查：作者自述材料来自数据库检索、引文扩展与定向更新，强调架构与机制而非文献清点；对每步改写 recurrent matrix 而不改动可读参数的隐式记忆表示，只作为“难以追溯”的一类被点名，未展开。",
+    "evolution": "第一阶段把 agent 安全当作输入问题：权重里的后门，以及单轮或多轮对话中的 prompt 注入。转折点出现在记忆变成可写且跨会话持久之后——分析单元从“某次输入”变成“记忆状态”，作者归纳为 persistence、statefulness、propagation：投毒条目在源上下文关闭后仍可被无限次召回；累积的偏置情景记忆会在任何单条记忆触发分类器之前就造成行为漂移；污染还会经共享存储与工具参数横向扩散。第二个转折是攻击面持续收缩：从语料级写入（AgentPoison），到只靠对话查询诱导 agent 自己写下恶意记忆（MINJA），再到只污染 agent 正常浏览时看到的环境内容（eTAMP），结论是“任何能影响写入的可观察上下文”都算写面。第三个转折是防御重心迁移：检索期检测，到执行期信息流与工具权限控制，到存储期 provenance 与快照回滚，再到治理层的可判定要求。作者反复强调扩大 context window 不等于持久记忆，因此单会话、单次检索的缓解手段覆盖不了这条链。",
+    "approaches": [
+      {
+        "point": "记忆生命周期分类框架（本文骨架）",
+        "detail": "用六阶段把攻击串成一条跨阶段链：写时埋入、存储期休眠并在被蒸馏成高层经验时反而提权、检索时复活、执行时劫持控制流、共享时跨 agent 与用户扩散、删除后残留。换来的是跨阶段可见性——单轮检测看不到链条两端，干预点也可以放在与埋入不同的阶段；代价是阶段划分对系统边界不敏感，作者承认同一工作常同时落在多个阶段—目标对上而无需新增阶段。该综述引述 AgentPoison 在低于 0.1% 的毒化率下取得超过 80% 的攻击成功率，作为写面可被极小比例污染撬动的证据。"
+      },
+      {
+        "point": "检索期检测与可证明聚合",
+        "detail": "RobustRAG 用 isolate-then-aggregate，在受限的污染段落数下对响应质量给出下界认证；TrustRAG、SeCon-RAG 靠聚类、信任打分与矛盾感知过滤；RevPRAG 看激活差异；A-MemGuard 更贴近记忆本身，比较独立推理路径、以分歧为异常信号，并把检出的攻击蒸馏成 lesson memory 供后续加固。代价在可用性：这类方法按相似度与内容工作，加强来源可信度惩罚会误伤合法证据，而朴素假断言本身就能绕过内容筛查。"
+      },
+      {
+        "point": "执行期信息流控制与权限隔离",
+        "detail": "CaMeL、FIDES、PCAS 分离数据面与控制面，限制不可信内容对工具调用和程序流的影响；Progent、IsolateGPT 与类型化权限分离用细粒度工具策略和执行隔离压缩爆炸半径。这一路最接近传统安全工程，可组合、可形式化（PerMIT 在单用户核心上给出 Lean 证明），但需要改造 agent 架构，且只约束“怎么用”，不清洗被污染的记忆本身。"
+      },
+      {
+        "point": "存储期 provenance、版本化与回滚",
+        "detail": "写时把来源、版本、敏感度、时间写进元数据（MemCube），以 provenance 标准做序列化，MemLineage 把签名派生记录接到敏感动作闸门；恢复侧靠快照（ChronoMem）与事后溯源（RAGForensics）。代价是血缘粒度直接决定删除粒度：作者引述 LinEra 的结果，按整段会话摘要时删除 1% 轮次会连带抹除 73.0% 的派生记忆、下游问答分数从 27.8 跌到 13.8，改用四轮窗口只抹除 3.8%、分数仅从 31.8 到 30.7——过度删除与残留之间没有免费选项。"
+      },
+      {
+        "point": "Verifiable Memory Governance 的五条谓词",
+        "detail": "把治理写成对记忆状态 Mt 的合取：写授权要求每条记录来源非空且通过策略检查（是评测出的策略谓词，不是自报的 approval flag）；provenance 可见要求可查询且血缘完整；principal 作用域检索要求返回集合严格限于 scope 含请求者的条目；可回滚要求回滚后的 live view 等于历史 live view 在当前擦除与访问约束下的投影；可验证遗忘要求在声明的探测分布下暴露概率不超过预先固定的 ε。另加效用硬约束：带记忆的任务得分必须严格高于关闭记忆通道的基线。"
+      }
+    ],
+    "key_differences": "分歧不在“检测还是阻断”，而在保护对象与代价落在哪一层。写时防御（人工核验冻结、写入元数据与来源标签）把成本前移为吞吐与人工，但环境级注入把写面扩展到一切可观察上下文，只审显式记忆更新会漏；检索期检测部署最便宜，却按内容相似度工作，假阳性直接折算成可用性损失——作者引述的观察是加强 provenance 惩罚能恢复准确率，但会连带排除来源不可信的合法证据；执行期信息流控制保证最强，代价是重构数据面与控制面、牺牲灵活性，且只约束“怎么用”；存储期是唯一能支撑取证与恢复的一层，却受限于血缘粒度，也拦不住已经发生的暴露。VMG 的取舍是把这些写成合取而非可选项：缺任一项，其余项的保证不成立，例如没有 principal 作用域时，回滚可能把已撤销的访问一并恢复。作者还区分检索授权与下游披露是两项独立检查。",
+    "bottlenecks": "作者明确点出三处空白：provenance 基础设施（跨摘要与合并的血缘完整性）、跨 principal 传播（私有记忆被提升为共享记忆时的准入）、删除后验证。残留派生散布在原始日志、压缩摘要、向量索引、反思教训、共享存储与审计记录中，MemCut 把 native recovery 与 residual recovery 分开测量，正说明检索成功率下降不足以证明遗忘。评估层面也不可比：写路径攻击的成功率保留各自协议与分母，作者声明不可横向比较，条件激活率也不等于端到端攻击率。VMG 只在声明的系统与威胁模型边界内成立，部署级保证仍缺。",
+    "future_directions": "作者的建议集中在工程与评测：把 provenance、版本化、策略化保留期与检索/执行防御整合成可审计的预防—遏制—恢复闭环；用 counterfactual memory regret 比较同一历史在干净与编辑状态下的下游损失；在 LongMemEval、LoCoMo、MemBench、MemoryAgentBench、MemOps 一类协议上固定历史、只改一个变量（事实、权限或记忆表示），追踪它影响了哪些证据被载入；并跟踪修复后的系统是否复发、授权工作是否恢复、修复成本与重读当前允许来源相比如何。\n我的判断：可验证遗忘中的 ε 与探测分布留了太大自由度，很容易被 benchmark 调参过拟合，真正缺的是一条能在真实部署上测出 lineage 完整性的工程基线；此外作者引述的技能蒸馏结果显示，只移除有害源技能几乎无法恢复性能、连其下游一起移除仍有残余，说明 skill memory 需要按依赖图做级联撤销，而现有防御基本没有覆盖这一层。",
+    "why_read_note": ""
+  },
+  "claims": [
+    {
+      "claim": "该综述引述 AgentPoison：在低于 0.1% 的毒化率下可取得超过 80% 的攻击成功率。",
+      "numbers": [
+        "0.1",
+        "80"
+      ],
+      "source_span": "Section 3.1",
+      "quote": "0.1% poison rate and over 80% attack success"
+    },
+    {
+      "claim": "作者引述 LinEra：以整段会话摘要方式记忆时，删除 1% 的对话轮次会连带抹除 73.0% 的派生记忆。",
+      "numbers": [
+        "1%",
+        "73.0"
+      ],
+      "source_span": "Section 4 (Recovery targets and conditions)",
+      "quote": "forgetting 1% of turns erased 73.0% of derived memories when the writer summarized whole sessions"
+    },
+    {
+      "claim": "改用四轮窗口切分时，同样删除只抹除 3.8% 的派生记忆。",
+      "numbers": [
+        "3.8"
+      ],
+      "source_span": "Section 4 (Recovery targets and conditions)",
+      "quote": "3.8% when it used four-turn windows"
+    },
+    {
+      "claim": "作者引述 LinEra 的下游问答结果：整段摘要下分数从 27.8 降到 13.8，四轮窗口下则从 31.8 降到 30.7。",
+      "numbers": [
+        "27.8",
+        "13.8",
+        "31.8",
+        "30.7"
+      ],
+      "source_span": "Section 4 (Recovery targets and conditions)",
+      "quote": "F1 fell from 27.8 to 13.8 for session summaries versus 31.8 to 30.7 for four-turn windows"
+    },
+    {
+      "claim": "综述把记忆生命周期分解为 Write、Store、Retrieve、Execute、Share & Propagate、Forget & Rollback 六个阶段。",
+      "numbers": [
+        "six"
+      ],
+      "source_span": "Section 2",
+      "quote": "memory lifecycle into six phases: Write, Store, Retrieve, Execute, Share & Propagate, Forget & Rollback"
+    },
+    {
+      "claim": "Verifiable Memory Governance 被形式化为五条带谓词定义与评测指标的治理原语。",
+      "numbers": [
+        "five"
+      ],
+      "source_span": "Section 1 (Contributions)",
+      "quote": "We formalize memory governance into five primitives"
+    }
+  ]
+}

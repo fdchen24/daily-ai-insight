@@ -1,0 +1,219 @@
+{
+"2602.01990": {
+"citation_count": 14,
+"reference_count": 45,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 8.61,
+"citation_percentile": 0.975,
+"citations_by_year": {
+"2026": 12,
+"2025": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.04077": {
+"citation_count": 1,
+"reference_count": 25,
+"venue": "International Conference on Artificial Intelligence and Statistics",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 1.58,
+"citation_percentile": 0.8,
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.14027": {
+"citation_count": 18,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 17,
+"2025": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.03955": {
+"citation_count": 14,
+"reference_count": 72,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 14
+},
+"oa_topics": [
+"Multi-Agent Systems and Negotiation",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.15030": {
+"citation_count": 11,
+"reference_count": 63,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.04417": {
+"citation_count": 7,
+"reference_count": 72,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.07593": {
+"citation_count": 2,
+"reference_count": 44,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Game Theory and Voting Systems",
+"Multi-Criteria Decision Making"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.13217": {
+"citation_count": 2,
+"reference_count": 50,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Logic, Reasoning, and Knowledge"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.05489": {
+"citation_count": 1,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Optimization and Variational Analysis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.13475": {
+"citation_count": 1,
+"reference_count": 28,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.03082": {
+"citation_count": 0,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Model Reduction and Neural Networks"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.02523": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.05882": {
+"citation_count": 0,
+"reference_count": 53,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote-Sensing Image Classification",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.06565": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Optimization and Search Problems"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2602.07413": {
+"citation_count": 0,
+"reference_count": 63,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

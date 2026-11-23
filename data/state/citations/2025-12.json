@@ -1,0 +1,44 @@
+{
+"2512.24407": {
+"citation_count": 4,
+"reference_count": 66,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Advanced Causal Inference Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2512.06330": {
+"citation_count": 1,
+"reference_count": 9,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Image Fusion Techniques",
+"Satellite Image Processing and Photogrammetry"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2512.08274": {
+"citation_count": 0,
+"reference_count": 53,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Graph Theory and Algorithms"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

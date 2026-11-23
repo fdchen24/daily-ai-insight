@@ -1,0 +1,103 @@
+{
+"2510.05310": {
+"citation_count": 8,
+"reference_count": 33,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.00810": {
+"citation_count": 3,
+"reference_count": 39,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.04392": {
+"citation_count": 3,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topic Modeling",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.06470": {
+"citation_count": 0,
+"reference_count": 13,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Inertial Sensor and Navigation",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.02848": {
+"citation_count": 0,
+"reference_count": 40,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and Audio Processing"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.09655": {
+"citation_count": 5,
+"reference_count": 40,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 3.59,
+"citation_percentile": 0.935,
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Advanced Steganography and Watermarking Techniques",
+"Physical Unclonable Functions (PUFs) and Hardware Security"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2510.06637": {
+"citation_count": 2,
+"reference_count": 40,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Meteorological Phenomena and Simulations"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

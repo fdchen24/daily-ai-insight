@@ -1,0 +1,137 @@
+{
+  "title_zh": "扩散 Transformer 的 RL 后训练本质上是激活引导",
+  "scores": {
+    "research_value": 90,
+    "research_value_reason": "把 RL 后训练的增益归因到冻结 base 上的常量激活偏移，覆盖图像与视频、LoRA 与全量微调，对理解并简化 RL 后训练有直接意义。",
+    "novelty": 86,
+    "novelty_reason": "用固定 steering vectors 拟合 RL checkpoint 的 velocity，并只用这些向量跑 Flow-GRPO，系统性区分了平均激活差、task arithmetic 与输入依赖 LoRA。",
+    "technical_depth": 93,
+    "technical_depth_reason": "多个 RL checkpoint、多个 reward、均值差/LoRA/其他常量干预对照、joint attention 因果替换与用户研究，证据链完整；作者也明确不声称必要性或低秩。"
+  },
+  "reading": {
+    "why_read": "值得读的核心是量级：在 SD3.5-M 上，固定 steering vectors 只有 0.29M 参数，而 RL-tuned LoRA 有 18.8M，参数少 65×，却恢复六个图像模型 90.0–96.3% 的 RL 奖励增益；两个视频模型分别为 89.8% 和 111.9%。更强的证据是，只用这些向量跑 Flow-GRPO，在 OCR 与 PickScore 上达到 RL 模型增益的 104.6% 和 103.6%，把“RL 后训练是否在学输入依赖变换”变成可检验命题。",
+    "motivation": "RL 后训练（Flow-GRPO、DanceGRPO 等）能提升文本渲染、组合准确性和人类偏好，常规解释是权重更新 ∆W 对每个 token、每个 prompt 产生不同激活变化，因而模型必须学到复杂的输入依赖变换。作者要回答的是：这些增益中有多少其实只是一个与输入无关的常量平移？已有 activation steering 多来自对比提示或优化，task arithmetic 则把权重差当作常量，但没人系统测量“固定向量能在多大程度上复现 RL 微调模型的奖励增益”，也没人把 velocity matching 与平均激活差、same-size LoRA、监督微调区分开。",
+    "innovations": [
+      {
+        "point": "固定 steering vector 复现 RL 奖励增益",
+        "detail": "把同一个向量加到每个 block 输出，按 guidance pass 与 step bin 选择；在 SD3.5-M 上以 0.29M 参数对 18.8M LoRA，仍恢复 90.0–96.3% 的 RL 增益。"
+      },
+      {
+        "point": "velocity matching 而非平均激活差",
+        "detail": "直接回归 RL checkpoint 的 velocity，目标中没有 reward；PickScore 上 sfit 增益 +1.416，而 smean 重标定后仅 +1.231；OCR 上 sfit 正交于 smean 的分量仍保留 96%（+0.312/+0.325）。"
+      },
+      {
+        "point": "仅训练 steering vectors 的 RL 超过权重 RL",
+        "detail": "zero init 后用 Flow-GRPO 只训练 steering vectors；OCR 与 PickScore 分别达到 RL 增益的 104.6% 与 103.6%，用户研究对 base 胜率 60–65%，对 RL 模型 50–52%。"
+      }
+    ],
+    "method": "在冻结 base 的每个 block 输出 h 上加 α·s_{ℓ,p,k(t)}，p 为 CFG 的 conditional/unconditional pass，k 为采样步的 early/late bin；同一向量用于所有 prompt、token、seed。拟合目标不是 reward，而是让 steered base 的 velocity 匹配 RL-tuned checkpoint 的 velocity，训练样本为 RL 模型最终样本重新加噪后的 (x_t,t)，因此无需 reward model 或在线采样。对照包括 mean-difference s_mean、same-size LoRA、gate scale、conditioning offset、prompt suffix 与 CFG 调整；SD3.5-M 为双流 joint attention，FLUX.1-dev 为单 pass。",
+    "results": "六个图像模型覆盖 SD3.5-M/FLUX.1-dev、LoRA 与 full fine-tune、PickScore/HPSv2.1/OCR/GenEval 奖励，sfit 恢复 90.0–96.3% 的 RL 增益；两个视频模型为 89.8% 与 111.9%。SD3.5-M 的 PickScore 测试集上 sfit 增益 +1.416，OCR 测试集 +0.325。same-size LoRA 在 SD3.5-M、FLUX.1-dev、VBVR-Pro 上与 steering vectors 的差异区间包含零，但 Wan2.1 上 same-size LoRA 只恢复 69.7%，低于 steering vectors 的 111.9%。在 joint attention 中把 image token 读到的 text K/V 换回 base，steering vectors 的 OCR/PickScore 增益只剩 20.5%/10.5%，RL 模型也只剩 26.4%/24.5%；只保留 conditional pass、early steps、text stream 的 35,328 参数（全量 12%、rank-32 LoRA 的 0.19%）仍恢复 89.5% OCR 与 73.7% PickScore。",
+    "limitations": "作者明确不声称必要性：固定向量能复现增益，不等于 RL 模型必须依赖这些向量，也不能推出 RL 更新低秩；视频结论只覆盖两个 RL-tuned 模型与两个 base，不能外推到视频 RL 后训练整体；八个 RL 模型都用 policy gradient，preference optimization 与 reward backpropagation 未测。读出的问题：拟合需要先有目标 RL checkpoint 并采样其轨迹/重加噪样本，属于逐模型蒸馏，成本虽低于 RL 但仍限制快速迁移；DreamBooth 监督微调上只恢复部分 identity gain，说明新主体细节不能由常量偏移承担；用户研究规模有限，对 RL 模型的“无差异”也可能来自统计功效不足。",
+    "insights": "把 RL 后训练视为“base 已有能力的常量选择/放大”，比“RL 必须学新输入依赖变换”更符合这批证据。后续可检验：preference optimization 与 reward backprop 是否同样落在低维常量 steering 子空间；不同 RL 算法/奖励学到的向量是否共享；用 joint attention 的 K/V 替换做因果探针，定位奖励增益进入图像/视频的路径。"
+  },
+  "claims": [
+    {
+      "claim": "在 SD3.5-M 上，固定 steering vectors 为 0.29M 参数，RL-tuned LoRA 为 18.8M，参数少 65×。",
+      "numbers": [
+        "0.29",
+        "18.8",
+        "65"
+      ],
+      "source_span": "Abstract",
+      "quote": "On SD3.5-M, these vectors hold 65x fewer parameters than the RL-tuned LoRA (0.29M against 18.8M)."
+    },
+    {
+      "claim": "六个图像模型上恢复 90.0–96.3% 的 RL 奖励增益，两个视频模型为 89.8% 和 111.9%。",
+      "numbers": [
+        "90.0",
+        "96.3",
+        "89.8",
+        "111.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "they recover 90.0-96.3% of the reward gains of six RL-tuned image models, and 89.8% and 111.9% on two RL-tuned video models."
+    },
+    {
+      "claim": "只训练 steering vectors 的 Flow-GRPO 在 SD3.5-M 上达到 OCR-tuned 与 PickScore-tuned 模型增益的 104.6% 和 103.6%。",
+      "numbers": [
+        "104.6",
+        "103.6"
+      ],
+      "source_span": "Section 1, Introduction",
+      "quote": "The trained vectors reach 104.6% and 103.6% of the gains of the OCR-tuned and PickScore-tuned SD3.5-M models"
+    },
+    {
+      "claim": "用户研究中，steered 图像相对 base 的胜率为 60% 至 65%，相对 RL-tuned 模型为 50% 至 52%。",
+      "numbers": [
+        "60",
+        "65",
+        "50",
+        "52"
+      ],
+      "source_span": "Section 4.6, Table 3 caption",
+      "quote": "In a user study, the images of Base + sfit and Base + sRL have a 60% to 65% win rate against the base model’s and are on par with the RL-tuned models’ (50% to 52%, Tab. 3)."
+    },
+    {
+      "claim": "在 OCR 与 PickScore 测试集上，sfit 分别增益 +0.325 与 +1.416。",
+      "numbers": [
+        "0.325",
+        "1.416"
+      ],
+      "source_span": "Section I, Additional results",
+      "quote": "On the OCR and PickScore test sets of Tab. 1, the steering vectors gain +0.325 OCR and +1.416 PickScore."
+    },
+    {
+      "claim": "PickScore 上 sfit 增益 +1.416，而 smean 重标定后仅 +1.231。",
+      "numbers": [
+        "1.416",
+        "1.231"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "On PickScore, smean has nearly the right direction but too small a norm: rescaled to the norms of sfit, it gains +1.231, where sfit gains +1.416."
+    },
+    {
+      "claim": "OCR 上 sfit 正交于 smean 的分量仍保留 96% 的增益（+0.312/+0.325）。",
+      "numbers": [
+        "96",
+        "0.312",
+        "0.325"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "On OCR, the gain lies off the averaged direction: the component of sfit orthogonal to smean keeps 96% (+0.312 of +0.325) of the gain of sfit."
+    },
+    {
+      "claim": "Wan2.1 上 same-size LoRA 只恢复 69.7% 的 RL 增益，低于 steering vectors 的 111.9%。",
+      "numbers": [
+        "69.7",
+        "111.9"
+      ],
+      "source_span": "Section 4.5",
+      "quote": "On Wan2.1, the same-size LoRA recovers 69.7% of the RL gain, against 111.9% for the steering vectors."
+    },
+    {
+      "claim": "把 image token 读到的 text K/V 换回 base 后，steering vectors 的 OCR/PickScore 增益只剩 20.5%/10.5%，RL 模型只剩 26.4%/24.5%。",
+      "numbers": [
+        "20.5",
+        "10.5",
+        "26.4",
+        "24.5"
+      ],
+      "source_span": "Section 5, Finding 2",
+      "quote": "Replacing the text keys and values that image queries read with those of the unsteered base model on the same noisy state keeps only 20.5% of the steering vectors’ OCR gain and 10.5% of their PickScore gain (Fig. 9). The RL-tuned models rely on the same route, retaining 26.4% (OCR-tuned) and 24.5% (PickScore-tuned) of their gains under this intervention, whereas resetting what text tokens read from image tokens preserves at least 84.4% of all four gains."
+    },
+    {
+      "claim": "只保留 conditional pass、early steps、text stream 的 35,328 参数（全量 12%、rank-32 LoRA 的 0.19%）仍恢复 89.5% OCR 与 73.7% PickScore。",
+      "numbers": [
+        "35,328",
+        "12",
+        "0.19",
+        "32",
+        "89.5",
+        "73.7"
+      ],
+      "source_span": "Section 5, Finding 1",
+      "quote": "With all three choices together, 35,328 parameters (12% of the full set, 0.19% of the rank-32 LoRA) recover 89.5% of the RL gain on OCR and 73.7% on PickScore."
+    }
+  ]
+}

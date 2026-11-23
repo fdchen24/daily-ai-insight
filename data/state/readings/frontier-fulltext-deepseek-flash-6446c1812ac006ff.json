@@ -1,0 +1,92 @@
+{
+  "title_zh": "一先验两动力学：复用视频扩散 Transformer 的自监督隐动作学习",
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "无标注视频中的可迁移隐动作是可控世界模型与具身智能的关键缺口；论文把视频生成先验同时用于逆/前向动力学，并在导航与操作两域给出系统证据，方向价值高。",
+    "novelty": 82,
+    "novelty_reason": "与只在 FDM 使用视频先验、IDM 从零训练或冻结特征的做法不同，这里让同一预训练视频 DiT 分别承担 IDM 与 FDM，并通过角色特定的信息访问控制实现端到端隐动作学习。",
+    "technical_depth": 88,
+    "technical_depth_reason": "实验覆盖两个差异明显的域，基线共享数据与探测协议，并包含 LoRA 适配、FDM 规模、时间分解、IDM/FDM 噪声网格和替代先验等消融；跨具身定量仍以循环一致性为主。"
+  },
+  "reading": {
+    "why_read": "值得读的是它把同一个 Wan2.2-TI2V 视频 DiT 同时改造成 IDM 和 FDM：IDM 用 action queries 单次前向读出隐动作，FDM 用 frame-causal joint flow matching 与高噪声采样迫使动作参与预测；在 GR-1 上 EEF R2 达 0.277，高于 DreamDojo 的 0.149。",
+    "motivation": "现有 latent action learning 把先验放在不同位置：IDM 多从零训练或冻结在 DINOv3/V-JEPA 特征上，视频生成先验通常只进入 FDM，或用外部视频表示做对齐。这样 IDM 仍缺少视频预训练中的时序结构，而标准 diffusion 训练又可能让 FDM 绕过隐动作、直接从含噪未来帧预测目标，削弱对动作瓶颈的依赖。视频 DiT 在大规模预训练中已学到状态如何演化，问题变成：能否让同一先验同时服务逆动力学与前向动力学；难点是两者对信息访问的要求不同，必须分别约束。",
+    "innovations": [
+      {
+        "point": "同一视频 DiT 承担两种动力学",
+        "detail": "IDM 与 FDM 都从同一预训练视频 DiT 初始化，分别用 LoRA 适配；IDM 变成单次前向的 transition encoder，FDM 保留生成式 action-conditioned 预测，新增 action readout/conditioning 模块。"
+      },
+      {
+        "point": "用信息访问控制塑造隐动作",
+        "detail": "IDM 用非对称 attention mask 让每个 action query 只读相邻两帧；FDM 用 frame-causal attention 与 joint future prediction 去掉干净历史捷径，并在高噪声 timestep 训练，使未来目标泄漏减少、动作通道成为必要信息。"
+      },
+      {
+        "point": "系统分析与先验扩展",
+        "detail": "作者扫 IDM/FDM 噪声、比较 causal joint 与 autoregressive、LoRA 与 head-only、FDM 规模，并把框架迁移到 V-JEPA2 等 IDM 先验；还指出 probing 强不等于生成控制好。"
+      }
+    ],
+    "method": "给定无动作标注视频，IDM qφ 对每个 transition x_i→x_{i+1} 输出低维高斯隐动作 z_i；FDM fθ 在给定初始帧与对齐的 z 序列下预测后续帧速度。训练时两个模型共享同一预训练视频 DiT 的权重起点，但各自 LoRA 适配；IDM 在 flow timestep 上做一次前向，action queries 通过因果 mask 只聚合相邻帧信息，经 Gaussian head 得到 μ、σ，再用重参数化采样。FDM 保留初始帧干净、未来帧加噪，用 frame-causal attention 做 joint flow matching；为防 FDM 从含噪未来帧抄答案，训练偏向高噪声 timestep。IDM 与 FDM 通过 z 端到端联合优化，损失为 flow-matching 加 KL 正则；推理时用 posterior mean，FDM 可当作 action-conditioned video world model。取舍是：因果 joint 预测和高噪声有利于动作学习但不利生成保真，因此高保真部署采用两阶段，冻结 IDM 后另训双向 FDM。",
+    "results": "作者在 MIND 相机导航和 GR-1 机器人操作上做 few-shot linear probing，报告 O2LaF 在离散与连续动作、不同标注预算下均优于 AdaWorld、Olaf-World、DreamDojo、VideoWorld2、LAPA-DINOv3、VILLA-X 等基线。操作域中，仅用 EgoDex 人类演示训练的编码器在 GR-1 上取得 EEF R2 0.277，DreamDojo 为 0.149。零样本跨上下文相机迁移中，1st-P 的平移 NRMSE 为 1.289、旋转 RPE 为 0.786，低于 Olaf-World 的 1.627 和 1.300；3rd-P 也报告了更低的相机运动误差。跨具身循环重建中，human cross-cycle PSNR 为 24.30，高于 DreamDojo 的 22.61。消融显示 LoRA 适配优于只训 action head，causal joint 优于 autoregressive；V-JEPA2 作 IDM 的 probing 更强，但跨上下文生成出现源外观泄漏。",
+    "limitations": "作者只把可解释性与闭环规划列为未来工作；更实质的限制是跨具身 human-to-robot 的直接迁移主要靠定性图，定量 cycle consistency 只说明动作可重建，不证明物理动作等价。训练域限于 MiraData/EgoDex，评估依赖少量标注 probe 与 VBench/ViPE 等视频代理指标；高噪声与因果 FDM 为动作学习牺牲生成保真，最终高保真部署需两阶段，尚未展示闭环策略收益。",
+    "insights": "可复用的设计是把生成式视频先验同时作为逆/前向动力学，但关键在信息访问控制而非共享权重：action query 的局部 mask 与 FDM 的 frame-causal/high-noise 训练共同防止捷径。高噪声 flow matching 可视为一种信息瓶颈正则，适合其他 latent action/world model。另一个提醒是 probing 与下游生成/控制并不一致，V-JEPA2 的结果说明必须用跨上下文生成检验动作表示是否泄漏外观。"
+  },
+  "claims": [
+    {
+      "claim": "在 GR-1 操作域，O2LaF 的 EEF R2 为 0.277，DreamDojo 为 0.149",
+      "numbers": [
+        "0.277",
+        "0.149"
+      ],
+      "source_span": "Sec. 4.2, Results",
+      "quote": "0.277 on GR-1, compared with 0.149 for DreamDojo"
+    },
+    {
+      "claim": "1st-P 零样本相机迁移中，O2LaF 的平移 NRMSE 为 1.289",
+      "numbers": [
+        "1.289"
+      ],
+      "source_span": "Table 1, 1st-P, row 'Ours'",
+      "quote": "1.289"
+    },
+    {
+      "claim": "1st-P 零样本相机迁移中，Olaf-World 的平移 NRMSE 为 1.627",
+      "numbers": [
+        "1.627"
+      ],
+      "source_span": "Table 1, 1st-P, row 'Olaf-World'",
+      "quote": "1.627"
+    },
+    {
+      "claim": "1st-P 零样本相机迁移中，O2LaF 的旋转 RPE 为 0.786",
+      "numbers": [
+        "0.786"
+      ],
+      "source_span": "Table 1, 1st-P, row 'Ours'",
+      "quote": "0.786"
+    },
+    {
+      "claim": "1st-P 零样本相机迁移中，Olaf-World 的旋转 RPE 为 1.300",
+      "numbers": [
+        "1.300"
+      ],
+      "source_span": "Table 1, 1st-P, row 'Olaf-World'",
+      "quote": "1.300"
+    },
+    {
+      "claim": "Human cross-cycle PSNR 中，O2LaF 为 24.30",
+      "numbers": [
+        "24.30"
+      ],
+      "source_span": "Table 2, Human, Cross-cycle",
+      "quote": "24.30"
+    },
+    {
+      "claim": "Human cross-cycle PSNR 中，DreamDojo 为 22.61",
+      "numbers": [
+        "22.61"
+      ],
+      "source_span": "Table 2, Human, Cross-cycle",
+      "quote": "22.61"
+    }
+  ]
+}

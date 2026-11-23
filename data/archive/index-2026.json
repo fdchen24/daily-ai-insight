@@ -1,0 +1,28 @@
+{
+  "year": 2026,
+  "days": {
+    "2026-11-23": {
+      "counts": {
+        "classic": 1,
+        "frontier": 9,
+        "survey": 1
+      },
+      "total": 11,
+      "generated_at": "2026-11-23T14:09:31.627115+00:00",
+      "titles": [
+        "Attention 就是全部：Transformer 序列转换架构",
+        "非穿透世界模型：用冻结 DiT 隐状态阻止穿墙",
+        "重建对齐提升统一多模态模型的生成与编辑能力",
+        "扩散 Transformer 的 RL 后训练本质上是激活引导",
+        "AutoMaster：让固定模型成为更好教师的自主后训练",
+        "野外编码智能体：GitHub Copilot 生产规模工作负载刻画与优化",
+        "On-Policy Self-Distillation：单模型双上下文自蒸馏的推理后训练",
+        "cmHC：用几何收缩平衡 Hyper-Connections 中的流混合",
+        "一先验两动力学：复用视频扩散 Transformer 的自监督隐动作学习",
+        "算力最优的 tokenization：压缩率如何决定数据-参数配比",
+        "LLM Agent 的长期记忆安全：跨越记忆生命周期的攻击、防御与治理"
+      ]
+    }
+  },
+  "updated_at": "2026-11-23T14:09:31.627115+00:00"
+}

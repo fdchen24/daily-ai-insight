@@ -1,0 +1,33 @@
+{
+"2502.05085": {
+"citation_count": 4,
+"reference_count": 72,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Bayesian Modeling and Causal Inference",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2502.21099": {
+"citation_count": 4,
+"reference_count": 42,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Optimization and Variational Analysis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

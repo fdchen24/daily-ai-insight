@@ -1,0 +1,290 @@
+{
+"2608.00101": {
+"citation_count": 28,
+"reference_count": 29,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 28
+},
+"oa_topics": [
+"Software System Performance and Reliability",
+"Cloud Computing and Resource Management"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.11095": {
+"citation_count": 9,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Software Engineering Research",
+"Software Engineering Techniques and Practices"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.08463": {
+"citation_count": 6,
+"reference_count": 48,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Optimization and Variational Analysis",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.04196": {
+"citation_count": 4,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.11829": {
+"citation_count": 4,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.16335": {
+"citation_count": 4,
+"reference_count": 17,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Adaptive Control of Nonlinear Systems",
+"Advanced Control Systems Optimization"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.12149": {
+"citation_count": 3,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topic Modeling",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.12860": {
+"citation_count": 3,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.17202": {
+"citation_count": 3,
+"reference_count": 65,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.10305": {
+"citation_count": 1,
+"reference_count": 34,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Bayesian Modeling and Causal Inference"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.15012": {
+"citation_count": 1,
+"reference_count": 32,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Network Security and Intrusion Detection"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.25273": {
+"citation_count": 1,
+"reference_count": 12,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Markov Chains and Monte Carlo Methods",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.00701": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.02867": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.03408": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"UAV Applications and Optimization"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.13923": {
+"citation_count": 0,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.19522": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"3D Surveying and Cultural Heritage"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.20122": {
+"citation_count": 0,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.22452": {
+"citation_count": 0,
+"reference_count": 22,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Language Development and Disorders",
+"Reading and Literacy Development"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.26684": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2608.30960": {
+"citation_count": 0,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

@@ -1,0 +1,18 @@
+{
+"1810.04805": {
+"citation_count": 83883,
+"reference_count": 57,
+"venue": "arXiv (Cornell University)",
+"year": 2018,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5431,
+"2025": 13317
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

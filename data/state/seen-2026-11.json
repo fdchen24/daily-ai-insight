@@ -1,0 +1,110 @@
+{
+  "arxiv-1706.03762": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "classic",
+    "title": "Attention Is All You Need",
+    "count": 1,
+    "angles": [
+      "今天读它，重点不是复述“Transformer 很强”，而是看它如何把序列建模的计算路径从随序列长度增长的循环步数压到常数级，并用 multi-head、masked self-attention、positional encoding 把"
+    ]
+  },
+  "arxiv-2611.27963": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Non-penetrating World Models",
+    "count": 1,
+    "angles": [
+      "值得读的点在于它把碰撞检测从外部深度估计搬进生成器内部：不解码像素，直接读冻结 DiT 的中间 token，先判断候选动作是否会穿墙，再用保持原意的安全动作替换。这个“生成器知道但不说”的观察，比单纯加约束模块更有启发性。"
+    ]
+  },
+  "arxiv-2509.07295": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Reconstruction Alignment Improves Unified Multimodal Models",
+    "count": 1,
+    "angles": [
+      "把视觉理解编码器的 embedding 当作稠密“文本提示”，用自监督重建做 post-training，推理接口不变。Harmon 基座在 27 A100 GPU 小时内达到 GenEval 0.86、DPGBench 87.21，说明理"
+    ]
+  },
+  "arxiv-2611.26627": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "RL Post-Training in Diffusion Transformers Is Activation Steering",
+    "count": 1,
+    "angles": [
+      "值得读的核心是量级：在 SD3.5-M 上，固定 steering vectors 只有 0.29M 参数，而 RL-tuned LoRA 有 18.8M，参数少 65×，却恢复六个图像模型 90.0–96.3% 的 RL 奖励增益；两个视"
+    ]
+  },
+  "arxiv-2611.26510": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher",
+    "count": 1,
+    "angles": [
+      "核心不只是筛选成功轨迹，而是先用自然语言 skill 改写 teacher 的 rollout 行为，再把 skill 指令保留在 SFT 输入里。Terminal-Bench 2.1 的较大学生相对 Vanilla SFT 提升 8.99"
+    ]
+  },
+  "arxiv-2608.00101": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Agentic Coding in the Wild: Characterizing GitHub Copilot Traces at Production Scale",
+    "count": 1,
+    "angles": []
+  },
+  "arxiv-2601.18734": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models",
+    "count": 1,
+    "angles": [
+      "值得读的是把 on-policy distillation 的 teacher 从外部大模型换成同一模型的 privileged-context 副本：student 只看题，teacher 看题加 verified solution，在 "
+    ]
+  },
+  "arxiv-2611.27193": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "cmHC: Balancing Stream Mixing in Hyper-Connections via Geometric Contraction",
+    "count": 1,
+    "angles": [
+      "值得读的是它把 mHC 的 under-mixing 归因于 Birkhoff polytope 顶点附近的初始化锁定，并用可证明的 contraction 把残差矩阵推离顶点；同时指出 contraction 过强会经跨层累积把流推向均匀"
+    ]
+  },
+  "arxiv-2611.26617": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "One Prior, Two Dynamics: Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning",
+    "count": 1,
+    "angles": [
+      "值得读的是它把同一个 Wan2.2-TI2V 视频 DiT 同时改造成 IDM 和 FDM：IDM 用 action queries 单次前向读出隐动作，FDM 用 frame-causal joint flow matching 与高噪声"
+    ]
+  },
+  "arxiv-2605.01188": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Compute Optimal Tokenization",
+    "count": 1,
+    "angles": [
+      "值得读的是它把 tokenizer 的压缩率变成 scaling law 的自变量，而不是固定超参。实验覆盖 988 个 BLT 与 320 个子词模型（50M–6.7B 参数、4B–1.1T bytes 训练数据），结论直接可操作：算力最"
+    ]
+  },
+  "arxiv-2604.16548": {
+    "last_recommended": "2026-11-23T14:09:31.627115+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "survey",
+    "title": "A Survey on Long-Term Memory Security in LLM Agents: Attacks, Defenses, and Governance Across the Memory Lifecycle",
+    "count": 1,
+    "angles": [
+      "如果你对 agent 的记忆安全理解仍停留在“prompt injection 要过滤”，这篇会把记忆投毒、RAG 污染、多 agent 传染、卸载失败放到同一条跨会话链上，并给出五条可写成谓词的治理要求，省掉你按生命周期重新归位这批文献、"
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+{
+"2607.12266": {
+"citation_count": 2,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Machine Learning and Data Classification"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.02921": {
+"citation_count": 1,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.06292": {
+"citation_count": 0,
+"reference_count": 29,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Numerical Solvers for Ordinary Differential Equations"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.15094": {
+"citation_count": 0,
+"reference_count": 58,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.20943": {
+"citation_count": 0,
+"reference_count": 62,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum many-body systems"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.22139": {
+"citation_count": 0,
+"reference_count": 51,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Image Segmentation Techniques",
+"Cardiac Imaging and Diagnostics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.24402": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2607.24364": {
+"citation_count": 0,
+"reference_count": 18,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI in cancer detection",
+"Single-cell and spatial transcriptomics"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

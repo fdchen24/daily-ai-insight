@@ -1,0 +1,20 @@
+{
+"2005.14165": {
+"citation_count": 63280,
+"reference_count": 137,
+"venue": "neural information processing systems",
+"year": 2020,
+"work_type": "conference-paper",
+"fwci": 953.66,
+"citation_percentile": 1.0,
+"citations_by_year": {
+"2026": 14072,
+"2025": 17769
+},
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

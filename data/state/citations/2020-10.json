@@ -1,0 +1,18 @@
+{
+"2010.11929": {
+"citation_count": 72389,
+"reference_count": 58,
+"venue": "arXiv (Cornell University)",
+"year": 2020,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 15073,
+"2025": 20683
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

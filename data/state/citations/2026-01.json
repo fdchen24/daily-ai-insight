@@ -1,0 +1,86 @@
+{
+"2601.18734": {
+"citation_count": 724,
+"reference_count": 37,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 398.66,
+"citation_percentile": 1.0,
+"citations_by_year": {
+"2026": 722,
+"2025": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2601.06222": {
+"citation_count": 2,
+"reference_count": 42,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Digital Media Forensic Detection",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2601.20881": {
+"citation_count": 1,
+"reference_count": 64,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Speech and Audio Processing",
+"Speech Recognition and Synthesis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2601.05613": {
+"citation_count": 0,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Time Series Analysis and Forecasting",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2601.14180": {
+"citation_count": 0,
+"reference_count": 18,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image and Signal Denoising Methods",
+"Image Enhancement Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2601.13574": {
+"citation_count": 0,
+"reference_count": 14,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Soft Robotics and Applications",
+"Advanced Sensor and Energy Harvesting Materials"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

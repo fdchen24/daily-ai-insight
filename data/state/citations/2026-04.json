@@ -1,0 +1,116 @@
+{
+"2604.00942": {
+"citation_count": 1,
+"reference_count": 51,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Topological and Geometric Data Analysis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.14016": {
+"citation_count": 1,
+"reference_count": 54,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2025": 1
+},
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.13050": {
+"citation_count": 1,
+"reference_count": 36,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Urban Design and Spatial Analysis",
+"Data Mining Algorithms and Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.21903": {
+"citation_count": 1,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Meteorological Phenomena and Simulations"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.24391": {
+"citation_count": 1,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.25178": {
+"citation_count": 1,
+"reference_count": 44,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Computer Graphics and Visualization Techniques",
+"Parallel Computing and Optimization Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.09244": {
+"citation_count": 0,
+"reference_count": 37,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2604.14908": {
+"citation_count": 0,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Millimeter-Wave Propagation and Modeling"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

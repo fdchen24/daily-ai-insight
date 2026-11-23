@@ -1,0 +1,18 @@
+{
+"2203.02155": {
+"citation_count": 11081,
+"reference_count": 86,
+"venue": "arXiv (Cornell University)",
+"year": 2022,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2559,
+"2025": 3234
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+}
+}

@@ -1,0 +1,256 @@
+{
+  "title_zh": "野外编码智能体：GitHub Copilot 生产规模工作负载刻画与优化",
+  "scores": {
+    "research_value": 92,
+    "research_value_reason": "首次以 7.4M 用户、5.7B LLM 调用、946T token 的生产 trace 刻画 coding agent 工作负载，直接挑战 vLLM/SGLang 的 request-level 服务假设，并给出可复用的开源数据与两个落地优化。",
+    "novelty": 80,
+    "novelty_reason": "核心贡献是测量而非新算法：KV cache 在 turn 边界降 52%、模型切换后仅剩 6%、86% LLM 调用由 agent 自主发起等量化结论此前只有合成 benchmark 或小样本 trace（如 4.3K 条的 TraceLab）支撑。",
+    "technical_depth": 84,
+    "technical_depth_reason": "trace 分析有明确的分层定义（session/turn/step）、skew 统计和 workflow 聚类；两个 use case 均有 LRU/Oracle 对照与 held-out 周评估，但 KV offloading 的 replay 因缺少 prompt 文本而依赖 token 数重建前缀的假设。"
+  },
+  "reading": {
+    "why_read": "论文给出了几个能直接改变服务系统设计的数字：turn 内 prefix cache 命中率中位数 97.9%，跨 turn 边界平均掉 27%，模型切换后只剩 6%；86% 的 LLM 调用由 agent 自主发起，LLM:tool 调用比接近 1:1；单次调用中位 prompt 61K token、输出 179 token（341:1）。据此训练的 14MB LightGBM idle-time predictor 在两个场景分别省下 14.9% token 成本、并相对 LRU 降低 3–33% TTFT。",
+    "motivation": "coding agent 已成为主流 LLM 负载，但现有推理系统（vLLM、SGLang）是为独立、短生命周期、无状态请求设计的。CacheTTL、SAGA、Sutradhara 等工作虽已意识到这种错配，却主要在 SWE-bench 之类合成 benchmark 上设计与评估，其假设是否成立无从验证；而已有野外观测要么规模小（TraceLab 仅 4.3K 条 trace、43 名开发者），要么只覆盖 benchmark 而非生产流量。作者因此用 GitHub Copilot 两个月生产 trace 补上这段空白，把'agentic 负载长什么样'从猜测变成可量化事实。",
+    "innovations": [
+      {
+        "point": "生产规模 agentic 负载刻画",
+        "detail": "基于 103.7M session、819.3M turn、92+ 模型、197+ 工具，量化出六类 workflow archetype（Deep-loop read 占 30.5%、LLM-only 20.2%、Multi-cycle edit 19.0%，而 Deep-loop w/failures 仅 9.1% 却中位 36 次 LLM 调用、算力放大 4×）与五类用户原型（每 turn token 从 23K 到 1.1M，跨 50×）。"
+      },
+      {
+        "point": "KV cache 生命周期的 session 结构化分析",
+        "detail": "把 cache 命中率分解到调用位置与 session 结构事件：turn 内第 1 次调用 43%、第 2 次 86%、之后稳定 93–98%；跨 turn 同模型掉 27%，模型切换掉 69%（平均命中率 6%），且切换 6.4% 的 session 中 36% 由错误触发、其余多由限流触发。"
+      },
+      {
+        "point": "idle-time predictor 与两个系统用例",
+        "detail": "用 LightGBM 分位数回归估计 idle 时间生存函数，12 个模型共 14MB、单次推理 <1.5ms，可捕获 86.9–88.8% 的可回收 idle 时间；据此做 harness 侧 API keep-alive（token 成本 0.350→0.298）与 serving 侧 LRI 驱逐策略（按预测剩余 idle 排序，替代 LRU 的 recency 排序）。"
+      }
+    ],
+    "method": "工作分两段。第一段是纯测量：trace 按 session→user-turn→step 三层组织，每个 turn 从一条用户 prompt 出发，其后全是 agent 自主发起的 LLM 调用与工具调用交替，作者据此统计调用比、并发度、token 构成、cache 命中轨迹与失败重试。第二段把观测转成预测与控制：把每个 turn 边界后的用户 idle 时间视为随机变量，用 LightGBM 分位数回归拟合生存函数 S(t)，用条件概率 S(t0+Δ)/S(t0) 判断'已经等了 t0 还要不要再等'，并另训一个 last-turn classifier 判断 session 是否结束；特征以 session 级为主（平均 idle 时长、turn index 贡献过半重要性）。用例一在 harness 侧按预测结果发送 dummy refresh 请求刷新 provider 侧 TTL（300s TTL、290s 刷新间隔、缓存读按 0.10 计价、最多刷新 9 次）。用例二在 vLLM host-memory KV tier 中实现 LRI 策略：按 s_i(t)=Pr[T_i>A_i(t)+h | T_i>A_i(t)] 排序驱逐，即以'再空闲至少 h 秒'的条件概率取代 LRU 的'最久未用'。评测既有 8×A100 实机 replay（32B PD 合置、235B-A22B PD 分离），也有基于 Vidur+Cascade 的 turn 级模拟器做容量/负载扫描。",
+    "results": "作者报告的关键测量结果：turn 内 prefix cache 命中率中位 97.9%，但约 10% 调用低于 25%（冷启动）；跨 turn 同模型平均掉 27%，模型切换后平均命中率仅 6%。多轮 session 中用户 idle 占 wall-clock 时间中位 74.7%，LLM 推理 17.5%、工具 2.2%。工具调用中位 168ms、LLM 调用中位 5.4s；失败工具的 P95 延迟可达成功调用的 48×，失败的 run_build 注入的 prompt token 比成功时多 7–8×。两个用例：keep-alive 在 6/8–6/14 held-out 周、1,042,521 个 turn 边界上把归一化成本从 0.350 降到 0.298（14.9%），Oracle 为 26.9%，而无预测的固定刷新最多只省 11.0% 且 k>4 后转为负收益；LRI 在 PD 合置下把 return TTFT 降 20%、wasted eviction 降 51%（1.45M→0.71M token，重复请求比例 21.1%→11.9%），PD 分离下降 19% 与 23%。模拟器一周 replay 显示 LRI 相对 LRU 平均 TTFT 降 18–24%、每日降幅 3–33%、DRAM 驱逐少 46–48%；低 DRAM 容量（30K–60K blocks）时收益 10–15%，高负载 250–300 sessions/h 时 13.5–25.9%。",
+    "limitations": "评测条件有明显限定：KV offloading 的实机 replay 因 trace 不含 prompt 文本，只能按 token 数重建前缀，并假设同 session 内共享前缀、跨 session 零共享、跨 turn append-only（除 context compaction），这与真实前缀复用分布存在偏差；idle 预测的特征天花板被作者自己承认——没有任何 turn 特征与 session 终止的相关性超过 0.28，长尾 idle 本质上由会议、休息等遥测外因素决定。LRI 的收益高度依赖存储层级：一旦加上 SSD tier 保留全部被驱逐前缀，命中率大家同为 70%，LRI 在 100–300 sessions/h 只提升 1.7–4.5%，仅在 400 sessions/h 过载下才回到 15–27%。keep-alive 的成本结论建立在'缓存读按 0.10 计价、TTL 300s'这一特定 provider 定价与策略上，换定价或 TTL 需重新标定阈值 θ_last、θ_save。此外全部数据来自单一产品（GitHub Copilot）的单一时段（2026 年 6–7 月），模型代号匿名化（Model A–O）使结论难以与其他部署对齐；工具失败率与 archetype 划分依赖作者的聚类选择，未报告聚类稳定性。",
+    "insights": "这篇论文最可迁移的不是两个策略，而是把'session 结构事件'（turn 边界、模型切换、context compaction）当作一等调度信号的思路：cache 命中率不是随时间的平滑衰减，而是在这些离散事件上断崖式下跌，因此驱逐策略应当预测'还要空闲多久'而不是'多久没用'。三个可直接跟进的方向：其一，模型切换造成 6% 的近乎全失，说明跨模型 KV 复用（如 ICaRus 类工作）在生产中价值被低估，而'切换前预计算目标模型 cache'目前只是作者的设想，尚无实现与测量；其二，9.1% 的失败重试 turn 贡献 4× 算力，tools 可靠性作为一个可优化的服务侧变量（提前失败、压缩错误输出——失败的 run_build 多注入 7–8× token）几乎无人研究；其三，用户原型跨 50× token 消费，说明分层 SLO 与按 archetype 的保留优先级比统一超时更合理，但如何在不知道用户身份的前提下在线推断 archetype 仍是开放问题。"
+  },
+  "claims": [
+    {
+      "claim": "turn 内 prefix cache 命中率中位数为 97.9%",
+      "numbers": [
+        "97.9"
+      ],
+      "source_span": "Section 4.3, Figure 17a",
+      "quote": "the median cache hit rate reaches 97.9%"
+    },
+    {
+      "claim": "turn 内第 1 次 LLM 调用命中率约 43%，第 2 次升至约 86%，第 3 次之后稳定在 93–98%",
+      "numbers": [
+        "43",
+        "86",
+        "93",
+        "98"
+      ],
+      "source_span": "Section 4.3, Figure 17b",
+      "quote": "Call #1: ∼43% (cold start, first call has the minimal prefix reuse)."
+    },
+    {
+      "claim": "跨 turn 边界同模型时平均命中率下降 27%，模型切换时下降 69% 且平均命中率仅 6%",
+      "numbers": [
+        "27",
+        "69",
+        "6"
+      ],
+      "source_span": "Section 4.4, Figure 18",
+      "quote": "After a model switch, the average cache hit rate is only 6%, a −69% average drop compared to −27% for same-model turn boundaries"
+    },
+    {
+      "claim": "多轮 session 中用户 idle 占 wall-clock 时间中位 74.7%，LLM 推理 17.5%，工具执行 2.2%",
+      "numbers": [
+        "74.7",
+        "17.5",
+        "2.2"
+      ],
+      "source_span": "Section 4.2, Figure 16b",
+      "quote": "user-idle time becomes the major contribution to the total wall clock time, with a median of 74.7%"
+    },
+    {
+      "claim": "单次调用中位 prompt 为 61K token、中位输出 179 token，比例超过 341:1",
+      "numbers": [
+        "61",
+        "179",
+        "341"
+      ],
+      "source_span": "Section 4.1, Figure 13",
+      "quote": "The ratio of median prompt to median completion length exceeds 341:1"
+    },
+    {
+      "claim": "工具调用中位延迟 168ms，LLM 调用中位 5.4s",
+      "numbers": [
+        "168",
+        "5.4"
+      ],
+      "source_span": "Section 5, Figure 22",
+      "quote": "the median is only 168 ms versus 5.4 s for LLM calls"
+    },
+    {
+      "claim": "失败的 run_build 调用注入的 prompt token 在 중位上是成功时的 7–8 倍",
+      "numbers": [
+        "7",
+        "8"
+      ],
+      "source_span": "Section 5, Figure 24",
+      "quote": "failed builds inject substantially more context, often 7–8× more at the median"
+    },
+    {
+      "claim": "失败工具调用影响 9% 的 turn，重试循环可把算力放大约 4 倍",
+      "numbers": [
+        "9",
+        "4"
+      ],
+      "source_span": "Section 1 / Table 1",
+      "quote": "Tool failures amplify cost"
+    },
+    {
+      "claim": "五类用户原型的每 turn token 消费跨 50 倍，从 23K 到 1.1M",
+      "numbers": [
+        "50",
+        "23",
+        "1.1"
+      ],
+      "source_span": "Table 7",
+      "quote": "Chat-only users"
+    },
+    {
+      "claim": "idle-time predictor 捕获 86.9–88.8% 的可回收 idle 时间",
+      "numbers": [
+        "86.9",
+        "88.8"
+      ],
+      "source_span": "Section 7.2",
+      "quote": "capture 86.9–88.8% of eligible idle time"
+    },
+    {
+      "claim": "keep-alive 策略把每 turn token 成本从 0.350 降至 0.298，即下降 14.9%，Oracle 为 26.9%",
+      "numbers": [
+        "0.350",
+        "0.298",
+        "14.9",
+        "26.9"
+      ],
+      "source_span": "Section 8, Figure 34b / 正文",
+      "quote": "Predicted Keep-Alive reduces normalized cost by 14.9% at turn boundaries, against the oracle's 26.9% savings"
+    },
+    {
+      "claim": "无预测的固定刷新最多节省 11.0%（k=1），k=4 之后转为负收益",
+      "numbers": [
+        "11.0",
+        "1",
+        "4"
+      ],
+      "source_span": "Table 11",
+      "quote": "A predictor-free policy that refreshes a fixed k times at every boundary saves at most 11.0% (k = 1), and becomes net-negative beyond k = 4"
+    },
+    {
+      "claim": "PD 合置下 LRI 把 return TTFT 降低 20%，wasted eviction 从 1.45M 降到 0.71M token（重复请求比例 21.1%→11.9%）",
+      "numbers": [
+        "20",
+        "1.45",
+        "0.71",
+        "21.1",
+        "11.9"
+      ],
+      "source_span": "Section 9.2, Figure 35",
+      "quote": "LRI reduces return TTFT by 20% and wasted evictions by 51% (1.45M to 0.71M tokens), lowering the fraction of evicted blocks requested again from 21.1% to 11.9%"
+    },
+    {
+      "claim": "PD 分离下 LRI 把 return TTFT 降低 19%、wasted eviction 降低 23%（34.7%→30.0%）",
+      "numbers": [
+        "19",
+        "23",
+        "34.7",
+        "30.0"
+      ],
+      "source_span": "Section 9.2",
+      "quote": "In PD disaggregation, it reduces return TTFT by 19% and wasted evictions by 23%, with the corresponding fraction decreasing from 34.7% to 30.0%"
+    },
+    {
+      "claim": "一周 replay 中 LRI 平均 TTFT 降低 18–24%，每日降幅 3–33%，DRAM 驱逐少 46–48%",
+      "numbers": [
+        "18",
+        "24",
+        "3",
+        "33",
+        "46",
+        "48"
+      ],
+      "source_span": "Section 9.3, Table 12",
+      "quote": "LRI reduces mean TTFT by 18–24% across DRAM capacities of 60K–120K blocks per GPU, outperforms LRU on every day by 3–33%, and evicts 46–48% fewer DRAM blocks"
+    },
+    {
+      "claim": "加入 SSD tier 后各策略命中率同为 70%，LRI 在 100–300 sessions/h 仅提升 1.7–4.5%，400 sessions/h 时提升 15–27%",
+      "numbers": [
+        "70",
+        "1.7",
+        "4.5",
+        "400",
+        "15",
+        "27"
+      ],
+      "source_span": "Section 9.3, Figure 37",
+      "quote": "All policies then achieve a 70% hit rate. At 100–300 sessions/h, LRI improves mean TTFT by only 1.7–4.5%"
+    },
+    {
+      "claim": "idle-time predictor 训练于 882K turn（6/1–6/7）、评估于 740K turn（6/8–6/14），模型 14MB、单次推理低于 1.5ms",
+      "numbers": [
+        "882",
+        "740",
+        "14",
+        "1.5"
+      ],
+      "source_span": "Section 7.2",
+      "quote": "We train on 882K turns from June 1–7 and evaluate on 740K turns from June 8–14"
+    },
+    {
+      "claim": "模型切换影响约 6.4% 的 session，切换前非成功率 36% 而基线为 8%",
+      "numbers": [
+        "6.4",
+        "36",
+        "8"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "model switches affect ∼6.4% of sessions and are predominantly reactive, triggered by errors (36% non-success rate before switches vs. 8% baseline)"
+    },
+    {
+      "claim": "6 类 workflow archetype 中 Deep-loop read 占 30.5%、LLM-only 占 20.2%、Multi-cycle edit 占 19.0%，Deep-loop w/failures 占 9.1% 且中位 36 次 LLM 调用",
+      "numbers": [
+        "30.5",
+        "20.2",
+        "19.0",
+        "9.1",
+        "36"
+      ],
+      "source_span": "Table 6",
+      "quote": "Deep-loop w/failures"
+    },
+    {
+      "claim": "数据集规模为 103.7M session、819.3M turn、7.4M 用户、5.7B LLM 调用、7.2B 工具调用、942.2T prompt token",
+      "numbers": [
+        "103.7",
+        "819.3",
+        "7.4",
+        "5.7",
+        "7.2",
+        "942.2"
+      ],
+      "source_span": "Table 3 / Section 2.2",
+      "quote": "103.7M sessions and 819.3M turns from 7.4M individual users"
+    },
+    {
+      "claim": "86% 的 LLM 调用由 agent 自主发起，LLM:tool 调用比接近 1:1（每 session 中位 20 vs 24）",
+      "numbers": [
+        "86",
+        "20",
+        "24"
+      ],
+      "source_span": "Section 3.1, Figure 1b",
+      "quote": "the ratio of LLM calls to tool invocations is remarkably close to 1:1 (median 20 vs. 24 per session, Figure 1b)"
+    }
+  ]
+}

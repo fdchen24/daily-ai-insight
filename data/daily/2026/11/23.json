@@ -1,0 +1,2475 @@
+{
+  "arxiv_announce_date": "2026-11-23",
+  "generated_at": "2026-11-23T14:09:31.627115+00:00",
+  "counts": {
+    "classic": 1,
+    "frontier": 9,
+    "survey": 1
+  },
+  "notes": [],
+  "items": [
+    {
+      "id": "arxiv-1706.03762",
+      "content_type": "classic",
+      "source": [
+        "classics"
+      ],
+      "arxiv_id": "1706.03762",
+      "title": "Attention Is All You Need",
+      "title_zh": "Attention 就是全部：Transformer 序列转换架构",
+      "authors": [
+        "Ashish Vaswani",
+        "Noam Shazeer",
+        "Niki Parmar"
+      ],
+      "abstract": "Transformer 原始论文：self-attention 完全替代循环与卷积，确立了此后序列建模的默认架构。",
+      "published_at": "2017-06-12",
+      "updated_at": null,
+      "arxiv_announce_date": "2026-11-23",
+      "channel": "classic",
+      "topics": [
+        "架构/训练/推理加速",
+        "LLM 与推理"
+      ],
+      "topics_source": "manual",
+      "primary_category": null,
+      "categories": [],
+      "category_tier": "high",
+      "doi": null,
+      "links": {
+        "paper": "https://arxiv.org/abs/1706.03762",
+        "pdf": "https://arxiv.org/pdf/1706.03762"
+      },
+      "signals": {
+        "citation_count": 152843,
+        "reference_count": 96,
+        "venue": "neural information processing systems",
+        "year": 2017,
+        "work_type": "conference-paper",
+        "fwci": 1140.21,
+        "citation_percentile": 1.0,
+        "citations_by_year": {
+          "2026": 19037,
+          "2025": 32254
+        },
+        "oa_topics": [
+          "Natural Language Processing Techniques",
+          "Topic Modeling"
+        ]
+      },
+      "year": 2017,
+      "quality": {
+        "dimensions": {
+          "research_value": 98.0,
+          "novelty": 96.0,
+          "technical_depth": 91.0,
+          "impact": 100.0,
+          "completeness": null
+        },
+        "tier": "A",
+        "l1_reason": "回看 attention 细节，才能解释 KV Cache、MQA、RoPE 等当下推理优化",
+        "evidence_level": "fulltext",
+        "score": 96.2,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "论文定义的 scaled dot-product attention、multi-head attention、masked self-attention 与位置编码仍是序列建模系统的默认层接口，复杂度比较也仍是架构分析的常用语言。",
+          "novelty": "在 attention 普遍依附于 RNN 的背景下，它把 recurrence 与 convolution 一并移除，只用 self-attention 堆叠完成 encoder-decoder 序列转换，并形式化 multi-head 与 sinusoidal 位置表示。",
+          "technical_depth": "除架构定义外，论文用每层复杂度、最小串行操作数和最大路径长度做层类型比较，并给出翻译主实验、组件消融与成分句法分析跨任务验证。"
+        }
+      },
+      "recommendation_type": "classic",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 8385,
+        "tokens_out": 9088,
+        "cache_hit_tokens": 8192
+      },
+      "claims": [
+        {
+          "claim": "encoder 与 decoder 各堆叠 6 个相同层",
+          "numbers": [
+            "6"
+          ],
+          "source_span": "Section 3.1",
+          "quote": "stack of N = 6 identical layers",
+          "verified": true
+        },
+        {
+          "claim": "模型宽度为 dmodel = 512",
+          "numbers": [
+            "512"
+          ],
+          "source_span": "Section 3.1",
+          "quote": "dmodel = 512",
+          "verified": true
+        },
+        {
+          "claim": "FFN 内层维度为 dff = 2048",
+          "numbers": [
+            "2048"
+          ],
+          "source_span": "Section 3.3",
+          "quote": "dff = 2048",
+          "verified": true
+        },
+        {
+          "claim": "Multi-Head 使用 h = 8 个注意力头",
+          "numbers": [
+            "8"
+          ],
+          "source_span": "Section 3.2.2",
+          "quote": "h = 8 parallel attention layers, or heads",
+          "verified": true
+        },
+        {
+          "claim": "每个头的 key/value 维度为 dk = dv = 64",
+          "numbers": [
+            "64"
+          ],
+          "source_span": "Section 3.2.2",
+          "quote": "dk = dv = dmodel/h = 64",
+          "verified": true
+        },
+        {
+          "claim": "EN-DE 翻译报告 28.4 BLEU",
+          "numbers": [
+            "28.4"
+          ],
+          "source_span": "Section 6.1; Table 2",
+          "quote": "state-of-the-art BLEU score of 28.4",
+          "verified": true
+        },
+        {
+          "claim": "big model 训练 3.5 天、使用 8 块 P100",
+          "numbers": [
+            "3.5",
+            "8"
+          ],
+          "source_span": "Section 6.1",
+          "quote": "3.5 days on 8 P100 GPUs",
+          "verified": true
+        },
+        {
+          "claim": "摘要与结果表报告 EN-FR 41.8",
+          "numbers": [
+            "41.8"
+          ],
+          "source_span": "Abstract; Table 2",
+          "quote": "41.8",
+          "verified": true
+        },
+        {
+          "claim": "正文结果段落写 EN-FR 41.0",
+          "numbers": [
+            "41.0"
+          ],
+          "source_span": "Section 6.1",
+          "quote": "41.0",
+          "verified": true
+        },
+        {
+          "claim": "single-head 比最佳 multi-head 差 0.9 BLEU",
+          "numbers": [
+            "0.9"
+          ],
+          "source_span": "Section 6.2",
+          "quote": "single-head attention is 0.9 BLEU worse than the best setting",
+          "verified": true
+        },
+        {
+          "claim": "解析任务仍低于 RNNG 的 93.3",
+          "numbers": [
+            "93.3"
+          ],
+          "source_span": "Table 4",
+          "quote": "93.3",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_today": "今天读它，重点不是复述“Transformer 很强”，而是看它如何把序列建模的计算路径从随序列长度增长的循环步数压到常数级，并用 multi-head、masked self-attention、positional encoding 把“无循环”变成可训练架构。做长序列、并行训练、推理缓存或架构消融时，文中的复杂度对比与消融设计仍是可直接借用的分析框架。",
+        "historical_context": "发表时，序列转换的主流是 encoder-decoder 的 RNN/LSTM/GRU，attention 通常作为辅助模块接在循环网络之上。循环按位置逐步计算隐藏状态，训练样本内部无法并行，长序列受内存和串行步数限制；ConvS2S、ByteNet 用卷积提高并行度，但任意两位置间的操作数随距离线性或对数增长。Transformer 的出发点是去掉循环与卷积，让任意两位置只经过常数级操作，同时保留 encoder-decoder 的总体接口。",
+        "problem_then": "核心问题是：能否在不使用 sequence-aligned RNN 或 convolution 的前提下，仍然完成高质量序列转换？具体要同时解决三件事：让远距离依赖的路径变短、让训练在序列维度上可并行、以及在没有循环/卷积时仍向模型注入位置信息并保持自回归解码的因果性。",
+        "contributions": [
+          {
+            "point": "以 self-attention 作为唯一的序列混合算子",
+            "detail": "encoder 与 decoder 的每层由 multi-head self-attention 和 position-wise FFN 组成，彻底移除循环与卷积；decoder 的 self-attention 用 masking 保持自回归性，encoder-decoder attention 负责跨序列对齐。"
+          },
+          {
+            "point": "提出 Multi-Head Attention 与 scaled dot-product attention",
+            "detail": "把 Q/K/V 投影到多个子空间并行做 attention，再将各头输出拼接后投影；点积除以 sqrt(dk) 以控制大维度下 softmax 的梯度，multi-head 则避免单头平均化带来的表示瓶颈。"
+          },
+          {
+            "point": "给出架构级复杂度比较并验证跨任务泛化",
+            "detail": "论文用每层计算复杂度、最小串行操作数与最大路径长度比较 self-attention、recurrent、convolutional 层；除翻译外，还在 English constituency parsing 上验证同一架构的通用性，而非只做单一任务调参。"
+          }
+        ],
+        "core_idea": "模型是 encoder-decoder：encoder 与 decoder 各堆叠 6 个相同层，dmodel = 512。每层包含 multi-head self-attention 与 position-wise FFN（内层 dff = 2048），每个子层外接 residual connection 和 layer normalization。Attention 写成 softmax(QK^T/√dk)V；Multi-Head 用 h = 8 组独立投影，每组 dk = dv = 64，拼接后再投影。Decoder 的 self-attention 用 -∞ mask 阻断对未来位置的注意，encoder-decoder attention 的 K/V 来自 encoder 输出。由于没有循环/卷积，输入嵌入加上 sinusoidal positional encoding；embedding 与 pre-softmax 线性层共享权重。训练用 Adam、warmup 与 dropout/label smoothing。",
+        "influence": "论文把 self-attention、multi-head attention、masked decoder self-attention、sinusoidal positional encoding 形式化为可组合的层接口，并开源 tensor2tensor。它明确把 restricted/local self-attention 与文本之外的图像、音频、视频模态列为扩展方向；后续序列转换工作可以在这个 encoder-decoder 骨架上替换任务头或注意力范围，而不必重新引入循环。",
+        "modern_reading": "今天看，“完全替代循环”已被接受，但原文结论要加限定。翻译主结果中 big model 在 EN-DE 报告 28.4 BLEU，训练 3.5 天、8 块 P100；EN-FR 摘要与结果表为 41.8，正文结果段落却写 41.0，引用需核对版本。消融显示 single-head 比最佳 multi-head 差 0.9 BLEU，sinusoidal 与 learned positional embedding 几乎相同；解析任务超过 BerkeleyParser，但仍低于 RNNG 的 93.3，说明通用架构并非所有任务都 SOTA。",
+        "reading_minutes": 5
+      }
+    },
+    {
+      "id": "arxiv-2611.27963",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.27963",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "Non-penetrating World Models",
+      "title_zh": "非穿透世界模型：用冻结 DiT 隐状态阻止穿墙",
+      "authors": [
+        "Yuhang Dai",
+        "Yinwei Wu",
+        "Ziyue Lin",
+        "Han Ji",
+        "Xingyi Yang"
+      ],
+      "abstract": "We study a new problem of preventing object penetration in interactive video world models. To understand how existing models handle this, we introduce NoPeBench, a benchmark that evaluates how world models respond to physical obstacles. Our evaluation reveals that none of the open-source models can reliably prevent such failures. Surprisingly, however, these models already encode the information needed to predict such violations. We find that the hidden states of diffusion transformers (DiTs) can predict whether a candidate action will penetrate an obstacle. Building on this, we introduce NoPeWorld, a lightweight framework that detects and prevents penetration. Specifically, we train a small prediction head on top of a frozen DiT's hidden states to read out if a candidate action is safe or not. Unsafe actions are then replaced with safe ones that best preserve the original intent. Despite its simplicity, NoPeWorld substantially reduces the physical violation rate, averaged over six video world models, from 74% to 16%. Remarkably, our method shows zero-shot generalization to open-domain imagery, third-person viewpoints, and moving obstacles. We publicly release our code, the NoPeBench benchmark, and model weights. Project Page: https://nopeworld.github.io .",
+      "published_at": "2026-11-20T18:44:57+00:00",
+      "updated_at": "2026-11-20T18:44:57+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "category_tier": "high",
+      "comment": "20 pages, 13 figures. Code: https://github.com/yuhangdai427/NoPeWorld",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.27963",
+        "pdf": "https://arxiv.org/pdf/2611.27963",
+        "code": "https://github.com/yuhangdai427/NoPeWorld",
+        "project": "https://nopeworld.github.io/"
+      },
+      "signals": {
+        "hf_upvotes": 48,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": null,
+        "influential_citation_count": null,
+        "reference_count": null,
+        "venue": null,
+        "work_type": null,
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 3,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "扩散模型与 Flow Matching"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 87.0,
+          "novelty": 84.0,
+          "technical_depth": 85.0,
+          "impact": 84.3,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "冻结DiT隐状态探针预测碰撞，违规率74%→16%，含基准与代码，零样本泛化",
+        "evidence_level": "fulltext",
+        "score": 85.7,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "把交互视频世界模型的穿墙问题定义成可检验的非穿透约束，并给出专门基准与跨多个生成器的干预结果，问题重要且此前缺少系统评测。",
+          "novelty": "关键新意在于发现冻结 DiT 隐状态已含即将接触的信息，并用轻量 head 把该信息转成动作替换，而非只加约束模块；同时提出专门诱发碰撞的 NoPeBench。",
+          "technical_depth": "方法把约束生成化为候选动作筛选，训练目标对应 clearance 与 intent，并做了读取层、DiT 与 VAE/pixels 对比、两种模式、成本和多模型闭环评测；但监督依赖 Unreal 几何，开放域主要靠 VLM 判定。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 11634,
+        "tokens_out": 8207,
+        "cache_hit_tokens": 896
+      },
+      "claims": [
+        {
+          "claim": "Task 1 中，原始模型漏掉全部穿墙动作，NoPeWorld 两种模式把漏检率降到 0.6–11.5%，决策分提高 17–33 分。",
+          "numbers": [
+            "100",
+            "0.6",
+            "11.5",
+            "17",
+            "33"
+          ],
+          "source_span": "Sec. 4.4, Task 1",
+          "quote": "cut missed collisions from 100% to 0.6–11.5% and raise the decision score by 17–33 points",
+          "verified": true
+        },
+        {
+          "claim": "在全部模型上，collision 模式把平均 violation 从 74% 降到 16%。",
+          "numbers": [
+            "74",
+            "16"
+          ],
+          "source_span": "Sec. 4.4, Task 2",
+          "quote": "from 74% to 16% averaged over all six in collision mode",
+          "verified": true
+        },
+        {
+          "claim": "LingBot-World 2.0 上 violation 从 89% 降到 4%，Safe-Intent Score 从接近零提升到约一半。",
+          "numbers": [
+            "89",
+            "4"
+          ],
+          "source_span": "Sec. 4.4 / Introduction",
+          "quote": "cuts violations from 89% to 4% and lifts the Safe-Intent Score, zero for any video with a violation, from near zero to about half",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的点在于它把碰撞检测从外部深度估计搬进生成器内部：不解码像素，直接读冻结 DiT 的中间 token，先判断候选动作是否会穿墙，再用保持原意的安全动作替换。这个“生成器知道但不说”的观察，比单纯加约束模块更有启发性。",
+        "motivation": "交互视频世界模型按用户命令自回归生成视频块，命令以开环方式注入，没有场景几何反馈；训练视频里又几乎没有“被墙挡住”的样本，因此模型遇到障碍会直接穿过、跨帧隧穿或把障碍物抹掉。现有交互基准大多沿无碰撞路径评测，prompt 提醒障碍物几乎无效；外接深度估计虽能停车，却要逐帧解码和额外网络，而且只会停、不会沿墙滑动，牺牲用户原意。论文因此要回答：能否不引入外部感知，在生成器内部检测并阻止穿透，同时尽量保留原动作。",
+        "innovations": [
+          {
+            "point": "冻结 DiT 隐状态可预测即将发生的接触",
+            "detail": "作者在 DiT 中间到深层 block 上取 token，发现交叉注意力读出能在下一视频块被去噪前区分安全与穿墙动作；同样探针放在 VAE latent 或解码像素上明显更差。这把碰撞检测从后处理改成生成前查询。"
+          },
+          {
+            "point": "轻量 head + 候选动作投影",
+            "detail": "head 用 cross-attention 聚合动作条件化后的隐状态，同时预测安全 logit、扫掠 clearance 和 intent 分数；推理时在原始动作、停止、缩短步长、转向等候选里选安全且最接近原意的动作，并分 collision/prediction 两种读取时机。"
+          },
+          {
+            "point": "NoPeBench 把碰撞作为必测项",
+            "detail": "基准让每条测试路线都撞向障碍物，另设开放路径控制；Task 1 在真实历史上评单步决策，Task 2 在 Unreal 几何上评闭环视频，Task 3 用开放域图像和 VLM 评委测迁移。它同时惩罚穿墙和无关停车。"
+          }
+        ],
+        "method": "论文先把非穿透写成约束生成：在冻结生成器 θ 下，只优化执行动作 a_k，使生成的块既高似然又不进入实体几何；由于生成器不存几何，用候选动作的扫掠 clearance 和 collide-and-slide 的 intent error 来近似。NoPeWorld 不建显式地图，而是在冻结 DiT 的中间隐状态上训练一个轻量 cross-attention head：把候选动作和原命令经生成器原生控制编码器投影到同一 token 网格，读出安全概率、clearance 和 intent 分数。监督来自 Unreal Engine 的占用图：对候选动作扫掠碰撞圆盘得到 clearance，和模拟器的 collide-and-slide 位移比较得到 intent error，再软化成安全/意图/排序目标，辅以 listwise ranking。推理时阈值化得到可行集，原动作安全就保留，否则选可行集里 intent 最高的动作；prediction 模式在块间读 commit pass，collision 模式在块内 step 0 读，若替换则只重跑 step 0。",
+        "results": "在 Task 1 的真实历史单步决策上，原始模型漏掉全部穿墙动作，NoPeWorld 两种模式把漏检率从 100% 降到 0.6–11.5%，决策分提高 17–33 分。Task 2 闭环生成中，collision 模式在全部模型上把平均 violation 从 74% 降到 16%；LingBot-World 2.0 从 89% 降到 4%，SIS 从接近零升到约一半。External depth 在部分模型上 violation 更低，但主要靠停车，Slide 明显下降。Task 3 的作者报告零样本迁移到开放域、第三人称和动态障碍，VLM 判定 violation 低于原始模型；不过个别模型仍有较高 violation，WorldPlay2 的 SIS 低于原始模型。",
+        "limitations": "监督依赖 UnrealZoo 的合成占用图和碰撞标签，真实场景没有等价 3D 监督；head 虽轻，仍需接入生成器内部隐状态并做阈值校准，不能直接用于只提供 API 的模型。开放域 Task 3 没有几何真值，主要靠 VLM 评委，且动态障碍样本有限；Task 2 只跑短时闭环。候选集是离散的停止、缩短和转向，只实现无摩擦滑动，不能处理推、携带、破碎等接触动力学；在 Hy-Nomas 上误改安全动作比例高，WorldPlay2 上 SIS 反而低于原始模型。",
+        "insights": "把生成式世界模型的隐状态当作可查询的物理接口，可能比外接感知更通用：同一读出可服务不同 backbone 的碰撞决策，也提示可以用轻量 probe 做安全过滤、动作重规划或 RL 奖励。下一步值得研究接触动力学、可变形与可推动物体，以及把 head 训练从合成几何迁移到真实视频的自监督信号。",
+        "reading_minutes": 5
+      }
+    },
+    {
+      "id": "arxiv-2509.07295",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2509.07295",
+      "arxiv_version": "v5",
+      "version_count": 5,
+      "title": "Reconstruction Alignment Improves Unified Multimodal Models",
+      "title_zh": "重建对齐提升统一多模态模型的生成与编辑能力",
+      "authors": [
+        "Ji Xie",
+        "Trevor Darrell",
+        "Luke Zettlemoyer",
+        "XuDong Wang"
+      ],
+      "abstract": "We discover a simple but effective way for visual understanding to help visual generation in a unified model. Unified multimodal models (UMMs) unify visual understanding and generation within a single architecture. However, conventional training relies on image-text pairs (or sequences) whose captions are typically sparse and miss fine-grained visual details, even when they use hundreds of words to describe a simple image. We introduce Reconstruction Alignment (RecA), a resource-efficient post-training method that leverages visual understanding encoder embeddings as dense \"text prompts,\" providing rich supervision without captions. Concretely, RecA conditions a UMM on its own visual understanding embeddings and optimizes it to reconstruct the input image with a self-supervised reconstruction loss, thereby using visual understanding to improve image generation. Despite its simplicity, RecA is broadly applicable: across autoregressive, masked-autoregressive, and diffusion-based UMMs, it consistently improves generation and editing fidelity. With only 27 GPU hours, post-training with RecA substantially improves image generation performance on GenEval (0.73 $\\rightarrow$ 0.90) and DPGBench (80.93 $\\rightarrow$ 88.15), while also boosting editing benchmarks (ImgEdit 3.38 $\\rightarrow$ 3.75, GEdit 6.94 $\\rightarrow$ 7.27). Notably, RecA surpasses much larger open-source models and applies broadly across diverse UMM architectures, establishing it as an efficient and general post-training alignment strategy for UMMs.",
+      "published_at": "2025-09-08T23:59:32+00:00",
+      "updated_at": "2026-11-20T10:00:31+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": "43 pages, 36 figures and 14 tables; accepted by ICLR 2026. A simple way to use visual understanding to improve image generation",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2509.07295",
+        "pdf": "https://arxiv.org/pdf/2509.07295",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 56,
+        "influential_citation_count": null,
+        "reference_count": 93,
+        "venue": "International Conference on Learning Representations",
+        "work_type": "conference-paper",
+        "fwci": 36.58,
+        "citation_percentile": 0.997,
+        "citations_by_year": {
+          "2026": 51,
+          "2025": 5
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "revision",
+      "topics": [
+        "图像/视频/多模态生成",
+        "AI 安全与评估"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 86.0,
+          "novelty": 80.0,
+          "technical_depth": 87.0,
+          "impact": 100.0,
+          "completeness": 60.0
+        },
+        "tier": "A",
+        "l1_reason": "用理解编码器embedding当密集prompt做自重建，27 GPU时让GenEval 0.73→0.90，跨三类UMM通用",
+        "evidence_level": "fulltext",
+        "score": 84.2,
+        "rank_in_pool": 2,
+        "l2_reasons": {
+          "research_value": "针对 UMM 理解-生成错配这一核心问题，给出无需 caption 或 RL 的通用 post-training 方案，并在多架构与多基准上验证。",
+          "novelty": "把理解编码器 embedding 当作稠密 prompt、以重建为原生 post-training 目标，区别于 REPA/VA-VAE 的表示对齐和 Ross 的辅助解码器。",
+          "technical_depth": "覆盖离散、MAR、连续扩散四类架构，含 SFT 对照、编码器与分辨率消融、数据源与训练顺序实验，以及 GenEval 模板泄漏分析；但计数与推理提升有限。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 35990,
+        "tokens_out": 8878,
+        "cache_hit_tokens": 35840
+      },
+      "claims": [
+        {
+          "claim": "仅用 27 A100 GPU 小时，1.5B 参数的 UMM 经 RECA post-training 后在 GenEval 达到 0.86、DPGBench 达到 87.21",
+          "numbers": [
+            "27",
+            "1.5",
+            "0.86",
+            "87.21"
+          ],
+          "source_span": "Introduction, paragraph 4",
+          "quote": "With only 27 A100 GPU hours, a 1.5B-parameter UMM post-trained with RECA surpasses significantly larger open-source models, achieving state-of-the-art results on GenEval (0.86) and DPGBench (87.21).",
+          "verified": true
+        },
+        {
+          "claim": "使用 GPT-4o-Image 数据后，RECA 进一步提升到 GenEval 0.90、DPGBench 88.15",
+          "numbers": [
+            "0.90",
+            "88.15"
+          ],
+          "source_span": "Introduction, paragraph 4",
+          "quote": "Moreover, when post-trained with GPT-4o-Image data, RECA further improves to GenEval (0.90) and DPGBench (88.15).",
+          "verified": true
+        },
+        {
+          "claim": "BAGEL 经 RECA 后 ImgEdit 总体分为 3.75，超过 FLUX-Kontext 的 3.60 与 baseline 的 3.38",
+          "numbers": [
+            "3.75",
+            "3.60",
+            "3.38"
+          ],
+          "source_span": "Section 3.2, image editing results",
+          "quote": "On ImgEdit, RECA achieves an overall score of 3.75, surpassing FLUX-Kontext (3.60) and the baseline (3.38).",
+          "verified": true
+        },
+        {
+          "claim": "在 GEdit-Bench-EN 上 RECA 达到 7.27",
+          "numbers": [
+            "7.27"
+          ],
+          "source_span": "Section 3.2, image editing results",
+          "quote": "On GEdit-Bench-EN, RECA reaches 7.27",
+          "verified": true
+        },
+        {
+          "claim": "SFT→RECA 顺序在 MidjourneyV6 上达到 90.15/88.15",
+          "numbers": [
+            "90.15",
+            "88.15"
+          ],
+          "source_span": "Section 3.5, Table 6 discussion",
+          "quote": "applying RECA after SFT (SFT→RECA) consistently delivers the best results (90.15/88.15 on MidjourneyV6).",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "material_note": "全文超长已截断",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "把视觉理解编码器的 embedding 当作稠密“文本提示”，用自监督重建做 post-training，推理接口不变。Harmon 基座在 27 A100 GPU 小时内达到 GenEval 0.86、DPGBench 87.21，说明理解-生成对齐可以靠重建信号而非更多 caption 或 RL 推进。",
+        "motivation": "统一多模态模型通常靠 image-text pair 训练，但 caption 即使很长也漏掉空间布局、几何、纹理和细粒度属性，导致生成分支学不到理解分支已掌握的语义。论文用“能识别黄色西兰花却生成绿色西兰花”这类现象指出理解与生成的系统性错配：文本监督太稀疏，而理解编码器 embedding 本身是语言对齐的稠密语义表示。于是问题变成：能否把图像 embedding 当作 maximally informative 的“文本提示”，让 UMM 通过重建图像来获得更丰富的监督。",
+        "innovations": [
+          {
+            "point": "把理解 embedding 作为稠密 prompt 的重建目标",
+            "detail": "图像经 CLIP/SigLIP 等理解编码器映射为语义 token，与模板文本拼接后送入 UMM，要求模型重建原图；监督来自图像本身而非 caption，形成无需成对文本的自监督 post-training。"
+          },
+          {
+            "point": "跨生成范式的通用性验证",
+            "detail": "在离散 token 的 Show-o、masked autoregressive 的 Harmon、连续扩散的 OpenUni 与 BAGEL 上统一应用，且不引入辅助模块；除共享理解-生成参数的架构外冻结理解编码器，推理时不需要图像 embedding。"
+          },
+          {
+            "point": "系统实证与训练配方分析",
+            "detail": "对比 SFT 与 RECA、理解编码器与生成编码器、不同输入分辨率、不同数据源与训练顺序，发现语义编码器加低分辨率 embedding 更有效，且 SFT→RECA 的两阶段顺序最佳。"
+          }
+        ],
+        "method": "RECA 把常规 text-to-image 损失替换为语义级重建损失：给定图像 I，先用 UMM 自身的视觉理解编码器提取 h_v，再与“详细描述图像”类模板文本拼接，令生成分支重建 I；离散模型用交叉熵，扩散模型用 diffusion/flow-matching 损失。训练时冻结理解编码器（共享参数的 Harmon/Show-o 例外），并把 text-to-image 损失权重置零；共享理解与生成参数的模型保留 image-to-text 损失以维持理解能力。作者还用 360 个模板做 prompt diversification，避免过拟合单一指令格式。推理阶段完全按原 UMM 使用，生成只需文本提示，编辑只需文本加原图。",
+        "results": "在 Harmon 基座上，RECA 不用 GPT-4o-Image 蒸馏即达到 GenEval 0.86、DPGBench 87.21（27 A100 GPU 小时）；加入 GPT-4o-Image 数据后升至 0.90/88.15。编辑侧 BAGEL 的 ImgEdit 总体分 3.75，GEdit-Bench-EN 7.27。Show-o、OpenUni、Harmon、BAGEL 四类架构均有提升；消融显示理解编码器优于 VAE，低分辨率语义嵌入优于高分辨率，且 SFT→RECA 顺序最佳（90.15/88.15）。",
+        "limitations": "作者承认计数任务提升有限，WISE 上的推理型生成提升不稳定，Show-o 与 BAGEL 的增益较小；BLIP3o 因预训练已含重建目标，应用 RECA 后重建与生成反而退化。我读出的限制还包括：效果依赖理解编码器的语义质量，弱编码器会压低上限；BAGEL 需换成与其训练分布匹配的 FLUX 生成数据，说明数据分布敏感；重建与生成的强相关主要是定性观察，因果机制尚未严格检验；编辑评测依赖本地 GPT-4.1 评判，排行榜方差也被作者提及。",
+        "insights": "这项工作提示，UMM 的 post-training 不必只围绕 caption 或偏好数据展开；把理解分支的语义表示作为稠密监督信号，可能是一种低成本、可跨架构复用的对齐手段。后续可探索：将 RECA 与 RL 结合以补足计数和推理；根据编码器语义质量自适应选择分辨率与冻结策略；用信息论指标诊断何时重建信号已饱和；以及在 benchmark 去污染后重新评估各类 post-training 的真实增益。",
+        "reading_minutes": 4
+      }
+    },
+    {
+      "id": "arxiv-2611.26627",
+      "content_type": "paper",
+      "source": [
+        "huggingface"
+      ],
+      "arxiv_id": "2611.26627",
+      "arxiv_version": null,
+      "version_count": null,
+      "title": "RL Post-Training in Diffusion Transformers Is Activation Steering",
+      "title_zh": "扩散 Transformer 的 RL 后训练本质上是激活引导",
+      "authors": [
+        "Tuna Han Salih Meral",
+        "Kaan Oktay",
+        "Alec Helbling",
+        "Atakan Kara",
+        "Duen Horng Chau",
+        "Pinar Yanardag"
+      ],
+      "abstract": "Reinforcement learning (RL) post-training substantially improves the visual quality, text rendering, and compositional accuracy of diffusion transformers. Because capabilities such as rendering requested text or composing multiple objects are inherently prompt-dependent, a natural hypothesis is that improving them requires learning complex, input-dependent transformations. To isolate how much of these gains an input-independent shift explains, we probe each RL-tuned model with a deliberately simple parameterization: a fixed set of steering vectors added to the block outputs of the frozen base model. On SD3.5-M, these vectors hold 65x fewer parameters than the RL-tuned LoRA (0.29M against 18.8M). We fit them to match the velocity predictions of public RL-tuned checkpoints, with no reward in the objective. Although the vectors are identical for every prompt, token, and sampling seed, they recover 90.0-96.3% of the reward gains of six RL-tuned image models, and 89.8% and 111.9% on two RL-tuned video models. Initialized at zero and trained with online RL, the vectors alone exceed the reward gains of weight-based RL on text rendering (OCR) and human preference (PickScore) on SD3.5-M. A constant shift thus suffices for most of the gain of policy-gradient RL post-training: without new input-dependent transformations, it steers the pretrained generator toward what it can already compute.",
+      "published_at": "2026-11-19T00:00:00+00:00",
+      "updated_at": null,
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": null,
+      "categories": [],
+      "category_tier": null,
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": null,
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.26627",
+        "pdf": "https://arxiv.org/pdf/2611.26627",
+        "code": null,
+        "project": "https://rl-is-steering.github.io"
+      },
+      "signals": {
+        "hf_upvotes": 22,
+        "hf_num_comments": 4,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv (Cornell University)",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "强化学习与后训练",
+        "扩散模型与 Flow Matching"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 90.0,
+          "novelty": 86.0,
+          "technical_depth": 93.0,
+          "impact": 67.9,
+          "completeness": 70.0
+        },
+        "tier": "A",
+        "l1_reason": "固定steering向量0.29M恢复RL微调90%+收益，跨6图像2视频模型，证据强",
+        "evidence_level": "fulltext",
+        "score": 84.3,
+        "rank_in_pool": 4,
+        "l2_reasons": {
+          "research_value": "把 RL 后训练的增益归因到冻结 base 上的常量激活偏移，覆盖图像与视频、LoRA 与全量微调，对理解并简化 RL 后训练有直接意义。",
+          "novelty": "用固定 steering vectors 拟合 RL checkpoint 的 velocity，并只用这些向量跑 Flow-GRPO，系统性区分了平均激活差、task arithmetic 与输入依赖 LoRA。",
+          "technical_depth": "多个 RL checkpoint、多个 reward、均值差/LoRA/其他常量干预对照、joint attention 因果替换与用户研究，证据链完整；作者也明确不声称必要性或低秩。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 32881,
+        "tokens_out": 13674,
+        "cache_hit_tokens": 5632
+      },
+      "claims": [
+        {
+          "claim": "在 SD3.5-M 上，固定 steering vectors 为 0.29M 参数，RL-tuned LoRA 为 18.8M，参数少 65×。",
+          "numbers": [
+            "0.29",
+            "18.8",
+            "65"
+          ],
+          "source_span": "Abstract",
+          "quote": "On SD3.5-M, these vectors hold 65x fewer parameters than the RL-tuned LoRA (0.29M against 18.8M).",
+          "verified": true
+        },
+        {
+          "claim": "六个图像模型上恢复 90.0–96.3% 的 RL 奖励增益，两个视频模型为 89.8% 和 111.9%。",
+          "numbers": [
+            "90.0",
+            "96.3",
+            "89.8",
+            "111.9"
+          ],
+          "source_span": "Abstract",
+          "quote": "they recover 90.0-96.3% of the reward gains of six RL-tuned image models, and 89.8% and 111.9% on two RL-tuned video models.",
+          "verified": true
+        },
+        {
+          "claim": "只训练 steering vectors 的 Flow-GRPO 在 SD3.5-M 上达到 OCR-tuned 与 PickScore-tuned 模型增益的 104.6% 和 103.6%。",
+          "numbers": [
+            "104.6",
+            "103.6"
+          ],
+          "source_span": "Section 1, Introduction",
+          "quote": "The trained vectors reach 104.6% and 103.6% of the gains of the OCR-tuned and PickScore-tuned SD3.5-M models",
+          "verified": true
+        },
+        {
+          "claim": "用户研究中，steered 图像相对 base 的胜率为 60% 至 65%，相对 RL-tuned 模型为 50% 至 52%。",
+          "numbers": [
+            "60",
+            "65",
+            "50",
+            "52"
+          ],
+          "source_span": "Section 4.6, Table 3 caption",
+          "quote": "In a user study, the images of Base + sfit and Base + sRL have a 60% to 65% win rate against the base model’s and are on par with the RL-tuned models’ (50% to 52%, Tab. 3).",
+          "verified": true
+        },
+        {
+          "claim": "在 OCR 与 PickScore 测试集上，sfit 分别增益 +0.325 与 +1.416。",
+          "numbers": [
+            "0.325",
+            "1.416"
+          ],
+          "source_span": "Section I, Additional results",
+          "quote": "On the OCR and PickScore test sets of Tab. 1, the steering vectors gain +0.325 OCR and +1.416 PickScore.",
+          "verified": true
+        },
+        {
+          "claim": "PickScore 上 sfit 增益 +1.416，而 smean 重标定后仅 +1.231。",
+          "numbers": [
+            "1.416",
+            "1.231"
+          ],
+          "source_span": "Section 4.3",
+          "quote": "On PickScore, smean has nearly the right direction but too small a norm: rescaled to the norms of sfit, it gains +1.231, where sfit gains +1.416.",
+          "verified": true
+        },
+        {
+          "claim": "OCR 上 sfit 正交于 smean 的分量仍保留 96% 的增益（+0.312/+0.325）。",
+          "numbers": [
+            "96",
+            "0.312",
+            "0.325"
+          ],
+          "source_span": "Section 4.3",
+          "quote": "On OCR, the gain lies off the averaged direction: the component of sfit orthogonal to smean keeps 96% (+0.312 of +0.325) of the gain of sfit.",
+          "verified": true
+        },
+        {
+          "claim": "Wan2.1 上 same-size LoRA 只恢复 69.7% 的 RL 增益，低于 steering vectors 的 111.9%。",
+          "numbers": [
+            "69.7",
+            "111.9"
+          ],
+          "source_span": "Section 4.5",
+          "quote": "On Wan2.1, the same-size LoRA recovers 69.7% of the RL gain, against 111.9% for the steering vectors.",
+          "verified": true
+        },
+        {
+          "claim": "把 image token 读到的 text K/V 换回 base 后，steering vectors 的 OCR/PickScore 增益只剩 20.5%/10.5%，RL 模型只剩 26.4%/24.5%。",
+          "numbers": [
+            "20.5",
+            "10.5",
+            "26.4",
+            "24.5"
+          ],
+          "source_span": "Section 5, Finding 2",
+          "quote": "Replacing the text keys and values that image queries read with those of the unsteered base model on the same noisy state keeps only 20.5% of the steering vectors’ OCR gain and 10.5% of their PickScore gain (Fig. 9). The RL-tuned models rely on the same route, retaining 26.4% (OCR-tuned) and 24.5% (PickScore-tuned) of their gains under this intervention, whereas resetting what text tokens read from image tokens preserves at least 84.4% of all four gains.",
+          "verified": true
+        },
+        {
+          "claim": "只保留 conditional pass、early steps、text stream 的 35,328 参数（全量 12%、rank-32 LoRA 的 0.19%）仍恢复 89.5% OCR 与 73.7% PickScore。",
+          "numbers": [
+            "35,328",
+            "12",
+            "0.19",
+            "32",
+            "89.5",
+            "73.7"
+          ],
+          "source_span": "Section 5, Finding 1",
+          "quote": "With all three choices together, 35,328 parameters (12% of the full set, 0.19% of the rank-32 LoRA) recover 89.5% of the RL gain on OCR and 73.7% on PickScore.",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的核心是量级：在 SD3.5-M 上，固定 steering vectors 只有 0.29M 参数，而 RL-tuned LoRA 有 18.8M，参数少 65×，却恢复六个图像模型 90.0–96.3% 的 RL 奖励增益；两个视频模型分别为 89.8% 和 111.9%。更强的证据是，只用这些向量跑 Flow-GRPO，在 OCR 与 PickScore 上达到 RL 模型增益的 104.6% 和 103.6%，把“RL 后训练是否在学输入依赖变换”变成可检验命题。",
+        "motivation": "RL 后训练（Flow-GRPO、DanceGRPO 等）能提升文本渲染、组合准确性和人类偏好，常规解释是权重更新 ∆W 对每个 token、每个 prompt 产生不同激活变化，因而模型必须学到复杂的输入依赖变换。作者要回答的是：这些增益中有多少其实只是一个与输入无关的常量平移？已有 activation steering 多来自对比提示或优化，task arithmetic 则把权重差当作常量，但没人系统测量“固定向量能在多大程度上复现 RL 微调模型的奖励增益”，也没人把 velocity matching 与平均激活差、same-size LoRA、监督微调区分开。",
+        "innovations": [
+          {
+            "point": "固定 steering vector 复现 RL 奖励增益",
+            "detail": "把同一个向量加到每个 block 输出，按 guidance pass 与 step bin 选择；在 SD3.5-M 上以 0.29M 参数对 18.8M LoRA，仍恢复 90.0–96.3% 的 RL 增益。"
+          },
+          {
+            "point": "velocity matching 而非平均激活差",
+            "detail": "直接回归 RL checkpoint 的 velocity，目标中没有 reward；PickScore 上 sfit 增益 +1.416，而 smean 重标定后仅 +1.231；OCR 上 sfit 正交于 smean 的分量仍保留 96%（+0.312/+0.325）。"
+          },
+          {
+            "point": "仅训练 steering vectors 的 RL 超过权重 RL",
+            "detail": "zero init 后用 Flow-GRPO 只训练 steering vectors；OCR 与 PickScore 分别达到 RL 增益的 104.6% 与 103.6%，用户研究对 base 胜率 60–65%，对 RL 模型 50–52%。"
+          }
+        ],
+        "method": "在冻结 base 的每个 block 输出 h 上加 α·s_{ℓ,p,k(t)}，p 为 CFG 的 conditional/unconditional pass，k 为采样步的 early/late bin；同一向量用于所有 prompt、token、seed。拟合目标不是 reward，而是让 steered base 的 velocity 匹配 RL-tuned checkpoint 的 velocity，训练样本为 RL 模型最终样本重新加噪后的 (x_t,t)，因此无需 reward model 或在线采样。对照包括 mean-difference s_mean、same-size LoRA、gate scale、conditioning offset、prompt suffix 与 CFG 调整；SD3.5-M 为双流 joint attention，FLUX.1-dev 为单 pass。",
+        "results": "六个图像模型覆盖 SD3.5-M/FLUX.1-dev、LoRA 与 full fine-tune、PickScore/HPSv2.1/OCR/GenEval 奖励，sfit 恢复 90.0–96.3% 的 RL 增益；两个视频模型为 89.8% 与 111.9%。SD3.5-M 的 PickScore 测试集上 sfit 增益 +1.416，OCR 测试集 +0.325。same-size LoRA 在 SD3.5-M、FLUX.1-dev、VBVR-Pro 上与 steering vectors 的差异区间包含零，但 Wan2.1 上 same-size LoRA 只恢复 69.7%，低于 steering vectors 的 111.9%。在 joint attention 中把 image token 读到的 text K/V 换回 base，steering vectors 的 OCR/PickScore 增益只剩 20.5%/10.5%，RL 模型也只剩 26.4%/24.5%；只保留 conditional pass、early steps、text stream 的 35,328 参数（全量 12%、rank-32 LoRA 的 0.19%）仍恢复 89.5% OCR 与 73.7% PickScore。",
+        "limitations": "作者明确不声称必要性：固定向量能复现增益，不等于 RL 模型必须依赖这些向量，也不能推出 RL 更新低秩；视频结论只覆盖两个 RL-tuned 模型与两个 base，不能外推到视频 RL 后训练整体；八个 RL 模型都用 policy gradient，preference optimization 与 reward backpropagation 未测。读出的问题：拟合需要先有目标 RL checkpoint 并采样其轨迹/重加噪样本，属于逐模型蒸馏，成本虽低于 RL 但仍限制快速迁移；DreamBooth 监督微调上只恢复部分 identity gain，说明新主体细节不能由常量偏移承担；用户研究规模有限，对 RL 模型的“无差异”也可能来自统计功效不足。",
+        "insights": "把 RL 后训练视为“base 已有能力的常量选择/放大”，比“RL 必须学新输入依赖变换”更符合这批证据。后续可检验：preference optimization 与 reward backprop 是否同样落在低维常量 steering 子空间；不同 RL 算法/奖励学到的向量是否共享；用 joint attention 的 K/V 替换做因果探针，定位奖励增益进入图像/视频的路径。",
+        "reading_minutes": 6
+      }
+    },
+    {
+      "id": "arxiv-2611.26510",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.26510",
+      "arxiv_version": "v2",
+      "version_count": 2,
+      "title": "AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher",
+      "title_zh": "AutoMaster：让固定模型成为更好教师的自主后训练",
+      "authors": [
+        "Guoxin Chen",
+        "Shuang Sun",
+        "Fanzhe Meng",
+        "Xinyu Tang",
+        "Ruihua Song",
+        "Wayne Xin Zhao"
+      ],
+      "abstract": "Task success alone does not specify which behaviors post-training should reinforce. Even successful teacher trajectories can contain unsupported assumptions, unproductive repetition, or superficial verification. We propose Skill-FT (Skill-Guided Fine-Tuning), which uses natural-language skills to suppress undesirable habits and elicit underrepresented effective behaviors during teacher rollouts, then fine-tunes a student model on the resulting trajectories. We introduce AutoMaster, an autonomous post-training system in which an LLM agent develops these interventions through trajectory analysis, skill design, data selection, and feedback from rollouts and evaluation. Across Terminal, Search, and software engineering tasks with 4B and 9B student models, AutoMaster improves mean performance over Vanilla SFT on successful unguided teacher trajectories by 1.42-8.99 percentage points, with the teacher, task pool, training set size, and SFT recipe held fixed. Together with the ablations and trajectory analyses, these results suggest that behavioral shaping can make a fixed model a more effective teacher. We further find that retaining skill instructions during SFT yields higher mean performance than removing them across all six settings, despite their absence at evaluation and identical supervised outputs. These findings suggest that preserving skill context as part of a training demonstration can support better behavioral internalization.",
+      "published_at": "2026-11-19T17:57:59+00:00",
+      "updated_at": "2026-11-20T11:55:50+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": "Website: https://aweai-team.github.io/AutoMaster/ Code: https://github.com/RUCAIBox/AutoMaster Models: https://huggingface.co/collections/RUC-AIBOX/automaster",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.26510",
+        "pdf": "https://arxiv.org/pdf/2611.26510",
+        "code": "https://github.com/RUCAIBox/AutoMaster",
+        "project": "https://aweai-team.github.io/AutoMaster/"
+      },
+      "signals": {
+        "hf_upvotes": 15,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv (Cornell University)",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 29,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "强化学习与后训练",
+        "Agent 与工具使用"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 82.0,
+          "novelty": 76.0,
+          "technical_depth": 80.0,
+          "impact": 60.1,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "用自然语言skill抑制教师坏习惯再SFT学生，控制变量提升1.42-8.99pp并有消融。",
+        "evidence_level": "fulltext",
+        "score": 77.6,
+        "rank_in_pool": 5,
+        "l2_reasons": {
+          "research_value": "把后训练的核心问题从“筛选成功轨迹”推进到“塑造教师演示行为”，在三个 agent 任务域上给出一致但幅度有限的增益，问题重要且可检验。",
+          "novelty": "Skill-FT 的“先用自然语言 skill 改写 teacher rollout，再做 SFT”以及保留 skill context 的受控发现，相对只做轨迹选择或失败恢复有实质差异；但 skill prompting 与 agent 自动实验均有先例。",
+          "technical_depth": "固定 teacher、task pool、训练集规模与 SFT recipe，设置 Vanilla SFT、Task-Matched SFT 和两个组件消融，并用轨迹案例支撑行为变化；不足是单一 teacher/agent、重复评测有限，同模型自教未验证。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 10177,
+        "tokens_out": 8548,
+        "cache_hit_tokens": 896
+      },
+      "claims": [
+        {
+          "claim": "AutoMaster 相对 Vanilla SFT 的平均增益为 1.42–8.99 个百分点",
+          "numbers": [
+            "1.42",
+            "8.99"
+          ],
+          "source_span": "Abstract",
+          "quote": "by 1.42-8.99 percentage points",
+          "verified": true
+        },
+        {
+          "claim": "Keep 相比 Remove 在六组设置上平均高 2.15–4.01 个百分点",
+          "numbers": [
+            "2.15",
+            "4.01"
+          ],
+          "source_span": "Section 5.2 / Figure 6",
+          "quote": "by 2.15–4.01 percentage points",
+          "verified": true
+        },
+        {
+          "claim": "Terminal-Bench 2.1 上较小学生的 Vanilla SFT 得分为 22.47",
+          "numbers": [
+            "22.47"
+          ],
+          "source_span": "Table 1, Terminal-Bench 2.1, Vanilla SFT 4B",
+          "quote": "22.47 ± 1.12",
+          "verified": true
+        },
+        {
+          "claim": "Terminal-Bench 2.1 上较小学生的 AutoMaster 得分为 28.09",
+          "numbers": [
+            "28.09"
+          ],
+          "source_span": "Table 1, Terminal-Bench 2.1, AutoMaster 4B",
+          "quote": "28.09 ± 2.25",
+          "verified": true
+        },
+        {
+          "claim": "Terminal-Bench 2.1 上较大学生的 Vanilla SFT 得分为 26.59",
+          "numbers": [
+            "26.59"
+          ],
+          "source_span": "Table 1, Terminal-Bench 2.1, Vanilla SFT 9B",
+          "quote": "26.59 ± 1.30",
+          "verified": true
+        },
+        {
+          "claim": "Terminal-Bench 2.1 上较大学生的 AutoMaster 得分为 35.58",
+          "numbers": [
+            "35.58"
+          ],
+          "source_span": "Table 1, Terminal-Bench 2.1, AutoMaster 9B",
+          "quote": "35.58 ± 1.30",
+          "verified": true
+        },
+        {
+          "claim": "Terminal-Bench 2.1 的较大学生相对 Vanilla SFT 提升 8.99 个百分点",
+          "numbers": [
+            "8.99"
+          ],
+          "source_span": "Table 1, ∆ row, Terminal-Bench 2.1, 9B",
+          "quote": "8.99",
+          "verified": true
+        },
+        {
+          "claim": "Task-Matched SFT 固定任务组成后仍低 1.08–10.11 个百分点",
+          "numbers": [
+            "1.08",
+            "10.11"
+          ],
+          "source_span": "Section 4.3 / Figure 4 caption",
+          "quote": "by 1.08–10.11 percentage points",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "核心不只是筛选成功轨迹，而是先用自然语言 skill 改写 teacher 的 rollout 行为，再把 skill 指令保留在 SFT 输入里。Terminal-Bench 2.1 的较大学生相对 Vanilla SFT 提升 8.99 个百分点；Keep 相比 Remove 在六组设置高 2.15–4.01 个百分点，说明“训练时保留行为上下文”本身有作用。",
+        "motivation": "成功轨迹的 SFT 隐含把“任务成功”等同于“值得学习的行为”，但 teacher 可能带着无依据假设、重复尝试或浅层验证也能做对；当有效行为在 unguided rollout 中很少出现时，只靠筛选成功样本无法补足。已有轨迹选择与失败恢复工作关注“选哪些轨迹”，较少主动改变 teacher 如何生成演示。因此需要把后训练的数据问题前移为行为生成问题：既塑造演示，又选择演示。",
+        "innovations": [
+          {
+            "point": "Skill-FT：用 skill 塑造 teacher rollout 行为",
+            "detail": "把自然语言 skill 追加到 base system prompt，针对跨任务复现的情境规定如何推理或行动，抑制不良习惯并引出 unguided rollout 中少见的行为；即使 teacher 已能解的任务也可干预。随后在选中轨迹上做标准 SFT，并保留原 system prompt（含 skill 指令），评测时去掉生成 skill。"
+          },
+          {
+            "point": "AutoMaster：双层自主实验闭环",
+            "detail": "内层由 LLM agent 分析轨迹、设计并分配 skill、做 pilot teacher rollout、按需修改 skill 或适用范围，再扩大批次并选择演示；外层从同一初始 checkpoint 训练学生，用评测分数和学生轨迹反馈下一轮。agent 通过 MCP 提交 rollout/SFT/评测任务，实验记录可追溯到训练集与 skill。"
+          },
+          {
+            "point": "保留 skill context 促进行为内化",
+            "detail": "在相同轨迹与 SFT recipe 下比较 Keep 与 Remove：Keep 在训练输入中保留指导 teacher 的 skill 指令，Remove 删除但监督输出不变。六组设置中 Keep 均更高，且所有学生评测时都不带 skill；作者解释为显式规则及其适用条件、输入指导与监督输出对应关系被保留。"
+          }
+        ],
+        "method": "给定固定 teacher、固定训练任务池和固定初始学生 checkpoint，AutoMaster 让 agent 先看 unguided teacher 与初始学生的轨迹，找应抑制的习惯和应补足的行为；为任务子集设计 skill s，把它拼到系统提示 p 后生成 teacher 轨迹 τ ~ Rollout(π_T, x; p⊕s)。Pilot rollout 检验 skill 是否引出目标行为且不引入新问题，再扩展到大批次，并由 agent 结合任务结果与行为质量选轨迹。外层每轮都从同一初始 checkpoint 做全参数 SFT，避免轮次累积；训练输入保留 teacher 用过的 skill 指令，评测按官方协议不带 skill。对照包括 Base、在成功 unguided teacher 轨迹上做 SFT 的 Vanilla SFT、匹配任务 ID 与每任务样本数的 Task-Matched SFT，以及分别去掉 skill guidance 或 agent 数据选择的消融。",
+        "results": "Table 1 中 AutoMaster 在六个 benchmark–model 组合均为最高。Terminal-Bench 2.1 上，较小学生由 22.47 升至 28.09，较大学生由 26.59 升至 35.58；BrowseComp 与 Doc2Repo 也一致高于 Vanilla SFT。相对 Vanilla SFT 的平均增益为 1.42–8.99 个百分点，且较大学生增益更大。消融显示去掉 skill guidance 或 agent 选择数据在六组均下降；Task-Matched SFT 固定任务组成后仍低 1.08–10.11 个百分点。Keep 相比 Remove 高 2.15–4.01 个百分点，尽管评测无 skill。",
+        "limitations": "作者未设专门 limitations。读出的主要问题是：标题的“same model”实际指同一固定 teacher，而非学生自教；实验中 teacher 是 DeepSeek-V4-Pro-Preview、学生是 Qwen3.5，不能直接支持同模型自蒸馏或自提升。系统依赖强外部 agent（GPT-6 Astra）以及 rollout、SFT、评测集群，agent 决策质量、调用成本与失败恢复未被量化。评测覆盖单一 teacher/agent/任务池，重复运行有限，正文只给均值与标准差，配对区间在未展开的附录。较小模型上收益并不稳定，并非所有轮次都超过 Vanilla SFT。skill 由 agent 自然语言生成，难以审计和最小化；Keep 更优的解释仍是事后轨迹分析，未隔离“输入-输出对应”与“训练分布匹配”等机制。",
+        "insights": "把后训练的数据问题前移为行为生成问题：先塑造 teacher 再筛选，比只做 trajectory selection 多一层杠杆。训练输入保留行为上下文可能是一种低成本条件化，值得在 agent SFT 与 distillation 中系统研究，但要区分显式规则、输入输出对应和分布匹配的贡献。后续需要同模型 self-teacher 实验、跨教师迁移、skill 自动审计与成本约束，才能判断 autonomous post-training 的真实边界。",
+        "reading_minutes": 6
+      }
+    },
+    {
+      "id": "arxiv-2608.00101",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2608.00101",
+      "arxiv_version": "v2",
+      "version_count": 2,
+      "title": "Agentic Coding in the Wild: Characterizing GitHub Copilot Traces at Production Scale",
+      "title_zh": "野外编码智能体：GitHub Copilot 生产规模工作负载刻画与优化",
+      "authors": [
+        "Banruo Liu",
+        "Haoran Qiu",
+        "\\'I\\~nigo Goiri",
+        "Rodrigo Fonseca",
+        "Ricardo Bianchini",
+        "Esha Choukse"
+      ],
+      "abstract": "AI coding agents (e.g., GitHub Copilot, Claude Code, Codex) interleave multi-step LLM inference with tool execution, creating a workload different from chatbots. We present the first production-scale characterization of coding agents using sampled GitHub Copilot traces from June-July 2026, comprising 7.4M users, 819M conversations, 5.7B LLM calls, and 946T tokens. Our analysis reveals distinctive workload properties with unique systems implications: e.g., sparse user-initiated turns unfold into autonomous agent loops with nearly 1:1 coupling between LLM calls and tool execution; parallel LLM calls are rare but exist in turns that trigger subagents; KV cache hit rates average 90% within a turn, but fall to 52% across turn boundaries and to 6% after model switches; workflows and user behaviors exhibit diverse, long-tailed resource footprints. We further distinguish short agentic turnaround times from minutes-long user idle periods between turns, and develop a lightweight idle-time predictor that captures 87-89% of total idle time. We demonstrate two use cases: (1) a harness-side LLM API keep-alive policy that preserves provider-side context KV cache, reducing token costs by 14.9% on turn boundaries; and (2) a serving-side KV cache residency policy that uses predicted idle time to guide DRAM offloading, reducing time to first token (TTFT) by 3-33% compared with LRU during a one-week evaluation with GitHub Copilot traces.",
+      "published_at": "2026-07-30T20:51:51+00:00",
+      "updated_at": "2026-11-20T02:03:02+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2608.00101",
+        "pdf": "https://arxiv.org/pdf/2608.00101",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 28,
+        "influential_citation_count": null,
+        "reference_count": 29,
+        "venue": "arXiv (Cornell University)",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": {
+          "2026": 28
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "revision",
+      "topics": [
+        "LLM 与推理",
+        "Agent 与工具使用"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 92.0,
+          "novelty": 80.0,
+          "technical_depth": 84.0,
+          "impact": 85.6,
+          "completeness": 60.0
+        },
+        "tier": "A",
+        "l1_reason": "57亿次调用的生产trace刻画agent负载，KV缓存跨轮骤降等结论直接影响系统设计",
+        "evidence_level": "fulltext",
+        "score": 83.2,
+        "rank_in_pool": 6,
+        "l2_reasons": {
+          "research_value": "首次以 7.4M 用户、5.7B LLM 调用、946T token 的生产 trace 刻画 coding agent 工作负载，直接挑战 vLLM/SGLang 的 request-level 服务假设，并给出可复用的开源数据与两个落地优化。",
+          "novelty": "核心贡献是测量而非新算法：KV cache 在 turn 边界降 52%、模型切换后仅剩 6%、86% LLM 调用由 agent 自主发起等量化结论此前只有合成 benchmark 或小样本 trace（如 4.3K 条的 TraceLab）支撑。",
+          "technical_depth": "trace 分析有明确的分层定义（session/turn/step）、skew 统计和 workflow 聚类；两个 use case 均有 LRU/Oracle 对照与 held-out 周评估，但 KV offloading 的 replay 因缺少 prompt 文本而依赖 token 数重建前缀的假设。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 23502,
+        "tokens_out": 4270,
+        "cache_hit_tokens": 23296
+      },
+      "claims": [
+        {
+          "claim": "turn 内第 1 次 LLM 调用命中率约 43%，第 2 次升至约 86%，第 3 次之后稳定在 93–98%",
+          "numbers": [
+            "43",
+            "86",
+            "93",
+            "98"
+          ],
+          "source_span": "Section 4.3, Figure 17b",
+          "quote": "Call #1: ∼43% (cold start, first call has the minimal prefix reuse).",
+          "verified": true
+        },
+        {
+          "claim": "跨 turn 边界同模型时平均命中率下降 27%，模型切换时下降 69% 且平均命中率仅 6%",
+          "numbers": [
+            "27",
+            "69",
+            "6"
+          ],
+          "source_span": "Section 4.4, Figure 18",
+          "quote": "After a model switch, the average cache hit rate is only 6%, a −69% average drop compared to −27% for same-model turn boundaries",
+          "verified": true
+        },
+        {
+          "claim": "单次调用中位 prompt 为 61K token、中位输出 179 token，比例超过 341:1",
+          "numbers": [
+            "61",
+            "179",
+            "341"
+          ],
+          "source_span": "Section 4.1, Figure 13",
+          "quote": "The ratio of median prompt to median completion length exceeds 341:1",
+          "verified": true
+        },
+        {
+          "claim": "工具调用中位延迟 168ms，LLM 调用中位 5.4s",
+          "numbers": [
+            "168",
+            "5.4"
+          ],
+          "source_span": "Section 5, Figure 22",
+          "quote": "the median is only 168 ms versus 5.4 s for LLM calls",
+          "verified": true
+        },
+        {
+          "claim": "失败工具调用影响 9% 的 turn，重试循环可把算力放大约 4 倍",
+          "numbers": [
+            "9",
+            "4"
+          ],
+          "source_span": "Section 1 / Table 1",
+          "quote": "Tool failures amplify cost",
+          "verified": true
+        },
+        {
+          "claim": "五类用户原型的每 turn token 消费跨 50 倍，从 23K 到 1.1M",
+          "numbers": [
+            "50",
+            "23",
+            "1.1"
+          ],
+          "source_span": "Table 7",
+          "quote": "Chat-only users",
+          "verified": true
+        },
+        {
+          "claim": "idle-time predictor 捕获 86.9–88.8% 的可回收 idle 时间",
+          "numbers": [
+            "86.9",
+            "88.8"
+          ],
+          "source_span": "Section 7.2",
+          "quote": "capture 86.9–88.8% of eligible idle time",
+          "verified": true
+        },
+        {
+          "claim": "无预测的固定刷新最多节省 11.0%（k=1），k=4 之后转为负收益",
+          "numbers": [
+            "11.0",
+            "1",
+            "4"
+          ],
+          "source_span": "Table 11",
+          "quote": "A predictor-free policy that refreshes a fixed k times at every boundary saves at most 11.0% (k = 1), and becomes net-negative beyond k = 4",
+          "verified": true
+        },
+        {
+          "claim": "PD 合置下 LRI 把 return TTFT 降低 20%，wasted eviction 从 1.45M 降到 0.71M token（重复请求比例 21.1%→11.9%）",
+          "numbers": [
+            "20",
+            "1.45",
+            "0.71",
+            "21.1",
+            "11.9"
+          ],
+          "source_span": "Section 9.2, Figure 35",
+          "quote": "LRI reduces return TTFT by 20% and wasted evictions by 51% (1.45M to 0.71M tokens), lowering the fraction of evicted blocks requested again from 21.1% to 11.9%",
+          "verified": true
+        },
+        {
+          "claim": "一周 replay 中 LRI 平均 TTFT 降低 18–24%，每日降幅 3–33%，DRAM 驱逐少 46–48%",
+          "numbers": [
+            "18",
+            "24",
+            "3",
+            "33",
+            "46",
+            "48"
+          ],
+          "source_span": "Section 9.3, Table 12",
+          "quote": "LRI reduces mean TTFT by 18–24% across DRAM capacities of 60K–120K blocks per GPU, outperforms LRU on every day by 3–33%, and evicts 46–48% fewer DRAM blocks",
+          "verified": true
+        },
+        {
+          "claim": "加入 SSD tier 后各策略命中率同为 70%，LRI 在 100–300 sessions/h 仅提升 1.7–4.5%，400 sessions/h 时提升 15–27%",
+          "numbers": [
+            "70",
+            "1.7",
+            "4.5",
+            "400",
+            "15",
+            "27"
+          ],
+          "source_span": "Section 9.3, Figure 37",
+          "quote": "All policies then achieve a 70% hit rate. At 100–300 sessions/h, LRI improves mean TTFT by only 1.7–4.5%",
+          "verified": true
+        },
+        {
+          "claim": "idle-time predictor 训练于 882K turn（6/1–6/7）、评估于 740K turn（6/8–6/14），模型 14MB、单次推理低于 1.5ms",
+          "numbers": [
+            "882",
+            "740",
+            "14",
+            "1.5"
+          ],
+          "source_span": "Section 7.2",
+          "quote": "We train on 882K turns from June 1–7 and evaluate on 740K turns from June 8–14",
+          "verified": true
+        },
+        {
+          "claim": "模型切换影响约 6.4% 的 session，切换前非成功率 36% 而基线为 8%",
+          "numbers": [
+            "6.4",
+            "36",
+            "8"
+          ],
+          "source_span": "Section 4.4",
+          "quote": "model switches affect ∼6.4% of sessions and are predominantly reactive, triggered by errors (36% non-success rate before switches vs. 8% baseline)",
+          "verified": true
+        },
+        {
+          "claim": "6 类 workflow archetype 中 Deep-loop read 占 30.5%、LLM-only 占 20.2%、Multi-cycle edit 占 19.0%，Deep-loop w/failures 占 9.1% 且中位 36 次 LLM 调用",
+          "numbers": [
+            "30.5",
+            "20.2",
+            "19.0",
+            "9.1",
+            "36"
+          ],
+          "source_span": "Table 6",
+          "quote": "Deep-loop w/failures",
+          "verified": true
+        },
+        {
+          "claim": "数据集规模为 103.7M session、819.3M turn、7.4M 用户、5.7B LLM 调用、7.2B 工具调用、942.2T prompt token",
+          "numbers": [
+            "103.7",
+            "819.3",
+            "7.4",
+            "5.7",
+            "7.2",
+            "942.2"
+          ],
+          "source_span": "Table 3 / Section 2.2",
+          "quote": "103.7M sessions and 819.3M turns from 7.4M individual users",
+          "verified": true
+        },
+        {
+          "claim": "86% 的 LLM 调用由 agent 自主发起，LLM:tool 调用比接近 1:1（每 session 中位 20 vs 24）",
+          "numbers": [
+            "86",
+            "20",
+            "24"
+          ],
+          "source_span": "Section 3.1, Figure 1b",
+          "quote": "the ratio of LLM calls to tool invocations is remarkably close to 1:1 (median 20 vs. 24 per session, Figure 1b)",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 5,
+        "downgraded_reason": null,
+        "warnings": [
+          {
+            "kind": "length",
+            "note": "results 字数 21 超出 [60, 400]"
+          }
+        ]
+      },
+      "content": {
+        "why_read": "",
+        "motivation": "coding agent 已成为主流 LLM 负载，但现有推理系统（vLLM、SGLang）是为独立、短生命周期、无状态请求设计的。CacheTTL、SAGA、Sutradhara 等工作虽已意识到这种错配，却主要在 SWE-bench 之类合成 benchmark 上设计与评估，其假设是否成立无从验证；而已有野外观测要么规模小（TraceLab 仅 4.3K 条 trace、43 名开发者），要么只覆盖 benchmark 而非生产流量。作者因此用 GitHub Copilot 两个月生产 trace 补上这段空白，把'agentic 负载长什么样'从猜测变成可量化事实。",
+        "innovations": [
+          {
+            "point": "生产规模 agentic 负载刻画",
+            "detail": ""
+          },
+          {
+            "point": "KV cache 生命周期的 session 结构化分析",
+            "detail": ""
+          },
+          {
+            "point": "idle-time predictor 与两个系统用例",
+            "detail": ""
+          }
+        ],
+        "method": "工作分两段。第一段是纯测量：trace 按 session→user-turn→step 三层组织，每个 turn 从一条用户 prompt 出发，其后全是 agent 自主发起的 LLM 调用与工具调用交替，作者据此统计调用比、并发度、token 构成、cache 命中轨迹与失败重试。第二段把观测转成预测与控制：把每个 turn 边界后的用户 idle 时间视为随机变量，用 LightGBM 分位数回归拟合生存函数 S(t)，用条件概率 S(t0+Δ)/S(t0) 判断'已经等了 t0 还要不要再等'，并另训一个 last-turn classifier 判断 session 是否结束；特征以 session 级为主（平均 idle 时长、turn index 贡献过半重要性）。用例一在 harness 侧按预测结果发送 dummy refresh 请求刷新 provider 侧 TTL（300s TTL、290s 刷新间隔、缓存读按 0.10 计价、最多刷新 9 次）。用例二在 vLLM host-memory KV tier 中实现 LRI 策略：按 s_i(t)=Pr[T_i>A_i(t)+h | T_i>A_i(t)] 排序驱逐，即以'再空闲至少 h 秒'的条件概率取代 LRU 的'最久未用'。",
+        "results": "低 DRAM 容量（30K–60K blocks）时收益 10–15%，高负载 250–300 sessions/h 时 13.5–25.9%。",
+        "limitations": "评测条件有明显限定：KV offloading 的实机 replay 因 trace 不含 prompt 文本，只能按 token 数重建前缀，并假设同 session 内共享前缀、跨 session 零共享、跨 turn append-only（除 context compaction），这与真实前缀复用分布存在偏差；keep-alive 的成本结论建立在'缓存读按 0.10 计价、TTL 300s'这一特定 provider 定价与策略上，换定价或 TTL 需重新标定阈值 θ_last、θ_save。工具失败率与 archetype 划分依赖作者的聚类选择，未报告聚类稳定性。",
+        "insights": "这篇论文最可迁移的不是两个策略，而是把'session 结构事件'（turn 边界、模型切换、context compaction）当作一等调度信号的思路：cache 命中率不是随时间的平滑衰减，而是在这些离散事件上断崖式下跌，因此驱逐策略应当预测'还要空闲多久'而不是'多久没用'。三个可直接跟进的方向：其一，模型切换造成 6% 的近乎全失，说明跨模型 KV 复用（如 ICaRus 类工作）在生产中价值被低估，而'切换前预计算目标模型 cache'目前只是作者的设想，尚无实现与测量；其三，用户原型跨 50× token 消费，说明分层 SLO 与按 archetype 的保留优先级比统一超时更合理，但如何在不知道用户身份的前提下在线推断 archetype 仍是开放问题。",
+        "reading_minutes": 4
+      }
+    },
+    {
+      "id": "arxiv-2601.18734",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2601.18734",
+      "arxiv_version": "v4",
+      "version_count": 4,
+      "title": "Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models",
+      "title_zh": "On-Policy Self-Distillation：单模型双上下文自蒸馏的推理后训练",
+      "authors": [
+        "Siyan Zhao",
+        "Zhihui Xie",
+        "Mengchen Liu",
+        "Jing Huang",
+        "Guan Pang",
+        "Feiyu Chen",
+        "Aditya Grover"
+      ],
+      "abstract": "Knowledge distillation improves large language model (LLM) reasoning by compressing the knowledge of a teacher LLM to train smaller LLMs. On-policy distillation advances this approach by having the student sample its own trajectories while a teacher LLM provides dense token-level supervision, addressing the distribution mismatch between training and inference in off-policy distillation methods. However, on-policy distillation typically requires a separate, often larger, teacher LLM and does not explicitly leverage ground-truth solutions available in reasoning datasets. Inspired by the intuition that a sufficiently capable LLM can rationalize external privileged reasoning traces and teach its weaker self, we introduce On-Policy Self-Distillation (OPSD), a learning algorithm where a single LLM acts as both teacher and student with different contexts. The teacher policy conditions on privileged information (e.g., verified reasoning traces) while the student policy sees only the question; training minimizes the per-token divergence between these distributions over the student's own rollouts. We demonstrate the efficacy of our method on multiple mathematical reasoning benchmarks, achieving superior token efficiency compared to reinforcement learning methods and better performance over off-policy distillation methods. Code repo: https://github.com/siyan-zhao/OPSD.",
+      "published_at": "2026-01-26T17:56:50+00:00",
+      "updated_at": "2026-11-20T03:36:21+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": "ICML 26, code: https://github.com/siyan-zhao/OPSD",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2601.18734",
+        "pdf": "https://arxiv.org/pdf/2601.18734",
+        "code": "https://github.com/siyan-zhao/OPSD",
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 724,
+        "influential_citation_count": null,
+        "reference_count": 37,
+        "venue": "International Conference on Machine Learning",
+        "work_type": "conference-paper",
+        "fwci": 398.66,
+        "citation_percentile": 1.0,
+        "citations_by_year": {
+          "2026": 722,
+          "2025": 2
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "revision",
+      "topics": [
+        "LLM 与推理",
+        "架构/训练/推理加速"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 82.0,
+          "novelty": 76.0,
+          "technical_depth": 84.0,
+          "impact": 100.0,
+          "completeness": 80.0
+        },
+        "tier": "B",
+        "l1_reason": "同一LLM带特权信息当teacher做on-policy自蒸馏，省去外部教师，思路清晰但增益未量化",
+        "evidence_level": "fulltext",
+        "score": 83.4,
+        "rank_in_pool": 7,
+        "l2_reasons": {
+          "research_value": "把 on-policy distillation 对外部教师的依赖替换为同一模型的 privileged-context 自蒸馏，并利用 ground-truth solution 提供 dense token 监督；对降低推理后训练采样成本有实际意义。",
+          "novelty": "核心是 context/self-distillation 与 on-policy soft distillation 的组合；单模型双上下文、full-vocab forward KL 与 pointwise clipping 是具体设计，但相对 GKD、STaR 及并发 SDPO/SDFT 属增量创新。",
+          "technical_depth": "包含 forward/reverse KL/JSD、pointwise clipping、生成长度、full-vocab 与 sampled-token 的消融，覆盖三个模型规模和多个数学 benchmark；但固定初始 teacher、LoRA-only 与峰值检查点选择限制了结论强度。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 11955,
+        "tokens_out": 13582,
+        "cache_hit_tokens": 2944
+      },
+      "claims": [
+        {
+          "claim": "实验在 Qwen3-1.7B 上报告 AIME25 的 Avg@k",
+          "numbers": [
+            "1.7"
+          ],
+          "source_span": "Table 3 caption",
+          "quote": "Comparison of divergence objectives on AIME25 with Qwen3-1.7B",
+          "verified": true
+        },
+        {
+          "claim": "forward KL 将 AIME25 的 Avg@k 从 36.7 提升到 43.9（step 50）",
+          "numbers": [
+            "36.7",
+            "43.9",
+            "50"
+          ],
+          "source_span": "Section 4.3.1",
+          "quote": "improving performance from 36.7 to 43.9 at step 50",
+          "verified": true
+        },
+        {
+          "claim": "OPSD 每问题只需 1024 sampled tokens",
+          "numbers": [
+            "1024"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "1024 sampled tokens",
+          "verified": true
+        },
+        {
+          "claim": "OPSD 在 100 步内收敛",
+          "numbers": [
+            "100"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "converges within 100 steps",
+          "verified": true
+        },
+        {
+          "claim": "GRPO 需要 8 条 rollout",
+          "numbers": [
+            "8"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "GRPO requires 8",
+          "verified": true
+        },
+        {
+          "claim": "GRPO 每条 rollout 上限为 16k tokens",
+          "numbers": [
+            "16"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "16k tokens each",
+          "verified": true
+        },
+        {
+          "claim": "reverse KL 在 AIME25 上的 Avg@k 为 37.5",
+          "numbers": [
+            "37.5"
+          ],
+          "source_span": "Table 3, row 'Reverse KL'",
+          "quote": "37.5",
+          "verified": true
+        },
+        {
+          "claim": "JSD 在 AIME25 上的 Avg@k 为 36.9",
+          "numbers": [
+            "36.9"
+          ],
+          "source_span": "Table 3, row 'JSD'",
+          "quote": "36.9",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的是把 on-policy distillation 的 teacher 从外部大模型换成同一模型的 privileged-context 副本：student 只看题，teacher 看题加 verified solution，在 student 自己的 rollout 上做 full-vocab forward KL。Qwen3-1.7B 的 AIME25 Avg@k 从 36.7 升到 43.9（step 50），而每问题只需 1024 sampled tokens、100 步内收敛；GRPO 则要 8 条 16k rollout。这个 token 效率对比是核心卖点。",
+        "motivation": "RLVR 依赖 group sampling 和二值 outcome reward：同组全对或全错时 advantage 为零，且序列级奖励把所有 token 赋予相同 credit；SFT 是 off-policy，存在 exposure bias 和较弱泛化。On-policy distillation 用学生自己的轨迹获得 dense token 监督，但仍需一个独立且通常更大的 teacher，也没有显式利用推理数据集中已有的 ground-truth solution。OPSD 的动机是：能力足够的模型在看到 verified reasoning trace 后，可以通过 rationalization 扮演自己的 teacher，从而同时获得 on-policy 数据、dense 监督和免外部 teacher 三个好处。",
+        "innovations": [
+          {
+            "point": "单模型双上下文自蒸馏",
+            "detail": "同一组参数 θ 用两个 prompt 实例化 student pS(·|x) 与 teacher pT(·|x,y*)。teacher 只通过 prefill 读取 reference solution 并隐式 rationalize，不生成额外 token；梯度只回传 student，因此无需 external teacher 或 PRM。"
+          },
+          {
+            "point": "在 student rollout 上做 full-vocab token-level soft distillation",
+            "detail": "student 先采样自己的轨迹，teacher 与 student 对同一前缀输出 next-token 分布，最小化逐 token forward KL；相比 sampled-token policy-gradient 目标，full-vocab 暴露整个 teacher 分布，作者报告在中等规模模型上两项数学 benchmark 的 pass 指标更高，但显存开销更大。"
+          },
+          {
+            "point": "per-token pointwise KL clipping 抑制 style token 支配",
+            "detail": "作者观察到 stylistic token 的 KL 可远高于数学 token，导致训练信号偏斜；对每个词表项的 f-divergence 贡献做 min(·,τ) 截断，稳定训练并防止性能退化。该设计直接针对 full-vocab soft distillation 的重尾问题。"
+          }
+        ],
+        "method": "给定 (x,y*)，student 只条件于 x，teacher 条件于 x 与 y*；teacher prompt 加入 reference solution 并要求其用自己的方法重解，但只做一次前向 prefill，不生成 token。student 采样 \\hat y 后，两个策略在同一个 student 前缀上计算 next-token 分布，损失是轨迹平均的逐 token divergence，梯度只穿过 student logits。主实验用 full-vocabulary forward KL；逐词表项做 pointwise clipping 以限制 style token。作者还给出 sampled-token policy-gradient 变体：只在 student 采样 token 上取 teacher-student log-prob 差作为 advantage，计算更省但监督更稀疏。关键取舍是把 teacher 固定为初始策略以稳定训练并起正则作用，而不是随 student 同步更新。",
+        "results": "评测用 Avg@k 与 pass 指标，基线为同数据 SFT 和 GRPO。作者报告在三个 Qwen3 规模上 OPSD 的峰值平均分都不低于 GRPO，小模型收益最大；但固定步数检查点在较大模型上低于 GRPO，说明峰值选择会影响结论。AIME25 消融中 forward KL 把 36.7 提到 43.9（step 50），reverse KL 与 JSD 仅 37.5 与 36.9；full-vocabulary 在中等规模模型上两项数学 benchmark 的 pass 指标均高于 sampled-token 变体。token 效率上，OPSD 每问题一条 1024 sampled tokens 且 100 步内收敛，GRPO 需 8 条 16k rollout。",
+        "limitations": "作者承认 full-vocabulary 需要保存词表级 logits，峰值显存更高；teacher 固定为初始策略虽稳定，却限制其随 student 改进而调整。验证只覆盖数学推理、Qwen3 系列和 LoRA 微调，尚未证明在代码、开放域或全参数训练上的可迁移性。OPSD 依赖 verified solution 作为 privileged information，无答案或不可验证任务不适用；同一模型自教还假设基础能力足以 rationalize 参考解，弱模型可能无法提供有效监督。主结果的峰值检查点与固定步数检查点存在落差，削弱了“匹配 GRPO”的稳健性。",
+        "insights": "可把 privileged information 从 ground-truth solution 扩展到工具调用结果、环境反馈或检索证据，使自蒸馏覆盖不可验证任务；也可研究 teacher 更新策略（EMA、周期同步）与 clipping 的交互。把 dense token-level 信号与 RLVR 的 outcome reward 结合，可能同时缓解 zero-advantage 和稀疏 credit。另一个方向是显式分离 style token 与 reasoning token 的监督强度，并在 full-vocab 与 sampled-token 之间做计算预算感知的折中。",
+        "reading_minutes": 7
+      }
+    },
+    {
+      "id": "arxiv-2611.27193",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.27193",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "cmHC: Balancing Stream Mixing in Hyper-Connections via Geometric Contraction",
+      "title_zh": "cmHC：用几何收缩平衡 Hyper-Connections 中的流混合",
+      "authors": [
+        "Haowei He",
+        "Ziwen Zhao",
+        "Chenshuo Pan",
+        "Gang Lin",
+        "Zhihao Yang",
+        "Chao Wang",
+        "Xinzhang Liu",
+        "Kaidong Yu",
+        "Han Gao",
+        "Dongfang Li",
+        "Menglin Yang",
+        "Shuangyong Song",
+        "Yongxiang Li"
+      ],
+      "abstract": "Manifold-constrained Hyper-Connections (mHC) extends residual connections to multiple streams and stabilizes residual propagation by constraining stream-mixing residual matrices to the Birkhoff polytope, the set of doubly stochastic matrices. In this work, we investigate how to effectively mix residual streams within the Birkhoff polytope. We reveal a mixing trade-off: when under-mixed residual matrices stay close to the vertices of the Birkhoff polytope, hyper-connections will degenerate into a set of nearly independent streams; when over-mixed residual matrices are concentrated around the uniform barycenter of the polytope, streams will become less distinguishable from each other. We theoretically validate our findings by bounding the cumulative residual mixing, stream difference and gradient difference of mixing coefficients across layers. Motivated by these findings, we propose Contraction for Manifold-Constrained Hyper-Connections (cmHC), an exact doubly stochastic method which geometrically contracts the Birkhoff polytope toward its interior. This contraction mitigates under-mixing by forcing the residual matrices to explore deeper into the polytope, with a provable stream mixing bound and no new parameterization. Moreover, we apply a moderate contraction at the shallow layers to prevent over-mixing, enabling stable gradient propagation on extremely large-scale model pretraining. Extensive experiments across dense and mixture-of-experts models at various parameter scales demonstrate the effectiveness and scalability of cmHC. We also develop fused operators for cmHC on Ascend NPUs, reducing hyper-connection execution latency by up to 44.8%.",
+      "published_at": "2026-11-20T06:26:11+00:00",
+      "updated_at": "2026-11-20T06:26:11+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.27193",
+        "pdf": "https://arxiv.org/pdf/2611.27193",
+        "code": "https://github.com/Newiz430/cmHC",
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 78,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": null,
+        "influential_citation_count": null,
+        "reference_count": null,
+        "venue": null,
+        "work_type": null,
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 0,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "架构/训练/推理加速",
+        "LLM 与推理"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 82.0,
+          "novelty": 76.0,
+          "technical_depth": 86.0,
+          "impact": 94.7,
+          "completeness": 80.0
+        },
+        "tier": "B",
+        "l1_reason": "给出Birkhoff多面体内混合权衡的界，并用几何收缩缓解欠混合，理论扎实但属架构改进",
+        "evidence_level": "fulltext",
+        "score": 83.0,
+        "rank_in_pool": 8,
+        "l2_reasons": {
+          "research_value": "把 mHC 的 under-mixing 与 over-mixing 统一为 Birkhoff polytope 上的混合权衡，并给出可证明的 contraction 与大规模预训练证据，对 multi-stream residual 设计有直接参考价值。",
+          "novelty": "在 mHC-lite 的 Birkhoff 参数化上只把 permutation 基替换为平滑版本，不增参数；真正新意是揭示 over-mixing 的跨层累积与 α 梯度平滑机制，并据此提出浅层 moderate contraction。",
+          "technical_depth": "包含双随机性保持、正混合下界、Dobrushin 累积混合界、stream difference 与 α 梯度差界，并在 6B/300B-MoE 与 Ascend 融合算子上验证；但 over-mixing 的两个界依赖局部线性近似。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 14824,
+        "tokens_out": 11454,
+        "cache_hit_tokens": 896
+      },
+      "claims": [
+        {
+          "claim": "在 OpenWebText 的 nanoGPT 实验中，cmHC 用 λ=0.97、K=2 取得最佳平均 loss rank",
+          "numbers": [
+            "0.97",
+            "2"
+          ],
+          "source_span": "Sec. 4.1, Table 1",
+          "quote": "cmHC with 𝜆= 0.97 and 𝐾= 2 achieves the best average loss rank",
+          "verified": true
+        },
+        {
+          "claim": "该配置相对 mHC-lite 的验证 loss 在三个尺度上分别降低 0.0073、0.0024、0.0045",
+          "numbers": [
+            "0.0073",
+            "0.0024",
+            "0.0045"
+          ],
+          "source_span": "Sec. 4.1",
+          "quote": "reducing validation loss over mHC-lite by 0.0073, 0.0024, and 0.0045, respectively.",
+          "verified": true
+        },
+        {
+          "claim": "全层 contraction 下，λ=0.97 优于 λ=0.70",
+          "numbers": [
+            "0.97",
+            "0.70"
+          ],
+          "source_span": "Sec. 4.1, ablation on λ",
+          "quote": "the moderate contraction 𝜆= 0.97 consistently outperforms the strong contraction 𝜆= 0.70 on both datasets",
+          "verified": true
+        },
+        {
+          "claim": "深度从 12 增至 48 时，验证 loss 优势在 OpenWebText 上从 0.0043 增至 0.0143，在 FineWeb-Edu 上从 0.0005 增至 0.0125",
+          "numbers": [
+            "12",
+            "48",
+            "0.0043",
+            "0.0143",
+            "0.0005",
+            "0.0125"
+          ],
+          "source_span": "Sec. 4.1, ablation on λ",
+          "quote": "The validation-loss advantage grows from 0.0043 to 0.0143 on OpenWebText and from 0.0005 to 0.0125 on FineWeb-Edu as depth increases from 12 to 48 layers.",
+          "verified": true
+        },
+        {
+          "claim": "6B-MoE 在 71.5k step 时，cmHC 相对 mHC 和 mHC-lite 的 loss 优势分别为 0.002 和 0.005",
+          "numbers": [
+            "6",
+            "71.5",
+            "0.002",
+            "0.005"
+          ],
+          "source_span": "Sec. 4.3",
+          "quote": "At the 6B scale, after an early transient, cmHC finishes training with loss advantages of 0.002 over mHC and 0.005 over mHC-lite at step 71.5k.",
+          "verified": true
+        },
+        {
+          "claim": "更大规模 MoE 在 2k step 时，cmHC 相对 mHC 的 loss 低 0.0157",
+          "numbers": [
+            "2",
+            "0.0157"
+          ],
+          "source_span": "Sec. 4.3",
+          "quote": "cmHC also attains a lower loss than mHC, with a gap of 0.0157 at step 2k",
+          "verified": true
+        },
+        {
+          "claim": "实验覆盖 6B 与 300B 参数规模的 MoE",
+          "numbers": [
+            "6",
+            "300"
+          ],
+          "source_span": "Sec. 4.3 / Introduction",
+          "quote": "6B and 300B parameter scales",
+          "verified": true
+        },
+        {
+          "claim": "Ascend NPU 融合算子在三个 hidden size 上把 forward+backward 总延迟降低 44.8%、31.0%、24.1%",
+          "numbers": [
+            "44.8",
+            "31.0",
+            "24.1"
+          ],
+          "source_span": "Sec. 4.4, Table 3",
+          "quote": "reduces total forward + backward latency by 44.8%, 31.0%, and 24.1%",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的是它把 mHC 的 under-mixing 归因于 Birkhoff polytope 顶点附近的初始化锁定，并用可证明的 contraction 把残差矩阵推离顶点；同时指出 contraction 过强会经跨层累积把流推向均匀重心。最优设置仅用 λ=0.97 作用于前 2 层，说明混合强度与作用层数需要联合调节。",
+        "motivation": "mHC 用双随机矩阵约束 residual mixing 换来训练稳定，但已有观察显示残差矩阵长期贴近 permutation 顶点，流之间主要是在换位置而不是交换信息；换一种初始化也只是把锁定点从 identity 移到别的顶点。另一方面，现有工作多把更强混合当成目标，很少讨论过度混合会让各流趋同、削弱表达性。论文要回答的是：在 Birkhoff polytope 内如何量化并控制混合强度，使浅层充分交换、深层保持可区分。",
+        "innovations": [
+          {
+            "point": "把 under-mixing 与 over-mixing 统一为 Birkhoff polytope 上的 mixing trade-off",
+            "detail": "作者报告 under-mixing 可发生在任意初始化偏好的 permutation 顶点，而不只是 identity；并用 Dobrushin 系数、stream difference 范数和 α 梯度差上界说明 contraction 既促进混合，也会随层数累积放大 over-mixing 风险。"
+          },
+          {
+            "point": "无新参数的几何 contraction",
+            "detail": "将每个 permutation 基 P_m 替换为平滑版本 P'_m=λP_m+(1-λ)/(n-1)(11^T-P_m)，等价于把残差矩阵向均匀重心 J_n 插值；保持 exact doubly stochastic，且每个 entry 有正下界，因而不增加可学习参数或基矩阵尺寸。"
+          },
+          {
+            "point": "浅层 moderate contraction 策略与工程实现",
+            "detail": "理论上的累积混合界只依赖前 k 层的 contraction 系数，因此把 λ 只用于前 K 层比全层或深层 contraction 更能把混合效应传播到后续层，同时避免深层过度均匀；作者在 Ascend NPU 上预计算 contracted bases 并融合 Pre/Post 算子。"
+          }
+        ],
+        "method": "mHC-lite 把 Hres_l 写成 n! 个 permutation 矩阵的凸组合，因而严格落在 Birkhoff polytope。cmHC 不改这个参数化，只把基矩阵换成向 J_n 收缩的 P'_m；由 Birkhoff–von Neumann 定理，凸组合仍双随机，谱范数不超过 1，且任意 entry 有正下界。这样即使 α 集中在单个顶点，Hres 也不会退化成纯 permutation。代价是 contraction 是 Banach 意义下的压缩映射，跨层乘积会指数收敛到 J_n；作者用 Dobrushin 系数给出累积混合上界，并在局部线性近似下分析 stream difference 与 α 梯度差，指出浅层 contraction 会沿后续层累积。最终策略是前 K 层共享一个适中 λ，深层保持近 identity；contracted bases 可预计算，因此不增加参数和渐近计算量，融合算子主要解决小算子启动与多流状态重复访问。",
+        "results": "在 nanoGPT 三个尺度、OpenWebText 上，λ=0.97 且 K=2 的 cmHC 取得最佳平均 loss rank，相对 mHC-lite 的验证 loss 分别降低 0.0073、0.0024、0.0045。全层 contraction 的消融中，λ=0.97 优于 λ=0.70；深度增加时验证 loss 优势从 0.0043 增至 0.0143（OpenWebText），支持“适度而非强 contraction”。6B 与 300B-MoE 上，cmHC 在 71.5k step 相对 mHC/mHC-lite 的 loss 优势为 0.002/0.005，在更大规模 MoE 的 2k step 相对 mHC 低 0.0157；梯度范数也更平稳。Ascend NPU 融合算子把 HC 执行延迟最多降低 44.8%。",
+        "limitations": "作者承认 contraction 强度与作用层数需要小心选择：强 contraction 可能把流推向均匀重心，浅层 contraction 也会沿后续层累积，因此 λ 和 K 不是免费超参。理论上，over-mixing 的 stream-difference 与 α 梯度差界依赖对 Transformer 分支的局部线性近似，完整非线性训练动态未被覆盖。实验只报告语言建模 loss 与梯度范数，没有下游任务、生成质量或训练吞吐；超大 MoE 的结果只覆盖训练早期，不能说明完整预训练收敛。融合算子只在 Ascend NPU、且排除 Transformer sublayer 的条件下对比，硬件通用性未验证。",
+        "insights": "把 residual stream mixing 看成 Birkhoff polytope 上的几何控制问题，比单纯换双随机参数化更接近问题本质：约束不仅要做“合法”，还要控制到顶点的距离和跨层累积。后续可把 contraction 强度做成按层或按训练阶段自适应，并用非线性传播/谱分析替代局部线性近似；也可检查这种浅层混合策略在 vision、多模态流或状态空间模型中的作用。",
+        "reading_minutes": 6
+      }
+    },
+    {
+      "id": "arxiv-2611.26617",
+      "content_type": "paper",
+      "source": [
+        "huggingface"
+      ],
+      "arxiv_id": "2611.26617",
+      "arxiv_version": null,
+      "version_count": null,
+      "title": "One Prior, Two Dynamics: Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning",
+      "title_zh": "一先验两动力学：复用视频扩散 Transformer 的自监督隐动作学习",
+      "authors": [
+        "Yuxin Jiang",
+        "Wenqiang Sun",
+        "Jiaqi Li",
+        "Yuchao Gu",
+        "Lvmin Zhang",
+        "Ivor Tsang",
+        "Mike Zheng Shou"
+      ],
+      "abstract": "Videos reveal how the world changes, but rarely the actions that cause those changes. Latent action learning recovers such supervision from visual transitions, yet often learns the underlying dynamics largely from scratch. We ask whether a pretrained video generator can instead provide the prior for both inverse and forward dynamics. We introduce O^{2}LaF, built on a simple principle: one prior, two dynamics. We initialize both models from the same pretrained video DiT and adapt them to their distinct roles: a feed-forward transition encoder with learnable action queries for inverse dynamics, and a causal, action-conditioned video generator for forward dynamics. By controlling information access and optimizing both dynamics end-to-end through a compact bottleneck, O^{2}LaF learns transferable actions from unlabeled videos. Across navigation and robotic manipulation, O^{2}LaF sets a new state of the art in few-shot action probing and enables stronger zero-shot action transfer across visual contexts and embodiments. Beyond generative video priors, we further extend our framework to predictive representation priors such as V-JEPA2, achieving competitive performance. Our findings suggest a broader paradigm for latent-action learning: repurposing pretrained video models to discover transferable actions and predict their consequences.",
+      "published_at": "2026-11-19T00:00:00+00:00",
+      "updated_at": null,
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": null,
+      "categories": [],
+      "category_tier": null,
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": null,
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.26617",
+        "pdf": "https://arxiv.org/pdf/2611.26617",
+        "code": "https://github.com/showlab/O2LaF",
+        "project": "https://showlab.github.io/o2laf/"
+      },
+      "signals": {
+        "hf_upvotes": 14,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv (Cornell University)",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 15,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "World Models 与具身智能",
+        "扩散模型与 Flow Matching"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 86.0,
+          "novelty": 82.0,
+          "technical_depth": 88.0,
+          "impact": 58.7,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "同一视频DiT初始化逆/前向动力学，端到端瓶颈学潜在动作，few-shot probing达SOTA。",
+        "evidence_level": "fulltext",
+        "score": 81.7,
+        "rank_in_pool": 9,
+        "l2_reasons": {
+          "research_value": "无标注视频中的可迁移隐动作是可控世界模型与具身智能的关键缺口；论文把视频生成先验同时用于逆/前向动力学，并在导航与操作两域给出系统证据，方向价值高。",
+          "novelty": "与只在 FDM 使用视频先验、IDM 从零训练或冻结特征的做法不同，这里让同一预训练视频 DiT 分别承担 IDM 与 FDM，并通过角色特定的信息访问控制实现端到端隐动作学习。",
+          "technical_depth": "实验覆盖两个差异明显的域，基线共享数据与探测协议，并包含 LoRA 适配、FDM 规模、时间分解、IDM/FDM 噪声网格和替代先验等消融；跨具身定量仍以循环一致性为主。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 12645,
+        "tokens_out": 8892,
+        "cache_hit_tokens": 896
+      },
+      "claims": [
+        {
+          "claim": "在 GR-1 操作域，O2LaF 的 EEF R2 为 0.277，DreamDojo 为 0.149",
+          "numbers": [
+            "0.277",
+            "0.149"
+          ],
+          "source_span": "Sec. 4.2, Results",
+          "quote": "0.277 on GR-1, compared with 0.149 for DreamDojo",
+          "verified": true
+        },
+        {
+          "claim": "1st-P 零样本相机迁移中，O2LaF 的平移 NRMSE 为 1.289",
+          "numbers": [
+            "1.289"
+          ],
+          "source_span": "Table 1, 1st-P, row 'Ours'",
+          "quote": "1.289",
+          "verified": true
+        },
+        {
+          "claim": "1st-P 零样本相机迁移中，Olaf-World 的平移 NRMSE 为 1.627",
+          "numbers": [
+            "1.627"
+          ],
+          "source_span": "Table 1, 1st-P, row 'Olaf-World'",
+          "quote": "1.627",
+          "verified": true
+        },
+        {
+          "claim": "1st-P 零样本相机迁移中，O2LaF 的旋转 RPE 为 0.786",
+          "numbers": [
+            "0.786"
+          ],
+          "source_span": "Table 1, 1st-P, row 'Ours'",
+          "quote": "0.786",
+          "verified": true
+        },
+        {
+          "claim": "1st-P 零样本相机迁移中，Olaf-World 的旋转 RPE 为 1.300",
+          "numbers": [
+            "1.300"
+          ],
+          "source_span": "Table 1, 1st-P, row 'Olaf-World'",
+          "quote": "1.300",
+          "verified": true
+        },
+        {
+          "claim": "Human cross-cycle PSNR 中，O2LaF 为 24.30",
+          "numbers": [
+            "24.30"
+          ],
+          "source_span": "Table 2, Human, Cross-cycle",
+          "quote": "24.30",
+          "verified": true
+        },
+        {
+          "claim": "Human cross-cycle PSNR 中，DreamDojo 为 22.61",
+          "numbers": [
+            "22.61"
+          ],
+          "source_span": "Table 2, Human, Cross-cycle",
+          "quote": "22.61",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的是它把同一个 Wan2.2-TI2V 视频 DiT 同时改造成 IDM 和 FDM：IDM 用 action queries 单次前向读出隐动作，FDM 用 frame-causal joint flow matching 与高噪声采样迫使动作参与预测；在 GR-1 上 EEF R2 达 0.277，高于 DreamDojo 的 0.149。",
+        "motivation": "现有 latent action learning 把先验放在不同位置：IDM 多从零训练或冻结在 DINOv3/V-JEPA 特征上，视频生成先验通常只进入 FDM，或用外部视频表示做对齐。这样 IDM 仍缺少视频预训练中的时序结构，而标准 diffusion 训练又可能让 FDM 绕过隐动作、直接从含噪未来帧预测目标，削弱对动作瓶颈的依赖。视频 DiT 在大规模预训练中已学到状态如何演化，问题变成：能否让同一先验同时服务逆动力学与前向动力学；难点是两者对信息访问的要求不同，必须分别约束。",
+        "innovations": [
+          {
+            "point": "同一视频 DiT 承担两种动力学",
+            "detail": "IDM 与 FDM 都从同一预训练视频 DiT 初始化，分别用 LoRA 适配；IDM 变成单次前向的 transition encoder，FDM 保留生成式 action-conditioned 预测，新增 action readout/conditioning 模块。"
+          },
+          {
+            "point": "用信息访问控制塑造隐动作",
+            "detail": "IDM 用非对称 attention mask 让每个 action query 只读相邻两帧；FDM 用 frame-causal attention 与 joint future prediction 去掉干净历史捷径，并在高噪声 timestep 训练，使未来目标泄漏减少、动作通道成为必要信息。"
+          },
+          {
+            "point": "系统分析与先验扩展",
+            "detail": "作者扫 IDM/FDM 噪声、比较 causal joint 与 autoregressive、LoRA 与 head-only、FDM 规模，并把框架迁移到 V-JEPA2 等 IDM 先验；还指出 probing 强不等于生成控制好。"
+          }
+        ],
+        "method": "给定无动作标注视频，IDM qφ 对每个 transition x_i→x_{i+1} 输出低维高斯隐动作 z_i；FDM fθ 在给定初始帧与对齐的 z 序列下预测后续帧速度。训练时两个模型共享同一预训练视频 DiT 的权重起点，但各自 LoRA 适配；IDM 在 flow timestep 上做一次前向，action queries 通过因果 mask 只聚合相邻帧信息，经 Gaussian head 得到 μ、σ，再用重参数化采样。FDM 保留初始帧干净、未来帧加噪，用 frame-causal attention 做 joint flow matching；为防 FDM 从含噪未来帧抄答案，训练偏向高噪声 timestep。IDM 与 FDM 通过 z 端到端联合优化，损失为 flow-matching 加 KL 正则；推理时用 posterior mean，FDM 可当作 action-conditioned video world model。取舍是：因果 joint 预测和高噪声有利于动作学习但不利生成保真，因此高保真部署采用两阶段，冻结 IDM 后另训双向 FDM。",
+        "results": "作者在 MIND 相机导航和 GR-1 机器人操作上做 few-shot linear probing，报告 O2LaF 在离散与连续动作、不同标注预算下均优于 AdaWorld、Olaf-World、DreamDojo、VideoWorld2、LAPA-DINOv3、VILLA-X 等基线。操作域中，仅用 EgoDex 人类演示训练的编码器在 GR-1 上取得 EEF R2 0.277，DreamDojo 为 0.149。零样本跨上下文相机迁移中，1st-P 的平移 NRMSE 为 1.289、旋转 RPE 为 0.786，低于 Olaf-World 的 1.627 和 1.300；3rd-P 也报告了更低的相机运动误差。跨具身循环重建中，human cross-cycle PSNR 为 24.30，高于 DreamDojo 的 22.61。消融显示 LoRA 适配优于只训 action head，causal joint 优于 autoregressive；V-JEPA2 作 IDM 的 probing 更强，但跨上下文生成出现源外观泄漏。",
+        "limitations": "作者只把可解释性与闭环规划列为未来工作；更实质的限制是跨具身 human-to-robot 的直接迁移主要靠定性图，定量 cycle consistency 只说明动作可重建，不证明物理动作等价。训练域限于 MiraData/EgoDex，评估依赖少量标注 probe 与 VBench/ViPE 等视频代理指标；高噪声与因果 FDM 为动作学习牺牲生成保真，最终高保真部署需两阶段，尚未展示闭环策略收益。",
+        "insights": "可复用的设计是把生成式视频先验同时作为逆/前向动力学，但关键在信息访问控制而非共享权重：action query 的局部 mask 与 FDM 的 frame-causal/high-noise 训练共同防止捷径。高噪声 flow matching 可视为一种信息瓶颈正则，适合其他 latent action/world model。另一个提醒是 probing 与下游生成/控制并不一致，V-JEPA2 的结果说明必须用跨上下文生成检验动作表示是否泄漏外观。",
+        "reading_minutes": 6
+      }
+    },
+    {
+      "id": "arxiv-2605.01188",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2605.01188",
+      "arxiv_version": "v3",
+      "version_count": 3,
+      "title": "Compute Optimal Tokenization",
+      "title_zh": "算力最优的 tokenization：压缩率如何决定数据-参数配比",
+      "authors": [
+        "Tomasz Limisiewicz",
+        "Artidoro Pagnoni",
+        "Srini Iyer",
+        "Mike Lewis",
+        "Sachin Mehta",
+        "Alisa Liu",
+        "Margaret Li",
+        "Gargi Ghosh",
+        "Luke Zettlemoyer"
+      ],
+      "abstract": "Scaling laws enable the optimal selection of data amount and language model size, yet the impact of the data unit, the token, on this relationship remains underexplored. In this work, we systematically investigate how the information granularity of tokens, controlled by the compression rate (i.e., average bytes of text per token), affects scaling trends. We train 988 latent tokenized models (BLT) ranging from 50M to 7B parameters that enable setting the desired compression rate. This flexibility allows us to study the role of compression rate well beyond 4.57 bytes per token obtained with a popular BPE tokenizer. Our experiments reveal that in compute-optimal configurations, model parameter counts scale proportionally to data size measured in bytes, not in tokens as commonly perceived (Kaplan et al., 2020; Hoffmann et al., 2022). Furthermore, we discover that the optimal compression rate differs from the one obtained with BPE and decreases with compute. These findings generalize to both latent and subword tokenization, as well as to languages other than English, guiding language model developers on tokenization scheme selection for maximal compute efficiency.",
+      "published_at": "2026-05-02T01:53:22+00:00",
+      "updated_at": "2026-11-20T01:35:56+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": "Transactions on Machine Learning Research (2026)",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2605.01188",
+        "pdf": "https://arxiv.org/pdf/2605.01188",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 10,
+        "influential_citation_count": null,
+        "reference_count": 43,
+        "venue": "Transactions on machine learning research",
+        "work_type": "article",
+        "fwci": 9.25,
+        "citation_percentile": 0.98,
+        "citations_by_year": {
+          "2026": 10
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "revision",
+      "topics": [
+        "LLM 与推理"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 86.0,
+          "novelty": 80.0,
+          "technical_depth": 82.0,
+          "impact": 61.0,
+          "completeness": 69.0
+        },
+        "tier": "A",
+        "l1_reason": "988个BLT模型揭示算力最优下参数量随字节而非token缩放，结论跨分词与语言",
+        "evidence_level": "fulltext",
+        "score": 78.3,
+        "rank_in_pool": 10,
+        "l2_reasons": {
+          "research_value": "把 scaling law 中的数据单位从 token 换成 byte，给出可跨 tokenizer 迁移的 ρ*≈60 bytes/parameter 配方，并用近千次训练覆盖压缩率与算力两个维度，对训练配方设计有直接指导意义。",
+          "novelty": "首次把压缩率作为 scaling law 的自变量系统扫描（T 覆盖字节级到超词级），发现非单调的最优压缩率及其随算力下降的趋势；方法本身复用 BLT 与 Chinchilla 式幂律框架，属于重要增量而非新范式。",
+          "technical_depth": "IsoFLOP 网格设计、两步幂律拟合、多随机种子与 Hessian 置信区间、以及在子词族和多语言上的复现都较扎实，但超参全程未调、两族的参数计数口径不一致、多语言仅在单一算力预算上验证，削弱了结论的普适强度。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 16891,
+        "tokens_out": 13450,
+        "cache_hit_tokens": 16640
+      },
+      "claims": [
+        {
+          "claim": "实验总计训练 988 个 latent tokenized 模型与 320 个子词模型，参数 50M–6.7B、训练数据 4B–1.1T bytes",
+          "numbers": [
+            "988",
+            "320",
+            "50",
+            "6.7",
+            "4",
+            "1.1"
+          ],
+          "source_span": "Section 2.5, Training and Evaluation",
+          "quote": "In total, we train 988 latently and 320 subword tokenized models with sizes from 50M to 6.7B parameters on training data of sizes from 4B to 1.1T bytes.",
+          "verified": true
+        },
+        {
+          "claim": "BLT 的 Law I 拟合给出 α=0.475、β=0.479，接近 0.5",
+          "numbers": [
+            "0.475",
+            "0.479"
+          ],
+          "source_span": "Section 3.2, Scaling Law I: Results",
+          "quote": "α = 0.475, β = 0.479",
+          "verified": true
+        },
+        {
+          "claim": "子词族的 Law I 拟合给出 α=0.501、β=0.446",
+          "numbers": [
+            "0.501",
+            "0.446"
+          ],
+          "source_span": "Section 4.1, Results",
+          "quote": "α = 0.501, β = 0.446",
+          "verified": true
+        },
+        {
+          "claim": "作者建议英语文本的算力最优配比约为 60 bytes per parameter，与压缩率无关",
+          "numbers": [
+            "60"
+          ],
+          "source_span": "Section 7, Discussion",
+          "quote": "should use approximately 60 bytes per parameter, regardless of data compression",
+          "verified": true
+        },
+        {
+          "claim": "BLT 的 Law II 拟合参数为 F=0.032、δ=0.035、T0=18.2、E=0.70，δ 描述最优压缩率随算力下降的速度",
+          "numbers": [
+            "0.032",
+            "0.035",
+            "18.2",
+            "0.70"
+          ],
+          "source_span": "Section 3.4, Scaling Law II: Results",
+          "quote": "F = 0.032, δ = 0.035, T0 = 18.2, and E = 0.70",
+          "verified": true
+        },
+        {
+          "claim": "子词族的 compression–compute 耦合 δ=0.129，95% 置信区间 [0.108, 0.150] 排除 0",
+          "numbers": [
+            "0.129",
+            "0.108",
+            "0.150",
+            "95"
+          ],
+          "source_span": "Section 4.1, Results",
+          "quote": "a positive compression–compute coupling δ = 0.129, with a 95% confidence interval of [0.108, 0.150] that excludes zero",
+          "verified": true
+        },
+        {
+          "claim": "Llama 3 BPE（词表 128,000）在英语上压缩率约 4.57 bytes/token",
+          "numbers": [
+            "128,000",
+            "4.57"
+          ],
+          "source_span": "Section 2.1, Background: Subword Tokenization",
+          "quote": "approximately T ≈4.57 bytes per token on English texts",
+          "verified": true
+        },
+        {
+          "claim": "SuperBPE 达到 T≈6.16 的压缩率",
+          "numbers": [
+            "6.16"
+          ],
+          "source_span": "Section 2.1, Background: Subword Tokenization",
+          "quote": "achieves T ≈6.16",
+          "verified": true
+        },
+        {
+          "claim": "推理匹配设置下，3.3B/T=4 与 6.7B/T=8 每字节推理成本相近，HellaSwag 0-shot 准确率为 70.6% 对 68.6%",
+          "numbers": [
+            "3.3",
+            "4",
+            "2.1",
+            "6.7",
+            "8",
+            "70.6",
+            "68.6"
+          ],
+          "source_span": "Section 3.5, Optimal Tokenization during Inference",
+          "quote": "the 3.3B model with compression rate T = 4 has a similar inference cost of 2.1 × 109 FLOPs/Byte as the 6.7B model with compression rate T = 8, while the former achieves higher score on the endtask accuracy (70.6% vs. 68.6%)",
+          "verified": true
+        },
+        {
+          "claim": "Chinchilla 的约 20 tokens per parameter 仅在 BPE 特定压缩率下成立",
+          "numbers": [
+            "20"
+          ],
+          "source_span": "Section 7, Discussion",
+          "quote": "the widely accepted rule of using approximately 20 tokens per parameter",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "值得读的是它把 tokenizer 的压缩率变成 scaling law 的自变量，而不是固定超参。实验覆盖 988 个 BLT 与 320 个子词模型（50M–6.7B 参数、4B–1.1T bytes 训练数据），结论直接可操作：算力最优下数据应按字节配平，约 60 bytes/parameter，而不是通行的“20 tokens/parameter”；最优压缩率还低于 BPE 的 4.57 bytes/token，并随算力继续下降。",
+        "motivation": "Chinchilla 式配方以 token 计量数据，但一个 token 承载多少信息由 tokenizer 的压缩率决定，换词表就等于换了一套数据单位，“20 tokens/parameter”这类结论无法跨 tokenizer 迁移。压缩率同时改变训练与推理的 FLOPs：更高压缩用更少 token 表示同样文本，省下的算力可以加数据或加参数，但此前无人系统量化该往哪边投。已有工作（Rust et al. 2021；Limisiewicz et al. 2023）报告高压缩有益，但那多半是多语语料频率的代理，且 BPE 的压缩率与词表绑定，无法在固定词表下连续调节。作者借助 BLT 的熵阈值分割，在参数量不变时精确设定压缩率，把问题转化为可拟合的 IsoFLOP 曲面。",
+        "innovations": [
+          {
+            "point": "把压缩率写入 scaling law 的第一条幂律",
+            "detail": "拟合 B*(C,T)=B0·C^α·T^β，得到 α=0.475、β=0.479，二者都接近 0.5，因此 bytes-per-parameter ρ*=B/N 在算力与压缩率变化下近似恒定，数据量的正确单位是字节而非 token。"
+          },
+          {
+            "point": "发现非单调的最优压缩率并刻画其随算力的漂移",
+            "detail": "最优损失对 T 呈 U 形，存在 T*；用 f(C,T)=F·log2(C^δ·T/T0)+E 拟合残差，BLT 的 δ=0.035、子词族 δ=0.129（95% CI 排除 0），说明算力越大越偏好较低压缩，即 BPE 的压缩率在超大规模下偏高。"
+          },
+          {
+            "point": "把最优压缩率与语言信息密度（parity）挂钩",
+            "detail": "五种语言加一个双倍膨胀英语上，ρ* 与 T* 都随 parity 上升；Llama 3、Qwen 3、EuroLLM 的压缩率相对最优值系统性偏离——高资源语言被过压缩、低资源语言压缩不足。"
+          }
+        ],
+        "method": "主实验台选 BLT，是因为它按 next-byte 熵阈值切分 latent token：调阈值即可在参数量不变的前提下连续设定压缩率，(N, T) 的网格因此唯一决定训练字节数 B，可直接做三维 IsoFLOP。为免 byte n-gram hash embedding 跨越 latent token 边界、干扰目标压缩率，作者去掉了原版 BLT 的这一组件；架构按 Llama 3 配方同步扩展宽度与深度。评估统一用 bits-per-byte 而非 per-token loss，保证不同 tokenizer 可比，上下文固定为相同字节长度。子词侧无法连续调 T，于是用 vocabulary masking 屏蔽大部分 merge 得到两个更低压缩档位，再加 character-level 与 SuperBPE 凑出五个档位，并保持同一分割算法与词表构造，尽量只让压缩率变化。拟合分两步：先用 log B 对 loss 的二次 IsoFLOP 定位极小值 B*，再对 B*(C,T) 与 L*(C,T) 做 BFGS 幂律拟合，多随机种子初始化，用 Hessian 数值近似给出 95% 置信区间。",
+        "results": "英语 C4 上的 IsoFLOP 曲面显示，各压缩率的最优解几乎落在同一条 ρ 上：Law I 拟合 α=0.475、β=0.479（BLT），子词族 α=0.501、β=0.446，都接近 0.5，因此 ρ*≈60 bytes/parameter 与压缩率、算力基本无关。Law II 的最优损失对 T 非单调，最优 T 略低于 BPE 的 4.57 并随算力下降：BLT 拟合 δ=0.035，子词族 δ=0.129（95% CI 排除 0）；作者明确说明子词侧单点比较的差异很小，结论依赖的是这个统计上显著的 δ。推理匹配实验中，3.3B/T=4 与 6.7B/T=8 的每字节推理成本相近，前者 HellaSwag 0-shot 为 70.6% 对 68.6%。多语言上 ρ* 与 T* 随 parity 变化，主流多语 tokenizer 的压缩率系统性偏离最优值。",
+        "limitations": "作者承认所有训练共用一套超参、学习率未按算力调整，tokenization 变体也有限（未测 Unigram、pre-tokenization 规则、latent 边界预测器的其他实现）。我读出的问题：其一，参数口径不一致——BLT 只计 global 模块、子词模型排除 embedding，两族的 N 并非同一口径，ρ 常数跨族“普适”的解释空间因此变大；其二，最优压缩率随算力漂移的幅度很小（δ=0.035），而低压缩直接抬高推理成本，越过拐点的收益必须与部署成本一起算，论文对这一点只给了定性讨论；其三，多语言实验仅在单一算力预算上完成，语言相关的 T* 是否也随算力下降尚未验证；其四，ρ*≈60 来自英语 DCLM 单一语域，附录显示联合多语训练时 ρ 会收敛，跨域可迁移性仍需检验。",
+        "insights": "最直接的工程含义是把训练配方从“每参数多少 token”改写为“每参数多少字节”，换 tokenizer 或换语言时按 bytes 重新配平，而不是沿用 20 tokens/parameter 的经验值。其次，“越大模型越适合较低压缩”意味着词表大小应当随算力变化，而不是固定一个 128k 级别的词表；BPE-dropout、按算力调词表、或在训练末期降低压缩率都值得实验。更长远地看，压缩率应与推理预算联合优化，并作为多语 tokenizer 设计的一等目标——latent tokenization 能在推理时按语言调 T，可能是多语场景的实际受益者，提示后续工作把压缩率纳入 MoE、多模态的 scaling law。",
+        "reading_minutes": 6
+      }
+    },
+    {
+      "id": "arxiv-2604.16548",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2604.16548",
+      "arxiv_version": "v6",
+      "version_count": 6,
+      "title": "A Survey on Long-Term Memory Security in LLM Agents: Attacks, Defenses, and Governance Across the Memory Lifecycle",
+      "title_zh": "LLM Agent 的长期记忆安全：跨越记忆生命周期的攻击、防御与治理",
+      "authors": [
+        "Zehao Lin",
+        "Xixuan Hao",
+        "Renyu Fu",
+        "Shaobo Cui",
+        "Kai Chen",
+        "Chunyu Li",
+        "Zhiyu Li",
+        "Feiyu Xiong"
+      ],
+      "abstract": "The emergence of writable, cross-session persistent memory in LLM agents introduces a qualitatively different threat landscape from conventional input-centric security concerns, characterized by three properties: persistence, statefulness, and propagation. To systematically characterize this landscape, we propose a Memory Lifecycle Framework that organizes attacks, defenses, and their cross-phase dependencies along two axes: six lifecycle phases (Write, Store, Retrieve, Execute, Share & Propagate, Forget & Rollback) and four security objectives (Integrity, Confidentiality, Availability, Governance). This analysis in turn exposes the need for explicit security requirements at the system level, motivating Verifiable Memory Governance (VMG), a framework of five architectural primitives for specifying and evaluating auditable, recoverable control over memory state within declared system and threat-model boundaries. Our analysis motivates integrating provenance, versioning, and policy-aware retention with retrieval and execution defenses to support auditable prevention, containment, and recovery across the lifecycle.",
+      "published_at": "2026-04-17T06:28:22+00:00",
+      "updated_at": "2026-11-20T03:33:03+00:00",
+      "arxiv_announce_date": "2026-11-23",
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": "22 pages, 3 figures, 4 tables. Expanded version of the EMNLP 2026 paper. Adds evidence on persistent representations, skill memory, authorization changes, and recovery. Table 4 compares lifecycle security claims and their evaluation conditions",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2604.16548",
+        "pdf": "https://arxiv.org/pdf/2604.16548",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": null,
+        "influential_citation_count": null,
+        "reference_count": null,
+        "venue": null,
+        "work_type": null,
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "revision",
+      "topics": [
+        "LLM 与推理"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 85.0,
+          "novelty": 78.0,
+          "technical_depth": 76.0,
+          "impact": 0.0,
+          "completeness": 57.0
+        },
+        "tier": "A",
+        "l1_reason": "六阶段×四目标 taxonomy 清晰，揭示跨阶段依赖与治理缺口，可作入门地图",
+        "evidence_level": "fulltext",
+        "score": 65.9,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "把 prompt 注入、RAG 投毒、多 agent 传染、卸载与回滚这几支互不引用的文献统一到一条跨会话攻击链上，并用对比表指出既有综述在生命周期分析与治理要求上的缺位。",
+          "novelty": "不止于文献罗列：除六阶段与四类目标的交叉分类外，把治理落成五条带谓词定义和评测指标的合取条件，并附加效用硬约束，是可被检验的组织方式。",
+          "technical_depth": "对具体机制讲到实现层，如图合并攻击如何借实体归并靠近同一锚点、KV 状态复用为何让同文本得到不同决策、按依赖图级联删除；并逐条标注评测条件，但防御侧多数只给一段功能描述，缺横向实验对比。"
+        }
+      },
+      "recommendation_type": "survey",
+      "recommended_at": "2026-11-23T13:51:46.876025+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 14662,
+        "tokens_out": 14860,
+        "cache_hit_tokens": 14464
+      },
+      "claims": [
+        {
+          "claim": "该综述引述 AgentPoison：在低于 0.1% 的毒化率下可取得超过 80% 的攻击成功率。",
+          "numbers": [
+            "0.1",
+            "80"
+          ],
+          "source_span": "Section 3.1",
+          "quote": "0.1% poison rate and over 80% attack success",
+          "verified": true
+        },
+        {
+          "claim": "作者引述 LinEra：以整段会话摘要方式记忆时，删除 1% 的对话轮次会连带抹除 73.0% 的派生记忆。",
+          "numbers": [
+            "1%",
+            "73.0"
+          ],
+          "source_span": "Section 4 (Recovery targets and conditions)",
+          "quote": "forgetting 1% of turns erased 73.0% of derived memories when the writer summarized whole sessions",
+          "verified": true
+        },
+        {
+          "claim": "改用四轮窗口切分时，同样删除只抹除 3.8% 的派生记忆。",
+          "numbers": [
+            "3.8"
+          ],
+          "source_span": "Section 4 (Recovery targets and conditions)",
+          "quote": "3.8% when it used four-turn windows",
+          "verified": true
+        },
+        {
+          "claim": "作者引述 LinEra 的下游问答结果：整段摘要下分数从 27.8 降到 13.8，四轮窗口下则从 31.8 降到 30.7。",
+          "numbers": [
+            "27.8",
+            "13.8",
+            "31.8",
+            "30.7"
+          ],
+          "source_span": "Section 4 (Recovery targets and conditions)",
+          "quote": "F1 fell from 27.8 to 13.8 for session summaries versus 31.8 to 30.7 for four-turn windows",
+          "verified": true
+        },
+        {
+          "claim": "Verifiable Memory Governance 被形式化为五条带谓词定义与评测指标的治理原语。",
+          "numbers": [
+            "five"
+          ],
+          "source_span": "Section 1 (Contributions)",
+          "quote": "We formalize memory governance into five primitives",
+          "verified": true
+        }
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": false,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 1,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "如果你对 agent 的记忆安全理解仍停留在“prompt injection 要过滤”，这篇会把记忆投毒、RAG 污染、多 agent 传染、卸载失败放到同一条跨会话链上，并给出五条可写成谓词的治理要求，省掉你按生命周期重新归位这批文献、以及判断某条防御究竟堵住链条哪一段的工作。",
+        "scope": "覆盖 LLM Agent 获得可写、跨会话持久记忆之后的安全问题：把 Write、Store、Retrieve、Execute、Share & Propagate、Forget & Rollback 六个阶段与完整性、机密性、可用性、治理四类目标交叉，逐阶段梳理代表性攻击与防御，最后提出 Verifiable Memory Governance 的五条可判定要求。不覆盖参数化在权重中的知识安全（只作对照），也不做穷尽式普查：作者自述材料来自数据库检索、引文扩展与定向更新，强调架构与机制而非文献清点；对每步改写 recurrent matrix 而不改动可读参数的隐式记忆表示，只作为“难以追溯”的一类被点名，未展开。",
+        "evolution": "第一阶段把 agent 安全当作输入问题：权重里的后门，以及单轮或多轮对话中的 prompt 注入。转折点出现在记忆变成可写且跨会话持久之后——分析单元从“某次输入”变成“记忆状态”，作者归纳为 persistence、statefulness、propagation：投毒条目在源上下文关闭后仍可被无限次召回；累积的偏置情景记忆会在任何单条记忆触发分类器之前就造成行为漂移；污染还会经共享存储与工具参数横向扩散。第二个转折是攻击面持续收缩：从语料级写入（AgentPoison），到只靠对话查询诱导 agent 自己写下恶意记忆（MINJA），再到只污染 agent 正常浏览时看到的环境内容（eTAMP），结论是“任何能影响写入的可观察上下文”都算写面。第三个转折是防御重心迁移：检索期检测，到执行期信息流与工具权限控制，到存储期 provenance 与快照回滚，再到治理层的可判定要求。作者反复强调扩大 context window 不等于持久记忆，因此单会话、单次检索的缓解手段覆盖不了这条链。",
+        "approaches": [
+          {
+            "point": "记忆生命周期分类框架（本文骨架）",
+            "detail": "用六阶段把攻击串成一条跨阶段链：写时埋入、存储期休眠并在被蒸馏成高层经验时反而提权、检索时复活、执行时劫持控制流、共享时跨 agent 与用户扩散、删除后残留。换来的是跨阶段可见性——单轮检测看不到链条两端，干预点也可以放在与埋入不同的阶段；代价是阶段划分对系统边界不敏感，作者承认同一工作常同时落在多个阶段—目标对上而无需新增阶段。该综述引述 AgentPoison 在低于 0.1% 的毒化率下取得超过 80% 的攻击成功率，作为写面可被极小比例污染撬动的证据。"
+          },
+          {
+            "point": "检索期检测与可证明聚合",
+            "detail": "RobustRAG 用 isolate-then-aggregate，在受限的污染段落数下对响应质量给出下界认证；TrustRAG、SeCon-RAG 靠聚类、信任打分与矛盾感知过滤；RevPRAG 看激活差异；A-MemGuard 更贴近记忆本身，比较独立推理路径、以分歧为异常信号，并把检出的攻击蒸馏成 lesson memory 供后续加固。代价在可用性：这类方法按相似度与内容工作，加强来源可信度惩罚会误伤合法证据，而朴素假断言本身就能绕过内容筛查。"
+          },
+          {
+            "point": "执行期信息流控制与权限隔离",
+            "detail": "CaMeL、FIDES、PCAS 分离数据面与控制面，限制不可信内容对工具调用和程序流的影响；Progent、IsolateGPT 与类型化权限分离用细粒度工具策略和执行隔离压缩爆炸半径。这一路最接近传统安全工程，可组合、可形式化（PerMIT 在单用户核心上给出 Lean 证明），但需要改造 agent 架构，且只约束“怎么用”，不清洗被污染的记忆本身。"
+          },
+          {
+            "point": "存储期 provenance、版本化与回滚",
+            "detail": "写时把来源、版本、敏感度、时间写进元数据（MemCube），以 provenance 标准做序列化，MemLineage 把签名派生记录接到敏感动作闸门；恢复侧靠快照（ChronoMem）与事后溯源（RAGForensics）。代价是血缘粒度直接决定删除粒度：作者引述 LinEra 的结果，按整段会话摘要时删除 1% 轮次会连带抹除 73.0% 的派生记忆、下游问答分数从 27.8 跌到 13.8，改用四轮窗口只抹除 3.8%、分数仅从 31.8 到 30.7——过度删除与残留之间没有免费选项。"
+          },
+          {
+            "point": "Verifiable Memory Governance 的五条谓词",
+            "detail": "把治理写成对记忆状态 Mt 的合取：写授权要求每条记录来源非空且通过策略检查（是评测出的策略谓词，不是自报的 approval flag）；provenance 可见要求可查询且血缘完整；principal 作用域检索要求返回集合严格限于 scope 含请求者的条目；可回滚要求回滚后的 live view 等于历史 live view 在当前擦除与访问约束下的投影；可验证遗忘要求在声明的探测分布下暴露概率不超过预先固定的 ε。另加效用硬约束：带记忆的任务得分必须严格高于关闭记忆通道的基线。"
+          }
+        ],
+        "key_differences": "分歧不在“检测还是阻断”，而在保护对象与代价落在哪一层。写时防御（人工核验冻结、写入元数据与来源标签）把成本前移为吞吐与人工，但环境级注入把写面扩展到一切可观察上下文，只审显式记忆更新会漏；检索期检测部署最便宜，却按内容相似度工作，假阳性直接折算成可用性损失——作者引述的观察是加强 provenance 惩罚能恢复准确率，但会连带排除来源不可信的合法证据；执行期信息流控制保证最强，代价是重构数据面与控制面、牺牲灵活性，且只约束“怎么用”；存储期是唯一能支撑取证与恢复的一层，却受限于血缘粒度，也拦不住已经发生的暴露。VMG 的取舍是把这些写成合取而非可选项：缺任一项，其余项的保证不成立，例如没有 principal 作用域时，回滚可能把已撤销的访问一并恢复。作者还区分检索授权与下游披露是两项独立检查。",
+        "bottlenecks": "作者明确点出三处空白：provenance 基础设施（跨摘要与合并的血缘完整性）、跨 principal 传播（私有记忆被提升为共享记忆时的准入）、删除后验证。残留派生散布在原始日志、压缩摘要、向量索引、反思教训、共享存储与审计记录中，MemCut 把 native recovery 与 residual recovery 分开测量，正说明检索成功率下降不足以证明遗忘。评估层面也不可比：写路径攻击的成功率保留各自协议与分母，作者声明不可横向比较，条件激活率也不等于端到端攻击率。VMG 只在声明的系统与威胁模型边界内成立，部署级保证仍缺。",
+        "future_directions": "作者的建议集中在工程与评测：把 provenance、版本化、策略化保留期与检索/执行防御整合成可审计的预防—遏制—恢复闭环；用 counterfactual memory regret 比较同一历史在干净与编辑状态下的下游损失；在 LongMemEval、LoCoMo、MemBench、MemoryAgentBench、MemOps 一类协议上固定历史、只改一个变量（事实、权限或记忆表示），追踪它影响了哪些证据被载入；并跟踪修复后的系统是否复发、授权工作是否恢复、修复成本与重读当前允许来源相比如何。\n我的判断：可验证遗忘中的 ε 与探测分布留了太大自由度，很容易被 benchmark 调参过拟合，真正缺的是一条能在真实部署上测出 lineage 完整性的工程基线；此外作者引述的技能蒸馏结果显示，只移除有害源技能几乎无法恢复性能、连其下游一起移除仍有残余，说明 skill memory 需要按依赖图做级联撤销，而现有防御基本没有覆盖这一层。",
+        "why_read_note": "",
+        "reading_minutes": 8
+      }
+    }
+  ],
+  "stats": {
+    "filter": {
+      "input": 1964,
+      "passed_rules": 907,
+      "dropped": {
+        "channel_stale": 1056,
+        "short_abstract": 1
+      },
+      "survey_matched": 1,
+      "pool_sizes": {
+        "frontier": 120,
+        "survey": 1,
+        "classic": 0
+      },
+      "classic_pool": 10
+    },
+    "rank": {
+      "frontier": {
+        "input": 120,
+        "batches": 8,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 24,
+          "B": 80,
+          "C": 16
+        },
+        "kept": 40
+      },
+      "survey": {
+        "input": 1,
+        "batches": 1,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 1
+        },
+        "kept": 1
+      },
+      "classic": {
+        "input": 10,
+        "batches": 1,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 3,
+          "B": 6,
+          "C": 1
+        },
+        "kept": 8
+      }
+    },
+    "select": {
+      "allowance": {
+        "frontier": 10,
+        "survey": 1,
+        "classic": 1
+      },
+      "dropped": {
+        "frontier": {
+          "topic": 0,
+          "affiliation": 0,
+          "similar": 0
+        },
+        "survey": {
+          "topic": 0,
+          "affiliation": 0,
+          "similar": 0
+        },
+        "classic": {
+          "topic": 0,
+          "affiliation": 0,
+          "similar": 0
+        }
+      },
+      "affiliation_constraint": "inactive_no_data"
+    },
+    "summarize": {
+      "input": 12,
+      "cached": 0,
+      "failed": 1,
+      "skipped_budget": 0,
+      "levels": {
+        "fulltext": 12
+      },
+      "degraded": [
+        {
+          "id": "arxiv-2509.07295",
+          "note": "全文超长已截断"
+        }
+      ]
+    },
+    "validate": {
+      "checked": 11,
+      "dropped": [],
+      "dropped_claims": 6,
+      "downgraded": [],
+      "link_failures": []
+    }
+  },
+  "validation": {
+    "items_dropped": 0,
+    "claims_dropped": 6,
+    "downgraded": 0,
+    "link_failures": 0,
+    "warnings": 2
+  }
+}

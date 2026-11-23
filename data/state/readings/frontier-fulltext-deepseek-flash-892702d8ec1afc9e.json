@@ -1,0 +1,65 @@
+{
+  "title_zh": "非穿透世界模型：用冻结 DiT 隐状态阻止穿墙",
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "把交互视频世界模型的穿墙问题定义成可检验的非穿透约束，并给出专门基准与跨多个生成器的干预结果，问题重要且此前缺少系统评测。",
+    "novelty": 84,
+    "novelty_reason": "关键新意在于发现冻结 DiT 隐状态已含即将接触的信息，并用轻量 head 把该信息转成动作替换，而非只加约束模块；同时提出专门诱发碰撞的 NoPeBench。",
+    "technical_depth": 85,
+    "technical_depth_reason": "方法把约束生成化为候选动作筛选，训练目标对应 clearance 与 intent，并做了读取层、DiT 与 VAE/pixels 对比、两种模式、成本和多模型闭环评测；但监督依赖 Unreal 几何，开放域主要靠 VLM 判定。"
+  },
+  "reading": {
+    "why_read": "值得读的点在于它把碰撞检测从外部深度估计搬进生成器内部：不解码像素，直接读冻结 DiT 的中间 token，先判断候选动作是否会穿墙，再用保持原意的安全动作替换。这个“生成器知道但不说”的观察，比单纯加约束模块更有启发性。",
+    "motivation": "交互视频世界模型按用户命令自回归生成视频块，命令以开环方式注入，没有场景几何反馈；训练视频里又几乎没有“被墙挡住”的样本，因此模型遇到障碍会直接穿过、跨帧隧穿或把障碍物抹掉。现有交互基准大多沿无碰撞路径评测，prompt 提醒障碍物几乎无效；外接深度估计虽能停车，却要逐帧解码和额外网络，而且只会停、不会沿墙滑动，牺牲用户原意。论文因此要回答：能否不引入外部感知，在生成器内部检测并阻止穿透，同时尽量保留原动作。",
+    "innovations": [
+      {
+        "point": "冻结 DiT 隐状态可预测即将发生的接触",
+        "detail": "作者在 DiT 中间到深层 block 上取 token，发现交叉注意力读出能在下一视频块被去噪前区分安全与穿墙动作；同样探针放在 VAE latent 或解码像素上明显更差。这把碰撞检测从后处理改成生成前查询。"
+      },
+      {
+        "point": "轻量 head + 候选动作投影",
+        "detail": "head 用 cross-attention 聚合动作条件化后的隐状态，同时预测安全 logit、扫掠 clearance 和 intent 分数；推理时在原始动作、停止、缩短步长、转向等候选里选安全且最接近原意的动作，并分 collision/prediction 两种读取时机。"
+      },
+      {
+        "point": "NoPeBench 把碰撞作为必测项",
+        "detail": "基准让每条测试路线都撞向障碍物，另设开放路径控制；Task 1 在真实历史上评单步决策，Task 2 在 Unreal 几何上评闭环视频，Task 3 用开放域图像和 VLM 评委测迁移。它同时惩罚穿墙和无关停车。"
+      }
+    ],
+    "method": "论文先把非穿透写成约束生成：在冻结生成器 θ 下，只优化执行动作 a_k，使生成的块既高似然又不进入实体几何；由于生成器不存几何，用候选动作的扫掠 clearance 和 collide-and-slide 的 intent error 来近似。NoPeWorld 不建显式地图，而是在冻结 DiT 的中间隐状态上训练一个轻量 cross-attention head：把候选动作和原命令经生成器原生控制编码器投影到同一 token 网格，读出安全概率、clearance 和 intent 分数。监督来自 Unreal Engine 的占用图：对候选动作扫掠碰撞圆盘得到 clearance，和模拟器的 collide-and-slide 位移比较得到 intent error，再软化成安全/意图/排序目标，辅以 listwise ranking。推理时阈值化得到可行集，原动作安全就保留，否则选可行集里 intent 最高的动作；prediction 模式在块间读 commit pass，collision 模式在块内 step 0 读，若替换则只重跑 step 0。",
+    "results": "在 Task 1 的真实历史单步决策上，原始模型漏掉全部穿墙动作，NoPeWorld 两种模式把漏检率从 100% 降到 0.6–11.5%，决策分提高 17–33 分。Task 2 闭环生成中，collision 模式在全部模型上把平均 violation 从 74% 降到 16%；LingBot-World 2.0 从 89% 降到 4%，SIS 从接近零升到约一半。External depth 在部分模型上 violation 更低，但主要靠停车，Slide 明显下降。Task 3 的作者报告零样本迁移到开放域、第三人称和动态障碍，VLM 判定 violation 低于原始模型；不过个别模型仍有较高 violation，WorldPlay2 的 SIS 低于原始模型。",
+    "limitations": "监督依赖 UnrealZoo 的合成占用图和碰撞标签，真实场景没有等价 3D 监督；head 虽轻，仍需接入生成器内部隐状态并做阈值校准，不能直接用于只提供 API 的模型。开放域 Task 3 没有几何真值，主要靠 VLM 评委，且动态障碍样本有限；Task 2 只跑短时闭环。候选集是离散的停止、缩短和转向，只实现无摩擦滑动，不能处理推、携带、破碎等接触动力学；在 Hy-Nomas 上误改安全动作比例高，WorldPlay2 上 SIS 反而低于原始模型。",
+    "insights": "把生成式世界模型的隐状态当作可查询的物理接口，可能比外接感知更通用：同一读出可服务不同 backbone 的碰撞决策，也提示可以用轻量 probe 做安全过滤、动作重规划或 RL 奖励。下一步值得研究接触动力学、可变形与可推动物体，以及把 head 训练从合成几何迁移到真实视频的自监督信号。"
+  },
+  "claims": [
+    {
+      "claim": "Task 1 中，原始模型漏掉全部穿墙动作，NoPeWorld 两种模式把漏检率降到 0.6–11.5%，决策分提高 17–33 分。",
+      "numbers": [
+        "100",
+        "0.6",
+        "11.5",
+        "17",
+        "33"
+      ],
+      "source_span": "Sec. 4.4, Task 1",
+      "quote": "cut missed collisions from 100% to 0.6–11.5% and raise the decision score by 17–33 points"
+    },
+    {
+      "claim": "在全部模型上，collision 模式把平均 violation 从 74% 降到 16%。",
+      "numbers": [
+        "74",
+        "16"
+      ],
+      "source_span": "Sec. 4.4, Task 2",
+      "quote": "from 74% to 16% averaged over all six in collision mode"
+    },
+    {
+      "claim": "LingBot-World 2.0 上 violation 从 89% 降到 4%，Safe-Intent Score 从接近零提升到约一半。",
+      "numbers": [
+        "89",
+        "4"
+      ],
+      "source_span": "Sec. 4.4 / Introduction",
+      "quote": "cuts violations from 89% to 4% and lifts the Safe-Intent Score, zero for any video with a violation, from near zero to about half"
+    }
+  ]
+}

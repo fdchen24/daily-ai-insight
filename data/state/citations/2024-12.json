@@ -1,0 +1,18 @@
+{
+"2412.11211": {
+"citation_count": 15,
+"reference_count": 124,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 13,
+"2025": 2
+},
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Control Systems and Identification"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}

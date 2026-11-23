@@ -1,0 +1,135 @@
+{
+  "title_zh": "算力最优的 tokenization：压缩率如何决定数据-参数配比",
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 scaling law 中的数据单位从 token 换成 byte，给出可跨 tokenizer 迁移的 ρ*≈60 bytes/parameter 配方，并用近千次训练覆盖压缩率与算力两个维度，对训练配方设计有直接指导意义。",
+    "novelty": 80,
+    "novelty_reason": "首次把压缩率作为 scaling law 的自变量系统扫描（T 覆盖字节级到超词级），发现非单调的最优压缩率及其随算力下降的趋势；方法本身复用 BLT 与 Chinchilla 式幂律框架，属于重要增量而非新范式。",
+    "technical_depth": 82,
+    "technical_depth_reason": "IsoFLOP 网格设计、两步幂律拟合、多随机种子与 Hessian 置信区间、以及在子词族和多语言上的复现都较扎实，但超参全程未调、两族的参数计数口径不一致、多语言仅在单一算力预算上验证，削弱了结论的普适强度。"
+  },
+  "reading": {
+    "why_read": "值得读的是它把 tokenizer 的压缩率变成 scaling law 的自变量，而不是固定超参。实验覆盖 988 个 BLT 与 320 个子词模型（50M–6.7B 参数、4B–1.1T bytes 训练数据），结论直接可操作：算力最优下数据应按字节配平，约 60 bytes/parameter，而不是通行的“20 tokens/parameter”；最优压缩率还低于 BPE 的 4.57 bytes/token，并随算力继续下降。",
+    "motivation": "Chinchilla 式配方以 token 计量数据，但一个 token 承载多少信息由 tokenizer 的压缩率决定，换词表就等于换了一套数据单位，“20 tokens/parameter”这类结论无法跨 tokenizer 迁移。压缩率同时改变训练与推理的 FLOPs：更高压缩用更少 token 表示同样文本，省下的算力可以加数据或加参数，但此前无人系统量化该往哪边投。已有工作（Rust et al. 2021；Limisiewicz et al. 2023）报告高压缩有益，但那多半是多语语料频率的代理，且 BPE 的压缩率与词表绑定，无法在固定词表下连续调节。作者借助 BLT 的熵阈值分割，在参数量不变时精确设定压缩率，把问题转化为可拟合的 IsoFLOP 曲面。",
+    "innovations": [
+      {
+        "point": "把压缩率写入 scaling law 的第一条幂律",
+        "detail": "拟合 B*(C,T)=B0·C^α·T^β，得到 α=0.475、β=0.479，二者都接近 0.5，因此 bytes-per-parameter ρ*=B/N 在算力与压缩率变化下近似恒定，数据量的正确单位是字节而非 token。"
+      },
+      {
+        "point": "发现非单调的最优压缩率并刻画其随算力的漂移",
+        "detail": "最优损失对 T 呈 U 形，存在 T*；用 f(C,T)=F·log2(C^δ·T/T0)+E 拟合残差，BLT 的 δ=0.035、子词族 δ=0.129（95% CI 排除 0），说明算力越大越偏好较低压缩，即 BPE 的压缩率在超大规模下偏高。"
+      },
+      {
+        "point": "把最优压缩率与语言信息密度（parity）挂钩",
+        "detail": "五种语言加一个双倍膨胀英语上，ρ* 与 T* 都随 parity 上升；Llama 3、Qwen 3、EuroLLM 的压缩率相对最优值系统性偏离——高资源语言被过压缩、低资源语言压缩不足。"
+      }
+    ],
+    "method": "主实验台选 BLT，是因为它按 next-byte 熵阈值切分 latent token：调阈值即可在参数量不变的前提下连续设定压缩率，(N, T) 的网格因此唯一决定训练字节数 B，可直接做三维 IsoFLOP。为免 byte n-gram hash embedding 跨越 latent token 边界、干扰目标压缩率，作者去掉了原版 BLT 的这一组件；架构按 Llama 3 配方同步扩展宽度与深度。评估统一用 bits-per-byte 而非 per-token loss，保证不同 tokenizer 可比，上下文固定为相同字节长度。子词侧无法连续调 T，于是用 vocabulary masking 屏蔽大部分 merge 得到两个更低压缩档位，再加 character-level 与 SuperBPE 凑出五个档位，并保持同一分割算法与词表构造，尽量只让压缩率变化。拟合分两步：先用 log B 对 loss 的二次 IsoFLOP 定位极小值 B*，再对 B*(C,T) 与 L*(C,T) 做 BFGS 幂律拟合，多随机种子初始化，用 Hessian 数值近似给出 95% 置信区间。",
+    "results": "英语 C4 上的 IsoFLOP 曲面显示，各压缩率的最优解几乎落在同一条 ρ 上：Law I 拟合 α=0.475、β=0.479（BLT），子词族 α=0.501、β=0.446，都接近 0.5，因此 ρ*≈60 bytes/parameter 与压缩率、算力基本无关。Law II 的最优损失对 T 非单调，最优 T 略低于 BPE 的 4.57 并随算力下降：BLT 拟合 δ=0.035，子词族 δ=0.129（95% CI 排除 0）；作者明确说明子词侧单点比较的差异很小，结论依赖的是这个统计上显著的 δ。推理匹配实验中，3.3B/T=4 与 6.7B/T=8 的每字节推理成本相近，前者 HellaSwag 0-shot 为 70.6% 对 68.6%。多语言上 ρ* 与 T* 随 parity 变化，主流多语 tokenizer 的压缩率系统性偏离最优值。",
+    "limitations": "作者承认所有训练共用一套超参、学习率未按算力调整，tokenization 变体也有限（未测 Unigram、pre-tokenization 规则、latent 边界预测器的其他实现）。我读出的问题：其一，参数口径不一致——BLT 只计 global 模块、子词模型排除 embedding，两族的 N 并非同一口径，ρ 常数跨族“普适”的解释空间因此变大；其二，最优压缩率随算力漂移的幅度很小（δ=0.035），而低压缩直接抬高推理成本，越过拐点的收益必须与部署成本一起算，论文对这一点只给了定性讨论；其三，多语言实验仅在单一算力预算上完成，语言相关的 T* 是否也随算力下降尚未验证；其四，ρ*≈60 来自英语 DCLM 单一语域，附录显示联合多语训练时 ρ 会收敛，跨域可迁移性仍需检验。",
+    "insights": "最直接的工程含义是把训练配方从“每参数多少 token”改写为“每参数多少字节”，换 tokenizer 或换语言时按 bytes 重新配平，而不是沿用 20 tokens/parameter 的经验值。其次，“越大模型越适合较低压缩”意味着词表大小应当随算力变化，而不是固定一个 128k 级别的词表；BPE-dropout、按算力调词表、或在训练末期降低压缩率都值得实验。更长远地看，压缩率应与推理预算联合优化，并作为多语 tokenizer 设计的一等目标——latent tokenization 能在推理时按语言调 T，可能是多语场景的实际受益者，提示后续工作把压缩率纳入 MoE、多模态的 scaling law。"
+  },
+  "claims": [
+    {
+      "claim": "实验总计训练 988 个 latent tokenized 模型与 320 个子词模型，参数 50M–6.7B、训练数据 4B–1.1T bytes",
+      "numbers": [
+        "988",
+        "320",
+        "50",
+        "6.7",
+        "4",
+        "1.1"
+      ],
+      "source_span": "Section 2.5, Training and Evaluation",
+      "quote": "In total, we train 988 latently and 320 subword tokenized models with sizes from 50M to 6.7B parameters on training data of sizes from 4B to 1.1T bytes."
+    },
+    {
+      "claim": "BLT 的 Law I 拟合给出 α=0.475、β=0.479，接近 0.5",
+      "numbers": [
+        "0.475",
+        "0.479"
+      ],
+      "source_span": "Section 3.2, Scaling Law I: Results",
+      "quote": "α = 0.475, β = 0.479"
+    },
+    {
+      "claim": "子词族的 Law I 拟合给出 α=0.501、β=0.446",
+      "numbers": [
+        "0.501",
+        "0.446"
+      ],
+      "source_span": "Section 4.1, Results",
+      "quote": "α = 0.501, β = 0.446"
+    },
+    {
+      "claim": "作者建议英语文本的算力最优配比约为 60 bytes per parameter，与压缩率无关",
+      "numbers": [
+        "60"
+      ],
+      "source_span": "Section 7, Discussion",
+      "quote": "should use approximately 60 bytes per parameter, regardless of data compression"
+    },
+    {
+      "claim": "BLT 的 Law II 拟合参数为 F=0.032、δ=0.035、T0=18.2、E=0.70，δ 描述最优压缩率随算力下降的速度",
+      "numbers": [
+        "0.032",
+        "0.035",
+        "18.2",
+        "0.70"
+      ],
+      "source_span": "Section 3.4, Scaling Law II: Results",
+      "quote": "F = 0.032, δ = 0.035, T0 = 18.2, and E = 0.70"
+    },
+    {
+      "claim": "子词族的 compression–compute 耦合 δ=0.129，95% 置信区间 [0.108, 0.150] 排除 0",
+      "numbers": [
+        "0.129",
+        "0.108",
+        "0.150",
+        "95"
+      ],
+      "source_span": "Section 4.1, Results",
+      "quote": "a positive compression–compute coupling δ = 0.129, with a 95% confidence interval of [0.108, 0.150] that excludes zero"
+    },
+    {
+      "claim": "Llama 3 BPE（词表 128,000）在英语上压缩率约 4.57 bytes/token",
+      "numbers": [
+        "128,000",
+        "4.57"
+      ],
+      "source_span": "Section 2.1, Background: Subword Tokenization",
+      "quote": "approximately T ≈4.57 bytes per token on English texts"
+    },
+    {
+      "claim": "SuperBPE 达到 T≈6.16 的压缩率",
+      "numbers": [
+        "6.16"
+      ],
+      "source_span": "Section 2.1, Background: Subword Tokenization",
+      "quote": "achieves T ≈6.16"
+    },
+    {
+      "claim": "推理匹配设置下，3.3B/T=4 与 6.7B/T=8 每字节推理成本相近，HellaSwag 0-shot 准确率为 70.6% 对 68.6%",
+      "numbers": [
+        "3.3",
+        "4",
+        "2.1",
+        "6.7",
+        "8",
+        "70.6",
+        "68.6"
+      ],
+      "source_span": "Section 3.5, Optimal Tokenization during Inference",
+      "quote": "the 3.3B model with compression rate T = 4 has a similar inference cost of 2.1 × 109 FLOPs/Byte as the 6.7B model with compression rate T = 8, while the former achieves higher score on the endtask accuracy (70.6% vs. 68.6%)"
+    },
+    {
+      "claim": "Chinchilla 的约 20 tokens per parameter 仅在 BPE 特定压缩率下成立",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Section 7, Discussion",
+      "quote": "the widely accepted rule of using approximately 20 tokens per parameter"
+    }
+  ]
+}

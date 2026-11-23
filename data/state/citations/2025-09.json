@@ -1,0 +1,62 @@
+{
+"2509.07295": {
+"citation_count": 56,
+"reference_count": 93,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 36.58,
+"citation_percentile": 0.997,
+"citations_by_year": {
+"2026": 51,
+"2025": 5
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2509.12031": {
+"citation_count": 4,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Markov Chains and Monte Carlo Methods",
+"Geometric Analysis and Curvature Flows"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2509.02433": {
+"citation_count": 1,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+},
+"2509.04588": {
+"citation_count": 0,
+"reference_count": 28,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Software Testing and Debugging Techniques"
+],
+"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+}
+}
