@@ -32,6 +32,17 @@ _CACHE_DIR = DATA_DIR / "state" / "readings"
 _TEMPLATES = {"frontier": "frontier", "survey": "survey", "classic": "classic"}
 
 
+def _material_client() -> HttpClient:
+    """取材用的 HTTP 客户端：只重试一次。
+
+    PDF 抓不到的代价是降级到摘要级解读（material 会标 note），比把时间耗在
+    重试上划算得多。实测网络波动时一次 PDF 请求卡住的时间远超 timeout——
+    DNS 解析走的是阻塞的 getaddrinfo，socket 超时管不到它——默认 3 次重试
+    会把单条目拖掉十几分钟，整期因此撞上 CI 的 90 分钟上限。
+    """
+    return HttpClient(interval=3.0, timeout=60.0, max_retries=1)
+
+
 def summarize_selected(selected: dict[str, list[dict]], *, batch: date,
                        llm: LLM | None = None) -> dict[str, Any]:
     """对阶段五选出的条目逐条生成解读，返回 {"items", "stats"}。"""
@@ -50,7 +61,7 @@ def summarize_selected(selected: dict[str, list[dict]], *, batch: date,
     entries = entries[:final_count]
 
     llm = llm or LLM.from_config("summarize")
-    client = HttpClient(interval=3.0, timeout=90.0)
+    client = _material_client()
     done: list[dict] = []
     try:
         for name, item in entries:
@@ -90,7 +101,7 @@ def _screen(entries: list[tuple[str, dict]], cfg: dict, llm: LLM | None,
     limit = int(cfg.get("screen_count") or 30)
     pool = entries[:limit]
     llm = llm or LLM.from_config("summarize")
-    client = HttpClient(interval=3.0, timeout=90.0)
+    client = _material_client()
     ok = 0
     try:
         for name, item in pool:

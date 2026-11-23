@@ -19,6 +19,7 @@ v1.0 写了"关键数值校验""AI 幻觉检查"但没有可执行定义，等�
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 
 from .collect.arxiv import fetch_by_ids
@@ -29,6 +30,8 @@ from .common import (
     log,
     normalize_title,
     parse_dt,
+    raw_path,
+    read_json,
     text_length,
     title_similarity,
 )
@@ -52,14 +55,14 @@ _SPACE_BEFORE_RE = re.compile(rf"([{_CJK}])([A-Za-z0-9])")
 _SPACE_AFTER_RE = re.compile(rf"([A-Za-z0-9%)])([{_CJK}])")
 
 
-def validate_items(items: list[dict], *,
+def validate_items(items: list[dict], *, batch: date | None = None,
                    client: HttpClient | None = None) -> dict[str, Any]:
     """逐条校验，返回 {"items"(通过的), "report"}。被丢弃的条目不进当期 JSON。"""
     cfg = load_config("scoring")["validate"]
     report: dict[str, Any] = {"checked": len(items), "dropped": [],
                               "dropped_claims": 0, "downgraded": [],
                               "warnings": [], "link_failures": []}
-    official = _official_meta(items, report)
+    official = _official_meta(items, batch, report)
 
     owned = client is None
     client = client or HttpClient(interval=0.5,
@@ -87,25 +90,59 @@ def validate_items(items: list[dict], *,
     return {"items": passed, "report": report}
 
 
-def _official_meta(items: list[dict], report: dict) -> dict[str, dict]:
-    """一次性回查全部 arXiv ID。回查本身失败时跳过元数据核验而不是全部丢弃。"""
+def _official_meta(items: list[dict], batch: date | None,
+                   report: dict) -> dict[str, dict]:
+    """凑出官方元数据表：先吃当期 raw，剩下的才去 Query API 回查。
+
+    采集阶段已经把 arXiv 的原始响应按批次存进 `data/raw/<批次>/arxiv.json`，
+    那份记录没经过任何模型，拿来比对标题/作者/日期与现查官方 API 等价。
+    之前每期都把 12 个 ID 重新查一遍，而刚做完全量抓取的 IP 正被 arXiv 限流，
+    实测连吃 5 个 429（退避 6→96 秒）后整段核验被跳过——费了几分钟还什么都
+    没校到。经典池的论文不在当期 raw 里，这些才真的需要联网回查。
+    """
     ids = [item["arxiv_id"] for item in items if item.get("arxiv_id")]
     if not ids:
         return {}
+    official = _meta_from_raw(batch, set(ids))
+    missing = [i for i in ids if i not in official]
+    if not missing:
+        log.info("arXiv 回查：%d 条全部命中当期 raw，未发请求", len(ids))
+        return official
     try:
-        return fetch_by_ids(ids)
+        official.update(fetch_by_ids(missing))
     except SourceError as exc:
-        log.error("arXiv 回查失败，本次跳过元数据核验：%s", exc)
+        log.error("arXiv 回查失败，这 %d 条跳过元数据核验：%s", len(missing), exc)
         report["warnings"].append({"scope": "metadata",
                                    "note": f"arXiv 回查失败，未核验：{exc}"})
+        # 显式标成"未核验"：留空会被 `_check_metadata` 当成"官方查不到"而丢条目
+        for arxiv_id in missing:
+            official.setdefault(arxiv_id, None)
+    return official
+
+
+def _meta_from_raw(batch: date | None, wanted: set[str]) -> dict[str, dict]:
+    """从当期 raw 里挑出需要的条目，字段名与 `fetch_by_ids` 的返回一致。"""
+    if batch is None:
         return {}
+    records = read_json(raw_path(batch, "arxiv"), default=None)
+    if not isinstance(records, list):
+        return {}
+    out: dict[str, dict] = {}
+    for row in records:
+        arxiv_id = row.get("arxiv_id")
+        if arxiv_id in wanted:
+            out[arxiv_id] = {"title": row.get("title"),
+                             "authors": row.get("authors") or [],
+                             "published_at": row.get("published_at"),
+                             "arxiv_version": row.get("arxiv_version")}
+    return out
 
 
 
 # ------------------------------------------------------------ 单条目
 
 
-def _check_item(item: dict, official: dict[str, dict], cfg: dict,
+def _check_item(item: dict, official: dict[str, dict | None], cfg: dict,
                 client: HttpClient, report: dict) -> list[str]:
     """返回硬失败原因列表；空列表表示通过。软问题就地修正并记 warning。"""
     hard: list[str] = []
@@ -116,6 +153,7 @@ def _check_item(item: dict, official: dict[str, dict], cfg: dict,
     hard += _check_required(item)
     _check_title_zh(item, hard)
 
+    _drop_unknown_fields(item, report)
     _verify_claims(item, cfg, report)
     _check_abstract_numbers(item, report)
     _check_lengths(item, cfg, report)
@@ -125,14 +163,16 @@ def _check_item(item: dict, official: dict[str, dict], cfg: dict,
     return hard
 
 
-def _check_metadata(item: dict, official: dict[str, dict]) -> list[str]:
+def _check_metadata(item: dict, official: dict[str, dict | None]) -> list[str]:
     """标题、首位作者、发布日期与官方元数据比对。repo 条目无此项。"""
     arxiv_id = item.get("arxiv_id")
     if not arxiv_id or not official:
         return []
-    meta = official.get(arxiv_id)
-    if meta is None:
+    if arxiv_id not in official:
         return [f"arXiv ID {arxiv_id} 在官方 API 查不到"]
+    meta = official[arxiv_id]
+    if meta is None:  # 回查没拿到，这条不核验也不丢
+        return []
 
     problems: list[str] = []
     if normalize_title(item.get("title")) != normalize_title(meta["title"]):
@@ -167,6 +207,24 @@ def _check_required(item: dict) -> list[str]:
     reading = item.get("reading") or {}
     missing = [name for name in fields if not reading.get(name)]
     return [f"解读缺必填字段：{'、'.join(missing)}"] if missing else []
+
+
+def _drop_unknown_fields(item: dict, report: dict) -> None:
+    """删掉模板之外的解读字段。
+
+    实测模型会自作主张多加一个 `bottlenecks_note`（值还可能是 null），
+    这类字段既没有校验规则也没有前端渲染位置，留着只会让对外的数据结构
+    随模型心情变动，所以就地删掉并记一条 warning。
+    """
+    template = item.get("reading_template") or "frontier"
+    allowed = set(_REQUIRED.get(template, _REQUIRED["frontier"]))
+    reading = item.get("reading") or {}
+    extra = [key for key in reading if key not in allowed]
+    for key in extra:
+        reading.pop(key, None)
+    if extra:
+        _warn(item, report, "extra_field",
+              f"模板 {template} 之外的字段已删除：{'、'.join(extra)}")
 
 
 def _check_title_zh(item: dict, hard: list[str]) -> None:
@@ -352,9 +410,15 @@ def _check_untranslated(item: dict, cfg: dict, report: dict) -> None:
                           % (limit - 1)))
     reading = item.get("reading") or {}
     for field, value in reading.items():
-        texts = [value] if isinstance(value, str) else [
-            row.get("detail") or "" for row in value
-            if isinstance(row, dict)]
+        # 字段可能是 null：prompt 要求的非必填字段模型会直接给 null，
+        # 这里按"无文本"跳过，不能当成可迭代对象
+        if isinstance(value, str):
+            texts = [value]
+        elif isinstance(value, list):
+            texts = [row.get("detail") or "" for row in value
+                     if isinstance(row, dict)]
+        else:
+            continue
         for text in texts:
             match = pattern.search(text or "")
             if match:

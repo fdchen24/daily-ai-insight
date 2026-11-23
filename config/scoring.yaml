@@ -111,7 +111,11 @@ summarize:
   # 用 intro_conclusion 取材做 L2 初筛的条数，再从中选最终入选项取全文
   screen_count: 30
   final_count: 12
-  max_output_tokens: 16384
+  # 16384 不够：flash 在 effort=high 下思维链也计入输出，实测一条 44 页论文的
+  # 解读撞上上限，返回截断的 JSON 整条被丢。截断修不回来且重试会再撞一次，
+  # 那条目的输入 token（约 36K）就白付了，所以上限给足——按实际用量计费，
+  # 调高不等于多花钱。flash 最大输出 393K，这里留 64K。
+  max_output_tokens: 65536
   # 取材字符上限（约 4 字符/token）
   material:
     intro_conclusion_chars: 24000
@@ -119,7 +123,9 @@ summarize:
   # 单次运行的硬上限，超出即停止并保留已完成部分
   budget:
     tokens_in_per_run: 1500000
-    tokens_out_per_run: 200000
+    # 含思维链：12 条 × 单条最多 64K 的理论上界是 768K，实测远低于此，
+    # 600K 既挡得住失控循环，又不会在正常日子里把最后两三条挤掉
+    tokens_out_per_run: 600000
 
 # ---------------------------------------------------- 第六节：机械化事实校验
 validate:

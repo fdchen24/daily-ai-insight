@@ -107,7 +107,8 @@ def run(batch: date, args: argparse.Namespace, started: float) -> int:
 
     # --- 阶段七：机械校验
     with HttpClient(interval=0.5, timeout=10.0) as client:
-        checked = validate_items(summarized["items"], client=client)
+        checked = validate_items(summarized["items"], batch=batch,
+                                 client=client)
     stages["validate"] = {k: v for k, v in checked["report"].items()
                           if k != "warnings"}
     if checked["report"]["dropped"]:

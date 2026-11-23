@@ -17,7 +17,10 @@ from typing import Any
 
 from .common import DATA_DIR, HttpClient, SourceError, load_config, log
 
-_PDF_DIR = DATA_DIR / "raw" / "pdf"
+_PDF_DIR = DATA_DIR / "state" / "pdf"
+# PDF 文本缓存随 data 分支长期保留，按文件数封顶：12 条/天 × 60KB 一年是
+# 250MB，clone 会越来越慢。保留最近 500 篇覆盖冷却期内的全部重跑场景。
+_PDF_CACHE_KEEP = 500
 
 # Intro / Conclusion 的节标题写法很杂：有编号（"1 Introduction"、"I. INTRODUCTION"）、
 # 有复数（"Conclusions"）、有合写（"Conclusion and Future Work"）。
@@ -138,10 +141,14 @@ def _excerpt(text: str, limit: int) -> str:
 
 
 def _pdf_text(item: dict, client: HttpClient | None) -> tuple[str, int]:
-    """下载并抽取 PDF 文本，按 arXiv ID 缓存到 data/raw/pdf。
+    """下载并抽取 PDF 文本，按 arXiv ID 缓存到 data/state/pdf。
 
     缓存的是抽取后的 .txt 而不是 PDF 本身：重跑时省掉下载和解析两步，
     且文本体积只有 PDF 的几分之一，不会把 data 分支撑大。
+
+    放 state 而不是 raw：data 分支忽略 raw/（那是可重算的中间产物），
+    缓存落在那里等于每次 CI 都重抽一遍——实测一篇 42 页的论文抽取要
+    2 分 38 秒，12 条就是半小时，整期因此撞上 job 的 90 分钟上限。
     """
     key = (item.get("arxiv_id") or item.get("id") or "").replace("/", "--")
     if not key:
@@ -170,8 +177,16 @@ def _pdf_text(item: dict, client: HttpClient | None) -> tuple[str, int]:
 
     _PDF_DIR.mkdir(parents=True, exist_ok=True)
     cached.write_text(text, encoding="utf-8")
+    _prune_pdf_cache()
     log.info("取材：%s 抽出 %d 页 / %d 字符", key, pages, len(text))
     return text, pages
+
+
+def _prune_pdf_cache() -> None:
+    """超出上限时按修改时间删最旧的几篇。删错了代价只是下次重抽一遍。"""
+    files = sorted(_PDF_DIR.glob("*.txt"), key=lambda p: p.stat().st_mtime)
+    for path in files[:max(0, len(files) - _PDF_CACHE_KEEP)]:
+        path.unlink(missing_ok=True)
 
 
 def _extract(blob: bytes) -> tuple[str, int]:

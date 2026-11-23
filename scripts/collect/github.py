@@ -63,15 +63,22 @@ def collect(batch: date, *, build_baseline: bool = True) -> dict[str, Any]:
         # 通道 B：Search API 基线池（提供增量计算的跟踪对象）
         if build_baseline:
             baseline = _search_baseline(client, cfg, token, stats)
-            for name in baseline:
-                repos.setdefault(name, {"full_name": name,
-                                        "trending_windows": []})
+            for name, payload in baseline.items():
+                entry = repos.setdefault(name, {"full_name": name,
+                                                "trending_windows": []})
+                entry["payload"] = payload
             stats["baseline"] = len(baseline)
 
         # 取详情并过滤
         items = []
         for name, seed in repos.items():
-            detail = _fetch_repo(client, cfg, name, stats)
+            # Search 返回已含 _repo_detail 需要的全部字段，基线池再逐个打
+            # /repos/{name} 就是 2500 次白付的请求：按 1 秒间隔要 40 多分钟，
+            # CI 实测采集步骤 59 分钟几乎全耗在这里。只有 trending 页抓来的
+            # 名字没有 payload，才真的需要单独取一次详情。
+            payload = seed.get("payload")
+            detail = (_repo_detail(payload) if payload
+                      else _fetch_repo(client, cfg, name, stats))
             if detail is None:
                 continue
             if not _is_ai_repo(detail, cfg):
@@ -121,8 +128,12 @@ def _scrape_trending(client: HttpClient, cfg: dict, window: str,
 
 
 def _search_baseline(client: HttpClient, cfg: dict, token: str | None,
-                     stats: dict) -> set[str]:
-    """按 star 区间 × 关键词分段搜索，绕开单次查询 1000 条返回上限。"""
+                     stats: dict) -> dict[str, dict]:
+    """按 star 区间 × 关键词分段搜索，绕开单次查询 1000 条返回上限。
+
+    返回 {full_name: 搜索结果原文}：调用方直接用这份 payload 建条目，不再
+    回头逐个请求 /repos/{name}。
+    """
     target = cfg["baseline_target"] if token else 300
     pushed_after = (date.today()
                     - timedelta(days=cfg["pushed_within_days"])).isoformat()
@@ -130,11 +141,11 @@ def _search_baseline(client: HttpClient, cfg: dict, token: str | None,
     keywords = cfg["keywords"] if token else cfg["keywords"][:3]
     per_bucket_pages = 3 if token else 1
 
-    names: set[str] = set()
+    found: dict[str, dict] = {}
     for bucket in cfg["star_buckets"]:
         for keyword in keywords:
-            if len(names) >= target:
-                return names
+            if len(found) >= target:
+                return found
             query = (f'{keyword} in:name,description,readme '
                      f'stars:{bucket} pushed:>{pushed_after}')
             for page in range(1, per_bucket_pages + 1):
@@ -150,14 +161,15 @@ def _search_baseline(client: HttpClient, cfg: dict, token: str | None,
                     break
                 if resp.status_code == 403:
                     log.warning("Search API 配额耗尽，基线池提前结束")
-                    return names
+                    return found
                 if resp.status_code != 200:
                     break
                 payload = resp.json().get("items") or []
                 if not payload:
                     break
-                names.update(item["full_name"] for item in payload)
-    return names
+                for item in payload:
+                    found.setdefault(item["full_name"], item)
+    return found
 
 
 def _fetch_repo(client: HttpClient, cfg: dict, full_name: str,
@@ -179,6 +191,15 @@ def _fetch_repo(client: HttpClient, cfg: dict, full_name: str,
         stats["detail_failures"] += 1
         return None
     data = resp.json()
+    return _repo_detail(data)
+
+
+def _repo_detail(data: dict) -> dict[str, Any] | None:
+    """把 /repos 或 search 的返回整成候选条目；归档/派生/停用的仓库丢弃。
+
+    两个接口的字段名一致（search 的 items 就是精简版 repository 对象），
+    所以建条目的逻辑只写一份。
+    """
     if data.get("archived") or data.get("fork") or data.get("disabled"):
         return None
 

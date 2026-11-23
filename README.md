@@ -38,6 +38,10 @@ GitHub Pages。全程跑在 GitHub Actions 上，不需要服务器，也不需�
 阶段二至七由 [scripts/run_daily.py](scripts/run_daily.py) 串起来；采集单独一个入口，
 因为它受网络与配额影响最大，重跑它不该连带重算 LLM。
 
+CI 里这两个入口也是两个 job（`collect` → `daily`，候选池用 artifact 传递），各自独立
+计时：首次实测采集 59 分钟、解读 20 分钟，放在同一个 job 里一旦超时，已付的 token
+就全作废。
+
 ## 本地跑通
 
 ```bash

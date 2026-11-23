@@ -533,7 +533,8 @@ Mobile First 响应式；底部导航；适合中文长文的字号行距（正�
 
 ### 8.2 Actions 权限与故障隔离
 
-- 拆成两个 job：`pipeline`（`permissions: contents: write`，持有 `DEEPSEEK_API_KEY`）与 `deploy`（`permissions: pages: write, id-token: write`，不接触密钥）。
+- 拆成三个 job：`collect`（采集，`contents: write`，不接触 LLM 密钥）、`daily`（`needs: collect`，筛选排序 / L2 解读 / 校验，持有 `DEEPSEEK_API_KEY`）与 `deploy`（`permissions: pages: write, id-token: write`，不接触密钥）。
+  采集与解读分开计时而不是塞进同一个 job：首次 CI 实测采集 59 分钟、解读 20 分钟，挤在一个 90 分钟的 job 里解读会被 timeout 掐在中途，已付的 token 全部作废。候选池不入 data 分支（可重算、单批次 8MB），用 artifact 从 `collect` 递给 `daily`。
 - 单数据源失败只记日志并跳过该源，不中断流水线。
 - LLM 调用设单次任务 token 预算上限，超限中止并保留已完成部分。
 - 失败时**不覆盖 `latest.json`**；前端始终显示数据自带的 `arxiv_announce_date`，而不是"今天"。
