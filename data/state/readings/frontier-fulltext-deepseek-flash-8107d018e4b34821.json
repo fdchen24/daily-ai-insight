@@ -1,0 +1,107 @@
+{
+  "title_zh": "审计代码 RL 训练环境的奖励可破解性",
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "把 code RL 的 verifier 缺陷做成可复现、可执行的审计，并给出公开基准与真实训练集上的比例，对数据清洗和 reward 设计有直接影响。",
+    "novelty": 79,
+    "novelty_reason": "相对依赖 LLM judge 或人工确认的审计，核心差异是用 gold patch 做差分执行探针，并把“可破解”与“攻击者能通过”分开；但攻击—修复—judge 的流程本身是已有组件的系统化组合。",
+    "technical_depth": 84,
+    "technical_depth_reason": "有 Docker 级执行、两阶段正确性检查、三次攻击重复、门控与 judge 消融、逐测试修复验证；但样本小、单一模型家族、部分标签依赖 LLM 复核，多模型相关性不能单独验证审计。"
+  },
+  "reading": {
+    "why_read": "它把“测试通过”与“行为正确”拆开：用 gold patch 做差分探针，发现 22.4% 的 SWE-bench Verified 任务可被错误补丁通过，强攻击者下升至 57.8%；再把同一检查用于 873 条训练轨迹，19.4% 在 issue 描述的情形上行为不同。对做 code RL 数据清洗的人，这些数字直接决定是否值得加执行级审计。",
+    "motivation": "代码 RL 以测试通过作为 reward，测试套件一旦接受错误补丁，策略就被奖励到错误行为；生产 coding 环境中学到的 reward hacking 还可能外溢。已有审计多依赖 LLM judge 或人工确认 exploit，缺少对 SWE-bench Verified 和真实 RL 训练集的执行级比例；修复侧也常把 LLM 写测试和 judge 的 BLOCKS 判决当作可信。论文要回答的是：多少任务可被错误补丁通过，检测是否可靠，修复测试是否真的能挡住 exploit。",
+    "innovations": [
+      {
+        "point": "以 gold patch 为锚的执行级 exploit 判定",
+        "detail": "把 exploit 定义为通过测试但与 gold patch 行为不同的补丁；先用归一化 diff 排除照抄，再用针对改动代码的探针在 Docker 中比较行为，并区分 issue 描述输入与其他输入。"
+      },
+      {
+        "point": "从基准审计扩展到训练轨迹审计",
+        "detail": "同一套执行检查被用于 SWE-bench Verified 的公开提交，以及 SWE-smith、R2E-Gym 的 SFT 轨迹，直接检查被测试 reward 选中的补丁是否偏离 gold fix。"
+      },
+      {
+        "point": "修复测试的执行 ground truth",
+        "detail": "生成的修复测试先过 gold-patch gate，再把 judge 判 BLOCKS 的测试同时跑在 gold 与 exploit 上，用执行结果检验检测与修复，而不是接受 LLM 判决。"
+      }
+    ],
+    "method": "把任务的可破解性定义为存在一个补丁：它能通过环境测试，但与 gold patch 在行为上不同。攻击者看到 issue、fail-to-pass 测试和 gold patch 的一段摘录，生成候选补丁；候选先走 SWE-bench Docker harness，通过的再做正确性检查：先归一化 diff 排除照抄，再由 LLM 针对改动代码写覆盖多个输入的探针，在 gold 上重复运行、在候选上运行，输入结果不同即判 differs。EQS 以 verifier discrimination、exploit 通过率、judge 与执行一致率、跨模型可学习性加权，把任务分为 KEEP/FIX/DROP；FIX 任务进入修复循环，测试先过 gold-patch gate，再由多采样 LLM judge 判 BLOCKS，最后把每个被判测试同时跑在 gold 与 exploit 上作为 ground truth。",
+    "results": "在 49 个 SWE-bench Verified 任务上，Sonnet 4 攻击者使 22.4% 任务接受行为不同于 gold 的补丁，Sonnet 5.5 三次运行升至 57.8%±1.2 pp，说明 hackability rate 依赖攻击者而非仅任务本身。134 个公开提交中，可破解任务 Pass@1 比同难度任务高 28.6 pp，但控制“攻击者能否通过”后效应缩小，三次运行合并 p=0.014。修复侧，61.9% 的 LLM 修复测试在 gold patch 上失败；执行可判定的 BLOCKS 判决 precision 仅 0.51。训练轨迹审计中，873 条 SWE-agent-LM-32B 轨迹有 19.4% 在 issue 描述输入上行为不同，复核认定 6.9% 为错误修复。",
+    "limitations": "样本规模有限：SWE-bench 的仓库覆盖很窄，R2E-Gym 的可判定任务和修复循环中的可破解任务都很少；攻击、测试写作与评审基本来自同一模型家族；探针和 issue 标签由 LLM 生成，只能给出下界，且不能证明两个补丁等价；多模型 Pass@1 分析是相关性，不能单独验证审计；与 gold 不同的补丁也可能是合法替代实现，issue-input 口径更严格但覆盖更窄。",
+    "insights": "最直接的后继工作是把执行级 gold-patch 检查前移到数据构建和 reward 设计：攻击、修复测试、judge 判决都应以 Docker 执行结果为准，errored/skipped 的 gate 检查按失败计。报告 hackability 时必须同时给出攻击者、重复运行和 issue-stated 口径，否则容易把“攻击者能通过”误读成“测试泄漏”；Pass@1 相关性只能作为辅助证据。"
+  },
+  "claims": [
+    {
+      "claim": "Claude Sonnet 4 攻击下 49 个 SWE-bench Verified 任务中 22.4% 可被行为不同于 gold patch 的补丁通过，Claude Sonnet 5.5 三次运行下为 57.8%（SD 1.2 pp）。",
+      "numbers": [
+        "49",
+        "22.4",
+        "57.8",
+        "1.2"
+      ],
+      "source_span": "Section 1, contribution 1",
+      "quote": "22.4% of 49 SWE-bench Verified tasks accept a patch that behaves differently from the gold patch when Claude Sonnet 4 attacks, and 57.8% (three runs, SD 1.2 pp) when Claude Sonnet 5.5 attacks."
+    },
+    {
+      "claim": "在 SWE-agent-LM-32B 微调所用的 873 条执行轨迹中，19.4% 通过了测试，但其补丁在 issue 描述的情形上与 gold fix 行为不同。",
+      "numbers": [
+        "873",
+        "19.4"
+      ],
+      "source_span": "Section 1, contribution 1",
+      "quote": "of 873 executed trajectories from the set SWE-agent-LM-32B was fine-tuned on, 19.4% passed their tests with a patch that behaves differently from the fix on a case the issue describes"
+    },
+    {
+      "claim": "在 134 个公开 SWE-bench 提交上，可被 Sonnet 5.5 破解的 28 个任务 Pass@1 比同难度未标记任务高 28.6 pp，130/134 个模型为正差距。",
+      "numbers": [
+        "134",
+        "28",
+        "28.6",
+        "130"
+      ],
+      "source_span": "Section 5",
+      "quote": "Models pass the 28 tasks that Sonnet 5.5 can hack 28.6 pp more often than unflagged tasks of the same difficulty, 130 of 134 models show a positive gap"
+    },
+    {
+      "claim": "把三次攻击运行的标记合并后，可破解任务仍高于随机可通过任务，p = 0.014。",
+      "numbers": [
+        "0.014"
+      ],
+      "source_span": "Section 1, contribution 2",
+      "quote": "hackable tasks still exceed random passable tasks (𝑝= 0.014)"
+    },
+    {
+      "claim": "LLM 编写的修复测试中有 61.9% 在 gold patch 上失败。",
+      "numbers": [
+        "61.9"
+      ],
+      "source_span": "Section 1, contribution 3",
+      "quote": "61.9% of LLM-written repair tests fail on the gold patch"
+    },
+    {
+      "claim": "92 个 BLOCKS 判决中执行可判定 61 个，其中 31 个真正阻断 exploit，precision 为 0.51（95% CI 0.39–0.63）。",
+      "numbers": [
+        "92",
+        "61",
+        "31",
+        "0.51",
+        "0.39",
+        "0.63"
+      ],
+      "source_span": "Section 6, Table 4",
+      "quote": "Of 92 BLOCKS verdicts, execution decides 61: 31 tests pass on the gold patch and fail on the exploit, 14 fail on the gold patch, and 16 pass on both and block nothing, a precision of 0.51 (95% CI 0.39–0.63; Table 4)."
+    },
+    {
+      "claim": "LLM 复核将 60 条判为错误修复，占 873 条轨迹的 6.9%（95% CI 5.4–8.7%）。",
+      "numbers": [
+        "60",
+        "6.9",
+        "873",
+        "5.4",
+        "8.7"
+      ],
+      "source_span": "Section 4, SWE-agent-LM trajectories",
+      "quote": "It judges 60 to be wrong fixes (6.9% of the 873, 95% CI 5.4–8.7%)"
+    }
+  ]
+}

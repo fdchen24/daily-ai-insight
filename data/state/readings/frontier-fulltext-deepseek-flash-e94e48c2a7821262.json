@@ -1,0 +1,162 @@
+{
+  "title_zh": "掩码不等于物体：面向 3D Gaussian 分割的体积化监督",
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把“渲染 mask 正确”与“3D 选择完整”这两个长期被混同的目标拆开，并同时补上基准（Removal-3D）与指标（RDE），这是 3DGS 物体级编辑绕不开的前置问题。",
+    "novelty": 74,
+    "novelty_reason": "对 alpha 混合特征监督中贡献加权梯度路径的诊断为实质观察，深度簇内全体 Gaussian 的直接监督与移除式体积评测组合是新的；但落点仍是在现有管线上加辅助损失，而非新框架。",
+    "technical_depth": 78,
+    "technical_depth_reason": "有监督投递方式、push 损失、目标聚合三组消融，以及 reweighting/KNN 对照与贡献 CDF 归因，覆盖两类特征学习范式；但精确体积评测仅三个合成场景，自举伪目标未做误差分析。"
+  },
+  "reading": {
+    "why_read": "它把“渲染出的 mask 对”与“选出的 Gaussian 集合是否完整”明确拆开，并给出机制解释：alpha 混合特征的梯度按 w=Transmittance×alpha 分配，被遮挡与低不透明度 Gaussian 几乎收不到监督。VODA 用逐像素深度聚类绕开这条路径直接监督。实测 LaGa 在 Removal-3D 上 mRDE 从 36.93 降到 21.66，同时 LERF 平均 mIoU 从 56.80 升到 60.28，说明补全 3D 选择不必以渲染指标为代价。",
+    "motivation": "现有 3DGS 分割方法——OpenGaussian、LaGa 属自监督，Gaussian Grouping、ILGS 属监督——都把可学习实例特征 alpha 混合成 2D 特征图，再与外部目标对齐或做跨像素对比，梯度因此天然按渲染贡献加权。少数主导 Gaussian 就足以渲染出正确 mask，被遮挡、低 alpha 的同类 Gaussian 因权重小而欠监督甚至完全无梯度；论文用一个 sheep 查询说明“mask 对、移除后仍留残影”。另一类直接关联方法（Lifting By Gaussians 取最大贡献 Gaussian、Dr. Splat 取 Top-k、Quantile Rendering 做分位数采样）虽绕开渲染损失，仍只把像素关联到稀疏子集，在跨视角上始终弱贡献的 Gaussian 依旧无人认领，因此跳过渲染优化本身并不解决问题。评测端 LERF 与 ScanNet 只看渲染 mask 或点云可见表面标签，无法度量被遮挡部分，使完整性缺陷在指标上不可见。",
+    "innovations": [
+      {
+        "point": "把监督从贡献加权路径上摘下来",
+        "detail": "深度感知光栅器关闭 transmittance 提前终止，保留被遮挡的 contributor，按相邻深度差超过自适应阈值（由局部深度差中位数、敏感度系数与上下界裁剪得到）切分成深度簇，取总贡献最大的簇为目标簇；再用整像素渲染特征按 alpha 加权聚合出 detached 伪目标，对簇内每个 Gaussian 直接施加平方 L2 损失，梯度不再乘以渲染权重。"
+      },
+      {
+        "point": "Removal-3D 与 RDE：用移除后的深度变化度量选择完整性",
+        "detail": "在 Blender 中搭建三个室内场景（Table、Kitchen、Room），为每个目标物体提供移除前后的配对深度图。RDE 只在真值目标 mask 区域比较预测移除与真值移除造成的深度变化，并先把预测变化裁剪到真值幅度范围内再取绝对误差，避免“多删”被当作更优。"
+      },
+      {
+        "point": "排除更简单的替代解释",
+        "detail": "梯度重标定（Normalize、Clamp）与 KNN 空间传播在同设定下都劣于 VODA：渲染贡献本身不能判断一个低贡献 Gaussian 是否属于目标，KNN 还可能跨物体边界传播特征。配合恢复 Gaussian 的贡献 CDF 左移，把增益归因到“哪些 Gaussian 收到监督”而非“梯度有多大”。"
+      }
+    ],
+    "method": "VODA 只改特征监督，不动重建场景、特征表示与推理期选择，推理零额外开销。对 OpenGaussian 与 LaGa 在原有特征学习阶段内联，对 Gaussian Grouping 与 ILGS 作为短的特征微调阶段。目标簇选择用总贡献而非最近深度，以降低近相机 floater 的影响；另加像素级 push 损失：同一训练视角内随机采样属于不同非背景 mask 的像素对，当渲染特征余弦相似度超过 margin 时惩罚，缓解深度簇跨越相邻实例导致的特征混合。总目标为基线损失加直接损失与 push 损失的加权和。关键取舍在于：分组依赖重建后 Gaussian 的局部深度聚集性（cloning/splitting 的局部性），且伪目标由被高贡献 Gaussian 主导的渲染特征产生，本质是自举。",
+    "results": "LERF 的 select-then-render 协议下四个基线平均 mIoU 全升：OpenGaussian 37.12→42.98、LaGa 56.80→60.28、Gaussian Grouping 22.75→43.73、ILGS 30.00→49.62，LaGa 的 mAcc@0.25 由 76.33 升到 82.56。ScanNet 文查询分割 19 类上 OpenGaussian 26.20→29.00、LaGa 32.20→33.20，10 类上 LaGa 43.06→45.53。Removal-3D 上四个基线 mRDE 全部下降（OpenGaussian 39.31→27.34、LaGa 36.93→21.66、Gaussian Grouping 50.05→38.12、ILGS 49.98→35.65），同时渲染 mask mIoU 上升（LaGa 75.93→79.07、OpenGaussian 52.87→60.90），说明不是靠扩大选择集合换取低 RDE。消融显示：同样的深度簇目标若仍经渲染路径投递，Gaussian Grouping 的 LERF mIoU 只有 12.40，改为直接监督后到 43.73；push 对 LERF 影响很小，但把 OpenGaussian 在 Removal-3D 的 mRDE 从 32.63 降到 27.34；alpha 加权聚合略优于均匀平均。",
+    "limitations": "作者承认：深度聚类会把相互接触的物体并到一起，也会把内部稀疏的物体切碎，push 损失只能部分缓解；被遮挡 Gaussian 缺乏特征级真值，只能通过下游选择与移除间接评估；精确体积评测只有三个合成场景。我另外读到：伪目标来自完整渲染特征，本身由高贡献 Gaussian 主导，属自举，基线特征在目标上出错时直接监督会放大错误；LERF 上 LaGa 有场景回退（figurines 65.79→63.28、ramen 53.35→50.42）；Gaussian Grouping 与 ILGS 的 LERF 数字是在统一 select-then-render 下重跑，12.40→43.73 这类跃升混入了协议差异，不宜全部记为方法增益；RDE 只在真值 mask 内计算，区域外误选不受惩罚，必须与 mIoU 合看；聚类阈值超参跨基线共享，但未见敏感性分析。",
+    "insights": "监督“送到哪些 primitive”比“信号多强”更决定 3D 表征的完整性——这一视角可直接迁移到 3DGS 的开放词汇查询、物体编辑与组合式场景生成。评测上，用移除或形变后的可观测量（深度变化、渲染差异）作为体积完整性的代理，比继续堆渲染 mask 指标更容易暴露真实缺陷。方法上，深度局部性是几乎免费的先验，值得替换成其他可分组线索（法向、特征相似度、多视角一致性）；而自举伪目标的风险提示，若要有真正的体积真值，仍需引入不依赖基线特征的外部标注或渲染式反解。",
+    "title_zh_note": null
+  },
+  "claims": [
+    {
+      "claim": "LERF 上 OpenGaussian 的平均 mIoU 由 37.12 提升到 42.98",
+      "numbers": [
+        "37.12",
+        "42.98"
+      ],
+      "source_span": "Table 1, OpenGaussian 行 Mean mIoU",
+      "quote": "37.12"
+    },
+    {
+      "claim": "LaGa 在 LERF 上的平均 mIoU 由 56.80 提升到 60.28，mAcc@0.25 由 76.33 提升到 82.56",
+      "numbers": [
+        "56.80",
+        "60.28",
+        "76.33",
+        "82.56"
+      ],
+      "source_span": "Table 1, LaGa 行 Mean",
+      "quote": "56.80"
+    },
+    {
+      "claim": "Gaussian Grouping 在 LERF 上平均 mIoU 由 22.75 提升到 43.73，ILGS 由 30.00 提升到 49.62",
+      "numbers": [
+        "22.75",
+        "43.73",
+        "30.00",
+        "49.62"
+      ],
+      "source_span": "Table 1, Mean mIoU 列",
+      "quote": "22.75"
+    },
+    {
+      "claim": "ScanNet 19 类上 OpenGaussian mIoU 由 26.20 升到 29.00，LaGa 由 32.20 升到 33.20；10 类上 LaGa 由 43.06 升到 45.53",
+      "numbers": [
+        "26.20",
+        "29.00",
+        "32.20",
+        "33.20",
+        "43.06",
+        "45.53"
+      ],
+      "source_span": "Table 2",
+      "quote": "26.20"
+    },
+    {
+      "claim": "Removal-3D 上平均 mRDE：OpenGaussian 39.31→27.34，LaGa 36.93→21.66，Gaussian Grouping 50.05→38.12，ILGS 49.98→35.65",
+      "numbers": [
+        "39.31",
+        "27.34",
+        "36.93",
+        "21.66",
+        "50.05",
+        "38.12",
+        "49.98",
+        "35.65"
+      ],
+      "source_span": "Table 3, Mean mRDE 列",
+      "quote": "39.31"
+    },
+    {
+      "claim": "Removal-3D 上渲染 mask mIoU 同步上升：LaGa 75.93→79.07，OpenGaussian 52.87→60.90",
+      "numbers": [
+        "75.93",
+        "79.07",
+        "52.87",
+        "60.90"
+      ],
+      "source_span": "Table 3, Mean mIoU 列",
+      "quote": "75.93"
+    },
+    {
+      "claim": "同样的深度簇目标若经渲染路径投递，Gaussian Grouping 的 LERF mIoU 仅 12.40，改为直接监督后升到 43.73",
+      "numbers": [
+        "12.40",
+        "43.73"
+      ],
+      "source_span": "§4.3 Supervision delivery",
+      "quote": "where LERF mIoU rises from 12.40 to 43.73"
+    },
+    {
+      "claim": "push 损失对 LERF 影响很小，但把 OpenGaussian 在 Removal-3D 的 mRDE 由 32.63 降到 27.34",
+      "numbers": [
+        "32.63",
+        "27.34"
+      ],
+      "source_span": "Table 4, OpenGaussian 后两行",
+      "quote": "32.63"
+    },
+    {
+      "claim": "在 1/255 阈值下，VODA 找回的 Gaussian 中低贡献者的比例比基线选中的高出 10.2–15.9 个百分点",
+      "numbers": [
+        "10.2",
+        "15.9"
+      ],
+      "source_span": "§4.4, Figure 7 说明",
+      "quote": "10.2–15.9"
+    },
+    {
+      "claim": "六个分析场景中有 8.5–18.7% 的找回 Gaussian 在所有训练视角下贡献为零",
+      "numbers": [
+        "8.5",
+        "18.7"
+      ],
+      "source_span": "§4.4 Contribution reweighting and spatial propagation",
+      "quote": "8.5–18.7%"
+    },
+    {
+      "claim": "Gaussian Grouping 上 Normalize 把 LERF mIoU 提到 34.03，但 Removal-3D mIoU 掉到 1.6",
+      "numbers": [
+        "34.03",
+        "1.6"
+      ],
+      "source_span": "Table 6, Gaussian Grouping 列",
+      "quote": "34.03"
+    },
+    {
+      "claim": "LERF 上 LaGa 并非每个场景都提升：figurines 由 65.79 降到 63.28，ramen 由 53.35 降到 50.42",
+      "numbers": [
+        "65.79",
+        "63.28",
+        "53.35",
+        "50.42"
+      ],
+      "source_span": "Table 1, LaGa 行",
+      "quote": "65.79"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "title_zh": "Mind2Act World：机器人操作中具身认知、物理执行与动作组合的诊断基准",
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把机器人操作失败拆成 Mind、Act 与 Mind2Act 三层，并提供 episode 级失败归因，直接对准“会推理、会执行却不会闭环”的核心瓶颈。",
+    "novelty": 82,
+    "novelty_reason": "同一类任务需求既在隔离视图下评测，又在闭环组合下评测，并用规则、LLM judge 与人工复核生成模型 profile card，区别于只报成功率的 manipulation benchmark。",
+    "technical_depth": 86,
+    "technical_depth_reason": "180 种配置、共享测试实例、物理谓词评分、4,500 条专家演示和 56,700 个计分 episode，配合难度递进与 Clean/Random 对照；但因果归因仍受视图任务不同和推理时暂停时钟限制。"
+  },
+  "reading": {
+    "why_read": "值得读的是它把失败来源拆成 Mind、Act 与 Mind2Act 三个视图，并用同一套物理谓词评分；最强 agent 在三个视图上的 52.7%、39.0%、12.0% 形成明显落差，直接暴露“会想也会做但不会闭环”的问题。诊断 harness 再把失败归因到具体阶段，这比单一成功率更有信息量。",
+    "motivation": "现有 manipulation benchmark 多半把认知推理与物理执行放在同一任务里，只报告任务是否成功，失败无法回溯到推理、执行还是二者衔接；另一些工作虽分开评测推理与执行，却很少检验动作结果能否更新后续决策。机器人真实工作流要求记住订单、按时完成接触操作，并根据温度、位姿等反馈继续下一步，因此需要一个把能力解耦再重新耦合、且能记录阶段与事件的诊断基准。",
+    "innovations": [
+      {
+        "point": "三视图解耦—再耦合的评测设计",
+        "detail": "Mind 任务保留常规抓放、只加大历史依赖；Act 任务直接给出操作目标、只加大时空精度；Mind2Act 把依赖操作串成闭环，让前一步的物理结果决定下一步。这样单视图强弱可与组合表现对照，而不是在同一长任务里混在一起。"
+      },
+      {
+        "point": "物理谓词驱动的可追溯评分",
+        "detail": "成功由仿真器状态与事件判定：放置需释放后被支撑、旋钮读数需释放后稳定、按键需产生有效按压；同时记录阶段、首次可观察错误和部分进度，区分“选错对象”与“没放好”。"
+      },
+      {
+        "point": "规则、LLM judge 与人工复核的失败归因",
+        "detail": "对失败 episode 先由确定性规则用 scorer 与仿真事件定位，再由 LLM judge 看视频和动作或工具调用，不确定样本交人工；最终把失败归到 Mind、Act 或 composition，并汇总为模型画像。"
+      }
+    ],
+    "method": "基准建在 Isaac Sim 的双 ARX X5 平台，30 个桌面任务来自五类真实需求，每个任务 3 个难度、Clean/Random 两种场景，共 180 种配置。所有系统共享任务实例、信息契约和评估器：端到端策略输出关节或末端动作块，agent 通过 move_eef、wait_steps、memory_resolve 等工具行动。评分只看环境侧物理谓词，隐藏仿真状态只给评估器；提供 4,500 条专家演示（75.8 小时）用于微调，评测共 56,700 个计分 episode。诊断层沿 episode 记录定位首个不可恢复错误，再映射到 failure code 和 Mind、Act、composition 三类能力。",
+    "results": "指标为最终成功率与部分进度分，Overall 汇总时 Mind2Act 权重等于两个单视图之和。作者报告最强 agent GPT-6 Astra 在 Mind、Act、Mind2Act 上分别为 52.7%、39.0%、12.0%，Overall 成功率 34.6%；最佳端到端策略 InternW0 的 Overall 为 8.7%，且没有端到端策略在 Mind2Act 超过 3.6%。诊断结果显示 physical execution 是三个被测系统的最大失败组：G0.5 41.4%、InternW0 37.2%、GPT-6 Astra 55.3%。作者据此指出单视图能力不迁移到闭环组合，agent 强在保持任务状态、弱在持续接触，VLA 强在已练动作、弱在任务状态。",
+    "limitations": "作者承认：三个视图是不同任务集合而非对同一系统的干预，Mind2Act 更长且含早期执行错误，因此低分不能完全归因于组合；推理时仿真暂停，定时任务不是实时能力；agent 使用固定工具栈和四倍物理预算；系统覆盖有限（三个 agent、四个 VLA、两个 WAM，且无 hybrid 或 memory-augmented 系统）；全部是单平台桌面仿真，Random 是外观压力测试而非部署场景。我读出的额外问题是：诊断依赖 LLM judge 与人工复核，规则层只覆盖部分失败，跨系统比较仍受接口和预算差异影响。",
+    "insights": "后续最值得做的是作者提出的 oracle 干预：给 Mind2Act 任务注入 Mind oracle 或 Act oracle，测各自增益与剩余组合成本；并用同一初始状态、仅改变是否返回抓取、放置或接触反馈的配对实验，直接测 outcome feedback 的作用。另一个方向是把 profile card 的 breakpoint 转成针对性数据：从失败停点附近的状态采集恢复演示，而不是继续加全长轨迹；对 agent 则改 harness，要求每步返回结果、检查后再继续并允许重试。"
+  },
+  "claims": [
+    {
+      "claim": "最强 agent 在 Mind、Act、Mind2Act 上的成功率分别为 52.7%、39.0%、12.0%。",
+      "numbers": [
+        "52.7",
+        "39.0",
+        "12.0"
+      ],
+      "source_span": "Abstract",
+      "quote": "Even the strongest agent succeeds in 52.7% of Mind and 39.0% of Act episodes but in only 12.0% of Mind2Act episodes."
+    },
+    {
+      "claim": "没有端到端策略在 Mind2Act 上超过 3.6%。",
+      "numbers": [
+        "3.6"
+      ],
+      "source_span": "Introduction, contribution summary",
+      "quote": "no end-to-end policy exceeds 3.6%."
+    },
+    {
+      "claim": "GPT-6 Astra 的 Overall 成功率为 34.6%，最佳端到端策略 InternW0 为 8.7%。",
+      "numbers": [
+        "34.6",
+        "8.7"
+      ],
+      "source_span": "Section 5.2, 'OVERALL'",
+      "quote": "with 34.6% for GPT-6 Astra among the agents and 8.7% for InternW0 among the end-to-end policies."
+    },
+    {
+      "claim": "基准包含 30 个任务，每个任务 3 个难度和 2 种场景，共 180 种配置。",
+      "numbers": [
+        "30",
+        "3",
+        "2",
+        "180"
+      ],
+      "source_span": "Abstract",
+      "quote": "We introduce Mind2Act World, a diagnostic benchmark of 30 simulated manipulation tasks from five real-world application domains. Each task has three difficulty levels and two scene settings (Clean and Random), yielding 180 configurations."
+    },
+    {
+      "claim": "提供 4,500 条专家演示，共 75.8 小时。",
+      "numbers": [
+        "4500",
+        "75.8"
+      ],
+      "source_span": "Introduction",
+      "quote": "4,500 demonstrations (75.8 hours) are provided for fine-tuning end-to-end policies."
+    },
+    {
+      "claim": "九个系统合计 56,700 个计分 episode。",
+      "numbers": [
+        "56700"
+      ],
+      "source_span": "Section 5.1.3",
+      "quote": "the nine evaluated systems account for 56,700 scored episodes."
+    },
+    {
+      "claim": "physical execution 是三个被测系统的最大失败组：G0.5 41.4%、InternW0 37.2%、GPT-6 Astra 55.3%。",
+      "numbers": [
+        "41.4",
+        "37.2",
+        "55.3"
+      ],
+      "source_span": "Section 6.2",
+      "quote": "Physical execution is the largest diagnosed failure group in all three systems, accounting for 41.4% of G0.5’s failures, 37.2% of InternW0’s, and 55.3% of GPT-6 Astra’s."
+    }
+  ]
+}

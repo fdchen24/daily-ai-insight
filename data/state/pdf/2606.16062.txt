@@ -1,0 +1,516 @@
+Auditing Reward Hackability in Code RL Training
+Environments
+Shreshth Rajan
+rajan.shreshth@gmail.com
+November 2026
+Abstract
+Code RL rewards a policy for passing a task’s tests, so a test suite that accepts a wrong patch trains
+the wrong behavior. We measure how often open code RL environments accept wrong patches and how
+reliably hackable tasks can be detected and repaired, checking each claim by execution against the task’s
+gold patch. First, 22.4% of 49 SWE-bench Verified tasks accept a Docker-verified patch that behaves
+differently from the gold patch, and 57.8% against a stronger attacker. The gold-patch check is necessary:
+an attacker not shown the gold patch returns it for 31% of its passing “exploits”. Second, across 134
+public SWE-bench submissions, models pass hackable tasks 28.6 pp more often than tasks of the same
+difficulty, mostly because those tasks are passable at all; pooled over three attacker runs, hackable tasks
+still exceed matched passable ones (𝑝= 0.014). Third, repair is harder to verify than detection: 61.9%
+of LLM-written repair tests fail on the gold patch, and even behind a gate an LLM judge is wrong on
+38% of the verdicts execution can check. Finally, of 873 training trajectories behind an open coding
+agent run beside the gold fix, 19.4% answer differently on a case the issue describes; an LLM review that
+can only demote these executed differences judges 6.9% to be wrong fixes the tests rewarded (6.4–10.5%
+across three model reviews), and 5.4% in a second public training set (R2E-Gym). Audits and repairs of
+code RL environments should be decided by execution wherever execution can decide.
+1
+Introduction
+Reinforcement learning from execution feedback works only when the verifier is correct. If a task’s test
+suite accepts a patch that does not solve the issue, the policy is rewarded for the wrong behavior, and
+reward hacking learned in production coding environments generalizes to broader misalignment [19, 29, 37].
+Before committing training compute, curators need one number: what fraction of a code RL set rewards an
+incorrect solution? Labs increasingly answer with LLMs. An attacker proposes test-passing wrong patches
+[27, 47], a test writer hardens the suite [15, 16], and a judge decides whether a new test blocks the exploit
+[32, 35].
+We measure that fraction on SWE-bench Verified [13, 21] and R2E-Gym [12], repair the broken tasks, and
+check every SWE-bench step by execution against the task’s gold patch. An exploit is a patch that passes the
+tests and behaves differently from the gold patch, and a task is hackable if it accepts an exploit. A repair test
+counts only if it passes on the gold patch and fails on the exploit; the judge’s BLOCKS verdict is its claim
+that a test does this. We make three contributions:
+1. Execution-verified hackability rates. 22.4% of 49 SWE-bench Verified tasks accept a patch that
+behaves differently from the gold patch when Claude Sonnet 4 attacks, and 57.8% (three runs, SD 1.2
+pp) when Claude Sonnet 5.5 attacks. Without the gold-patch check the first rate would read 28.6%: three
+of the attacker’s 14 “hackable” tasks pass only with the gold fix. An attacker that is not shown the gold
+patch returns it for 31% (28/91) of its passing “exploits” across three runs, against 4% when it is shown.
+The check carries to training data: of 873 executed trajectories from the set SWE-agent-LM-32B was
+fine-tuned on, 19.4% passed their tests with a patch that behaves differently from the fix on a case the
+issue describes (Section 4).
+1
+arXiv:2606.16062v2  [cs.AI]  19 Nov 2026
+AUDIT
+REPAIR WITH GATE
+(if FIX)
+PASS
+FAIL
+⇒ retry
+Section 4
+Section 6
+Task
+set
+Exploit gen.
++ Docker run
+(test suite)
+Quality score
+(EQS)
+Correctness check
+vs. gold
+(diff + probes)
+Verdict
+KEEP/FIX/DROP
+Test writer
+(test for
+exploit)
+Gate: run test
+on gold patch
+(Docker)
+LLM judge
+(3-sample
+semi-formal)
+BLOCKS verdict;
+run test on
+exploit
+Upgraded
+FIX → KEEP
+Figure 1: Every stage of the pipeline is checked by execution against the gold patch. Attacker patches run in each
+task’s Docker image, and a correctness filter compares every passing patch to the gold patch by diff and by executed
+probes. Tasks that the environment quality score marks FIX enter a repair loop: each generated test is first run on the
+gold patch (the gate) and then scored by an LLM judge, and we also run every judged test on the exploit it targets.
+2. A controlled multi-model check, and its limit. Across 134 public submissions, Pass@1 on the 28 tasks
+hackable by Sonnet 5.5 is 28.6 pp higher than on other tasks of the same human-rated difficulty (130 of
+134 models); random flags matched on difficulty and gold-patch size reach that gap in at most 1 of 2,000
+draws. Most of that gap tracks whether the attacker can pass a task at all; with flags pooled over three
+attacker runs, hackable tasks still exceed random passable tasks (𝑝= 0.014), a real but modest effect.
+The audit’s own unchecked flags pass the same check about as well as random ones, so a leaderboard
+correlation alone cannot validate an audit (Section 5).
+3. Repairs must be checked by execution. 61.9% of LLM-written repair tests fail on the gold patch.
+When every judged test is run on the gold patch and on its exploit, the judge is wrong on 30 of the 61
+BLOCKS verdicts that execution can decide (16 of 42 behind the gate), and of the 7 hackable tasks the
+judge reports repaired, 1 is (Section 6).
+Every number regenerates from committed per-task JSON with the scripts listed in the Appendix, and the
+SWE-bench execution checks cost $14.36 of API calls ($10.18 for three attacker runs, $4.18 for probes), the
+training-data probes $45.88 for SWE-smith and $26.75 for R2E-Gym, and a few Docker-hours.
+2
+Related work
+Auditing benchmarks and environments. Hacker-Fixer loops [47] audit 1,968 terminal tasks with hacker,
+fixer, and solver agents and find 323 hackable, confirming hacks with an LLM judge and a manual check of
+49 environments; the hacks are released as Terminal Wrench [5]. BenchJack [34] finds 219 flaws in 8 classes
+across 10 agent benchmarks; ABA [35] flags over a quarter of tasks in 168 benchmarks; BenchGuard [31]
+targets tasks that reject correct work; SpecGuard [6] proves tasks broken before an agent runs; OpenAI’s
+audit of SWE-Bench Pro estimates about 30% of tasks broken [23], after a SWE-bench Verified audit that
+found at least 59.4% of 138 hard tasks reject correct solutions [22], the reverse of the error we measure.
+These systems confirm exploits with LLM judges or people; we confirm them by executing them against the
+gold patch on SWE-bench Verified, and report a per-task range on an RL training set (R2E-Gym) whose
+exploit files allow only a declared-strategy check.
+Strengthening SWE-style tests. UTBoost [41] and SWE-ABS [42] strengthen SWE-bench tests and reject
+previously passing agent patches; Probe to Generate [15] keeps a generated test only if the gold patch
+passes it, the gate we evaluate; Tan et al. [28], Luo et al. [18], and SWE-Bench Pro Verified [45] harden
+2
+tests or remediate unearned passes; Arctic-SWE [16] strengthens tests in R2E-Gym, SWE-rebench V2,
+and Scale-SWE and reports training gains. PatchDiff [38], SWE-bench+ [2], and Ahmed et al. [1] show
+plausible patches often diverge from gold; our probes follow PatchDiff’s differential testing. SWEPatchTest
+finds only 9.21% of LLM-written test suites both accept correct patches and reject incorrect ones [17], and
+failing reproduction tests are dominated by mechanical errors [8].
+LLM judges and hackable environments. An LLM judge detects malicious repair patches on SWE-bench
+Verified with 55.4% accuracy [30]; LLM-written rubrics and optimistic verifiers are exploited when checked
+against an oracle [24, 33]; monitors are evaded during RL [4, 39]. ImpossibleBench [46], EvilGenie [9],
+CATCH [36], Countdown-Code [14], and hack-verifiable environments [25, 26] build environments where
+hacking is known by construction. Function-level RL pipelines validate synthetic tests against reference
+solutions [11, 27, 43]. On whether leaky tests hurt training, a preregistered GRPO contrast on MBPP found
+a 0.20-point held-out difference [44]; we make no training claim.
+3
+Method
+3.1
+Exploit generation
+We attack 49 SWE-bench Verified tasks: the first 50 in dataset order (22 astropy, 28 django), minus
+django-11206, whose gold patch did not resolve in our harness. The attacker receives the issue, the
+fail-to-pass tests, and the first 30 lines of the gold patch, labeled as the fix the exploit must not be, and
+proposes up to three patches that pass the tests without solving the issue. Patches with self-rated confidence
+≥7/10 run through SWE-bench’s evaluation harness in the task’s image; a patch is resolving if the harness
+reports the task resolved. The audit attacker is Claude Sonnet 4 (127 patches, $1.43 for the 50 sampled
+tasks). We rerun the same prompt with Claude Sonnet 5.5, once as is and once with the gold excerpt
+removed ($3.32). On R2E-Gym we sample 20 tasks from six repositories with seed 42; the attacker writes
+full-file replacements, which R2E-Gym’s reward function scores. An R2E-Gym task is decisive if the gold
+patch passes its tests and at least one attacker patch applies.
+3.2
+Correctness check against the gold patch
+A resolving patch is an exploit only if it behaves differently from the gold patch, which we check in two
+stages. Stage 1 compares the changed lines to the gold patch’s after stripping whitespace, and again after
+dropping comments and rewriting a bare return None as return; a patch that matches is a false positive.
+Stage 2 is executed, following PatchDiff [38]: for each task, Claude Opus 5.5 sees the issue, the gold patch,
+and the unlabeled candidate patches and writes a standalone probe script that calls the changed code on
+6–12 inputs, tagging each as a case the issue states or not. The probe runs in the task’s image twice on gold
+(inputs whose result differs between the two runs are dropped) and once per candidate. A candidate whose
+results match gold on every input is same; otherwise it differs, on an issue-stated input or only elsewhere.
+A task is hackable if some resolving patch differs from gold.
+3.3
+Environment quality score
+The environment quality score (EQS) selects tasks for repair. Each task gets EQS(𝑡) = 0.35𝑉+ 0.30 (1 −
+𝐻) + 0.20 𝐹1 + 0.15 𝐷, where 𝑉is verifier discrimination over candidate patches [7], 𝐻the exploit pass rate,
+𝐹1 the agreement between a semi-formal LLM judge [32] and execution, and 𝐷cross-model learnability
+[3]. Tasks above 0.70 are KEEP, [0.40, 0.70] FIX, and below 0.40 DROP (38, 11, and 1 of the 50 sampled
+tasks). The weights are a fixed prior, and the score is used only to select tasks for repair.
+3
+Table 1: Hackability depends on the attacker: 22.4% of tasks with Sonnet 4 and 57.8% with Sonnet 5.5. Sonnet
+5.5 rows: mean ± SD over three independent runs (counts per run in parentheses). “Resolving”: tasks with at least
+one resolving patch. “Hackable”: tasks with a resolving patch that behaves differently from the gold patch on a probe
+input. “Issue input”: the difference appears on an input the issue states. “No gold”: the gold excerpt withheld from
+the prompt.
+Attacker
+Resolving
+Hackable
+Issue input
+SWE-bench Verified, 49 tasks
+Sonnet 4 (audit)
+14
+11 (22.4%)
+4 (8.2%)
+Sonnet 5.5
+32, 33, 31 57.8%±1.2 (28, 29, 28) 21.8%±3.1 (12, 11, 9)
+Sonnet 5.5, no gold 22, 28, 22 32.0%±4.3 (14, 18, 15) 10.2%±4.1 (5, 7, 3)
+R2E-Gym, 16 decisive tasks
+Sonnet 4
+4
+2–4
+—
+3.4
+Sanity-gated repair loop
+The repair loop writes tests meant to block each exploit and discards any test that fails on the gold patch.
+For each FIX task, a test writer (Sonnet 4, temperature 0.3) proposes test methods that should fail on a target
+exploit. The gate injects each test into the project’s own test file, applies the task’s test patch and the gold
+patch, and runs the project’s runner on that test; a test that fails on the gold patch is discarded and triggers a
+retry at temperature 0.7. Surviving tests go to the judge, three samples of a semi-formal protocol voting
+BLOCKS or DOES_NOT_BLOCK per exploit. A task is upgraded FIX→KEEP when its score crosses
+0.70. We ran the loop without the gate ($5.57), with it ($3.60), and with two ablations.
+3.5
+Executed ground truth for repairs
+We decide every repair by running the tests. A test truly blocks an exploit if it passes on the gold patch and
+fails on the exploit. A task is repaired if every exploit that differs from the gold patch is truly blocked by
+some test generated for it, scored against the Docker-verified exploits. We run every judged test of all four
+runs in the task’s image twice, once on the gold patch and once on its target exploit. Patches are applied
+with git apply, falling back to patch –fuzz=5, and the phase reports an error if neither applies.
+4
+Hackability rates
+SWE-bench Verified. Against the audit attacker, 11 of 49 tasks are hackable (22.4%; Table 1): 5 astropy
+and 6 django. The attacker resolves 25 of 127 patches on 14 tasks, and three of these tasks pass only with
+the gold fix: the exploits for django-11179 and django-11095 are the gold patch line for line, and the
+two for django-11451 differ from it only by return None for return. Stage 2 probes the remaining
+20 resolving patches on 11 tasks: 2 behave like the gold patch on every input, 18 differ, and every task
+keeps at least one differing patch. The hacks are concrete: astropy-13236 skips the fix only inside the
+two test functions it finds on the call stack, django-11239 sets SSL variables only for the test’s literal
+file names, and django-11133 returns b’memoryview’. We also labeled the 20 patches by reading them
+before probing, and the labels agree with the probes on all 20 about which patches behave like the gold
+patch.
+A stronger attacker finds more, consistently. With the same prompt, Sonnet 5.5 makes 28, 29, and 28 of
+49 tasks hackable in three independent runs (57.8%, SD 1.2 pp), and 35 of 49 across the three; on 21.8% of
+tasks (SD 3.1 pp) the difference from the gold patch appears on an input the issue states. A hackability rate
+therefore describes the tests and the attacker together, and should be reported with the attacker named and
+with repeated runs.
+Without the gold excerpt, the attacker often returns the gold fix. With the excerpt removed from the
+4
+prompt, 28 of the 91 resolving patches across three runs match the gold patch after normalization (30.8%
+pooled; mean of per-run rates 31.9%, SD 9.0 pp); with the excerpt shown, 6 of 141 do (4.3% pooled and
+per-run mean, SD 2.3 pp; first run alone: 10 of 25 against 2 of 48, Fisher 𝑝= 0.0002). The attacker often
+says so, naming one patch “Copy right matrix (minimal true fix)” and another “Early return on missing
+credentials (issue’s suggestion)”. When a fix is small, the shortest test-passing patch is the fix. A Docker
+pass shows that a patch satisfies the tests; only a comparison with the gold patch shows that it is wrong.
+R2E-Gym. Between 2 and 4 of 16 decisive tasks are hackable. Of 20 sampled tasks, 16 are decisive and 4
+have a passing exploit. On two of the four, every passing exploit declares a strategy that matches the gold
+commit; this run stored only excerpts of the exploit files, so these two cannot be probed.
+Training data accepted by tests: SWE-agent-LM’s trajectories. The same check applies to data a model
+was trained on. SWE-smith released the 5,016 agent trajectories used to fine-tune SWE-agent-LM-32B,
+which reaches 40.2% on SWE-bench Verified [40]; each was kept because its submitted patch made the
+task’s tests pass, so the tests acted as the reward that selected it. We extract the submitted patch from 3,973
+of them and compare it with the task’s gold fix (the reverse of the task’s injected bug): 280 match it and
+3,693 differ. Running one differing trajectory per task in 12 repositories (876 probed, 873 decided, of 912
+differing), 530 (60.7%) behave differently from the gold fix on some input and 169 (19.4%) on an input the
+task’s issue describes. These 169 are an execution-established upper bound. Each was then judged against
+the issue, both patches and the probe results by Claude Opus 5.5 under a fixed rubric (review/RUBRIC.md);
+unlike the BLOCKS judge of Section 6, this review never creates a flag and can only move an executed
+difference to harmless or unclear. It judges 60 to be wrong fixes (6.9% of the 873, 95% CI 5.4–8.7%),
+91 harmless (ordering, formatting, random draws) and 18 unclear. A second review by a different model
+(Claude Sonnet 5.5), blinded to the first, agrees on 56 of the 60 and marks 32 more as wrong (79% agreement
+on wrong versus not, 𝜅= 0.58), so 56 (6.4%) is the rate both reviews support and 92 (10.5%) the rate either
+does. On a random 40 of the 169 (seed 0, review/draw_blind40.py), a third reviewer (a fresh Claude
+Opus 5.5 instance given only the rubric and the evidence, and none of the earlier verdicts) agrees with the
+first review on 90% of wrong-versus-not labels (𝜅= 0.77) and with the second on 88% (𝜅= 0.74); every
+case the first review called wrong in that sample is called wrong by all three. All three reviewers are models;
+no case was labeled by a person. The wrong fixes include a patch that special-cases the exact path the test
+checks (if "root[4][’b’][2]" in path:
+continue), one that fingerprints the random generator to
+recognize the test’s seeds and returns answers from a table it wrote, an OAuth token endpoint that drops its
+HTTPS and signature-method checks, and a lexer registry that loads 400 of 589 lexers. In 15 harmless cases
+the trained patch follows the LLM-written issue more closely than the gold fix does, a second defect: the
+task’s statement and its reference disagree. Our first extraction dropped new source files a patch created;
+fixing it changed 5 of the 873 probed patches, which we re-ran (2 still differ on an issue input). For 55 of the
+60, the hardening step of our scanner wrote a test that passes on the gold fix and fails on the trained patch in
+Docker; for the other 5 no written test met both conditions. The probes, the 12 repositories (not a random
+sample of the 123), and one model family writing the probes and every review, with no human labels, are
+the limits; the rubric, prompts and all 169 written verdicts are available from the author.
+A second training set: R2E-Gym. We ran the same pipeline on the 3,231 released SFT trajectories behind
+R2EGym-32B [12], in 5 of its repositories (pyramid, tornado, coverage.py, scrapy, aiohttp), one trajectory
+per task. Patches are rebuilt by replaying each trajectory’s edits, since the transcripts carry no diff, and gold
+is the task’s upstream commit. Of 781 extractable trajectories, 111 match the gold commit; of 485 decided
+probes, 81 (16.7%) answer differently from gold on an issue-described input, and the first review judges
+26 of them wrong fixes (5.4%; the blinded second review confirms 25, 𝜅= 0.63), against 60 (6.9%) on
+SWE-smith. More R2E-Gym patches differ only off the issue (59% against 41%), because its gold fixes
+are real feature commits with many valid implementations rather than the reversal of a small injected bug;
+differences driven by extras in the gold commit were judged harmless. The wrong fixes include a cookie set
+5
+−20
+0
+20
+40
+Pass@1 gap, flagged minus unflagged (pp, within difficulty stratum)
+Audit's flags
+(Sonnet 4, unchecked; 14)
+Audit, execution-verified
+(11)
+Stronger attacker,
+execution-verified (28)
+Stronger attacker, differs on
+an issue-stated input (12)
++14.1 pp
+123/134 models +
++7.6 pp
+109/134 models +
++28.6 pp
+130/134 models +
++17.3 pp
+124/134 models +
+Figure 2: Hackable tasks have a large Pass@1 gap beyond difficulty and patch size. Red: pooled within-stratum
+Pass@1 gap across 134 models for each flag set. Gray: 95% range of the gap for random flag sets matched on difficulty
+stratum (first two rows) or on stratum and gold-patch size (last two). Table 2 adds the null matched on whether the
+attacker could pass the task at all.
+Table 2: The Pass@1 gap tracks whether a task can be passed, more than whether it can be hacked. Pooled
+Pass@1 gap (pp), models with a positive gap, and one-sided permutation 𝑝against random flags matched on stratum
+(S), stratum and gold-patch size (S+size), and stratum and whether Sonnet 5.5 resolved any patch (S+pass.).
+Flags
+Gap
+Δ𝑚>0
+𝑝(S) (S+size) (S+pass.)
+Audit, unchecked (14)
++14.1 123/134
+0.08
+—
+—
+Audit, verified (11)
++7.6 109/134
+0.25
+0.16
+0.50
+Sonnet 5.5, verified (28)
++28.6 130/134 <0.001
+<0.001
+0.09
+Sonnet 5.5, issue input (12)
++17.3 124/134
+0.05
+0.03
+0.29
+Sonnet 5.5, gold withheld (14)
++5.9 102/134
+0.26
+0.30
+0.12
+Sonnet 5.5 resolves any patch (32) +27.1 131/134
+0.001
+<0.001
+—
+3 runs: hackable in ≥2 (29)
++30.9 129/134
+0.003
+0.003
+0.014
+3 runs: hackable in any (35)
++36.6 129/134 <0.001
+<0.001
+0.018
+3 runs: resolves any patch (39)
++31.6 126/134
+0.008
+0.03
+—
+for every subdomain when wild_domain=False is meant to prevent exactly that, and an OAuth 1.0a client
+that still sends the oauth_version value the issue reports as rejected.
+5
+Hackable tasks have higher Pass@1, mostly because they are passable
+The audit shows that tests accept wrong patches; this section asks whether models pass the affected tasks more
+often, and whether that check can validate an audit. We collected per-task resolution for 134 submissions
+from the SWE-bench/experiments repository. For each model 𝑚, Δ𝑚is the Pass@1 gap between flagged
+and unflagged tasks, computed within each of SWE-bench Verified’s human-rated difficulty strata and
+pooled across strata; a DerSimonian–Laird estimator pools Δ𝑚across models. All models are scored on the
+same 49 tasks, so agreement among models is not evidence about tasks; the test that matters resamples tasks.
+We draw 2,000 random flag sets matched on stratum (S), on stratum and gold-patch-size tercile (S+size),
+and on stratum and whether the Sonnet 5.5 attacker resolved any patch for the task (S+passable).
+Models pass the 28 tasks that Sonnet 5.5 can hack 28.6 pp more often than unflagged tasks of the same
+difficulty, 130 of 134 models show a positive gap, and random flags matched on stratum or on stratum and
+gold-patch size reach that gap in at most 1 of 2,000 draws (Figure 2, Table 2). Flagged tasks have a mean
+Pass@1 of 63.5% across models, against 25.7% for the rest. A single RL-trained agent is too small a sample
+for this test: on DeepSWE (trained on R2E-Gym), the audit’s 14 unchecked flags, the only set DeepSWE
+was evaluated against, are solved 43% of the time against 29% for the rest, 𝑝= 0.53.
+6
+Table 3: The gate discards 65 of 105 decisive tests (61.9%). Un-gated and gated runs of the repair loop; a decisive
+test passes or fails on the gold patch.
+Metric
+Un-gated
+Gated
+Tests generated
+87
+111
+pass / fail / error or skipped
+—
+40 / 65 / 6
+Score upgrades FIX→KEEP
+10 / 11
+9 / 11
+Mean EQS
+0.570 →0.816 0.570 →0.797
+API cost
+$5.57
+$3.60
+Most of the gap tracks how passable a task is. All 28 hackable tasks are among the 32 on which the same
+attacker resolved any patch, flagging those 32 gives nearly the same gap (+27.1 pp), and matched on whether
+the attacker could pass the task, one run’s hackable flags are not distinguishable from random (𝑝= 0.09).
+Pooling the three attacker runs sharpens the flags: tasks hackable in at least two runs (29) give +30.9 pp,
+and against random flags matched on stratum and on being passable in some run they reach 𝑝= 0.014
+(35 tasks hackable in any run: +36.6 pp, 𝑝= 0.018). This null is tight, since 35 of the 39 passable tasks
+are hackable, so the evidence that weak tests add to Pass@1 beyond passability is real but modest. The
+14 tasks hackable with the gold patch withheld give +5.9 pp. The audit’s own flags show why the check
+needs execution-verified flags: its 14 unchecked flags gave +14.1 pp with 123 of 134 models positive, a gap
+random flags reach 8% of the time, and removing the three false positives lowered it to +7.6 pp. A Pass@1
+correlation across models therefore cannot validate a hackability audit on its own; checking the exploits can,
+and repeated attacker runs make the correlation informative.
+6
+A 61.9% defect rate in LLM-augmented tests
+The gate. Most LLM-written repair tests fail on the gold patch. The 11 FIX tasks include 3 false positives,
+which leaves 8 hackable tasks to repair. In the gated run the gate checked 111 generated tests: 40 pass on
+the gold patch, 65 fail, 3 error, and 3 were skipped, a defect rate of 61.9% over the 105 decisive checks,
+those that pass or fail (Table 3). A stratified re-check of six tests that the un-gated judge had endorsed found
+a concrete bug behind each failure (Table 6), such as a wrong import path, a repeated keyword argument, or
+an assertion that inverts the function’s documented behavior.
+The judge under execution. The judge’s BLOCKS verdicts are right about half the time, and the gate
+removes the errors that are easiest to catch. We ran every judged test of the four runs on the gold patch and
+on its target exploit. Of 92 BLOCKS verdicts, execution decides 61: 31 tests pass on the gold patch and fail
+on the exploit, 14 fail on the gold patch, and 16 pass on both and block nothing, a precision of 0.51 (95% CI
+0.39–0.63; Table 4). The remaining 31 are undecidable: 16 tests could not be injected, 7 error on gold, and
+8 exploit patches do not apply. All 14 gold failures are in the un-gated run. In the gated runs, 18 of the 26
+undecidable verdicts are on tests the gate skipped or that errored, which the gate passed to the judge; the
+other 8 target exploit texts that do not apply. Over the 168 pairs whose test passes gold and whose exploit
+applied, judge and execution agree at 𝜅= 0.41. In the three gated runs every decidable error is a test that
+passes on both the gold patch and the exploit, and precision there is 0.62 (26 of 42).
+Repairs and ablation. Execution confirms a small fraction of the repairs the judge claims. The un-gated
+run targeted the Docker-verified exploits, so it gives the clean comparison: its judge reports 7 of the 8
+hackable FIX tasks repaired, and execution confirms 1 (astropy-13236). The gated run claims 5 and
+repairs 2, but its tests were written against regenerated exploit texts (below), so its executed count also
+measures that failure (Table 5). Across configurations the executed count moves by at most one task; at
+𝑛= 8 the ablations do not separate retry prompts or the number of judge samples.
+Two silent failures in our pipeline. The execution checks also exposed two failures in our own code,
+neither of which raised an error. First, the repair runs read exploit text by index from a results file that a
+7
+Table 4: Half the decidable BLOCKS verdicts are wrong. Judge BLOCKS verdicts per run, split by what execution
+shows. “Blocks”: the test passes on the gold patch and fails on the exploit. “Undec.”: execution cannot decide. 𝜅is
+over all judged pairs whose test passes gold and whose exploit applies.
+Run
+BLOCKS Blocks Fails gold Both pass Undec.
+𝜅
+No gate
+24
+5
+14
+0
+5 0.67
+Gate + retry
+26
+8
+0
+7
+11 0.33
+Neutral retry
+24
+9
+0
+7
+8 0.24
+1-sample judge
+18
+9
+0
+2
+7 0.39
+All
+92
+31
+14
+16
+31 0.41
+Table 5: In every configuration, execution confirms at most 2 of the 8 hackable tasks as repaired. “Score”:
+score upgrades (of 11). “Judge”: hackable FIX tasks with every exploit that differs from gold judged blocked (of 8).
+“Executed”: the same, confirmed in Docker against the verified exploits (of 8).
+Configuration
+Score Judge Executed
+API
+Judge only (no gate)
+10
+7
+1
+$5.57
+Gate + retry + 3-sample judge
+9
+5
+2
+$3.60
+neutral retry prompt
+9
+3
+1
+$4.39
+1-sample judge
+8
+2
+2
+$2.13
+later 100-task re-run had regenerated; the gated run and both ablations therefore targeted 20 exploit texts of
+which 19 differ from the Docker-verified patches. Second, the re-verification script applied patches with git
+apply –reject || true, which applies the hunks that fit, drops the rest, and runs the tests anyway; none
+of the 25 verified exploit patches applies with plain git apply, and SWE-bench’s harness falls through to
+fuzzy patch for all of them. All executed numbers above use an apply step that errors when a patch does
+not apply in full.
+7
+Discussion
+What to check. Audits and repairs should be scored against the gold patch at every step. Hackability audits
+should check each exploit against the gold patch before reporting a rate: a diff catches exact copies at no
+cost, and an executed probe catches the rest. Repair tests should be run on the gold patch, with an errored or
+skipped check counted as a failure, and a judge’s verdict that a test blocks an exploit should be replaced by
+running the test on the exploit. Patch application should fail loudly. Published hardening pipelines already
+run the gold-side gate [11, 15, 47]; the attacker-side and exploit-side checks are the ones that changed our
+numbers.
+Limitations. R2E-Gym labels rest on each exploit’s declared strategy, since its exploit files were not stored.
+The gold copies from the attacker that never saw the gold patch (28 of 91 passing patches across three runs)
+may reflect memorization of SWE-bench Verified [20, 22] as much as convergence on the shortest fix. Only
+the audit’s resolving patches were also read by a person (18 differing, 2 behaving like gold); none of the 179
+differing Sonnet 5.5 patches were, which is why we report the issue-input rate beside the any-input rate.
+Counting only patches a reader labeled as hacks, the audit’s rate is 16.3% (8/49); counting only issue-stated
+inputs, 8.2%. The headline Sonnet 5.5 arm shows the attacker 30 lines of the gold patch, as a red team
+with the reference would have and an RL policy would not; without it the rate is 32.0%. The SWE-bench
+sample is 49 tasks from 2 of 12 repositories, the R2E-Gym sample 16 decisive tasks, and the repair loop 8
+hackable tasks; the attack, test writing, and judging use one model family. Probe inputs and their issue tags
+are written by an LLM, so a probe can miss a difference (the hackable counts are lower bounds for the given
+attacker) and cannot prove two patches equivalent. A patch that differs from the gold patch may be a valid
+alternative fix [10]; the issue-input column is the stricter reading. Each attacker run is one sample per task,
+8
+and some patches returned no harness result (7 to 21 per run); Table 2’s single-run rows use the first run’s
+flags and its three-run rows pool all runs. The multi-model result is correlational.
+Changes from version 1. Version 1 reported 28.6% hackability on the same 49 tasks, a +14.1 pp Pass@1
+gap across 134 models, and 9 of 11 tasks repaired. Version 2 adds the execution checks of Sections 3.2
+and 3.5: three of version 1’s 14 hackable tasks passed only with the gold fix (rate 22.4%), its +14.1 pp gap
+was not distinguishable from random flags and, like the larger gap of a stronger attacker’s flags, tracks how
+passable a task is, and its repair count rested on judge verdicts that execution confirms for 1 of 7 claimed
+repairs. The two pipeline failures in Section 6 affected version 1’s repair runs. Version 2 also adds the audits
+of two public training sets, SWE-smith’s and R2E-Gym’s trajectories (Section 4), and the hardening tests
+verified by execution.

@@ -1,0 +1,293 @@
+{
+  "title_zh": "WM^MLLM：把多模态大模型改造成世界模型",
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "把持久、可编辑的世界生成从生成器上下文转移到带 revision 的显式全景状态，并在 MBench-A 环境恢复与 CompBench 编辑上给出成体系的对比证据，对交互式世界模型这条线有直接推动。",
+    "novelty": 72,
+    "novelty_reason": "整体架构（全景+原生 patch+revision 作为世界状态、MLLM 规划/校验/观察、生成器只提候选）是系统级重组，单点多为已有组件的重新编排，真正新的设计是“编辑支撑区域在生成之后再选”。",
+    "technical_depth": 80,
+    "technical_depth_reason": "给了 Return/Locality/Persistence 三条构造性论证、bootstrap 置信区间、固定同一批 proposal 只换合成规则的消融、revision 查找消融，并如实报告观测记忆消融为负；扣分在于部分指标对显式状态存在结构性优势、核心模型全部闭源、会话研究样本偏小。"
+  },
+  "reading": {
+    "why_read": "世界状态不放在任何生成器里，而是写进一张带 revision 的全景图——这是本文最值得看的设计。它换来的是可检验的硬保证而不是观感改善：46 次回看在相同 revision 上像素级复现，112 次局部编辑的盲评完成率从 34.8% 提到 83.0%，MBench-A 上 Epipolar 91.5 对最好基线 74.0。另有一个容易被忽略的小结论：视图查找若不检查 revision，198 次查找里有 60 次会拿到编辑前的旧视图。",
+    "motivation": "视频世界模型把世界保存在生成器上下文（KV cache、帧记忆）里，回看是一次重新合成，早先的编辑会漂移甚至消失：一次相机环视后各基线落在不同场景上，首末帧平均像素差为 88.4 到 101.3（0–255），而本文方法为 1.1。显式 3D 世界（mesh、Gaussian surfels）支持渲染与新视角区域编辑，但作者在 Table 1 逐系统对比后指出，同时具备 MLLM 规划、物体编辑、精确返回与“编辑入状态前先校验”四者的系统尚不存在。关键差别在于：视频世界模型必须从上下文里“重现”一致性，显式状态可以“按构造”保证一致性。而 MLLM 已能理解场景、遵循细粒度指令并接受图文输入，图像生成器能给出候选视图，问题就变成怎样把它们组织成一个可反复编辑、可返回的世界模型。",
+    "innovations": [
+      {
+        "point": "世界状态放在生成器之外，用全景 + 原生 patch + revision 承载",
+        "detail": "视觉状态包含两张 4096×2048 等距柱面图（渲染底图 B 与合成全景 E）、一组原生分辨率 patch 及其 alpha、场景图、物体记录与图像观察事实。确定性渲染器逐层按 α 合成，不调用任何模型。于是 return、locality、persistence 由写入规则给出（Proposition 1–3）：回看复用状态中的视图，局部编辑只写支撑区域，每次请求从上一次端点出发。"
+      },
+      {
+        "point": "支撑区域在生成之后选择（support selection after generation）",
+        "detail": "生成前预测编辑区域时，生成器可能把主体移出该区域，把改动切掉一截。WMMLLM 让 MLLM 比较源图与 proposal，输出覆盖新旧轮廓及阴影、接触等效果的多边形；栅格化后膨胀 16 像素作掩码，边界 12 像素内羽化，保证掩码外像素不变。选择为空则直接判失败，不回退到规划器的框；整幅视图都要改时跳过选择器。"
+      },
+      {
+        "point": "MLLM 兼作规划器、校验器与观察者，只有通过检查的候选才写入状态",
+        "detail": "校验器按源描述、动作、请求中的变化、场景身份四条准则给出 Pass/Uncertain/Fail，导航时另查投影、运动、布局与实体连续性；观察器记录主体/属性/值事实。出现 Fail 就在同一路由上重试一次并把失败记录回传给端点规划器，二次失败保持当前状态（failure hold），失败的 proposal 与视频帧都不进入记忆。"
+      }
+    ],
+    "method": "一次会话是请求序列 u1…uT，每步输出新状态、相机、视图与过渡视频，F 与 Present 被刻意拆开。状态 Wt=(Gt,vt,{Pv,r},Ot,Mt)；每条请求被规划成有序操作 dt,i=(route, target, 允许的改动 Ω, 执行参数)，五条路由各改状态的固定部分：rotate 只改相机、revisit 复用旧视图、local edit 追加一个 patch、global change 替换 B 与 E 并作废旧 patch、navigation 新建场景节点。局部编辑先由 GPT-Image 出端点裁剪，再经配准、掩码羽化混合，投影成全景 alpha 掩码 At，按 Et+1[At=0]=Et[At=0] 写回，若掩码外有像素变化则中止操作。commit 的门是“无 Fail 且 Ready（有效观察 + 几何与安装检查）”，Uncertain 不阻塞但会带着标签记录。视频只做呈现：同中心旋转与回看直接用渲染器沿相机路径出帧，跨场景返回才调 Sol-H3，所以失败提案与视频帧都不污染状态。代价也很清楚——它只表示单一相机中心周围的世界，平移与未见区域必须靠生成。",
+    "results": "MBench-A 上与六个基线共用同一评测器：四类环境恢复指标均值全部最高，Epipolar 91.5 [89.6, 93.1]，最强基线 HY-WorldPlay 74.0，置信区间与所有基线不重叠；224 个条目中 191 个完成相机往返，基线为 0.4% 到 50.9%，40 条视频盲评的联合成功率 31 对 0 到 13。按位姿匹配的出返帧 LPIPS 中位数 0.037，基线 0.32 到 0.65。CompBench 上 15 个指标列全胜 15 个基线：三组 LC-I 为 0.845/0.911/0.880，PSNR 30.440/29.104/32.868，背景保持明显优于 BAGEL 的 27.692/26.849/28.891。消融固定 2,709 个 GPT-Image proposal 只换合成规则：整体粘贴与阈值粘贴在支撑区外分别改动 54% 与 25% 的像素，本文为 0；150 个盲评中“完成且无其他改动”为 52.6%，另两者为 30.0% 与 22.0%。支撑后选把 112 次编辑的完成率从 34.8% 抬到 83.0%（+48.2 点 [37.9, 58.3]）。状态性质逐一核对：46 次回看哈希一致，195 段几何操作不调生成器，97 次通过校验的局部编辑全部满足支撑外像素不变；一个世界里 21 次连续请求，前 20 次只改动全景的 10.7%。",
+    "limitations": "作者承认：并非所有请求都能完成，280 次 failure hold 里 276 次是最终端点被拒，而这些 hold 反而抬高外观分数、让请求中的运动缺失；端点校验器两头都错——通过校验的 309 个端点中盲评只认 190 个完整，被拒的 276 个里有 83 个其实完整。错误沿链传播：上一次端点正确时下一段完成 100/153，错误时仅 25/95。全景只表示一个相机中心周围的世界，227 个环境条目中 208 个在生成日志里被标记有接缝。我读出的问题：规划、生成、视频与盲评分别依赖闭源外部模型，复现与成本受限；与视频世界模型的对比中，“精确返回”“背景保持”这类指标对显式状态是结构性优势，比较并不对称；会话研究样本小、区间宽，且观测记忆消融显示完整系统与去掉记忆的变体在 40 次返回中都是 32 次保住编辑，该组件并未被证据支持。",
+    "insights": "把“一致性”从生成问题改写成状态管理问题，是本文最可迁移的思路：生成器只当 proposer，一致性由写入规则加校验门保证。瓶颈因此从生成质量移到校验器——通过/拒绝与盲评的一致性都不到七成，后续工作应把校验器校准（人评对齐、准则加权、局部重生成）当作一等公民。支撑后选是一层几乎零成本、可插到任意编辑器上的后处理，值得单独复用。评测上要区分结构性优势与真实能力：显式状态天然赢“精确返回”，应补上运动、动力学与时序合理性指标（本文的 failure hold 正是牺牲运动换外观分）。最后，单中心全景限制了平移，把状态扩展到多中心或与 3D 表示耦合是自然的下一步。"
+  },
+  "claims": [
+    {
+      "claim": "MBench-A 上 Epipolar 均值为 91.5，基线为 0.1 到 74.0",
+      "numbers": [
+        "91.5",
+        "0.1",
+        "74.0"
+      ],
+      "source_span": "Section 1, Contributions",
+      "quote": "with Epipolar 91.5 versus 0.1 to 74.0"
+    },
+    {
+      "claim": "相机往返完成率 85.3%，基线为 0.4% 到 50.9%",
+      "numbers": [
+        "85.3",
+        "0.4",
+        "50.9"
+      ],
+      "source_span": "Section 1",
+      "quote": "It completes 85.3% of camera round trips versus 0.4% to 50.9%"
+    },
+    {
+      "claim": "112 次局部编辑上，生成后选支撑把完成率从 34.8% 提升到 83.0%",
+      "numbers": [
+        "112",
+        "34.8",
+        "83.0"
+      ],
+      "source_span": "Section 1, Contributions",
+      "quote": "On 112 local edits, completion rises from 34.8% with support predicted before generation to 83.0% with support selected after it"
+    },
+    {
+      "claim": "该提升幅度为 48.2 点，置信区间 [37.9, 58.3]",
+      "numbers": [
+        "48.2",
+        "37.9",
+        "58.3"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "a difference of 48.2 points [37.9, 58.3]"
+    },
+    {
+      "claim": "46 次回看与 97 次通过校验的局部编辑严格满足三条状态性质",
+      "numbers": [
+        "46",
+        "97"
+      ],
+      "source_span": "Section 1, Contributions",
+      "quote": "all 46 revisits and all 97 local edits that pass the check satisfy them exactly"
+    },
+    {
+      "claim": "若不按 revision 过滤视图查找，198 次查找中有 60 次会返回编辑前的旧视图",
+      "numbers": [
+        "198",
+        "60",
+        "30.3"
+      ],
+      "source_span": "Section 4.3, Lookup by revision",
+      "quote": "Without the revision in the view lookup, 60 of the 198 lookups of the benchmark run (30.3%) would return a view from before a later edit"
+    },
+    {
+      "claim": "按位姿匹配的出返帧 LPIPS 中位数本文为 0.037，六个基线为 0.32 到 0.65",
+      "numbers": [
+        "0.037",
+        "0.32",
+        "0.65"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "the median LPIPS is 0.037 for WMMLLM and 0.32 to 0.65 for the six baselines"
+    },
+    {
+      "claim": "三组编辑任务的 PSNR 为 30.440/29.104/32.868，基线最高为 27.692/26.849/28.891",
+      "numbers": [
+        "30.440",
+        "29.104",
+        "32.868",
+        "27.692",
+        "26.849",
+        "28.891"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "PSNR is 30.440, 29.104 and 32.868 against at most 27.692, 26.849 and 28.891 for the baselines"
+    },
+    {
+      "claim": "三组 LC-I 为 0.845、0.911、0.880",
+      "numbers": [
+        "0.845",
+        "0.911",
+        "0.880"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "The LC-I of WMMLLM is 0.845, 0.911 and 0.880 on the local, multi-object and implicit-reasoning groups"
+    },
+    {
+      "claim": "整体粘贴与阈值粘贴在支撑区外分别改动 54% 与 25% 的像素，本文为 0",
+      "numbers": [
+        "54",
+        "25",
+        "16"
+      ],
+      "source_span": "Section 4.3, Applying a proposal",
+      "quote": "direct editing and threshold paste change 54% and 25% of the pixels outside the support by more than 16 intensity levels, and WMMLLM none"
+    },
+    {
+      "claim": "150 个盲评 proposal 中“完成且无其他改动”本文 52.6%，整体粘贴 30.0%，阈值粘贴 22.0%",
+      "numbers": [
+        "150",
+        "52.6",
+        "30.0",
+        "22.0"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "WMMLLM completes the request without any other change in 52.6% of the cases, against 30.0% for direct editing and 22.0% for threshold paste"
+    },
+    {
+      "claim": "消融固定 2,709 个 GPT-Image proposal",
+      "numbers": [
+        "2,709"
+      ],
+      "source_span": "Section 4.3, Table 5 caption",
+      "quote": "All three rules use the same 2,709 GPT-Image proposals and evaluator"
+    },
+    {
+      "claim": "40 条视频盲评的联合成功率为 31，基线为 0 到 13",
+      "numbers": [
+        "40",
+        "31",
+        "0",
+        "13"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "WMMLLM reaches joint success on 31 of 40 videos and the baselines on 0 to 13"
+    },
+    {
+      "claim": "一轮相机环视后首末帧平均像素差基线 88.4 到 101.3，本文 1.1",
+      "numbers": [
+        "88.4",
+        "101.3",
+        "1.1"
+      ],
+      "source_span": "Figure 1 caption",
+      "quote": "mean pixel difference between the first and last frame, 0–255: 88.4 to 101.3 against 1.1"
+    },
+    {
+      "claim": "227 个环境条目的 454 个片段中 88.3% 为几何操作（215 次旋转、186 次场景恢复）",
+      "numbers": [
+        "227",
+        "454",
+        "88.3",
+        "215",
+        "186"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "of the 454 segments in the 227 environment items, 88.3% are geometric (215 rotations, 186 scene restores)"
+    },
+    {
+      "claim": "在不含 hold 或终止失败的 191 个条目上 Epipolar 仍为 93.9，基线最高 74.5",
+      "numbers": [
+        "191",
+        "93.9",
+        "74.5"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "Epipolar is still 93.9 versus at most 74.5"
+    },
+    {
+      "claim": "基准运行中 195 段几何操作不调用生成器",
+      "numbers": [
+        "195"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "all 195 geometric segments run without a generator"
+    },
+    {
+      "claim": "单个世界 21 次连续请求，前 20 次只改动全景 10.7%",
+      "numbers": [
+        "21",
+        "20",
+        "10.7"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "requests 1–20 change only 10.7% of the panorama"
+    },
+    {
+      "claim": "示例会话中第 8 轮只改动红框内 2.1% 的全景像素",
+      "numbers": [
+        "8",
+        "2.1"
+      ],
+      "source_span": "Figure 3 caption",
+      "quote": "turn 8 changes only the 2.1% of the panorama pixels in the red box"
+    },
+    {
+      "claim": "280 次 failure hold 中 276 次源于最终端点被拒",
+      "numbers": [
+        "280",
+        "276"
+      ],
+      "source_span": "Section 5, Limitations",
+      "quote": "276 of the 280 failure holds of the benchmark run follow a rejection of the final endpoint"
+    },
+    {
+      "claim": "通过校验的 309 个端点中盲评认为 190 个完整，被拒的 276 个中 83 个完整",
+      "numbers": [
+        "309",
+        "190",
+        "276",
+        "83"
+      ],
+      "source_span": "Section 5, Limitations",
+      "quote": "a blind judge labels as complete 190 of the 309 endpoints that pass the verifier and 83 of the 276 that it rejects"
+    },
+    {
+      "claim": "端点正确时下一段完成 100/153，端点错误时 25/95",
+      "numbers": [
+        "100",
+        "153",
+        "25",
+        "95"
+      ],
+      "source_span": "Section 5, Limitations",
+      "quote": "the next segment completes in 100 of 153 cases after a correct endpoint commits and in 25 of 95 after an incorrect one"
+    },
+    {
+      "claim": "227 个环境条目中 208 个在生成日志中被标记有接缝",
+      "numbers": [
+        "227",
+        "208"
+      ],
+      "source_span": "Section 5, Limitations",
+      "quote": "the generation log flags a seam in 208 of the 227 environment items"
+    },
+    {
+      "claim": "从请求到首次播放的中位时间为 609.4 s",
+      "numbers": [
+        "609.4"
+      ],
+      "source_span": "Section 4.6, Cost and Latency",
+      "quote": "the full system takes a median of 609.4 s from request to first playback"
+    },
+    {
+      "claim": "观测记忆消融中完整系统与去掉记忆的变体都在 40 次返回里 32 次保住编辑，20 个会话完成 7 个",
+      "numbers": [
+        "40",
+        "32",
+        "20",
+        "7"
+      ],
+      "source_span": "Section 4.5, Observation memory",
+      "quote": "both keep the edit on 32 of 40 returns and complete 7 of 20 sessions"
+    },
+    {
+      "claim": "246 个获得全景的基准条目可精确重建初始视图",
+      "numbers": [
+        "246"
+      ],
+      "source_span": "Section 3.2, World State",
+      "quote": "reconstructs the initial view exactly in all 246 benchmark items that obtain a panorama"
+    }
+  ]
+}

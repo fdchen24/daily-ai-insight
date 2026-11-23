@@ -4,25 +4,24 @@
     "2026-11-23": {
       "counts": {
         "classic": 1,
-        "frontier": 9,
-        "survey": 1
+        "frontier": 10
       },
       "total": 11,
-      "generated_at": "2026-11-23T14:09:31.627115+00:00",
+      "generated_at": "2026-11-23T14:56:48.927311+00:00",
       "titles": [
-        "Attention 就是全部：Transformer 序列转换架构",
-        "非穿透世界模型：用冻结 DiT 隐状态阻止穿墙",
-        "重建对齐提升统一多模态模型的生成与编辑能力",
-        "扩散 Transformer 的 RL 后训练本质上是激活引导",
-        "AutoMaster：让固定模型成为更好教师的自主后训练",
-        "野外编码智能体：GitHub Copilot 生产规模工作负载刻画与优化",
-        "On-Policy Self-Distillation：单模型双上下文自蒸馏的推理后训练",
-        "cmHC：用几何收缩平衡 Hyper-Connections 中的流混合",
-        "一先验两动力学：复用视频扩散 Transformer 的自监督隐动作学习",
-        "算力最优的 tokenization：压缩率如何决定数据-参数配比",
-        "LLM Agent 的长期记忆安全：跨越记忆生命周期的攻击、防御与治理"
+        "用人类反馈训练语言模型遵从指令",
+        "后验匹配蒸馏：用倾斜均值监督少步生成",
+        "Mind2Act World：机器人操作中具身认知、物理执行与动作组合的诊断基准",
+        "TuringSpace：用交互式 CAPTCHA 将空间智能锚定在动作上",
+        "动作效果匹配 AFFECT：让机器人世界模型对动作扰动敏感",
+        "审计代码 RL 训练环境的奖励可破解性",
+        "WM^MLLM：把多模态大模型改造成世界模型",
+        "语言模型可重写自身权重：Self-Rewriting 与规模涌现",
+        "Embeddings vs. Grep：重估仓库级代码检索中的 dense 优势",
+        "Clover-35B-A3B：面向 agent 任务的块扩散 MoE 语言模型",
+        "掩码不等于物体：面向 3D Gaussian 分割的体积化监督"
       ]
     }
   },
-  "updated_at": "2026-11-23T14:09:31.627115+00:00"
+  "updated_at": "2026-11-23T14:56:48.927311+00:00"
 }

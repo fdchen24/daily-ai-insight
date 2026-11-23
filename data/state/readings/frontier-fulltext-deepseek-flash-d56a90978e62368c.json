@@ -1,0 +1,206 @@
+{
+  "title_zh": "Embeddings vs. Grep：重估仓库级代码检索中的 dense 优势",
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把仓库级代码检索的评测效度问题拆成可测量的因果链（分块设置、标签规则、查询词汇），并给出可直接执行的报告规范，会影响后续 code retrieval 基准与 agent 检索选型的做法。",
+    "novelty": 74,
+    "novelty_reason": "「弱基线抬高神经排序增益」在 IR 中已有共识，新意在于系统落到仓库级代码检索：控制查询来源/时间/标签规则的基准、generate-then-grep 受控干预，以及一次性检验的预注册 lockbox。",
+    "technical_depth": 86,
+    "technical_depth_reason": "四个查询池共享语料与标签、十三个 encoder、标签规则与 per-commit 快照消融、污染检验、以及修正 git 泄漏后重跑的 agent 评估都在正文给出；扣分处是 BM25 的 chunk size 在评测查询上选定、τ 分析自认属探索性。"
+  },
+  "reading": {
+    "why_read": "它把「dense 比 BM25 强」拆成可测量的成分：BM25 的分块设置、把改动的测试文件算作相关、查询里有没有代码的稀有标识符。三个干预的效应量都很具体——整文件 BM25 让 curated 池的溢价从 +0.121 降到 +0.034，测试计入标签把它抬到 +0.165，LLM 补标识符后 BM25 在四个 Python 池上都不再落后。",
+    "motivation": "代码检索基准（CoIR 一类）多用 docstring 或网页式查询配旧代码，agent 侧证据（SWE-bench）用原始 issue/PR 文本；两边标签规则还不一致——SWE-bench 的 gold patch 不含测试，而 PR 的 changed-file 列表会把测试算进去。词汇检索基线又常沿用 dense 的分块设置，这在神经排序里是已知的虚高来源，但在仓库级代码检索上一直没被量化。于是「基准上 dense 大幅领先」与「grep 驱动的 agent 并不缺检索」两种说法并存。作者要问三件事：统一协议下 premium 有多大、由哪些查询承载、能不能逐查询路由。",
+    "innovations": [
+      {
+        "point": "把 dense 优势拆成基准设定效应",
+        "detail": "固定仓库、快照与标签规则，只变查询来源与时间，发现分块设置与「测试文件算相关」两条设定各自贡献可观溢价；据此提出报告规范：整文件 BM25、剥掉 PR 模板、先声明哪些改动文件算相关。"
+      },
+      {
+        "point": "generate-then-grep 作为受控干预",
+        "detail": "LLM 只读查询、写出 identifiers/APIs/error terms 与代码骨架并前置到查询，BM25 增益 0.11–0.19，而同一扩展查询只让 encoder 涨 +0.03 到 +0.07，说明溢价集中在「查询缺代码词汇」这类查询上；标识符组单独就能关掉溢价，散文式改写不行。"
+      },
+      {
+        "point": "预注册 lockbox 与失败的路由",
+        "detail": "在锁定的跨语言与 DeepSWE 池上一次性检验：固定 RRF 融合保住增益，训练出的 router 未过预注册标准；并公开了 agent 评估因 git object store 泄漏答案导致结论反转、以及修正后重跑的过程。"
+      }
+    ],
+    "method": "Repo-Premium-Core 固定十个 Python 仓库、每仓库一个代码快照与一套标签规则（改动编辑过的非测试源文件），只变查询来源与时间：curated 的 SWE-bench Verified statements，加上跨 cut-off 前后的三个 PR 时间窗，共 1,265 条查询。Extension 扩到五种语言、九个 held-out Python 仓库，以及由 DeepSWE 与 TS/Go/Rust 组成的预注册 lockbox。检索侧对比 BM25（分块与整文件两档）、十三个 dense encoder、SPLADE、ColBERTv2；关键干预是 generate-then-grep。另用 τ（查询与首个 gold 文件共享 token 的最大 IDF）定位溢价落在哪类查询，再用 RRF 融合与学习型 router 对比，最后用 mini-swe-agent 做端到端文件定位，并显式检查每个任务的 base commit 是否泄漏修复。",
+    "results": "对整文件 BM25，curated 溢价只剩 +0.034，raw 池 +0.059 到 +0.125，没有 encoder 在 CUR-PRE 或 RAW-POST 上保持显著优势，残余差异主要在覆盖（Recall@10 +0.10 到 +0.19）。把改动的测试文件算作相关会放大溢价：tuned premium 从 +0.034 抬到 +0.165，RAW-POST 从 +0.059 抬到 +0.136，因为 dense 更常把测试文件排第一（59% vs 34%）。generate-then-grep 给 BM25 增加 0.11–0.19，同一扩展查询只让 encoder 涨 +0.03 到 +0.07；curated 池上 BM25 反超 0.081，分块 BM25 下残差为 −0.052 到 +0.012。固定 RRF 融合比 dense 高 +0.060，lockbox 上仍领先 +0.019/+0.045；router 只有 +0.005（oracle +0.077）。τ 越低溢价越大，对整文件 BM25 从 +0.125 到 −0.046。同一改动用 raw 措辞溢价高 +0.091/+0.111；在 DeepSWE 的原始任务描述上溢价消失，Qwen3-Emb-0.6B 甚至低于 BM25（−0.078）。agent 侧换检索工具没有可分辨差异，exact-match 随模型从 0.033 到 0.300。",
+    "limitations": "核心只有十个 Python 仓库，跨语言池每种语言一个仓库，小效应无法排除；BM25 的 chunk size 在评测查询上选过，作者承认这使 dense 的数字成为下界；generation 的效果依赖 generator，只有最大的模型让 curated 溢价转负，小模型只能关掉大部分；τ 分析自认探索性，预注册 held-out 检验符号一致但区间含零；标签只取「一次改动编辑的文件」，函数级与行级目标未验证；agent 评估样本小，只测文件定位、不验修复是否正确。",
+    "insights": "对基准设计：报 dense 数字时应同时给出整文件 BM25 与 anchor 增强 BM25 两臂，并写明测试文件是否计入——标签规则本身就能把 curated 与 raw 池的差距翻倍。对系统：固定 RRF 融合比训练 router 稳，router 的 oracle 空间目前拿不到，别把工程预算押在逐查询选择上。对 agent 研究：端到端 exact-match 被模型主导，检索改进只能从 any-hit 这类中间指标看出来，检索工作若要影响 agent，需要接上中间信号而不是只报 nDCG。"
+  },
+  "claims": [
+    {
+      "claim": "Repo-Premium 核心集包含 1,265 条查询，覆盖十个 SWE-bench Verified 仓库",
+      "numbers": [
+        "1,265"
+      ],
+      "source_span": "Section 1",
+      "quote": "The core has 1,265 queries over"
+    },
+    {
+      "claim": "dense 侧按 1,000 字符分块，块分数 max-pool 到文件",
+      "numbers": [
+        "1,000"
+      ],
+      "source_span": "Section 4",
+      "quote": "chunked at c = 1,000 characters"
+    },
+    {
+      "claim": "把 BM25 改为整文件索引后，curated 池的 dense 溢价从 +0.121 降到 +0.034",
+      "numbers": [
+        "0.121",
+        "0.034"
+      ],
+      "source_span": "Section 1, finding F1",
+      "quote": "premium from +0.121 to +0.034"
+    },
+    {
+      "claim": "对整文件 BM25，raw 池的溢价为 +0.059 到 +0.125",
+      "numbers": [
+        "0.059",
+        "0.125"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "+0.059 to +0.125 on the raw pools"
+    },
+    {
+      "claim": "把改动的测试文件计入相关后，curated 池 tuned 溢价从 +0.034 升到 +0.165",
+      "numbers": [
+        "0.034",
+        "0.165"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "raises the tuned premium from +0.034 to +0.165"
+    },
+    {
+      "claim": "同一标签规则下 RAW-POST 的 tuned 溢价从 +0.059 升到 +0.136",
+      "numbers": [
+        "0.059",
+        "0.136"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "from +0.059 to +0.136 on RAW-POST"
+    },
+    {
+      "claim": "dense 检索把测试文件排在首位的比例是 59%，BM25 是 34%",
+      "numbers": [
+        "59",
+        "34"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "59% against 34%"
+    },
+    {
+      "claim": "残余优势主要在覆盖：Recall@10 高出 +0.10 到 +0.19",
+      "numbers": [
+        "0.10",
+        "0.19"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "(Recall@10 +0.10 to +0.19)"
+    },
+    {
+      "claim": "generate-then-grep 给 BM25 带来 0.11–0.19 nDCG@10 的增益",
+      "numbers": [
+        "0.11",
+        "0.19"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "generation adds 0.11–0.19 nDCG@10 to BM25,"
+    },
+    {
+      "claim": "同一扩展查询下 dense 只涨 +0.03 到 +0.07，而 BM25 涨 +0.12 到 +0.21",
+      "numbers": [
+        "0.03",
+        "0.07",
+        "0.12",
+        "0.21"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "+0.03 to +0.07, against +0.12 to +0.21"
+    },
+    {
+      "claim": "curated 池上 dense 对整文件 BM25 的溢价为 +0.034，加入生成 anchors 后变为 −0.081",
+      "numbers": [
+        "0.034",
+        "0.081"
+      ],
+      "source_span": "Table 2, row CUR-PRE",
+      "quote": "+0.034 −0.081"
+    },
+    {
+      "claim": "在编码器分块下，扩展查询后的残差为 −0.052 到 +0.012",
+      "numbers": [
+        "0.052",
+        "0.012"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "−0.052 to +0.012"
+    },
+    {
+      "claim": "RRF 融合在开发集上比 dense 单独高 +0.060 nDCG@10",
+      "numbers": [
+        "0.060"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "BM25 raises nDCG@10 by +0.060 over"
+    },
+    {
+      "claim": "在 lockbox 上两种固定融合仍分别领先 dense +0.019 与 +0.045",
+      "numbers": [
+        "0.019",
+        "0.045"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "beat dense retrieval by +0.019 and +0.045 on the"
+    },
+    {
+      "claim": "预注册 router 在 lockbox 上只比总是使用融合高 +0.005，而 oracle 上限是 +0.077",
+      "numbers": [
+        "0.005",
+        "0.077"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "using the fusion, against +0.077 for the oracle"
+    },
+    {
+      "claim": "对整文件 BM25，从最低 τ 四分位到最高四分位，溢价由 +0.125 变为 −0.046",
+      "numbers": [
+        "0.125",
+        "0.046"
+      ],
+      "source_span": "Section 5.4",
+      "quote": "it falls from +0.125 to −0.046"
+    },
+    {
+      "claim": "同一改动用 raw PR 措辞比 LLM 改写溢价高 +0.091（jina-code-0.5b）与 +0.111（Qwen3-Embedding-0.6B）",
+      "numbers": [
+        "0.091",
+        "0.111"
+      ],
+      "source_span": "Section 5.5",
+      "quote": "larger by +0.091 for jina-code-0.5b and +0.111"
+    },
+    {
+      "claim": "在 DeepSWE 原始任务描述上，Qwen3-Embedding-0.6B 的 nDCG@10 比 BM25 低 −0.078",
+      "numbers": [
+        "0.078",
+        "0.144",
+        "0.013"
+      ],
+      "source_span": "Table 22",
+      "quote": "−0.078 [−0.144, −0.013]"
+    },
+    {
+      "claim": "agent 的文件定位 exact-match 随所用模型从 0.033 到 0.300",
+      "numbers": [
+        "0.033",
+        "0.300"
+      ],
+      "source_span": "Section Q, Table 20",
+      "quote": "ranges from 0.033 (gemma-4-31B-it) to 0.300"
+    }
+  ]
+}

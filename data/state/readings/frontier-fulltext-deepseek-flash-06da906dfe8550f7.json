@@ -1,0 +1,208 @@
+{
+  "title_zh": "TuringSpace：用交互式 CAPTCHA 将空间智能锚定在动作上",
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把空间推理评测推进到可执行、可验证的交互闭环，并提供可扩展训练环境，问题重要且结果对 CUA 与空间理解两个方向都有用。",
+    "novelty": 82,
+    "novelty_reason": "相对现有多选题空间 CAPTCHA 和文本命令交互环境，实质差异是像素级 GUI 动作、多轮反馈与程序化 oracle 训练数据三者结合。",
+    "technical_depth": 84,
+    "technical_depth_reason": "证据链较完整：人类基线、多模型统一评测、pass@1/pass^3、OOD 迁移和带一致性检验的错误分析；主要短板是只微调单一基座，迁移评测的输入与解码设置不完全一致。"
+  },
+  "reading": {
+    "why_read": "它把空间推理从静态选择题改成可验证的屏幕动作闭环：人类通过率为 94.1%，最强模型 GPT-6 Astra 只有 74.1%；在生成的交互轨迹上微调 Qwen3.5-9B，可从 1.6% 提升到 33.1%，并在 VSI-Bench 上获得 9.9 个点的迁移增益。",
+    "motivation": "现有 CAPTCHA benchmark 多已被 CUA 解决，且很少涉及空间能力；空间 benchmark 又以静态图像或视频上的多选题为主，模型可以靠选项排除或猜测得分。少数交互式空间环境只接受“左转”这类文本命令，或暴露 DOM 让代理选择带标签的元素，因而不能检验“读屏—预测动作后果—执行—看反馈—修正”的闭环。论文要补的正是这一环：用必须点击、拖拽并在下一帧观察结果的 CAPTCHA，把空间理解锚定在动作序列上。",
+    "innovations": [
+      {
+        "point": "交互式空间 CAPTCHA benchmark",
+        "detail": "125 个任务覆盖五类空间能力，全部通过截图上的 click、drag 或 step 完成；每个任务不是固定题面，而是带 checker 与 oracle 的生成器，可无限合成新 instance。"
+      },
+      {
+        "point": "可扩展训练 gym 与泄漏控制",
+        "detail": "回放 oracle 得到动作-观测轨迹；训练与测试使用不同 seed（36、43、50 为测试 seed）和不相交资产池，并过滤空间配置哈希相同的样本，避免把 benchmark 实例泄漏进训练。"
+      },
+      {
+        "point": "失败机制分析",
+        "detail": "对 293 次失败尝试的标注显示，68% 的错误信念在最初两步形成；后续推理即使质疑它，也只有少数真正放弃，更多是编造观测或依赖幻觉先验来辩护。"
+      }
+    ],
+    "method": "每个 seed 任务由生成器 Gτ(z,M) 产生页面、指令、checker 和 oracle；构建时在 100 个 seed 上做程序化检查，要求 oracle 可解、随机点击几乎不能通过，再用模型 rollout 排除捷径并由作者人工试玩。评测取三个留出 seed，训练用另一组 seed 与不相交资产池，并做哈希去重。训练数据为 55,000 条 oracle 轨迹，单条最多 18 个 turn；微调 Qwen3.5-9B 时冻结 vision encoder，只更新语言模型，thinking-off，最小化工具调用 token 的交叉熵。取舍是：用程序化 oracle 保证可验证性和规模，但监督信号只覆盖专家轨迹，不包含失败恢复或探索策略。",
+    "results": "Table 1 中人类为 94.1%，GPT-6 Astra 为 74.1%，其 pass^3 仅 58.4%，人类为 84.8%；Kimi K3 为 32.0%，Qwen3.5-9B 仅 1.6%。在 TuringSpace-Gym 上 SFT 后，TuringSpace-9B 的 pass@1 到 33.1%，pass^3 为 12.8%，超过 Kimi K3 与 Qwen3.8-Max，但仍远低于人类。七个 OOD benchmark 全部提升：ReCAP 56.4→73.6，Open CaptchaWorld 26.9→36.9，SpatialViz-Bench 28.1→34.2，VSI-Bench 50.5→60.4，RefSpatial-Bench 38.3→58.1，VABench-Point 35.7→43.1，RoboAfford-Eval 67.6→79.8。",
+    "limitations": "作者没有单列局限性。可读出的问题：人类基线只由三名作者各测一个 test seed，样本小；任务与资产是合成页面和开放素材，真实场景覆盖仍有限；训练只验证了一个单一基座，缺少与其他训练数据、RL 目标或更大模型的对照；OOD 评测中基座多用原图与采样解码，SFT 模型用固定低分辨率与 greedy，迁移增益可能混入输入/解码差异；TuringSpace-9B 仍只有 33.1% pass@1 和 12.8% pass^3，距离可靠使用很远。",
+    "insights": "后续研究可以把这类可验证交互环境当作“过程监督”的来源：不仅监督最终点击，还监督动作后的信念更新；用 verifier 给中间状态打分，或把 oracle 轨迹与失败恢复轨迹混合做 RL，可能比单纯 SFT 更能提升闭环修正能力。另一个方向是把感知错误与推理错误分开建模——论文显示感知错误占主导，单纯加长 CoT 反而可能强化错误信念。最后，跨 benchmark 迁移需要控制输入分辨率和解码策略，否则容易把预处理差异误读为空间能力提升。"
+  },
+  "claims": [
+    {
+      "claim": "TuringSpace-Bench 由 125 个交互式空间 CAPTCHA 组成。",
+      "numbers": [
+        "125"
+      ],
+      "source_span": "Abstract",
+      "quote": "125 interactive CAPTCHAs"
+    },
+    {
+      "claim": "人类解决 94.1% 的任务。",
+      "numbers": [
+        "94.1"
+      ],
+      "source_span": "Abstract / Table 1",
+      "quote": "Humans solve 94.1% of the tasks"
+    },
+    {
+      "claim": "GPT-6 Astra 的 pass@1 为 74.1%。",
+      "numbers": [
+        "74.1"
+      ],
+      "source_span": "Table 1, row 'GPT-6 Astra'",
+      "quote": "GPT-6 Astra, reaches 74.1% pass@1"
+    },
+    {
+      "claim": "GPT-6 Astra 的 pass^3 为 58.4%，人类为 84.8%。",
+      "numbers": [
+        "58.4",
+        "84.8"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "pass^3 drops to 58.4% for GPT-6 Astra and lower for the other models, against 84.8% for humans"
+    },
+    {
+      "claim": "Kimi K3 的 pass@1 为 32.0%。",
+      "numbers": [
+        "32.0"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "reaches 32.0%"
+    },
+    {
+      "claim": "Qwen3.5-9B 经微调从 1.6% 提升到 33.1%。",
+      "numbers": [
+        "1.6",
+        "33.1"
+      ],
+      "source_span": "Abstract / Section 4.2",
+      "quote": "from 1.6% to 33.1%"
+    },
+    {
+      "claim": "TuringSpace-9B 的 pass@1 为 33.1%，pass^3 为 12.8%。",
+      "numbers": [
+        "33.1",
+        "12.8"
+      ],
+      "source_span": "Table 1, row 'TuringSpace-9B'",
+      "quote": "33.1 ±6.1 20.0 12.0 4.0 12.0 16.0 12.8"
+    },
+    {
+      "claim": "ReCAP 从 56.4% 提升到 73.6%。",
+      "numbers": [
+        "56.4",
+        "73.6"
+      ],
+      "source_span": "Table 2, row 'ReCAP'",
+      "quote": "56.4 73.6 +17.2"
+    },
+    {
+      "claim": "Open CaptchaWorld 从 26.9% 提升到 36.9%。",
+      "numbers": [
+        "26.9",
+        "36.9"
+      ],
+      "source_span": "Table 2, row 'Open CaptchaWorld'",
+      "quote": "26.9 36.9 +10.0"
+    },
+    {
+      "claim": "SpatialViz-Bench 从 28.1% 提升到 34.2%。",
+      "numbers": [
+        "28.1",
+        "34.2"
+      ],
+      "source_span": "Table 2, row 'SpatialViz-Bench'",
+      "quote": "28.1 34.2 +6.1"
+    },
+    {
+      "claim": "VSI-Bench 从 50.5% 提升到 60.4%，增益 9.9 个点。",
+      "numbers": [
+        "50.5",
+        "60.4",
+        "9.9"
+      ],
+      "source_span": "Table 2, row 'VSI-Bench'",
+      "quote": "50.5 60.4 +9.9"
+    },
+    {
+      "claim": "RefSpatial-Bench 从 38.3% 提升到 58.1%。",
+      "numbers": [
+        "38.3",
+        "58.1"
+      ],
+      "source_span": "Table 2, row 'RefSpatial-Bench'",
+      "quote": "38.3 58.1 +19.8"
+    },
+    {
+      "claim": "VABench-Point 从 35.7% 提升到 43.1%。",
+      "numbers": [
+        "35.7",
+        "43.1"
+      ],
+      "source_span": "Table 2, row 'VABench-Point'",
+      "quote": "35.7 43.1 +7.4"
+    },
+    {
+      "claim": "RoboAfford-Eval 从 67.6% 提升到 79.8%。",
+      "numbers": [
+        "67.6",
+        "79.8"
+      ],
+      "source_span": "Table 2, row 'RoboAfford-Eval'",
+      "quote": "67.6 79.8 +12.2"
+    },
+    {
+      "claim": "训练数据为 55,000 条已验证 oracle 轨迹。",
+      "numbers": [
+        "55,000"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "55,000 verified oracle trajectories"
+    },
+    {
+      "claim": "每个任务在 100 个 seed 上做程序化检查。",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "rolled out on 100 seeds"
+    },
+    {
+      "claim": "测试使用 seed 36、43、50。",
+      "numbers": [
+        "36",
+        "43",
+        "50"
+      ],
+      "source_span": "Equation (2) / Section 3.3",
+      "quote": "36, 43, 50"
+    },
+    {
+      "claim": "每条轨迹最多 18 个 turn。",
+      "numbers": [
+        "18"
+      ],
+      "source_span": "Appendix A",
+      "quote": "Every trajectory has at most 18 turns"
+    },
+    {
+      "claim": "失败分析覆盖 293 次失败尝试。",
+      "numbers": [
+        "293"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "all 293 failed attempts"
+    },
+    {
+      "claim": "68% 的失败尝试在前两步就形成错误信念。",
+      "numbers": [
+        "68"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "In 68% of the attempts, the belief appears within the first two steps"
+    }
+  ]
+}

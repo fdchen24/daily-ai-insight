@@ -1,0 +1,140 @@
+{
+  "title_zh": "用人类反馈训练语言模型遵从指令",
+  "scores": {
+    "research_value": 95,
+    "research_value_reason": "SFT→reward model→PPO 这三段式、成对比较的 RM 损失、逐 token KL 惩罚与 PPO-ptx，至今仍是偏好学习论文的默认基线和必做消融。",
+    "novelty": 88,
+    "novelty_reason": "相对此前的 RLHF 工作（摘要、风格续写），实质变化是把训练与评估分布换成真实 API 指令分布，并把 alignment tax 从'观察到'变成'可缓解'；三阶段骨架本身沿袭 Ziegler 与 Stiennon。",
+    "technical_depth": 85,
+    "technical_depth_reason": "给出了 RM 成对比较损失及把同一 prompt 的比较重组为单个 batch element 的实现、KL 惩罚叠加预训练对数似然的组合目标、以及 held-out 标注者与交叉验证的 RM 泛化检验；但优化算法本身没有新理论贡献。"
+  },
+  "reading": {
+    "why_today": "今天做偏好学习仍以这篇的三段式（SFT→reward model→PPO）为参照系，差别主要在奖励信号怎么来。它的工程结论可直接复用：RM 不必与策略同规模；KL 惩罚与预训练梯度混合是两个独立旋钮，分别管 reward hacking 与能力回退；训练/测试按用户 ID 划分以防偏好泄漏；主指标用成对胜率而非绝对打分。",
+    "historical_context": "2022 年初的主流是 scaling 加 prompting：GPT-3 靠 few-shot 前缀完成任务，指令微调一侧 FLAN、T0 用大量公开 NLP 数据集配指令模板。两条路都有缺口。next-token 目标只优化网页文本的似然，与 helpful/honest/harmless 不是一回事，模型会编事实、生成有害或偏置内容；而公开 NLP 数据集以分类和 QA 为主，与真实 API 调用分布差得远——原文统计分类加 QA 只占约 18%，开放式生成与头脑风暴占约 57%。RLHF 此前只在摘要和风格续写这类单一、易评估的任务上验证过。",
+    "problem_then": "把 RLHF 从单任务推到开放、异构的真实用户指令分布：在没有明确任务定义、prompt 来自真实用户的情况下，用人类偏好重塑模型行为，同时量化并压住随之而来的 alignment tax（公开 NLP 任务掉点），让对齐在成本上划得来。",
+    "contributions": [
+      {
+        "point": "把 RLHF 从单任务推广到广分布的指令遵循",
+        "detail": "训练分布由 API Playground 的真实 prompt 加标注者自写 prompt 构成，SFT 约 13k、RM 约 33k、PPO 约 31k 条；评估以标注者对自家 175B SFT 基线的成对胜率为主，175B InstructGPT 对 175B GPT-3 胜率 85±3%，对 few-shot GPT-3 为 71±4%。"
+      },
+      {
+        "point": "PPO-ptx：用预训练梯度抵消 alignment tax",
+        "detail": "原文观察到 PPO 微调会让 SQuAD、DROP、HellaSwag、WMT 等公开任务掉点，于是在 PPO 目标中加入预训练分布的对数似然项（系数 γ）；报告称这在偏好得分基本不降的前提下缓解了回退，并优于单纯调大 KL 系数。"
+      },
+      {
+        "point": "把'对齐'拆成可操作的评估套件",
+        "detail": "除偏好胜率，还用元数据标注（是否答对指令、是否满足显式约束、是否幻觉）加 TruthfulQA、RealToxicityPrompts、Winogender、CrowS-Pairs，其中封闭域任务的幻觉率为 21% 对 41%，被要求尊重时毒性输出少约 25%；并用 held-out 标注者与五折交叉验证检验 RM 是否只拟合了自家标注者。"
+      }
+    ],
+    "core_idea": "SFT：标注者对 prompt 写示范，用它监督微调 GPT-3；checkpoint 按 RM 分数而非验证损失选取（原文发现验证损失一个 epoch 就过拟合，但继续训练仍提升偏好）。RM：对同一 prompt 采样多个回复（最多 9 个）让标注者排序，得到组内两两比较；损失是对所有比较取平均的 −E[log σ(r(x,y_w) − r(x,y_l))]。关键实现是把同一 prompt 的所有比较作为一个 batch element 做一次前向——否则组内高度相关的比较会让 RM 一个 epoch 就过拟合。RM 由 SFT 模型去掉 unembedding 得到，规模停在 6B。RL：bandit 环境，给 prompt 采样一个回复、用 RM 打分作奖励，PPO 最大化 r(x,y) − β·log[π_RL(y|x)/π_SFT(y|x)]，逐 token KL 惩罚限制策略偏离 SFT。PPO-ptx 再加 γ·E_{x∼D_pretrain}[log π_RL(x)]。奖励先做 bias 归一化，使示范数据均值为 0。",
+    "influence": "这篇把 RLHF 变成对话模型对齐的默认骨架，此后'预训练→SFT→偏好学习'基本是标准流程。从它分出的方向包括：省略显式 reward model、直接用偏好对优化策略的一支；reward model 的过优化与 reward hacking 研究，把 KL 系数、奖励尺度当作核心超参；用模型反馈替代人工比较以降低标注成本；以及对 alignment tax 的系统处理。原文自己点名的后续路线有：对抗式数据收集、与 control codes 等可控生成方法结合、expert iteration、带约束的优化目标、对预训练混料做毒性过滤。",
+    "modern_reading": "本解读基于全文。需限定几点：(1) 这里的'对齐'是对约 40 名经筛选标注者及其背后研究者偏好的对齐，训练数据 96% 以上是英文，标注者间一致率约 72.6%，原文讨论部分承认这不等于 aligned to human values；(2) 训练时有用性优先于无害，被要求生成有偏内容时 InstructGPT 比同规模 GPT-3 更毒，此取舍后被拒答与安全训练改写；(3) '1.3B 胜 175B'是在自家 API 分布上对自家基线测得的偏好胜率，不等于通用能力提升；(4) 过度 hedge 与接受虚假前提两类失败，被作者归因于标注者被要求奖励 epistemic humility 及训练集缺少此类样本——reward model 偏差较早的可诊断案例。"
+  },
+  "claims": [
+    {
+      "claim": "原文统计分类与 QA 只占 API 使用约 18%，开放式生成与头脑风暴占约 57%",
+      "numbers": [
+        "18",
+        "57"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "are only a small part (about 18%) of what API customers use our language models for, whereas open-ended generation and brainstorming consist of about 57% of our prompt dataset"
+    },
+    {
+      "claim": "SFT 数据约 13k 条、RM 数据约 33k 条、PPO 数据约 31k 条",
+      "numbers": [
+        "13k",
+        "33k",
+        "31k"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "The SFT dataset contains about 13k training prompts (from the API and labeler-written), the RM dataset has 33k training prompts (from the API and labeler-written), and the PPO dataset has 31k training prompts (only from the API)."
+    },
+    {
+      "claim": "175B InstructGPT 对 175B GPT-3 的偏好胜率为 85±3%，对 few-shot GPT-3 为 71±4%",
+      "numbers": [
+        "85",
+        "3",
+        "71",
+        "4"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "85 ± 3% of the time, and preferred 71 ± 4% of the time to"
+    },
+    {
+      "claim": "标注者每次对同一 prompt 最多 9 个回复排序",
+      "numbers": [
+        "9"
+      ],
+      "source_span": "Section 3.5 Reward modeling",
+      "quote": "K = 9 responses to rank"
+    },
+    {
+      "claim": "reward model 只用 6B 规模以节省算力",
+      "numbers": [
+        "6B"
+      ],
+      "source_span": "Section 3.5 Reward modeling",
+      "quote": "we only use 6B RMs, as this saves a lot of compute"
+    },
+    {
+      "claim": "封闭域任务上 InstructGPT 与 GPT-3 的幻觉率为 21% 对 41%",
+      "numbers": [
+        "21",
+        "41"
+      ],
+      "source_span": "Section 1",
+      "quote": "21% vs. 41% hallucination rate, respectively"
+    },
+    {
+      "claim": "被要求尊重时 InstructGPT 的毒性输出比 GPT-3 少约 25%",
+      "numbers": [
+        "25"
+      ],
+      "source_span": "Section 1",
+      "quote": "InstructGPT models generate about 25% fewer toxic outputs than GPT-3"
+    },
+    {
+      "claim": "1.3B 的 InstructGPT 输出在人类评估中比 175B GPT-3 更受偏好",
+      "numbers": [
+        "1.3",
+        "175"
+      ],
+      "source_span": "Section 1",
+      "quote": "outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3"
+    },
+    {
+      "claim": "两者参数量相差 100 倍以上",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Section 1",
+      "quote": "despite having over 100x fewer parameters"
+    },
+    {
+      "claim": "标注团队约 40 名合同工，来自 Upwork 与 ScaleAI",
+      "numbers": [
+        "40"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "we hired a team of about 40 contractors on Upwork and through ScaleAI"
+    },
+    {
+      "claim": "训练标注者之间的一致率为 72.6±1.5%",
+      "numbers": [
+        "72.6",
+        "1.5"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "training labelers agree with each-other 72.6 ± 1.5% of the time"
+    },
+    {
+      "claim": "训练数据 96% 以上是英文",
+      "numbers": [
+        "96"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "Our dataset is over 96% English"
+    }
+  ]
+}

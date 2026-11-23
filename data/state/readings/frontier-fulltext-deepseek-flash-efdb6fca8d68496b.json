@@ -1,0 +1,143 @@
+{
+  "title_zh": "Clover-35B-A3B：面向 agent 任务的块扩散 MoE 语言模型",
+  "scores": {
+    "research_value": 72,
+    "research_value_reason": "把扩散语言模型（含权重与推理引擎）推到 agent 任务可用的水平，并给出消费级显卡的 INT4 部署与联合决策变体，填补开源 DLM 在 agentic 评测上的空白；但结论更像一条工程路线可行性的证明，没有沉淀出可迁移的训练规律。",
+    "novelty": 65,
+    "novelty_reason": "BD-GDN 把历史记忆压成单个 softmax 条目与块内 token 竞争、并用 c_h·log(N_b/N_ref) 校准块大小，以及零初始化的块内右向卷积，是有具体形式的新机制；整体仍是 block diffusion + Gated DeltaNet + dMoE + 自推测解码的组合，多数组件来自作者自己或已有工作。",
+    "technical_depth": 68,
+    "technical_depth_reason": "架构、双流训练与因果隔离、联合损失、解码与端侧执行都给到公式与配置级细节，评测覆盖广且声称同协议复现；但全文没有任何组件消融，速度对比是系统级因而不可归因，内部决策集非盲测，三次平均也未报告方差。"
+  },
+  "reading": {
+    "why_read": "关心扩散模型能否进入 agent 循环的读者应重点看 3.2 节：BD-GDN 把已完成前缀压成单个 readout logit，与当前块内全部 token value 在同一个 softmax 里分配概率，并用可学习的 c_h·log(N_b/N_ref) 抵消块大小带来的竞争者数量变化，右向卷积零初始化、总共只新增 740,160 个参数。速度侧给出 agent replay 上 515 tokens/s（H200）与 680 tokens/s（GB300），同时诚实报告 MATH-500 上反被 DFlash 2 反超。",
+    "motivation": "掩码扩散与块扩散已有 LLaDA、Dream、Fast-dLLM 系列，工业侧也出现 Mercury、DiffusionGemma、LLaDA2.2；但这些公开扩散模型的短板集中在 agent——作者按统一协议复现后发现 LLaDA2.2 flash 与 DiffusionGemma 在 Terminal-Bench 2.1 和 SWE-bench Verified 上仍落后 Qwen 自回归基线，而 agent 场景同时要求长上下文、工具调用与反复生成的低延迟。既有加速工作（近似 KV 复用、置信度并行解码、块级缓存、独立 drafter）大多把 draft 与 target 分开，drafter 容量有限、训练分布也覆盖不了 target 的全部工作负载。作者因此想把扩散生成能力与自推测解码放在同一个模型里一起训，并顺带把稀疏 MoE 压到消费级显卡上运行。",
+    "innovations": [
+      {
+        "point": "把历史记忆作为 softmax 的一个竞争者（BD-GDN）",
+        "detail": "干净路径保留 gated delta rule 的因果递推，去噪时前缀状态 S_b 在整块内固定不变；块内 query 的历史 readout r_j = S_b·q̂_j/√d_k 与 N_b 个块内 value 进入同一个 softmax，历史侧只占一个 logit ℓ_hist = b_h + c_h·log(N_b/N_ref)。c_h·log 项补偿块大小变化导致的竞争者数量变化，初始化 (s_h, b_h, c_h) = (10, 5, 1)；噪声 query 不施加 α/β 门控，因为这两个门控只属于干净记忆更新。"
+      },
+      {
+        "point": "独立的块内右向短卷积",
+        "detail": "保留预训练因果 depthwise 核（宽度 4），并联 3 个右向 tap 并在初始化时置零，两侧预激活相加后过同一个 SiLU；右向输入只允许块内合法后继，缺失补零，因此不会跨 block 或跨 packed 样本边界。prefill 与块提交后的因果重放只用因果核，保证状态与 KV 的因果一致性。"
+      },
+      {
+        "point": "块级 expert coreset + 自推测解码",
+        "detail": "把块内所有 token 的 top-8 概率按 expert 聚合，取覆盖 τ=0.9 总质量的最小 expert 前缀作为该层该次去噪的 coreset，在 coreset 外屏蔽 logit 后重做 token 级 top-8，避免并行预测把路由打散；解码时一次扩散前向给出整块 draft，由因果 GDN 逐 token 验证，接受准则为 p(d) ≥ δ·exp(−H)，只提交被接受的前缀。"
+      }
+    ],
+    "method": "骨干直接取 Qwen3.6-35B-A3B，改造成块扩散：三层 BD-GDN 加一层全注意力循环堆叠，每个 mixer 后接 dMoE，序列混合分别承担“已完成上下文的递归记忆”和“块内双向交互”，上下文长度约 128K。训练沿用 Megatron 系基础设施，把同一例子的加噪流与干净流打包进一条序列，并用例子/流/块三个身份显式约束可见性——噪声 query 只能读本块之前的干净 token 与本块内的噪声 token，读不到干净目标块；块大小每步从若干档位均匀采样，边界同时作用于 attention、BD-GDN、右向卷积与路由。损失是“无位移的块去噪损失 + 位移的干净流 NTP 损失”的加权和，两次目标共享一次骨干前向与一次融合交叉熵。长上下文用 FlexAttention 元数据只执行允许的 tile，上下文并行对全注意力做 K/V 重排、对 BD-GDN 走 Ulysses 或 FLA-KCP 传播有序状态。解码是 confidence-aware 提交与自推测的结合，另加 presence/repetition 惩罚和长度相关的 stop token 偏置。端侧用 SGLang + KTransformers 做 GPU/CPU 混合 expert 执行，并按路由统计把高频 expert 放到 GPU。决策模型变体把一组相关问题的答案位置放进同一个扩散块，一次去噪同时读出，靠块内双向 attention 共享证据。",
+    "results": "主表覆盖知识、数学、代码、推理、指令跟随、长上下文与 agent 七大类，Clover 在七个 agent 指标上全部领先，其中 SWE-bench Verified 73.6、Terminal-Bench 2.1 51.7，明显高于同规模的 Qwen 自回归基线与 Mercury 2.5；通用能力大体与 Qwen3.6-35B-A3B 持平，但困难知识题与竞赛数学仍是弱项。速度强烈依赖工作负载：agent replay 上 515 tokens/s（H200）、680 tokens/s（GB300），但在 MATH-500 上因 draft 成本高，decode 吞吐 465.2 反低于 Qwen3.6+DFlash 2 的 604.3。端侧在 RTX 5070 Ti 上用 INT4 g32 + KTransformers，路由统计指导的 expert 放置把 decode 从 66.64 提到 97.52 tokens/s（人工复核准确率 97.6%），再降低验证阶段活跃 expert 数后到 106.25 tokens/s（96.0%）。决策模型变体在内部 500 组上联合预测，问题准确率 90.37%→93.88%，全组全对率 65.4%→77.0%；Sudoku 的全对率提升 54.0 点；多问题组延迟 164 ms，对比串行独立调用 1,243 ms 与并行独立调用 249 ms，加速 7.58× 与 1.52×。",
+    "limitations": "作者承认：困难知识题、竞赛数学与独立代码生成仍有差距；MATH-500 上 draft 成本高于 DFlash 2；速度对比是系统级（不同 target、验证树、解码策略），agent replay 只测速度不测任务成功率；内部决策集在开发中反复使用，属于能力检查而非盲测，决策模型变体也尚未发布。我读出的问题更硬：全文没有组件消融，历史 readout、c_h 校准、右向卷积、coreset、自推测各自的贡献都未被单独测量，主表领先无法归因到具体设计；Table 3 混用官方报告与不同 coding harness（OpenCode vs Codex），可比性打折；三次平均没有方差；端侧准确率经人工复核，口径不透明。",
+    "insights": "块扩散的天然搭配可能是“常量大小的递归状态 + 块内双向 attention”：历史压成一个 softmax 条目、块内保留全双向，用固定形状状态替代逐 token KV cache，这对长上下文 agent 的反复调用很划算。块级 expert coreset 说明并行预测必须与 MoE 路由协同设计，否则一次前向会把 expert 打散成低效访存。另一个可迁移的观察是让 draft 能力与模型一起长起来：独立小 drafter 覆盖不了 target 的完整工作负载分布，MATH-500 上输、长上下文 agent replay 上赢，正是这一解释的间接证据。决策模型的联合预测提示同一 block 内答案位置互相可见可作为一种一致性机制，但单次去噪并不保证满足全部约束，若要用于结构化输出还需显式约束求解。",
+    "claims": [
+      {
+        "claim": "SWE-bench Verified 73.6、Terminal-Bench 2.1 51.7，在七个 agent 指标上领先",
+        "numbers": [
+          "73.6",
+          "51.7"
+        ],
+        "source_span": "Abstract",
+        "quote": "73.6 on SWE-bench Verified and 51.7"
+      },
+      {
+        "claim": "agent replay 上 H200 单卡达 515 tokens/s（block size 16）",
+        "numbers": [
+          "515",
+          "16"
+        ],
+        "source_span": "Section 3.7",
+        "quote": "Clover achieves 515 tokens/s on one NVIDIA H200 GPU with block size 16 and the length"
+      },
+      {
+        "claim": "同一设置下 GB300 单卡达 680 tokens/s",
+        "numbers": [
+          "680"
+        ],
+        "source_span": "Section 3.7",
+        "quote": "reaches 680 tokens/s on one NVIDIA GB300 GPU"
+      },
+      {
+        "claim": "BD-GDN 的右向卷积与 per-head softmax 标量共新增 740,160 个参数",
+        "numbers": [
+          "740,160"
+        ],
+        "source_span": "Section 3.2",
+        "quote": "a total of 740,160 new"
+      },
+      {
+        "claim": "MATH-500 上 Clover 的 decode 吞吐为 465.2 tokens/s，低于 Qwen3.6+DFlash 2 的 604.3",
+        "numbers": [
+          "465.2",
+          "604.3"
+        ],
+        "source_span": "Table 2, MATH-500 行",
+        "quote": "465.2"
+      },
+      {
+        "claim": "路由指导的 expert 放置把 decode 从 66.64 提升到 97.52 tokens/s，人工复核准确率 97.6%",
+        "numbers": [
+          "66.64",
+          "97.52",
+          "97.6"
+        ],
+        "source_span": "Section 4.2",
+        "quote": "improves decode throughput from 66.64 to 97.52 tokens/s, with 97.6%"
+      },
+      {
+        "claim": "把验证阶段活跃 expert 数降下来后吞吐到 106.25 tokens/s、准确率 96.0%",
+        "numbers": [
+          "106.25",
+          "96.0"
+        ],
+        "source_span": "Section 4.2",
+        "quote": "106.25 tokens/s at 96.0% accuracy"
+      },
+      {
+        "claim": "联合预测把问题准确率从 90.37% 提到 93.88%",
+        "numbers": [
+          "90.37",
+          "93.88"
+        ],
+        "source_span": "Abstract / Table 5",
+        "quote": "joint prediction raises question accuracy from 90.37% to 93.88% and"
+      },
+      {
+        "claim": "全组全对率从 65.4% 提到 77.0%",
+        "numbers": [
+          "65.4",
+          "77.0"
+        ],
+        "source_span": "Abstract / Table 5",
+        "quote": "all-correct group accuracy from 65.4% to 77.0%"
+      },
+      {
+        "claim": "Sudoku 上全对率提升 54.0 个百分点，Multiple500 提升 11.6 个百分点",
+        "numbers": [
+          "11.6",
+          "54.0"
+        ],
+        "source_span": "Section 5.2",
+        "quote": "complete-set accuracy by 11.6 percentage points on Multiple500 and 54.0"
+      },
+      {
+        "claim": "多问题组延迟 164 ms，对比串行 1,243 ms 与并行 249 ms",
+        "numbers": [
+          "164",
+          "1,243",
+          "249"
+        ],
+        "source_span": "Section 5.3",
+        "quote": "latency is 164 ms for joint prediction, compared with 1,243 ms for sequential independent calls and"
+      },
+      {
+        "claim": "对应加速 7.58× 与 1.52×",
+        "numbers": [
+          "7.58",
+          "1.52"
+        ],
+        "source_span": "Section 5.3",
+        "quote": "corresponding to speedups of 7.58× and 1.52×, respectively."
+      }
+    ]
+  }
+}

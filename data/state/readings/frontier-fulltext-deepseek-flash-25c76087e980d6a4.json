@@ -1,0 +1,163 @@
+{
+  "title_zh": "动作效果匹配 AFFECT：让机器人世界模型对动作扰动敏感",
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "论文针对机器人世界模型（RWM）被用于策略评估与规划时最关键的失败模式——视频逼真但对动作不敏感，且提出的训练信号可自主规模化（play 数据、无成功标签、无需同一初态重复执行），并在 UR5e、DROID、ALOHA-2 三个平台、两个 backbone 上验证。",
+    "novelty": 80,
+    "novelty_reason": "把 action sensitivity 表述为“记录扰动—视觉响应”的协方差匹配并证明其等价于有限特征 MMD，配合在真机上记录注入噪声的数据协议，区别于 counterfactual-consistency、inverse-dynamics 重建动作、outcome-label 监督等已有路线；但本质仍是辅助损失 + 冻结特征矩匹配，单项技术并非全新。",
+    "technical_depth": 86,
+    "technical_depth_reason": "给出中心化消去 context-only 项与 MMD 上界两条 Proposition、去对角项的无偏 U-statistic 估计器、可微 Euler 采样器的必要性论证，并设 placebo matching 与 unconditional matching 两个对照消融；不足之处是成功标签由人工判定、相关性只基于 12 episodes×4 checkpoints×2 tasks，且未与需要 outcome labels 或反事实数据的方法直接比较。"
+  },
+  "reading": {
+    "why_read": "机制很具体：给 play policy 的关节目标动作注入时间相关噪声（每 episode 声明幅度 ρ 与固定形状 c，白噪声沿时间高斯平滑宽度 4 步），记录注入的 u_t，再用冻结编码器把中心化后的扰动特征与视频 latent 的手工特征相乘，损失是这些乘积均值的平方——即有限特征 MMD。DROID 上 DreamDojo 的成功率 Pearson 从 0.468 升到 0.790、FVD 降 23%，规划成功率 +8.3pp，值得看它是如何在不引入成对反事实 rollout 的前提下把“动作敏感性”变成可优化目标的。",
+    "motivation": "RWM 要在策略评估和 model-based planning 中替代真机，必须复现“轻微动作差异导致定性不同结果”（抓中/错过/推走）。现有模型只被要求重建录制的未来，于是生成视觉合理但几乎不依赖动作的视频，对候选策略给出相似预测，误导 planner。已有改进路线各有代价：反事实基准需要同一初始状态下成对执行成功/失败动作；outcome-label 或 reward 监督在真机上难以规模化；inverse-dynamics 类目标只要求动作可从生成视频中恢复，而这一点仅靠可区分的机械臂运动就能满足，不保证物体交互正确。作者的切入点是：不要求逐样本匹配录制未来，而要求生成视频对动作扰动的响应分布与真实一致。",
+    "innovations": [
+      {
+        "point": "在数据侧制造可记录的扰动，而非制造反事实对",
+        "detail": "对 task-agnostic 遥操作训练出的 play policy 注入时间相关噪声后自主 rollout，执行 clip(Ā_t+U_t)，并在 clip 前记录 U_t 与噪声分布参数。每个 window 只需一条录制未来，因此不需要场景 reset、重复执行或成功标签，覆盖范围靠漂移和保留失败抓取自然增长。"
+      },
+      {
+        "point": "把动作敏感性写成中心化扰动特征与视频特征的协方差匹配",
+        "detail": "用冻结的 ψ 与 φ 提取扰动特征（窗口内噪声的有符号和、去期望的平方和）与视频 latent 特征（channel mean 变化、随机方向投影、flow 统计、energy），中心化后 gt 与 context 正交，乘积的期望即条件协方差，损失对每对特征的 E[d] 取平方并除以记录数据上的固定尺度 sb。理论上等价于线性核 MMD，且对响应过强、过弱、反向都施加惩罚，目标是被记录的响应本身而非“越大越好”。"
+      },
+      {
+        "point": "训练实现上避免两个隐式失败：mode collapse 与伪样本",
+        "detail": "minibatch 上用去掉对角项的 U-statistic 估计 E[d]²，避免平凡平方引入的方差项奖励生成多样性下降；生成 Ô_t 必须从纯噪声出发经可微 Euler 采样（S=2，κ=5），而不是复用 flow loss 的一步 clean 预测或单步 Euler 输出，否则线性特征会退化为只匹配条件均值。"
+      }
+    ],
+    "method": "训练语料来自 perturbation play：GR00T-N1.5+FLARE 策略在 56k 帧（约 100 分钟）play 遥操作上微调后闭环运行于 Franka Research 3（DROID 配置）与双臂 ALOHA-2，每个 episode 声明幅度 ρ（5 档）与冻结的逐维形状 c（play 语料的 per-step 标准差归一化），噪声按 episode 生成、时间平滑后乘 σ=ρc，夹爪维度置零，clip 到关节与速度限制。世界模型只接收 ot 与执行动作 At，Ut 仅用于损失。AFFECT 损失在冻结编码器的特征库上构造：扰动侧 7 或 12 个关节的 signed/magnitude 特征加 2 个 pooled 特征，视频侧 54 个 latent 特征，FR3 上共 864 个 test（UR5e 为 192）；每个 test 用固定 sb 归一化，sb 由 λ=0 的一遍训练预先统计。损失每 8 次迭代施加一次（S=2 的额外可微采样开销），λ 校准为 flow loss 的 15%；编码器冻结是为了防止 φ 输出常数把损失压到零，sb 冻结是为了不改变零损失解集。作者同时证明：context-only 误差（例如整体偏暗）在中心化后自动抵消，损失只约束特征库能检测到的响应。",
+    "results": "仿真 UR5e：DreamDojo 的 Pearson 从 0.451 升到 0.686，FVD 短时程 85→73、长时程 108→93；Cosmos3 从 0.091 升到 0.334，FVD 470→463、562→540。真机 DROID：DreamDojo 0.468→0.790，FVD 807→622（23%）；Cosmos3 0.425→0.583，FVD 910→744（18%）。ALOHA-2：Cosmos3 的相关系数从 0.298 升到 0.694、FVD 333→257；DreamDojo 0.325→0.490、PSNR 24.20→24.91，但 FVD 反而从 183 升到 188。规划（5 个策略 checkpoint 提议、DINOv2 成功估计器打分）在 UR5e 上把平均成功率从 Uniform 的 46.7% 提到 DreamDojo 的 60.0%、再加 AFFECT 的 68.3%（+8.3pp）；ALOHA-2 长时程任务平均增益 8.4pp。消融（Cosmos3，10k 迭代）显示 placebo matching（跨 episode 打乱扰动）与 unconditional matching（gt≡1）的长时程指标都明显劣于 AFFECT，20% 数据下增益变小但仍为正。特征定位分析显示冻结视频特征在机械臂/方块/阴影经过区域的响应比打乱配对基线强 1.6–2.2 倍，在静态桌面与背景上回到随机水平。",
+    "limitations": "作者承认两点：损失只约束所选特征库能检测到的响应，未被任何特征覆盖的物理响应完全不受约束；由于 play policy 观测到全部相机与本体状态，条件独立性 Ot⊥(Ut,Ht)|(ot,At) 只是近似成立，辅助损失可能把最优解推离 flow loss 的最优解。此外，上下文相关响应是先在 context 上平均再平方，过强与过弱的响应可以部分抵消，只约束方差加权平均误差；AFFECT 也无法修正仅由 context 决定的渲染误差。我读出的问题还有：成功率标签由人类评估者给出（要求物体与场景全程可见），Pearson 只基于每实体 2 任务×4 checkpoint×12 episode，相关性数值的置信区间不小；视频特征是手工指定的固定统计量（channel mean、随机投影、flow、energy），对物体级小位移的敏感度未经独立验证；噪声只加在关节位置目标上且夹爪不扰动，幅度阶梯固定，动作分布覆盖有限；计算上每 8 步要额外做 2 步可微采样，λ 依赖一次校准；ALOHA-2 上 DreamDojo+FVD 反而上升，说明视觉指标与动作保真度并非总是同向。",
+    "insights": "把“动作敏感性”从定性批评转化为可估计的统计量（扰动—视觉响应协方差，等价于有限特征 MMD）是这篇最可复用的部分：任何条件生成式世界模型只要有可记录的干预量，都能加这一项，且不需要配对反事实或结果标签。数据侧的启示是“记录干预”比“构造反事实”便宜得多——perturbation play 可以在自主 play 上持续扩大，且失败样本必须保留。下一步的自然方向是让特征库可学习但防塌缩（stop-gradient / EMA target 代替手工特征），以及把匹配从二阶协方差推广到对方向敏感的核。评估层面，成功率 Pearson 比 FVD 更贴近 RWM 的真实用途，值得与 MIRABench、RoboWM-Bench 这类反事实基准并列作为标准指标。",
+    "limitations_note": null
+  },
+  "claims": [
+    {
+      "claim": "UR5e 仿真上 DreamDojo 的成功率 Pearson 从 0.451 升到 0.686，FVD 短时程 85→73、长时程 108→93",
+      "numbers": [
+        "0.451",
+        "0.686",
+        "85",
+        "73",
+        "108",
+        "93"
+      ],
+      "source_span": "Sec 4.1 'Simulation results'; Table 1",
+      "quote": "For DreamDojo, Pearson correlation increases from 0.451 to 0.686, while FVD decreases from 85 to 73 at the short horizon and from 108 to 93 at the long horizon."
+    },
+    {
+      "claim": "UR5e 仿真上 Cosmos3 的 Pearson 从 0.091 升到 0.334，FVD 从 470 降到 463、从 562 降到 540",
+      "numbers": [
+        "0.091",
+        "0.334",
+        "470",
+        "463",
+        "562",
+        "540"
+      ],
+      "source_span": "Sec 4.1 'Simulation results'; Table 1",
+      "quote": "correlation increases from 0.091 to 0.334, alongside smaller FVD reductions from 470 to 463 and from 562 to 540"
+    },
+    {
+      "claim": "DROID 真机上 DreamDojo 的 Pearson 从 0.468 升到 0.790、Cosmos3 从 0.425 升到 0.583，FVD 分别下降 23% 与 18%",
+      "numbers": [
+        "0.468",
+        "0.790",
+        "0.425",
+        "0.583",
+        "807",
+        "622",
+        "23",
+        "910",
+        "744",
+        "18"
+      ],
+      "source_span": "Sec 4.1 'Real robot results'; Table 2",
+      "quote": "On DROID, AFFECT raises Pearson correlation from 0.468 to 0.790 for DreamDojo and from 0.425 to 0.583 for Cosmos3, while reducing FVD from 807 to 622 (23%) and from 910 to 744 (18%), respectively."
+    },
+    {
+      "claim": "ALOHA-2 上 Cosmos3 的 Pearson 从 0.298 升到 0.694，FVD 从 333 降到 257",
+      "numbers": [
+        "0.298",
+        "0.694",
+        "333",
+        "257"
+      ],
+      "source_span": "Sec 4.1 'Real robot results'; Table 2",
+      "quote": "correlation increases from 0.298 to 0.694, the highest among the evaluated methods, while its FVD decreases from 333 to 257"
+    },
+    {
+      "claim": "ALOHA-2 上 DreamDojo 的 Pearson 从 0.325 升到 0.490、PSNR 从 24.20 升到 24.91、LPIPS 从 0.06 降到 0.05，但 FVD 从 183 升到 188",
+      "numbers": [
+        "0.325",
+        "0.490",
+        "24.20",
+        "24.91",
+        "0.06",
+        "0.05",
+        "183",
+        "188"
+      ],
+      "source_span": "Sec 4.1 'Real robot results'; Table 2",
+      "quote": "correlation improves from 0.325 to 0.490, with PSNR increasing from 24.20 to 24.91 and LPIPS decreasing from 0.06 to 0.05, although FVD rises slightly from 183 to 188"
+    },
+    {
+      "claim": "UR5e 规划平均成功率从 Uniform 的 46.7% 到 DreamDojo 的 60.0%、再到 DreamDojo+AFFECT 的 68.3%，额外增益 8.3 个百分点",
+      "numbers": [
+        "46.7",
+        "60.0",
+        "68.3",
+        "8.3"
+      ],
+      "source_span": "Fig. 3(a); Sec 4.2 'Tasks and Results'",
+      "quote": "average UR5e success increases from 46.7% with Uniform to 60.0% with DreamDojo and 68.3% with DreamDojo + AFFECT, an additional gain of 8.3 percentage points"
+    },
+    {
+      "claim": "ALOHA-2 长时程规划的平均增益为 8.4 个百分点",
+      "numbers": [
+        "8.4"
+      ],
+      "source_span": "Sec 4.2 'Tasks and Results'; Fig. 3(b)",
+      "quote": "with an average gain of 8.4 percentage points"
+    },
+    {
+      "claim": "消融中 placebo matching 与 unconditional feature matching 的长时程 FVD 为 460 与 451，均差于 AFFECT 的 256",
+      "numbers": [
+        "460",
+        "451",
+        "256"
+      ],
+      "source_span": "Table 3",
+      "quote": "both controls show degraded video fidelity, supporting the importance of both preserving action-outcome correspondence and using perturbation-weighted features"
+    },
+    {
+      "claim": "冻结特征在机械臂、方块或阴影经过区域的响应比打乱配对基线强 1.6–2.2 倍",
+      "numbers": [
+        "1.6",
+        "2.2"
+      ],
+      "source_span": "Sec 4.3 'Do the frozen features see the action effect?'; Fig. 4",
+      "quote": "Responses are 1.6–2.2 times stronger than this shuffled baseline in regions traversed by the arm, cube, or shadow"
+    },
+    {
+      "claim": "AFFECT 每 8 次迭代施加一次，λ 校准为 flow loss 的 15%",
+      "numbers": [
+        "8",
+        "15"
+      ],
+      "source_span": "Sec 4.1 'Implementation details'",
+      "quote": "We fire the AFFECT term every 8 iterations and set λ so that it is 15% of the flow loss on a short calibration run."
+    },
+    {
+      "claim": "FR3 上特征库构成 16×54=864 个 test，UR5e 配置为 192 个",
+      "numbers": [
+        "16",
+        "54",
+        "864",
+        "192"
+      ],
+      "source_span": "Appendix A.5 'Bank size'",
+      "quote": "for 16 × 54 = 864 tests. The UR5e configuration has 192 tests."
+    }
+  ]
+}

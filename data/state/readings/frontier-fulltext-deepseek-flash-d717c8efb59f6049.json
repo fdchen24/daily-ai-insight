@@ -1,0 +1,173 @@
+{
+  "title_zh": "语言模型可重写自身权重：Self-Rewriting 与规模涌现",
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把自我改进从 prompt/agent 层推进到权重层，并给出可检验协议、尺度对比和故障修复，方向重要。",
+    "novelty": 91,
+    "novelty_reason": "编辑者与被编辑者是同一模型，且不允许梯度、优化器或更强教师；与更强模型编辑小模型、prompt 改写、自训练和 test-time scaling 有实质区别。",
+    "technical_depth": 81,
+    "technical_depth_reason": "有预先固定的 held-out 配对检验、同 seed 配对测试、尺度阶梯和单矩阵消融；但主要证据集中在一个模型族和一个数学任务，第二协议还依赖框架预留题检查。"
+  },
+  "reading": {
+    "why_read": "核心看点是闭环：模型先读自己的 hidden states 和失败答案，再写一个很小的 tensor 编辑，用同 seed 的配对测试决定提交或撤回；27B 在 490 个未见题上 +6.6 点，且对损坏副本的修复能跨到图像任务。",
+    "motivation": "现有改进路径各有代价：prompt/agent code 改写不进入权重，任务一换就失效；test-time scaling 每个答案都要额外算力；自训练/RL 仍要梯度、优化器和训练管线；模型编辑与方向消融由研究者选方向、层和强度。已有工作只展示更强的前沿模型去编辑一个小模型，并把“模型编辑自己”列为未来工作。本文要问：同一个模型能否仅凭自身推理，在没有梯度、没有训练、没有更强教师的情况下诊断自己的失败并改写自己的权重，而且这种能力是否随规模出现。",
+    "innovations": [
+      {
+        "point": "Self-Rewriting 的任务化设定",
+        "detail": "把自身权重、评分答案、运行自身和前向/隐藏状态读取作为工具，禁用梯度与优化器；模型每轮写一段理由和一个动作（Python 改 tensor、generate 配对测试、read hidden states），编辑以代码形式保存、可审查和回滚。"
+      },
+      {
+        "point": "用配对测试做编辑选择",
+        "detail": "同一问题、同一 seed 下比较编辑前后答案，报告准确率差、token 截断比例和 wrong→right/right→wrong；任务要求只在未见题上不降准确率且减少失败才提交，否则撤回。"
+      },
+      {
+        "point": "规模涌现与损坏修复",
+        "detail": "同一 Qwen3.5 家族多档、同一任务与工具下，2B 不做编辑，4B/9B 把自己改坏，27B 才能读 hidden states、按测量到的方向编辑并保留测试支持的改动；同一 27B 还能定位损坏矩阵并用截断离群值修复副本。"
+      }
+    ],
+    "method": "方法把一次改进写成“会话”：起始诊断给出模型在练习题上的准确率、token 截断和重复情况；随后模型在 Python 会话中按 tensor 名读写权重，调用 generate 在练习题上做同 seed 的编辑前后配对测试，或 read 取指定层 hidden states。框架关闭梯度、拒绝优化器和模型加载，只允许有限次前向与代码运行。27B 的自编辑不是随机扰动：它比较“能结束”和“被 token 上限截断”的答案在 layer 8 hidden states 上的均值差，取单位方向 u，在 layer 8 的两个输出矩阵做 W←W−α uu^T W，即移除 5% 的方向；每次测试支持才保留。修复任务给一个 layer 30 MLP 输出矩阵被噪声覆盖的副本，只告知“有些值损坏”；模型读 hidden states 和权重统计，发现 layer 30 的极端离群值，以 15 倍中位数为阈值截断，而不是恢复原值。",
+    "results": "论文报告第一协议中，27B 自编辑在预先固定的 490 题、每题 8 答案的 held-out 检验上从 57.2% 到 58.3%（p=0.038）；第二协议 session 8 与 session 2 分别 +6.6 和 +4.0 点，前八次会话五次撤回、三次提交，在用模型准确率只升。损坏副本在 200 题上从 0.0% 修到 33.0%（基座 58.5%），仅用文本数学找到的修复在未见图象基准上从 7.3% 到 70.2%，达到基座 84.3% 的 83%；ScreenSpot-v2 从 0% 到 89%（基座 93%）。尺度上 2B 不做编辑，4B/9B 改坏自己，只有 27B 改善。",
+    "limitations": "作者承认能力依赖规模：2B 不编辑，4B/9B 改坏自己；修复实验中的编辑者仍是未损坏的基座模型，被修复的损坏副本并不自己诊断自己。我的读法：结论只在一个 Qwen3.5 家族、一个数学任务和一种合成损坏上成立；自编辑需要外部框架提供评分答案、配对测试、工具和白名单，离部署中的完全自主还有距离。主结果提升幅度有限，且第二协议的提交前预留题检查引入了框架筛选；图像迁移是故障修复而非任务学习。安全性上，模型可写任意 tensor 代码，论文只提出人工在环，未做实证评估。",
+    "insights": "可跟进的点：把“编辑—配对测试—撤回”做成可回滚的权重提交机制，用于长尾失败修复；把合成损坏扩展为多位置、多类型故障，测量定位与恢复率随规模的变化；在非数学环境用环境反馈替代标准答案，让模型在部署中持续写小 rank-one 编辑。关键不是让模型自由改权重，而是保留同 seed 配对检验和预留题检查，否则 4B/9B 的失败说明自测很容易被模型自己绕过。"
+  },
+  "claims": [
+    {
+      "claim": "实验覆盖 Qwen3.5 的 2B、4B、9B、27B 四档模型。",
+      "numbers": [
+        "3.5",
+        "2",
+        "4",
+        "9",
+        "27"
+      ],
+      "source_span": "Sec. 3.1 Models",
+      "quote": "Qwen3.5 2B, 4B, 9B and 27B"
+    },
+    {
+      "claim": "27B 模型自编辑后在 490 个未见题上提升 6.6 个点，采用预先固定的配对检验。",
+      "numbers": [
+        "27",
+        "490",
+        "6.6"
+      ],
+      "source_span": "Introduction / Fig. 1",
+      "quote": "Its own edit makes a 27B open model 6.6 points more accurate on 490 problems it never saw, in a paired test fixed in advance"
+    },
+    {
+      "claim": "预先固定的评估使用 490 个 held-out 问题、每题 8 个答案。",
+      "numbers": [
+        "490",
+        "8"
+      ],
+      "source_span": "Fig. 1 caption",
+      "quote": "490 held-out problems with eight answers each"
+    },
+    {
+      "claim": "第一协议的自编辑在 held-out 上从 57.2% 升到 58.3%，p=0.038。",
+      "numbers": [
+        "57.2",
+        "58.3",
+        "0.038"
+      ],
+      "source_span": "App. D.3 / Tab. 8",
+      "quote": "The self-edited model solves 58.3% of the answers and the base model 57.2%, p = 0.038 (Tab. 8)."
+    },
+    {
+      "claim": "第二协议中 session 8 和 session 2 的编辑分别带来 6.6 和 4.0 个点的提升。",
+      "numbers": [
+        "8",
+        "2",
+        "6.6",
+        "4.0"
+      ],
+      "source_span": "Sec. 3.6",
+      "quote": "the edits of sessions 8 and 2 make it significantly more accurate, by 6.6 and 4.0 points"
+    },
+    {
+      "claim": "前八次第二协议会话中，模型五次撤回、三次提交，在用版本的准确率只升不降。",
+      "numbers": [
+        "8",
+        "5",
+        "3"
+      ],
+      "source_span": "Sec. 3.6",
+      "quote": "Of the first eight such sessions on its own weights, all reported, it withdraws in five and submits in three; each edit it submits replaces the last, and the accuracy of the model in use only rises"
+    },
+    {
+      "claim": "在 200 个 held-out 题上，模型对损坏副本的修复把准确率从 0.0% 提到 33.0%，基座为 58.5%。",
+      "numbers": [
+        "200",
+        "0.0",
+        "33.0",
+        "58.5"
+      ],
+      "source_span": "Fig. 2 / Tab. 2",
+      "quote": "0.0% → 33.0% on 200 held-out problems (base model 58.5%)"
+    },
+    {
+      "claim": "仅在文本数学题上找到的修复，使损坏副本在未见图象基准上从 7.3% 升到 70.2%，达到基座 84.3% 的 83%。",
+      "numbers": [
+        "7.3",
+        "70.2",
+        "84.3",
+        "83"
+      ],
+      "source_span": "Fig. 2 / Fig. 16",
+      "quote": "7.3% → 70.2% on six image benchmarks it never saw, 83% of the base model's 84.3%"
+    },
+    {
+      "claim": "ScreenSpot-v2 上损坏副本从 0% 提到 89%，基座为 93%。",
+      "numbers": [
+        "0",
+        "89",
+        "93"
+      ],
+      "source_span": "Introduction",
+      "quote": "on ScreenSpot-v2 from 0% to 89%, against 93% for the base model"
+    },
+    {
+      "claim": "修复会话在 layer 30 的 MLP 输出矩阵发现 1397 倍中位数的离群权重。",
+      "numbers": [
+        "30",
+        "1397"
+      ],
+      "source_span": "Fig. 12 card 4",
+      "quote": "Layer 30’s down_proj has an extreme 1397x outlier."
+    },
+    {
+      "claim": "修复以 15 倍中位数为阈值截断离群权重。",
+      "numbers": [
+        "15"
+      ],
+      "source_span": "Fig. 12 card 8 / Table 1",
+      "quote": "Clipped values exceeding 15× the median absolute value to 15× median."
+    },
+    {
+      "claim": "自编辑在 layer 8 的两个输出矩阵中移除 5% 的“未完成—完成”方向。",
+      "numbers": [
+        "8",
+        "5"
+      ],
+      "source_span": "Table 1 / Fig. 13",
+      "quote": "Removed 5% of that direction from the two output matrices of layer 8"
+    },
+    {
+      "claim": "2B 不做编辑，4B/9B 随机扰动并把自己改坏。",
+      "numbers": [
+        "2",
+        "4",
+        "9"
+      ],
+      "source_span": "Fig. 2 caption",
+      "quote": "The 2B model does not treat its weights as something it can change, and the 4B and 9B models perturb themselves at random and break themselves."
+    },
+    {
+      "claim": "只有 27B 模型能改善自己、修复损坏副本并把修复迁移到图像。",
+      "numbers": [
+        "27"
+      ],
+      "source_span": "Sec. 3",
+      "quote": "Only the 27B model improves itself, repairs a damaged copy of itself, and carries that repair over to images"
+    }
+  ]
+}

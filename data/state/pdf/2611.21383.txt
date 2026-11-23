@@ -1,0 +1,942 @@
+The Mask Is Not the Object: Volumetric Supervision
+for 3D Gaussian Segmentation
+Jeonghwan Cho
+Minsu Kim
+Junyoung Hong
+Seon Joo Kim
+Yonsei University
+ Project Page
+Abstract
+3D Gaussian Splatting enables object-level operations on Gaussian primitives, yet
+existing segmentation methods are largely trained and evaluated through rendered
+views. This mismatch can produce accurate rendered masks from incomplete 3D
+selections since alpha-blended feature supervision concentrates learning on dom-
+inant contributors while leaving occluded or low-contribution Gaussians weakly
+supervised. We propose VODA, a plug-and-play supervision objective that exploits
+local depth structure to group per-pixel contributors and directly supervises all
+Gaussians in selected depth clusters, bypassing contribution-weighted gradient
+delivery. To evaluate volumetric completeness, we introduce Removal-3D, a syn-
+thetic object-removal benchmark, and the Removal Depth Error (RDE), a metric
+comparing predicted and ground-truth depth changes. Across four rendering-based
+baselines, VODA consistently improves volumetric segmentation on Removal-3D
+while maintaining or improving performance on LERF and ScanNet. Further
+analysis shows that VODA recovers lower-contribution Gaussians, while simple
+gradient reweighting and spatial propagation fail to reproduce comparable gains.
+1
+Introduction
+Object-level editing of reconstructed scenes requires selecting objects as complete 3D entities.
+Removing, relocating, or extracting an object depends on capturing its full spatial extent, including
+its interior. For scenes represented by 3D Gaussian Splatting (3DGS) [12], this means selecting all
+Gaussians associated with the object. Yet existing segmentation methods [22, 24, 29, 10, 28, 6] are
+commonly evaluated by the accuracy of their rendered 2D masks, which does not establish whether
+the underlying 3D selection is complete. Figure 1 illustrates this gap: a selection can produce an
+accurate mask yet miss some of the object’s Gaussians, leaving visible remnants after removal.
+This gap stems from rendering-based feature supervision. Existing methods [29, 10, 28, 6] learn
+per-Gaussian instance features through rendered 2D feature maps, using external feature or mask
+targets, or mask-based contrastive objectives. Despite their differences, these objectives deliver
+gradients according to each Gaussian’s rendering contribution (§3.1). Dominant contributors can thus
+suffice to render an accurate mask, while low-contribution Gaussians belonging to the same object
+receive weak or no supervision and may remain unselected.
+We therefore study volumetric 3D Gaussian segmentation, aiming to select object-associated Gaus-
+sians beyond those needed to render a correct mask. We propose VODA, a plug-and-play objective
+that extends object-level supervision beyond the dominant contributors. VODA modifies only feature
+supervision, leaving the baseline’s reconstructed scene, feature representation, and inference-time
+selection procedure unchanged.
+Our key observation is that, after RGB optimization, Gaussians associated with the same object
+tend to cluster at similar depths, while larger depth gaps often reflect separation between distinct
+40th Conference on Neural Information Processing Systems (NeurIPS 2026).
+arXiv:2611.21383v1  [cs.CV]  16 Nov 2026
+Sheep
+Prompt
+Selection
+3D Gaussians
+Prompt
+3D Gaussians
+Removal
+Prediction
+Prediction
+(b) Pipeline for Volumetric Evaluation
+(a) Pipeline for View-space Evaluation
+incomplete
+3D Gaussians with Semantics
+…
+depth
+Figure 1: A plausible rendered mask does not imply complete 3D selection. For the query “sheep,”
+(a) the selected Gaussians render a plausible object mask, but (b) the depth change after removing the
+same Gaussian set indicates incomplete object removal in the reconstructed scene. This exposes a
+gap between rendered-mask quality and Gaussian-level selection completeness.
+objects. VODA exploits this structure by grouping per-pixel contributors into depth clusters and
+selecting the cluster that best explains each pixel (§3.2). Targets constructed from rendered features
+are then applied directly to every Gaussian in the selected cluster, supervising both dominant and
+low-contribution members while bypassing the contribution-weighted gradient path (§3.3). This
+direct supervision extends coverage within objects, while a complementary pixel-level push loss
+sharpens boundaries between adjacent objects.
+Evaluating volumetric segmentation requires measuring whether an object selection is complete
+beyond its visible projection. Existing benchmarks score rendered masks or visible surface labels and
+therefore do not directly measure this property. We use object removal as a diagnostic: removing a
+complete selection should produce the same depth change as removing the target object itself. We
+therefore introduce Removal-3D, a synthetic indoor-scene benchmark with paired ground-truth depth
+maps before and after target removal. To quantify how closely a predicted selection reproduces this
+change, we propose Removal Depth Error (RDE), which compares the ground-truth depth change
+with the change induced by removing the predicted Gaussians.
+Experiments across four rendering-based baselines [28, 6, 29, 10] show that VODA consistently
+improves volumetric segmentation on Removal-3D while maintaining or improving performance on
+standard benchmarks [13, 9]. Ablations identify direct Gaussian-level supervision as the primary
+source of these gains, while additional diagnostics support the need to change which Gaussians
+receive supervision rather than merely modifying the existing rendering-based signal.
+In summary, our contributions are threefold. (1) We formulate volumetric 3D Gaussian segmentation,
+distinguishing selection completeness from rendered-mask accuracy and identifying the bias in
+rendering-based supervision. (2) We propose VODA, a plug-and-play objective that directly super-
+vises all Gaussians in selected depth clusters. (3) We introduce Removal-3D and RDE, a benchmark
+and metric that assess selection completeness through removal-induced depth changes.
+2
+Related Work
+The explicit primitives of 3D Gaussian Splatting (3DGS) [12] support object-level selection and edit-
+ing. Recent methods attach semantic features or object identities to Gaussians for object-level scene
+understanding [29, 33]. We focus on how 2D supervision is transferred to Gaussians, distinguishing
+rendering-based feature learning from direct 2D-to-Gaussian association.
+Rendering-based Feature Learning.
+Earlier NeRF methods lift 2D semantics through feature
+distillation, mask supervision, or contrastive learning [31, 16, 26, 25, 1, 19, 4, 14, 30, 2], including
+distillation of pretrained visual features such as DINO [3]. Rendering-based 3DGS methods similarly
+alpha-blend per-Gaussian features into 2D maps, with two main supervision paradigms. Supervised
+feature learning matches these maps to external targets: CLIP features [22, 24, 32, 34, 23, 18],
+SAM mask identities as in Gaussian Grouping [29], or both jointly [10]. Self-supervised feature
+learning instead uses SAM masks as grouping cues, pulling features within a mask together and
+pushing features across masks apart without explicit feature targets [28, 6, 5, 8, 17]. Although their
+2
+(a) Standard
+(b) Weight-based
+(c) Ours
+Selected Gaussian
+Unselected Gaussian
+3D Gaussians
+Depth
+Early Stopping
+Alpha
+Transmittance
+Volume-aware
+Figure 2: Comparison of supervision and association strategies for per-pixel Gaussian contrib-
+utors. (a) Rendering-based feature learning delivers contribution-weighted gradients, giving weak
+supervision to low-contribution Gaussians. (b) Direct association links each pixel to a sparse subset
+of contributors selected by contribution-based rules. (c) VODA directly supervises every Gaussian in
+the selected depth cluster, including low-contribution Gaussians associated with the same object.
+supervision sources differ, these rendering-based objectives share the contribution-weighted gradient
+path analyzed in §3.1. As illustrated in Figure 2a, low-contribution Gaussians can therefore receive
+weak supervision even when the rendered features match the 2D targets or grouping constraints.
+VODA complements either paradigm with direct Gaussian-level supervision while leaving the
+reconstructed scene, feature representation, and inference-time selection unchanged.
+Direct 2D-to-Gaussian Association.
+Another line of work associates 2D observations directly
+with Gaussians rather than learning features through rendered-map losses. Lifting By Gaussians [7]
+assigns 2D mask labels to the per-pixel maximum-contributing Gaussian and merges the resulting
+fragments across views. Dr. Splat [15] registers CLIP embeddings to dominant or Top-k Gaussians for
+optimization-free 3D search. Quantile Rendering [11] uses quantile-based sampling to associate high-
+dimensional features with a sparse set of influential Gaussians. Despite their different association
+rules, these methods associate each pixel with only a sparse subset of Gaussian contributors, as
+illustrated in Figure 2b. Multi-view observations can expand this set, but object-associated Gaussians
+that remain weak contributors across views may still receive no assignment. Thus, bypassing
+rendered-feature optimization alone does not necessarily resolve the incompleteness induced by
+sparse, contribution-based association. VODA instead uses per-pixel depth structure to identify the
+target-associated cluster and directly supervises all Gaussians within it.
+3
+Method
+We propose VODA, a plug-and-play supervision objective for volumetric 3D Gaussian segmentation.
+We first analyze why standard rendering-based supervision is insufficient in §3.1. The depth-aware
+rasterizer in §3.2 then groups per-pixel contributors and selects a target depth cluster. Direct Gaussian-
+level supervision in §3.3 applies a feature loss to every Gaussian in the selected cluster, together with
+a complementary pixel-level push loss that encourages separation between object instances.
+3.1
+Contribution-weighted Supervision in Feature Rendering
+Let {gi}N
+i=1 be the Gaussians of a reconstructed 3DGS scene, and let fi ∈RC be the learnable
+instance feature associated with Gaussian gi. For a pixel p, the Gaussians overlapping the pixel are
+sorted by camera-space depth and alpha-blended into a rendered feature map:
+F(p) =
+X
+i∈G(p)
+wi(p)fi,
+wi(p) = Ti(p)αi(p),
+(1)
+3
+2. Rendering Contribution
+Feature 
+Render
+2DFM
+Depth-Aware Rasterizer
+Depth
+𝑤௜(𝐺௜)
+Main Object
+Depth
+Depth
+Depth
+skip
+skip
+𝐷(𝐺௜ାଵ) −𝐷(𝐺௜) 
+1. Cluster-based on Depth Gap
+3. Object-region Cluster
+Direct Gaussian-Level Supervision
+Splatting
+Main Object
+=
+=
+=
+𝐹௜෡
++
+=
++
+1. Target Aggregation
++
++
++
++
++
++
+=
+=
+=
+𝐹௜෡
+𝐹௜
+2. Supervision
+Supervision
+3D Gaussian Segmentation Methods
+𝐿௕௔௦௘+ 𝑳𝒅𝒊𝒓𝒆𝒄𝒕
+Volumetric 
+Supervision
+DA Rasterizer
+Direct 
+Supervision
+Feature Learning
+3D Gaussians
+Figure 3: Overview of VODA. The depth-aware rasterizer groups per-pixel contributors using
+adjacent depth gaps and selects the cluster with the largest total rendering contribution. Alpha-
+weighted pixel features are aggregated into detached Gaussian-level targets. A direct feature loss
+supervises every Gaussian in the selected cluster, including low-contribution Gaussians, without
+contribution-weighted gradient delivery. The baseline feature-rendering loss remains active.
+where G(p) denotes the Gaussians contributing to pixel p in depth order, αi(p) is the per-pixel alpha
+value of gi, and Ti(p) is the accumulated transmittance before gi in that ordering.
+Let Lrend denote the component of the baseline feature-learning objective that is computed through
+the rendered feature maps. For this rendered-map supervision term, applying the chain rule gives:
+∂Lrend
+∂fi
+=
+X
+p:i∈G(p)
+wi(p)∂Lrend
+∂F(p) .
+(2)
+This contribution-weighted path is shared by both paradigms described in §2, whether rendered
+features are matched to external targets or compared across pixels. As Eq. 2 shows, this shared path
+leads to an imbalance in gradient delivery: dominant contributors can learn features sufficient for an
+accurate rendered mask, while low-contribution Gaussians associated with the same object receive
+weak gradients due to their small rendering weights.
+3.2
+Depth-Aware Rasterizer
+To address this imbalance, we need to identify object-associated Gaussians beyond those retained
+by maximum or Top-k selection (Figure 2). Instead of relying solely on individual rendering
+contributions, we exploit the local depth structure of the reconstructed scene. During reconstruction,
+cloning and splitting introduce new Gaussians around existing primitives [12]. This local refinement
+motivates using depth proximity as a cue for object association: contributors representing the same
+local object region can form a depth cluster containing both dominant and low-contribution Gaussians.
+Larger gaps can indicate separation from other objects or the background.
+Depth clustering.
+To group contributors based on these depth gaps, we introduce a depth-aware
+rasterizer that collects per-pixel contributors, their camera-space depths, and alpha values. It disables
+transmittance-based early termination to retain contributors behind dominant Gaussians. For each
+pixel p with at least two contributors, let dj(p) denote the camera-space depth of the j-th contributor
+in depth order. We split consecutive contributors whenever their depth gap exceeds τ(p):
+τ(p) = clip
+ γ · median1≤j<|G(p)| [dj+1(p) −dj(p)] , τmin, τmax
+
+.
+(3)
+The median adapts the threshold to the local gap distribution, γ controls split sensitivity, and clipping
+bounds it within [τmin, τmax]. We denote the resulting depth clusters by Ck(p).
+4
+Target cluster selection.
+To identify the target cluster, VODA selects the cluster with the largest
+total contribution at each pixel:
+C∗(p) = arg max
+Ck(p)
+X
+i∈Ck(p)
+wi(p).
+(4)
+Using total contribution makes cluster selection less sensitive to near-camera floater Gaussians than
+relying on proximity alone.
+3.3
+Direct Gaussian-Level Supervision
+Given the selected depth cluster, we directly supervise its Gaussian features to bypass the contribution-
+weighted rendering path. Since there are no ground-truth instance features for individual Gaussians,
+we construct Gaussian-level pseudo-targets from the full rendered feature F(p) defined in Eq. 1, rather
+than rendering the selected cluster alone. This feature is dominated by high-contribution Gaussians
+that receive strong baseline supervision, providing a learned feature signal for other Gaussians in the
+same cluster. We detach the resulting Gaussian-level targets with sg[·] and apply the loss directly to
+Gaussian features, while retaining the baseline’s original rendering-based supervision.
+Gaussian-level target aggregation.
+A Gaussian may be selected at multiple pixels, which we
+collect as Pi = {p | gi ∈C∗(p)}. This set contains only pixels where gi is selected, not every pixel
+to which it contributes. VODA aggregates the rendered features over Pi to obtain ˆFi:
+ˆFi = sg
+"P
+p∈Pi αi(p)F(p)
+P
+p∈Pi αi(p) + ϵ
+#
+,
+(5)
+where ϵ ensures numerical stability and αi(p) weights each target by the Gaussian’s alpha at p.
+Direct feature loss.
+The direct loss aligns selected Gaussian features with aggregated targets:
+Ldirect =
+1
+|Gsel|
+X
+gi∈Gsel
+fi −ˆFi
+
+2
+2 ,
+Gsel = {gi | |Pi| > 0}.
+(6)
+The loss acts directly on Gaussian features with detached targets, so its gradient bypasses rendering
+weights and reaches low-contribution Gaussians in the selected clusters. Eq. 6 uses squared-ℓ2 by
+default, while baseline-specific distance choices are provided in the supplementary.
+Pixel-level feature push.
+A depth cluster can span adjacent object instances, so we add a pixel-level
+push loss to reduce feature mixing across object boundaries. Within each training view, we randomly
+sample a set Q of pixel pairs (p, q) belonging to different non-background masks and penalize pairs
+whose rendered-feature cosine similarity exceeds a margin m in the learned feature space:
+Lpush =
+1
+|Q|
+X
+(p,q)∈Q
+max(0, cos(F(p), F(q)) −m) .
+(7)
+3.4
+Training Objective
+Let Lbase denote the baseline feature-learning objective, including any existing Gaussian-level
+regularization. We retain this objective and add VODA’s direct and pixel-level push losses:
+LVODA = λdirectLdirect + λpushLpush,
+L = Lbase + LVODA.
+(8)
+Depending on the baseline, VODA is applied during feature learning on a reconstructed scene or
+in a post-training feature-only fine-tuning stage. Scene geometry, opacity, feature representation,
+and inference-time selection remain unchanged, and VODA adds no parameters or computation at
+inference. Implementation schedules and hyperparameters are provided in the supplementary.
+5
+Table 1: Open-vocabulary 3D object selection on LERF under the select-then-render protocol. We
+report rendered-mask mIoU and mAcc@0.25. waldo_kitchen is abbreviated as kitchen.
+mIoU ↑
+mAcc. ↑
+Methods
+figurines
+teatime
+ramen
+kitchen
+Mean
+figurines
+teatime
+ramen
+kitchen
+Mean
+LangSplat [22]
+10.16
+11.38
+7.92
+9.18
+9.66
+8.93
+20.34
+11.27
+9.09
+12.41
+LEGaussians [24]
+17.99
+19.27
+15.79
+11.78
+16.21
+23.21
+27.12
+26.76
+18.18
+23.82
+OpenGaussian [28]
+49.19
+45.63
+22.34
+31.33
+37.12
+69.64
+74.58
+32.39
+50.00
+56.65
++ VODA
+55.31
+62.89
+25.26
+28.47
+42.98
+69.64
+79.66
+36.62
+45.45
+57.84
+LaGa [6]
+65.79
+60.59
+53.35
+47.47
+56.80
+89.29
+83.05
+64.79
+68.18
+76.33
++ VODA
+63.28
+69.05
+50.42
+58.38
+60.28
+89.29
+91.53
+67.61
+81.82
+82.56
+Gaussian Grouping [29]
+26.04
+26.10
+16.10
+—
+22.75
+46.43
+46.67
+33.33
+—
+42.14
++ VODA
+51.45
+43.64
+36.09
+—
+43.73
+82.14
+80.00
+66.67
+—
+76.27
+ILGS [10]
+24.43
+38.70
+26.87
+—
+30.00
+50.00
+75.00
+55.56
+—
+60.19
++ VODA
+42.36
+58.32
+48.19
+—
+49.62
+75.00
+91.67
+77.78
+—
+81.48
+Query: “Pikachu”
+Query: “Rubber duck with buoy”
+GT
+Baseline
++ VODA
+OpenGaussian
+Gaussian Grouping
+ILGS
+Query: “Ottolenghi”
+LaGa
+Query: “Pink ice cream”
+GT
+Baseline
++ VODA
+Figure 4: Qualitative 3D object selection on LERF. For “Ottolenghi,” VODA recovers object regions
+missed by the baselines, while for “Pink ice cream,” it suppresses spurious selections. These examples
+demonstrate improvements in both the completeness and precision of 3D Gaussian selection.
+4
+Experiments
+We evaluate VODA on two standard 3DGS segmentation benchmarks, LERF and ScanNet, in §4.1,
+and on our Removal-3D benchmark for volumetric evaluation in §4.2. We further ablate its design
+choices in §4.3 and analyze recovered Gaussians and contribution-based alternatives in §4.4. We
+evaluate four baselines spanning both feature-learning paradigms in §2: OpenGaussian [28] and
+LaGa [6] are self-supervised, while Gaussian Grouping [29] and ILGS [10] are supervised.
+Implementation details.
+We implement VODA on the official codebase of each baseline and apply
+it only to the feature-learning stage, leaving RGB reconstruction and inference unchanged. The depth-
+clustering and loss hyperparameters are shared across all four baselines. VODA is applied within the
+existing feature stage for OpenGaussian and LaGa, and as a short feature-only fine-tuning stage for
+Gaussian Grouping and ILGS. Full implementation details are provided in the supplementary.
+4.1
+Comparison on Standard Benchmarks
+We evaluate VODA on two complementary standard settings probing different aspects of 3D scene
+understanding: open-vocabulary 3D object selection on LERF and semantic segmentation on ScanNet.
+3D Object Selection on LERF.
+Following OpenGaussian, we perform open-vocabulary 3D object
+selection by selecting a set of Gaussians for each text query and rendering only that set into multiple
+views. We compare these rendered masks with the ground-truth object masks from LangSplat [22],
+reporting mIoU and the percentage of queries whose IoU exceeds 0.25 (mAcc@0.25). Because
+selection precedes rendering, this protocol evaluates a single 3D Gaussian selection consistently
+across views rather than independently segmenting each rendered image. Gaussian Grouping and
+6
+Table 2: Text-query 3D semantic segmentation on ScanNet [9]. We report point-cloud mIoU and
+mAcc for three category splits. Gaussian Grouping and ILGS are omitted (see text).
+Methods
+19 classes
+15 classes
+10 classes
+mIoU ↑
+mAcc. ↑
+mIoU ↑
+mAcc. ↑
+mIoU ↑
+mAcc. ↑
+LangSplat [22]
+3.78
+9.11
+5.35
+13.20
+8.40
+22.06
+LEGaussians [24]
+3.84
+10.87
+9.01
+22.22
+12.82
+28.62
+OpenGaussian [28]
+26.20
+39.35
+28.00
+42.67
+34.57
+48.38
++ VODA
+29.00
+42.80
+29.43
+44.38
+36.89
+50.69
+LaGa [6]
+32.20
+47.35
+37.19
+53.88
+43.06
+61.31
++ VODA
+33.20
+49.63
+37.21
+55.59
+45.53
+65.24
+Reference Mesh
+LaGa
++ VODA
++ VODA
+OpenGaussian
+GT
+Reference Mesh
+GT
+OpenGaussian
+LaGa
++ VODA
++ VODA
+Query: “Bed”
+Query: “Sofa”
+Figure 5: Qualitative 3D semantic segmentation on ScanNet. VODA recovers missing object regions
+and suppresses spurious semantic assignments for both “Bed” and “Sofa.” Red arrows highlight
+representative regions with incomplete or noisy baseline predictions corrected by VODA.
+ILGS originally produce 2D segmentations by rendering first and then grouping the rendered features.
+We instead evaluate them with the same select-then-render protocol as OpenGaussian and LaGa, so
+their results differ from those reported in the original papers. Table 1 shows that VODA improves
+the average mIoU and mAcc@0.25 across all four baselines. The gains are particularly large for
+Gaussian Grouping and ILGS, although a few individual scenes show slight regressions. Figure 4
+shows that VODA recovers missing object parts while reducing spurious selections.
+3D Semantic Segmentation on ScanNet.
+Following OpenGaussian, we use 19, 15, and 10 Scan-
+Netv2 [9] categories as text queries and assign each Gaussian to its most similar query. We transfer
+these predictions to the ScanNet point cloud and report mIoU and mAcc against the ground-truth
+semantic labels. ScanNet complements LERF by evaluating category-level semantic assignment over
+the entire scene rather than object-level selection from individual text queries. Table 2 shows consis-
+tent improvements for both OpenGaussian and LaGa across all three category splits as the semantic
+label set changes from 19 to 10 classes. The gains remain consistent across different category splits,
+suggesting that VODA is not tied to a particular semantic class partition. Gaussian Grouping and
+ILGS are not applicable because their features are tied to per-view SAM mask identities, which the
+ScanNet text-query protocol does not provide. Figure 5 shows that VODA produces cleaner semantic
+assignments around object boundaries, with less label leakage across neighboring regions. However,
+ScanNet ground-truth labels cover only visible surfaces in the reconstructed point cloud and therefore
+cannot directly assess occluded object-associated Gaussians, motivating our volumetric benchmark.
+4.2
+Comparison on Volumetric Benchmark
+Removal-3D.
+Standard benchmarks evaluate rendered masks or visible surface labels, but cannot
+determine whether the selected set covers all Gaussians associated with the 3D object. In particular,
+they do not test whether removing the selected Gaussians reveals the surfaces expected after removing
+the object itself. We construct Removal-3D, a synthetic benchmark with three indoor scenes (Table,
+7
+Table 3: Volumetric segmentation on Removal-3D. Rendered-mask mIoU measures spatial overlap,
+while mRDE measures the depth discrepancy after removing the selected Gaussians.
+Methods
+Table
+Kitchen
+Room
+Mean
+mIoU↑
+mRDE↓
+mIoU↑
+mRDE↓
+mIoU↑
+mRDE↓
+mIoU↑
+mRDE↓
+OpenGaussian [28]
+57.87
+43.31
+37.46
+29.05
+63.26
+45.56
+52.87
+39.31
++ VODA
+65.76
+29.39
+52.38
+13.00
+64.55
+39.64
+60.90
+27.34
+LaGa [6]
+77.02
+43.95
+66.23
+22.99
+84.55
+43.85
+75.93
+36.93
++ VODA
+79.79
+32.25
+70.87
+8.16
+86.54
+24.56
+79.07
+21.66
+Gaussian Grouping [29]
+25.57
+52.65
+18.52
+33.92
+34.59
+63.57
+26.23
+50.05
++ VODA
+35.94
+41.59
+18.66
+20.29
+35.93
+52.47
+30.18
+38.12
+ILGS [10]
+27.14
+50.76
+26.94
+32.86
+40.88
+66.31
+31.66
+49.98
++ VODA
+37.24
+45.19
+31.46
+18.40
+47.54
+43.34
+38.75
+35.65
+Query: “Hamburger”
+GT
+OpenGaussian
+LaGa
+Gaussian Grouping
+ILGS
+Query: “Toy duck”
+Baseline
++ VODA
+Baseline
++ VODA
+Figure 6: Qualitative removal on Removal-3D. Each scene is rendered after removing the queried
+Gaussians. VODA leaves less residual target content and better reveals the surface behind the object.
+Kitchen, and Room) built in Blender using BlenderKit assets. For each target object, the benchmark
+provides paired depth maps of the full scene and the scene after ground-truth object removal.
+Removal Depth Error.
+We introduce the Removal Depth Error (RDE) to compare this reference
+depth change with the change induced by removing the predicted Gaussian set:
+RDE = 1
+|Ω|
+X
+p∈Ω
+ρ(∆D(p), ∆Dgt(p)) ,
+(9)
+where Ωdenotes the ground-truth target mask region, and ∆D(p) and ∆Dgt(p) are the predicted and
+reference depth changes, respectively. The function ρ clips the predicted change to the range bounded
+by the magnitude of the reference change before computing absolute error. We obtain per-scene
+mRDE by averaging over viewpoints and target objects, and report the mean across the three scenes
+as the overall score. Because RDE is evaluated only within the target object mask, selections outside
+this region do not affect the score. We therefore report rendered-mask mIoU alongside RDE as a
+complementary measure. RDE measures whether the selected Gaussians remove the target volume as
+expected, while mIoU measures whether the selection remains spatially aligned with the target in
+rendered views. The complete computation is provided in the supplementary.
+Volumetric Evaluation on Removal-3D.
+Table 3 shows consistent reductions in mRDE for every
+baseline and scene, together with improved mIoU. The improvement holds across both feature-
+learning paradigms, demonstrating improved Gaussian-level selection completeness on Removal-3D,
+a property standard benchmarks leave unmeasured. The mIoU gains suggest that lower mRDE is
+not achieved by simply expanding the selected set. Figure 6 complements the LERF and ScanNet
+8
+visualizations by rendering each scene after removing the queried Gaussians. For the “toy duck” and
+“hamburger” queries, the baselines leave residual target content, indicating that some object Gaussians
+remain unselected. VODA leaves less residual content and better reveals the occluded surface.
+4.3
+Ablation Study
+We ablate supervision delivery, the pixel-level push, and target aggregation using OpenGaussian and
+Gaussian Grouping as representatives of self-supervised and supervised feature learning.
+Table 4: Ablation on supervision type and pixel-level push.
+Supervision
+Pixel-Push
+LERF
+Removal-3D
+Rendering
+Direct
+mIoU↑
+mAcc↑
+mIoU↑
+mRDE↓
+OpenGaussian
+✓
+✓
+39.06
+56.18
+52.15
+32.37
+✓
+42.57
+58.14
+57.90
+32.63
+✓
+✓
+42.98
+57.84
+60.90
+27.34
+Gaussian Grouping
+✓
+✓
+12.40
+13.28
+16.84
+55.60
+✓
+42.89
+76.27
+29.57
+38.25
+✓
+✓
+43.73
+76.27
+30.18
+38.12
+Table 5: Target aggregation.
+Aggregation
+LERF
+Simple
+Alpha
+mIoU↑
+mAcc↑
+OpenGaussian
+✓
+40.63
+55.89
+✓
+42.98
+57.84
+Gaussian Grouping
+✓
+43.22
+76.27
+✓
+43.73
+76.27
+Supervision delivery.
+We compare VODA’s direct loss with a rendering variant that uses the same
+selected depth clusters and target features, but delivers supervision through feature rendering. Thus,
+the two variants differ only in how supervision reaches the selected Gaussians. Direct supervision
+consistently performs better across both baselines on LERF and Removal-3D, with the largest
+difference on Gaussian Grouping, where LERF mIoU rises from 12.40 to 43.73. This shows
+that identifying the appropriate depth cluster is not sufficient. Supervision must also bypass the
+contribution-weighted rendering path and reach the selected Gaussian features directly.
+Pixel-level push.
+We next isolate the pixel-level push loss while retaining direct supervision. The
+push loss has little effect on standard LERF performance, but consistently improves volumetric selec-
+tion on Removal-3D. This supports its complementary role to direct supervision. Direct supervision
+improves Gaussian coverage, while the push loss reduces feature mixing between nearby instances
+and improves volumetric selection. Boundary visualizations in the supplementary illustrate this effect.
+Target aggregation.
+Finally, we compare uniform averaging with the α-weighted aggregation in
+Eq. 5. Alpha weighting yields modest but consistent improvements across both baselines, supporting
+the choice to place greater trust in pixels where the selected Gaussian has a higher per-pixel alpha.
+Overall, the ablation shows that direct supervision provides the primary benefit, while the pixel-level
+push improves instance separation and α weighting improves target reliability.
+4.4
+Analysis
+We next test whether the Gaussians additionally recovered by VODA are precisely those that receive
+weak supervision through the rendering path, and whether simpler reweighting or spatial propagation
+can address the same failure mode.
+Rendering contribution of recovered Gaussians.
+Using LaGa, we compare Gaussians retrieved
+by the baseline with those missed by the baseline but recovered after adding VODA. For each
+Gaussian, we record its maximum rendering contribution wi(p) over all training pixels and views.
+Because the baseline and VODA checkpoints share identical geometry and opacity, as detailed in the
+supplementary, these contribution statistics are measured under the same scene geometry. Figure 7
+shows that the recovered Gaussians are consistently shifted toward lower rendering contribution on
+Removal-3D. At the 1/255 cutoff, the fraction of low-contribution Gaussians is 10.2–15.9 percentage
+points higher in the recovered set across the three scenes. The supplementary extends this analysis to
+9
++10pp
+max
+𝑝
+𝑤𝑖𝑝
+(b) kitchen
++16pp
+max
+𝑝
+𝑤𝑖𝑝
+(c) room
++13pp
+max
+𝑝
+𝑤𝑖𝑝
+(a) table
+cumulative fraction
+selected
+missed
+𝑤=1/255
+Figure 7: Rendering-contribution CDFs for LaGa on Removal-3D. VODA-recovered Gaussians have
+lower contributions than baseline-selected ones; 1/255 marks the reference threshold.
+Table 6: Contribution-based alternatives. Reweighting and propagation yield inconsistent gains, while
+VODA improves all three metrics for both baselines through direct depth-cluster supervision.
+OpenGaussian
+Gaussian Grouping
+Methods
+LERF
+Removal-3D
+Methods
+LERF
+Removal-3D
+mIoU ↑
+mIoU ↑
+mRDE ↓
+mIoU ↑
+mIoU ↑
+mRDE ↓
+Baseline
+37.12
+52.87
+39.3
+Baseline
+22.75
+26.23
+50.0
+Normalize
+24.61
+17.1
+72.7
+Normalize
+34.03
+1.6
+48.7
+Clamp
+35.94
+13.4
+69.4
+Clamp
+31.42
+1.5
+52.2
+KNN
+30.28
+17.9
+73.3
+KNN
+12.24
+1.5
+54.7
+VODA
+42.98
+60.90
+27.3
+VODA
+43.73
+30.18
+38.1
+six scenes, with accumulated-contribution statistics showing the same trend. This directly supports
+our diagnosis that VODA preferentially recovers Gaussians with weaker baseline supervision.
+Contribution reweighting and spatial propagation.
+Table 6 tests whether the imbalance can be ad-
+dressed without explicitly assigning supervision through depth clusters. Normalize and Clamp rescale
+the rendering gradient, while KNN propagates features from nearby high-contribution Gaussians.
+None of these alternatives matches VODA. All three substantially degrade volumetric performance for
+OpenGaussian, while for Gaussian Grouping, Normalize improves LERF performance but severely
+degrades Removal-3D. These failures reflect a limitation of contribution-based heuristics. Rendering
+contribution alone does not indicate whether a Gaussian is associated with the target object. Reweight-
+ing therefore cannot identify the relevant low-contribution Gaussians or recover those that receive no
+rendered gradient. Indeed, across the six analyzed scenes, 8.5–18.7% of recovered Gaussians receive
+zero contribution in every training view. KNN avoids this zero-gradient issue, but spatial proximity
+likewise does not establish object association and may propagate features across object boundaries.
+5
+Conclusion
+VODA closes the gap between rendered-mask accuracy and volumetric completeness by group-
+ing contributors by depth and directly supervising every Gaussian in selected clusters. We intro-
+duce Removal-3D and RDE to measure selection completeness from depth changes after object
+removal. Across four baselines, VODA improves applicable standard benchmarks and both mRDE
+and rendered-mask mIoU on Removal-3D. Reweighting and spatial propagation fail to match VODA,
+suggesting that reaching low-contribution Gaussians matters more than scaling rendered gradients.
+Limitations.
+Depth clustering may merge contacting objects or fragment objects with sparse
+interiors, and the pixel-level push only partly addresses these cases. Because occluded Gaussians
+lack feature-level ground truth, we assess their supervision indirectly through downstream selection
+and removal. Exact volumetric evaluation requires paired full-scene and object-removed depth maps,
+available only for the three synthetic Removal-3D scenes.
+10
+Acknowledgments
+This work was supported by the Artificial Intelligence Graduate School Program, Yonsei University
+(RS-2020-II201361), Institute of Information & communications Technology Planning & Evaluation
+(IITP) grants funded by the Korea government (MSIT) (RS-2024-00457882) and the Global AI
+Frontier Lab International Collaborative Research (RS-2024-00469482 & RS-2024-00509279).

@@ -1,0 +1,110 @@
+{
+  "title_zh": "后验匹配蒸馏：用倾斜均值监督少步生成",
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把少步蒸馏的目标从边缘分布或轨迹匹配推进到逐噪声级的条件后验匹配，并给出可证明的识别条件；在 SDXL、FLUX.2 和视频模型上验证，问题重要且结果有说服力。",
+    "novelty": 84,
+    "novelty_reason": "Tilt=Shift Identity 把指数倾斜后验均值化为一次冻结 teacher 的移位评估，配合后验识别定理形成无需辅助 student-score network 的新目标；与 DMD 和 Moment Matching 的差异是实质性的。",
+    "technical_depth": 88,
+    "technical_depth_reason": "包含定理及完整证明、零 population loss 的识别论证、多基线定量比较、多样性与质量消融和用户研究；但理论依赖精确 posterior-mean teacher，实际用无引导 teacher 评估，削弱了保证与主结果之间的直接对应。"
+  },
+  "reading": {
+    "why_read": "值得读的是机制而非又一个蒸馏损失：在 Gaussian corruption 下，指数倾斜后验 qλ(x|zt) 严格等于把噪声输入平移到 zt+ρtλ 后的原后验，因此每个 tilted mean 只需一次冻结 teacher 前向；作者进一步证明在开邻域匹配这族均值可唯一识别完整条件后验。",
+    "motivation": "少步蒸馏的核心争议是学生应保留 teacher 的什么信息。轨迹类方法压缩采样路径；DMD 等分布类方法匹配边缘分布，常用 reverse-KL，mode-seeking 会偏向主要模态、牺牲同 prompt 多样性；而且边缘匹配不保证每个噪声级的条件后验正确。Moment Matching 虽比较条件均值，但在学生预测重新加噪的状态上，且常需辅助 denoiser 或参数优化。PMD 因此把监督对象改为冻结 teacher 在每个噪声级的条件后验，目标是在少步学生中恢复其多模态结构和模态概率。",
+    "innovations": [
+      {
+        "point": "Tilt=Shift Identity：把后验倾斜变成输入平移",
+        "detail": "定义 qλ(x|zt)∝eλ⊤x q(x|zt)，在 Gaussian corruption 下证明 qλ(x|zt)=q(x|zt+ρtλ)，ρt=σt²/αt；于是 tilted posterior mean 等于 Dt(zt+ρtλ)。这把原本需要多次后验采样的目标变成一次冻结 teacher 评估，且对任意 clean-data 分布成立（在精确 posterior-mean denoiser 下）。"
+      },
+      {
+        "point": "后验识别定理：均值约束可识别完整分布",
+        "detail": "匹配开邻域内所有 λ 的 tilted means 等价于匹配学生与 teacher 的 log-MGF 梯度；二者在 tilt 原点邻域相等且 MGF 有限，则条件分布相等。因此零 population loss 不只匹配均值，还恢复多模态结构和模态概率，且不需要辅助 student-score network。"
+      },
+      {
+        "point": "条件多样性 + any-step 采样",
+        "detail": "学生通过拼接噪声混合 latent 与原始状态变成随机网络；训练在 student 自己的 on-policy 噪声状态上匹配后验。由于学的是每个噪声级的 clean posterior，推理时可在训练时间网格内改变步数：预测 clean 后按 Gaussian schedule 重新加噪，再调用学生，无需为每个步数重训。"
+      }
+    ],
+    "method": "训练时从学生 rollout 取 detached 的 zt，采样空间上粗粒度的 tilt λ，用冻结 teacher 在 zt+ρtλ 处一次前向得到目标 tilted mean。对同一 zt 和 λ 抽多个独立噪声输入，学生产生多个 clean 预测；用 softmax(λ⊤x̂) 加权平均估计学生 tilted mean，与 teacher 目标做平方欧氏残差。为降低有限样本下自归一化权重的偏差，附录用 delete-one jackknife 与 cross-fitting 组合多个子集残差。总目标另加非饱和 logistic GAN 项（作者设定固定权重），判别头读冻结 teacher 的 caption-conditioned 特征；GAN 补足无引导 teacher 后验缺失的视觉保真与 prompt 对齐。方法的关键取舍是：理论保证针对精确 posterior-mean denoiser，实际 teacher 在无 classifier-free guidance 下评估，因此 PMD 项匹配的是无引导后验，质量依赖 GAN 辅助。",
+    "results": "作者在 SDXL 和 FLUX.2 [klein] 4B 的四步设定报告：PMD 在两者均取得四步方法中最低 FID（SDXL 19.14，FLUX.2 24.12）；但 GenEval 并非全面领先，SDXL 上低于 DMD2。PartiPrompts 的 intra-prompt diversity 上，相对最强基线 SDXL 的 DINOv2/DreamSim/Vendi/LPIPS 分别提升 48.6%/45.9%/38.6%/6.9%，FLUX.2 对应提升 27.3%/39.7%/39.8%，LPIPS 为 13.4%。五十人用户研究中，PMD 在多样性上对 SMD/RTDMD/FLUX.2 的胜率为 64%/85%/66%。Wan 视频模型四步生成上 VBench Overall 85.47、Semantic 82.04、Quality 86.33，接近 AnyFlow 的 85.51。消融显示去掉 GAN 后 PMD-only 多样性最高（Vendi 5.112）但 FID 退化到 56.13，说明质量主要由对抗项补足。",
+    "limitations": "作者承认训练需要同一噪声状态下多次学生采样，且仍依赖辅助对抗损失才能达到有竞争力的视觉质量与 prompt 对齐。更实质的限制在理论假设：识别定理要求 teacher 是精确 posterior-mean denoiser，学生指数矩在原点邻域有限；实际 teacher 在无 classifier-free guidance 下评估，而带引导预测一般不是固定 clean 分布的后验均值。因此 PMD 项匹配的是无引导后验，PMD-only 的 FID 退化与偏好分数偏低正说明这一点，GAN 项实际在用覆盖性换 realism。tilt 分布与半径也缺少原则性选择准则：更大 tilt 提升多样性但 FID 变差，作者用混合半径折中；评估集中在少步图像和单视频模型，未验证更少步数或更大 teacher 的外推。",
+    "insights": "把“匹配什么”从边缘分布推进到条件后验，是少步蒸馏一个可继续挖掘的方向：Tilt=Shift 把高阶后验信息编码进 teacher 的移位评估，后续可研究自适应 tilt 分布、与 reward/guidance 的后验定义一致性，以及用更少学生采样估计 tilted mean。另一个启发是把识别定理当作诊断工具：如果目标只能识别均值，多样性损失就没有理论依据；PMD 给出了一个可检验的充分条件，也暴露了无引导后验与有引导生成质量之间的张力。"
+  },
+  "claims": [
+    {
+      "claim": "在 SDXL 四步设定下，PMD 的 FID 为 19.14。",
+      "numbers": [
+        "19.14"
+      ],
+      "source_span": "Table 1, SDXL row 'PMD (Ours)'",
+      "quote": "19.14"
+    },
+    {
+      "claim": "在 FLUX.2 [klein] 4B 四步设定下，PMD 的 FID 为 24.12。",
+      "numbers": [
+        "24.12"
+      ],
+      "source_span": "Section 5, Quantitative Results; Table 1",
+      "quote": "PMD’s 24.12"
+    },
+    {
+      "claim": "相对最强基线，SDXL 的 DINOv2、DreamSim、Vendi、LPIPS 多样性分别提升 48.6%、45.9%、38.6%、6.9%。",
+      "numbers": [
+        "48.6",
+        "45.9",
+        "38.6",
+        "6.9"
+      ],
+      "source_span": "Section 5, Intra-prompt diversity",
+      "quote": "On SDXL, PMD improves over the strongest baseline for each metric by 48.6% in DINOv2, 45.9% in DreamSim, 38.6% in Vendi, and 6.9% in LPIPS."
+    },
+    {
+      "claim": "FLUX.2 [klein] 4B 的对应多样性提升为 DINOv2 27.3%、DreamSim 39.7%、Vendi 39.8%、LPIPS 13.4%。",
+      "numbers": [
+        "27.3",
+        "39.7",
+        "39.8",
+        "13.4"
+      ],
+      "source_span": "Section 5, Intra-prompt diversity",
+      "quote": "are 27.3%, 39.7%, 39.8%, and 13.4%, respectively."
+    },
+    {
+      "claim": "五十人用户研究中，PMD 在多样性上对 SMD、RTDMD、FLUX.2 [klein] 的胜率分别为 64%、85%、66%。",
+      "numbers": [
+        "64",
+        "85",
+        "66"
+      ],
+      "source_span": "Section F, User Study Details",
+      "quote": "receiving higher ratings in 64%, 85%, and 66% of comparisons against SMD, RTDMD, and FLUX.2 [klein], respectively"
+    },
+    {
+      "claim": "Wan 视频模型四步生成上，PMD 的 VBench Overall 为 85.47、Semantic 为 82.04、Quality 为 86.33，AnyFlow Overall 为 85.51。",
+      "numbers": [
+        "85.47",
+        "82.04",
+        "86.33",
+        "85.51"
+      ],
+      "source_span": "Table 7, PMD row; Section H",
+      "quote": "PMD achieves the highest VBench Semantic score of 82.04 and a competitive Quality score of 86.33, resulting in an Overall score of 85.47, closely matching AnyFlow’s 85.51."
+    },
+    {
+      "claim": "去掉 GAN 后 PMD-only 的 Vendi 为 5.112。",
+      "numbers": [
+        "5.112"
+      ],
+      "source_span": "Table 6, row 'PMD only'; Appendix E.1",
+      "quote": "with a Vendi score of 5.112"
+    },
+    {
+      "claim": "PMD-only 的 FID 为 56.13。",
+      "numbers": [
+        "56.13"
+      ],
+      "source_span": "Table 6, row 'PMD only'; Appendix E.1",
+      "quote": "FID 56.13"
+    }
+  ]
+}

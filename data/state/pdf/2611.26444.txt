@@ -1,0 +1,3683 @@
+18 November 2026
+A Diagnostic Benchmark for Embodied Mind, Physical Action,
+and Mind-Action Composition in Robotic Manipulation
+Yuzhi Huang1,14∗† Jie Wu1∗† Fanding Huang1∗Junchao Lin1,14∗Weichen Zhang1∗Ziyi Xiong13,14∗Yang Li12∗
+Zhengwei Xie12∗Zhimin Wang1∗Zhen Liu1∗Jiazhen Huang1∗Yuzheng Zhang12 Yuche Liu12 Hongyi Yang12 Chen Tang8
+Shixiang Tang3 Hakan Aktas2 Adam Wu2 Duo Wu1 Kangye Ji1 Shuzhao Xie1 Huanan Liu1 Weijue Bu11 Chenxin Li8
+Xinyuan Wang6 Tianyi Bai7 Yinan Mao16 Jiawei Wang15 Minglei Li15 Heng Yu4 Ehsan Adeli4‡ Minchen Li5‡
+Yong-Lu Li10‡ Cengiz Öztireli2‡ Huazhe Xu1‡ Chao Yu1‡ Jing Zhang12‡ Shanghang Zhang9‡ Weitao Zhou15‡
+Wenwu Zhu1‡ Cheng Chi12# Jingyan Jiang1,14# Zhi Wang1#
+1THU
+2UCam
+3Oxford
+4Stanford
+5CMU
+6HKU
+7HKUST
+8CUHK
+9PKU
+10SJTU
+11FDU
+12RUC
+13SZU
+14Velabot AI
+15Simple AI
+16Baidu AI Cloud
+∗Co-first Authors
+†Project Leaders
+‡Advisors
+# Corresponding Authors
+ Website: mind2act-world.com
+§ Code: Benchmark
+ó Tasks
+ Leaderboard
+3 Diagnosis
+[ Document
+² Community
+Mind2Act
+Act
+Act
+Process-Level Event Trace
+1
+2
+3
+4
+20+
+5 Real-World Scenarios
+9
+8
+5
+5
+3
+12 Capability Categories
+Mind
+Act
+Mind2Act
+Diagnosis Loop
+Train
+Evaluate
+Diagnose
+Public Leaderboard
+end-to-end and agent boards ∙ Clean / Random
+Agent Infra
+tool API ∙ memory resolve ∙ closed-loop steps
+Simulation Suite
+180 configs ∙ Isaac Sim ∙ 4,500 demos
+Open Code & Policy Adapters
+scorers ∙ task specs ∙ plug-in VLA / WAM
+Model Profile Cards
+Evaluated Models
+Models ∙ 4 Paradigms Growing∙∙∙
+VLA
+WAM
+Agent
+→ model profile card
+Community
+WeChat ∙ QQ ∙ Feishu ∙ Discord
+Hybrid
+Mind
+Mind2Act
+Model
+Mind
+Act
+Mind2Act
+Overall
+Mind2Act
+Act
+Act
+Mind
+Mind2Act
+M1 Workpiece Tracking
+P2 Steamer Stack
+CP04 Cooking
+CP07 Bridge Building
+DR1 Conveyor Pickup
+PR4 Cloth Folding
+Mind
+10 tasks
+E2 Keypad Entry
+S1 Tray Layout
+S2 Hidden Zone
+P1 Meal Order
+Memory span ↑
+Logic depth ↑
+Mind2Act
+10 tasks
+CP02 Cake Decor
+CP05 Key Replay
+CP08 Block Build
+CP10 Ball Return
+Loop horizon ↑
+Error compounding ↑
+Act
+10 tasks
+DR2 Light Buttons
+DR3 Gate Crossing
+PR1 Resistor
+PR6 Domino Chain
+Dynamics ↑
+Precision ↑
+Easy
+Medium
+Hard
+×
+= 180 configs
+Agent ∙ acts through tools
+1
+GPT-6 Astra
+2
+DeepSeek V4.1 Flash
+3
+Gemini 4 Argon
+4.4
+End-to-end ∙ VLA / WAM
+1
+InternW0
+2
+KinRT
+3
+π0.5
+4
+G0.5
+5
+X-VLA
+6
+FastWAM
+Task score (0–100) and success rate, mean of Clean and Random over 30 tasks × 3 levels; Overall score = 0.25 Mind + 0.25 Act + 0.50 Mind2Act.
+5 episodes per configuration for agents, 50 for end-to-end policies; ranked by Overall score within each board.
+first failure ∙ Mind / Act ∙ behavioural profile
+Benchmark Highlights
+30 Tasks Across 3 Views
+Open-Source Ecosystem
+Leaderboard
+Long-Horizon Cooking ∙ CP04
+Moving Conveyor Pickup ∙ DR1
+Resistor ±0.2→0.12 Ω ∙ PR1
+Order Memory ∙ P1
+Build from Memory ∙ CP08
+1
+2
+3
+Mind2Act
+W O R L D
+Mind
+Act
+Physical Execution
+History-Based
+Cognitive Reasoning
+Precise & Timely
+Strong Mind 52.7% + strong Act 39.0% ≠ Mind2Act 12.0%
+30.2
+6.1
+8.7
+7.9
+7.6
+6.2
+6.2
+3.1
+Mind
+Act
+Mind2Act
+memory, goal selection, planning
+5 categories
+beyond one score
+data
+policy
+first failure
+stage + failure code
+30 tasks
+3 levels
+timely, precise, stable execution
+2 categories
+attributed to
+2 scenes
+next step, by architecture
+Instruments &
+Home &
+Manufacturing &
+Companion &
+Assembly &
+agent
+hybrid
+VLA / WAM
+Tool Use
+Food Service
+Logistics
+Edutainment
+Physical Reasoning
+reasoning and execution via feedback 5 categories
+logs
+tools, library
+handoff
+training data
+Lab instruments,
+Kitchen prep, meal
+Part checks, sorting,
+Cognitive, music and
+Building from drawings,
+behavioural profile: E/I ∙ S/N ∙ T/F ∙ J/P, tendencies not ability
+control panels, HMIs
+service, tidying
+interlocks, transport
+sports training
+chain mechanisms
+harder levels raise
+harder levels raise
+harder levels raise
+∙ CP01 conveyor meal assembly: did the effect propagate to the next decision?
+Progressive pressure inside every task
+Clean
+Memorize orders
+Set out plates
+Pick from moving belt
+Fulfil & update orders
+Random
+goal selection
+prerequisite
+physical effect
+continuation
+30 tasks  ×  3 levels  ×  2 scene settings
+action path
+target E M H what grows with the level
+Simulation ∙ 30 tasks × 3 levels ∙ Clean + Random
+evaluated
+queued
+each cell: task score (bar) ∙ success rate
+53.9 52.7%
+40.4 39.0%
+13.3 12.0%
+34.6%
+OpenAI
+DeepSeek
+12.4 11.0%
+11.3 8.7%
+0.3 0.0%
+6.6%
+7 models
+6 models
+maps observations to actions
+predicts the world, then acts
+Google
+5.0 4.3%
+12.3 9.7%
+0.1 0.0%
+4.7%
+Shanghai AI Lab ∙ WAM
+6.1 5.4%
+20.3 17.6%
+4.1 3.0%
+8.7%
+IIGroup, Tsinghua ∙ VLA
+5.6 4.4%
+17.4 13.6%
+4.3 2.9%
+7.0%
+4.5 3.5%
+15.9 12.0%
+5.1 3.6%
+6.4%
+Physical Intelligence ∙ VLA
+8 models
+4 models
+Galaxea AI ∙ VLA
+2.8 1.9%
+16.0 13.4%
+3.1 2.3%
+5.9%
+acts through tools
+planner + VLA / WAM executor
+1.4 1.0%
+21.9 19.6%
+0.7 0.2%
+7.0%
+Tsinghua AIR ∙ VLA
+Tsinghua ∙ WAM
+1.2 0.9%
+9.3 7.4%
+0.9 0.5%
+2.9%
+ranked with the end-to-end policies
+Entity
+Rule
+Process
+Spatial
+Integrated
+Dynamic Response
+Precise Execution
+Cumulative
+Repair
+Feedback
+Plan
+Predict
+Mind
+Act
+Composition
+Isaac Sim
+Bimanual
+Easy ∙ Medium ∙ Hard
+next ingredient 1
+both arms
+2
+temperature → keep warm
+3
+π0.5
+X-VLA
+G0.5
+KinRT
+GR00T N1.7
+StarVLA
+DM0.5
+Awomo
+OpenWAM
+X-WAM
+Liber-0
+InternW0
+FastWAM
+DeepSeek V4.1
+Gemini 4
+GPT-6 Astra
+Claude Fable 5.2
+Claude Opus 5.5
+GLM-5.3
+Kimi K3.1
+HexaShell
+G0.5
+GO-1
+ME-Brain-1.0
+Mem-0
+Closed-Loop Composition through Environmental Feedback
+Fig. 1. Overview of Mind2Act World. Mind2Act World is a diagnostic benchmark for embodied mind, physical action and
+their composition in robotic manipulation. Mind tasks test history-based reasoning, Act tasks test precise and timely physical
+execution, and Mind2Act tasks test their closed-loop composition, where action outcomes guide subsequent decisions. The
+30 tasks come from 5 real-world application domains and cover 12 capability categories. Each runs at 3 difficulty levels in
+Clean and Random scenes (180 configurations), with 4,500 expert demonstrations for training end-to-end policies. Agents and
+end-to-end policies share the same tasks, information contract and evaluator, and are ranked on separate leaderboards. A
+diagnosis loop then attributes the failed episodes of a system to Mind, Act or their composition and summarizes them in a
+model profile card that points to its next improvement. Top: the three views of Mind2Act World. Middle: the application
+domains, capability categories, tasks and diagnosis loop. Bottom: the open-source ecosystem, the evaluated models and the
+continuously updated leaderboards.
+arXiv:2611.26444v1  [cs.RO]  19 Nov 2026
+mmlab@SIGS
+Contents
+1
+Introduction
+3
+2
+Related Work
+4
+2.1
+Embodied Policies and Agents . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+4
+2.2
+Evaluation for Manipulation and Embodied Agents . . . . . . . . . . . . . . . . . . . .
+5
+3
+Mind2Act World Benchmark
+6
+3.1
+Design Principles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+6
+3.2
+Task Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+3.3
+Difficulty Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+3.4
+Training Data and Collection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+3.5
+Evaluation Setting . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+12
+4
+Technical Implementation and Evaluation Protocol
+13
+4.1
+Platform and Policy Interfaces
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+13
+4.2
+Episode Protocol and Timing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+14
+4.3
+Metrics and Aggregation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+15
+4.4
+Evaluation Integrity . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+15
+5
+Benchmark Results
+16
+5.1
+Experimental Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+16
+5.2
+Main Results and Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+17
+5.3
+Which System Suits Which Task . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+23
+6
+Diagnostic Analysis
+24
+6.1
+Diagnosis Harness and Model Profile Cards . . . . . . . . . . . . . . . . . . . . . . . .
+24
+6.2
+Failure Patterns of the Evaluated Systems
+. . . . . . . . . . . . . . . . . . . . . . . . .
+26
+6.3
+From Failure Codes to Directions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+26
+7
+Limitations and Future Directions
+28
+7.1
+Limitations
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+28
+7.2
+Future Directions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+28
+8
+Conclusion
+30
+References
+31
+Research preprint
+2
+mmlab@SIGS
+A BST R ACT
+Embodied intelligence aims to enable robots to perform complex physical tasks with human-like adaptability
+and reliability, which requires three complementary capabilities: history-based cognitive reasoning, precise
+and timely physical execution, and the composition of reasoning and execution through environmental
+feedback. Yet existing benchmarks often evaluate reasoning and execution within the same tasks, or evaluate
+them in separate assessments without examining their composition, thus providing limited insight into
+whether failures arise from reasoning, physical execution, or their composition. To fill this gap, we introduce
+Mind2Act World, a diagnostic benchmark comprising 30 simulated manipulation tasks across five real-world
+application domains. Each task features three difficulty levels and two scene settings (Clean and Random),
+yielding 180 configurations. These tasks are organized into three views: Mind emphasizes decisions based
+on historical observation, Act assesses precise and timely execution, and Mind2Act integrates reasoning and
+physical execution in closed-loop tasks, where action outcomes guide subsequent decisions. By contrasting
+performance across the three views, Mind2Act World reveals whether a system lacks a capability or fails to
+compose the capabilities it already has. Furthermore, we develop a diagnosis harness that attributes the failed
+episodes of three representative systems to Mind, Act, or their composition and summarizes each system in a
+per-model report called a profile card. Our evaluation of multimodal agents, vision-language-action models
+(VLAs), and world-action models (WAMs) shows that competence in a single view does not carry over to
+Mind2Act tasks. Even the strongest agent succeeds in 52.7% of Mind and 39.0% of Act episodes but in only
+12.0% of Mind2Act episodes. The strongest agent retains task state but struggles with sustained contact,
+whereas end-to-end policies execute practiced motions but retain little task state. These findings point to the
+composition of reasoning and execution through environmental feedback as the main open problem.
+1 Introduction
+“Knowledge is the beginning of action and action is the completion of knowledge.”
+— Wang Yangming
+The central ambition of embodied intelligence is to enable robots to perform complex physical tasks with
+human-like adaptability and reliability. Studies of human sensorimotor control indicate that adaptive
+and reliable manipulation involves reasoning over task-relevant information, executing physical actions
+precisely, and adapting behavior through environmental feedback [1–3]. In the cooking task of Fig. 1,
+a robot must remember which ingredient to add next, coordinate both arms to add the ingredient, and
+switch the stove from heating to keep-warm mode based on temperature feedback. These requirements
+motivate three capabilities. Mind decides what to do from earlier observations. Act produces the required
+physical effect in time. Mind-Action Composition closes the loop, so that remembered information
+guides each action and each physical outcome updates the next decision.
+Recent embodied systems spanning multimodal agents [32], vision-language-action models (VLAs) [19,
+20], world-action models (WAMs) [23, 26], and hybrid architectures [27, 28] have substantially advanced
+robotic manipulation. However, their capabilities in Mind, Act, and Mind-Action Composition remain
+poorly understood, which makes it difficult to identify capability bottlenecks and guide further development.
+Two limitations of existing embodied benchmarks [4, 6–8, 12] explain why. First, conventional benchmarks
+often assess cognitive reasoning and physical execution within the same tasks and report only whether a task
+succeeds [4–6], so a failure cannot be traced to Mind or Act. Second, although recent benchmarks have
+introduced finer-grained diagnostics and separate assessments of reasoning and physical execution [8, 11–
+13], they rarely evaluate Mind-Action Composition, particularly whether physical outcomes can effectively
+inform subsequent decisions. Closing this gap requires tasks that stress one capability while keeping the
+others present but easy, a judgment of composition based on verified physical outcomes, and a comparison
+of systems with different action interfaces and inference speeds on equal terms.
+To this end, we introduce Mind2Act World, a diagnostic benchmark for Mind, Act, and Mind-Action
+Composition in robotic manipulation (Fig. 1). Its 30 tasks come from five real-world application domains
+and are organized into three views of ten tasks each, covering 12 capability categories. Each view
+emphasizes one demand by design. Mind tasks keep physical operations simple, Act tasks state the
+Research preprint
+3
+mmlab@SIGS
+required operation explicitly, and Mind2Act tasks chain dependent operations so that each physical
+outcome decides what comes next. Success is judged from physical predicates on the environment, and the
+evaluator records stages and events within each episode. Each task has three difficulty levels that raise its
+demands while keeping the objective fixed. Each level runs in a Clean and a Random scene, which share
+the same instance but differ in clutter, materials and lighting (180 configurations in total). Agents and
+end-to-end policies share the same tasks, information contract and evaluator, and 4,500 demonstrations
+(75.8 hours) are provided for fine-tuning end-to-end policies. A diagnosis harness combines rule-based
+analysis of the evaluator’s stage and event records with an LLM judge to attribute each failed episode of
+three representative systems to Mind, Act, or their composition. It summarizes each of these systems
+in a per-model report called a model profile card (Fig. 6; Appendix E.4).
+Our evaluation on Mind2Act World reveals a clear pattern. Existing architectures are uneven across
+Mind and Act, yet all struggle with Mind-Action Composition. The strongest agent retains task state
+well but struggles to sustain contact, and its timed successes are measured with a simulator that pauses
+during inference. End-to-end policies respond within a fraction of a second and execute practiced motions,
+but retain little task state, and the memory of the VLAs largely disappears under scene randomization.
+Notably, on Mind2Act, the strongest system succeeds in only 12.0% of episodes, far below its 52.7%
+on Mind and 39.0% on Act, and no end-to-end policy exceeds 3.6%. Competence in either capability
+therefore does not carry over to Mind2Act tasks.
+The contributions of this work are summarized as follows:
+• We introduce Mind2Act World, a diagnostic benchmark comprising 30 manipulation tasks grounded
+in real-world requirements. Organized into three views, it systematically evaluates Mind, Act, and
+Mind-Action Composition.
+• We develop a diagnosis harness that combines rule-based analysis with an LLM judge to identify
+the stage at which each failed episode first breaks down and to attribute the failure to Mind, Act,
+or Mind-Action Composition. The harness also summarizes three representative models in model
+profile cards of their failure patterns and behavioral tendencies.
+• We evaluate representative multimodal agents, VLAs, and WAMs on shared tasks and scoring, with
+separate leaderboards for agents and end-to-end policies. Our results show that systems differ in which
+of Mind and Act is weaker, and that all of them struggle with Mind-Action Composition.
+2 Related Work
+2.1 Embodied Policies and Agents
+Robot manipulation policies have evolved from imitation learning [15–17] to large-scale generalist policies.
+Vision-language-action models such as OpenVLA [19], 𝜋0.5 [20], RDT2 [21] and G0.5 [22] improve
+instruction following and cross-task transfer, while world-action models such as LDA-1B [24], Motus [25]
+and DreamZero [26] couple predictive modeling with control. Agent-based systems take a different route,
+turning language-model reasoning into executable programs [32] and feeding success detection back into
+planning [67, 68]. Recent work also addresses memory-augmented manipulation [29, 30, 55], dynamic
+manipulation [61, 62], and force- or tactile-aware control [65, 66].
+Despite this progress, each line is usually evaluated where only its own demand is hard: memory methods
+on tasks with simple execution, dynamic and contact-aware controllers on tasks whose target is given,
+and agents on tasks where perceiving the outcome is assumed. In practice, a failure may come from
+holding the wrong task state, missing the intended physical effect, or continuing without checking that
+the effect occurred. Mind2Act World therefore makes all three demands hard within the same tasks
+and evaluates agents, VLAs and WAMs on them.
+Research preprint
+4
+mmlab@SIGS
+Table 1. Comparison with existing benchmarks. Among the compared benchmarks, only Mind2Act World
+assesses the same task demands both in isolation and in composition, and attributes each failure to reasoning,
+execution or their composition, with per-model summaries in profile cards. Scale: # Tasks in each benchmark’s own
+unit; Avg. demo, mean length of a training demonstration. Task design: Workflow, tasks derived from real-world
+requirements. Capability: Composition, decisions conditioned on realized outcomes are tested; Iso.+Comp., the
+same task semantics are assessed in isolation and in composition. Systems: VLA includes other end-to-end policies.
+Diagnosis: Stage loc., failures are localized to the stage at which the episode broke down; Attribution, failures are
+attributed to reasoning, execution or their composition; Harness, a dedicated tool analyses episode logs beyond
+success and score; Profile card, a model receives a card summarizing where it fails and its behavioral tendencies.
+stated focus, or evaluated in the original paper or on the official leaderboard; × not; “-” not reported or not applicable.
+Scale
+Task design
+Capability
+Systems
+Diagnosis
+Benchmark
+# Tasks
+Levels / task
+Avg. demo (s)
+Memory
+Dynamic
+Precision
+Bimanual
+Long-horizon
+Workflow
+Reasoning
+Execution
+Composition
+Iso.+Comp.
+Agent
+VLA
+WAM
+Stage loc.
+Attribution
+Harness
+Profile card
+Benchmarks designed mainly for end-to-end policies
+RLBench [5]
+100
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+LIBERO [4]
+130
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+THE COLOSSEUM [48]
+20
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+Colosseum V2 [49]
+28
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboLab [45]
+120
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboTwin 2.0 [34]
+50
+-
+13
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+BEHAVIOR-1K [7]
+1000
+-
+397 ×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboCasa365 [35]
+365
+-
+40
+×
+×
+×
+×
+×
+×
+×
+×
+×
+VLABench [37]
+100
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+GenManip [51]
+200
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RMBench [31]
+9
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboMME [38]
+16
+3
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+GeoMind [36]
+20
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+MIKASA-Robo-VLA [53]
+90
+-
+28
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboDojo [8]
+42
+-
+21
+×
+×
+×
+×
+×
+×
+Benchmarks designed mainly for embodied agents or for comparing system types
+EmbodiedBench [52]
+1128
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+RoboCerebra [50]
+100
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+×
+Embodied Playground [11]
+410
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+Embodied First Exam [14]
+1156
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+X2Real [12]
+44
+-
+-
+×
+×
+×
+×
+×
+×
+RoboColiseum [13]
+78
+-
+-
+×
+×
+×
+×
+×
+×
+×
+×
+×
+Mind2Act World (ours)
+30
+3
+61
+2.2 Evaluation for Manipulation and Embodied Agents
+Simulation benchmarks provide scalable testbeds for manipulation. RLBench [5], CALVIN [33] and
+LIBERO [4] cover multi-task, language-conditioned and lifelong settings. RoboTwin 2.0 [34] evaluates
+bimanual generalization, and THE COLOSSEUM [48] stresses distribution shift. BEHAVIOR-1K [7]
+and RoboCasa [6] pose long household activities. Memory benchmarks such as RMBench [31] and
+RoboMME [38] isolate history-dependent decisions, the latter with Easy, Medium and Hard levels
+and timed stopping of moving objects. GeoMind [36] evaluates spatial reasoning and spatial memory
+through structured manipulation tasks, with controlled scene variations and diagnostic metrics for
+spatial understanding and execution failures. RoboDojo [8] and RobotWorld [9] diagnose capability
+dimensions with stage scores or execution traces, and real-world benchmarks such as RoboArena [41]
+Research preprint
+5
+mmlab@SIGS
+assess deployed policies. For agents built on foundation models, EmbodiedBench [52] spans high-level
+and low-level embodied tasks, and Embodied Playground [11] evaluates closed-loop behavior in which
+earlier actions set up later prerequisites. X2Real [12] records subtask failure nodes, separates reasoning
+from manipulation dimensions including dynamic operation, and compares VLA, WAM and agent routes.
+RoboColiseum [13] reports a gap between task understanding and reliable execution. RLE-Bench [10]
+and Embodied First Exam [14] instead evaluate agents that write and iterate on code to solve robot
+control and robot learning engineering problems.
+Most of these benchmarks entangle reasoning and execution within one task, so a failure cannot be attributed
+to either, or measure them in separate evaluations, leaving open whether they hold together when one
+realized outcome sets the conditions for the next decision. Mind2Act World addresses this gap by deriving
+tasks from real-world requirements and organizing them into Mind, Act and Mind2Act views with graded
+difficulty, so that the same demands are measured in isolation and in composition across architectures.
+Table 1 compares Mind2Act World with 21 representative simulation benchmarks. Mind2Act World tasks
+also have long horizons, with training demonstrations averaging 60.7 s overall and 99.6 s in the Mind2Act
+view. Demonstrations in RoboTwin 2.0, RoboDojo, MIKASA-Robo-VLA and RoboCasa365 average 13 to
+40 s, and only BEHAVIOR-1K, whose tasks are full household activities, has longer ones.
+3 Mind2Act World Benchmark
+Mind2Act World asks whether failures in manipulation tasks arise from incorrect reasoning, imprecise
+execution, or a poor composition of the two. The benchmark comprises 30 simulation tasks on a bimanual
+ARX X5 platform, organized into 3 views that place different demands on a system. Mind focuses on
+history-dependent reasoning, Act emphasizes constrained physical execution, and Mind2Act focuses on
+their composition. Each task has Easy, Medium, and Hard levels, and each level is evaluated in a Clean
+and a Random scene setting, yielding 180 configurations. Fig. 2 presents an overview of our 30 tasks.
+The following sections describe the design principles (Section 3.1), task views (Section 3.2), difficulty
+levels (Section 3.3), training data (Section 3.4), and evaluation setting (Section 3.5).
+3.1 Design Principles
+Four principles guide the benchmark design: (i) build tasks from real-world requirements, (ii) evaluate
+reasoning and execution capabilities separately and in combination, (iii) verify physical outcomes and
+record task progress, and (iv) support evaluation across different model architectures.
+(i) Tasks are built from real-world requirements. Embodied agents in industry, homes, and service
+settings must follow instructions across multiple stages and produce the required physical effects at
+the right time. We construct tasks in three steps. First, we identify a practical requirement, such as
+remembering orders after they leave view, maintaining a target instrument reading, intercepting objects
+on a conveyor, or responding to appliance feedback. We then reproduce this requirement in a tabletop
+scene and define completion conditions based on physical outcomes. Table 2 groups the tasks into five
+application domains: home and food service, manufacturing and logistics, instrument operation and
+dexterous tool use, assembly and physical reasoning, and companion and edutainment. It also identifies the
+industrial or service requirement behind each task. In the companion and edutainment domain, structured
+activities such as card matching and paddle ball represent cognitive and sports training for older adults
+and children. All thirty tasks are tabletop abstractions of such needs. They isolate the requirement that
+makes the activity hard for a robot and do not reproduce a deployed workflow in full.
+(ii) Capabilities are decoupled, then recoupled. Long-horizon tasks often combine memory, planning,
+precision, and timing, making the source of failure difficult to identify. Mind2Act World evaluates these
+demands through three views with related task semantics. Mind tasks require only routine execution, so they
+examine how a system maintains and uses task state. Act tasks specify the required operation to examine its
+physical execution ability. Mind2Act tasks combine these demands and test composition in both directions.
+Research preprint
+6
+mmlab@SIGS
+Repeated items
+E1
+Keypad sums
+E2
+Button mapping
+F1
+Color feedback
+F2
+Meal orders
+P1
+Steamer stack
+P2
+Rotating tray
+S1
+Hidden hazards
+S2
+Workpiece tracking
+M1
+Card matching
+M2
+Conveyor pickup
+DR1
+Light buttons
+DR2
+Timed gates
+DR3
+Ball tray
+DR4
+Resistance slider
+PR1
+Voltage knob
+PR2
+Pen tracing
+PR3
+Cloth folding
+PR4
+Oriented stamp
+PR5
+Domino chain
+PR6
+Meal assembly
+CP01
+Rack loading
+CP03
+Cake decorating
+CP02
+Blueprint build
+CP08
+Whiteboard restore
+CP09
+Cooking
+CP04
+Balance weighing
+CP06
+Piano replay
+CP05
+Bridge building
+CP07
+Ball return
+CP10
+Mind
+·
+10 tasks
+Act
+·
+10 tasks
+Mind2Act
+·
+10 tasks
+A
+c
+t
+M
+i
+n
+d
+2
+A
+c
+t
+M
+i
+n
+d
+Dynamic
+Precision
+Predict
+Plan
+Feedback
+Repair
+Cumulative
+Integrated
+Spatial
+Process
+Entity
+Rule
+3
+views
+12
+capabilities
+180
+configurations
+E
+M
+H
+× C R
+5
+domains
+closed loop
+level up
+Fig. 2. All 30 tasks, grouped by view and capability. Mind tasks emphasize decisions based on historical
+observation, Act tasks precise and timely physical execution, and Mind2Act tasks the closed-loop composition of
+the two, in which action outcomes guide subsequent decisions. Each view has ten tasks, and together they cover
+twelve capability categories and five application domains. The central wheel groups the capability categories by
+view; the surrounding tiles show each task’s ID and scene, framed by view. Each task has three difficulty levels
+and two scene settings (Clean and Random), giving 180 configurations.
+Table 2. Application domains of Mind2Act World. Each task is built from a need in one of five domains.
+Chips give task IDs colored by view:
+Mind
+Act
+Mind2Act.
+Application domain
+# Real-world need
+Tasks
+» Home & Food Service
+8 Kitchen prep, meal service,
+tidying
+P1 P2 S1 PR4 CP01 CP02 CP03 CP04
+ï Manufacturing & Logistics
+5 Part checks, traceability,
+sorting, interlocks,
+transport
+E1 M1 DR1 DR3 DR4
+{ Instruments & Tool Use
+9 Lab instruments, control
+panels, HMIs, office
+documents
+E2 F1 DR2 PR1 PR2 PR3 PR5 CP06 CP09
+ó Assembly & Physical Reasoning
+3 Building from drawings,
+limited stock, chain
+mechanisms
+PR6 CP07 CP08
+s Companion & Edutainment
+5 Cognitive, music and sports
+training; puzzle play
+F2 M2 S2 CP05 CP10
+Retained task state guides actions, and the physical outcomes of those actions update that state. The views
+define observable task demands, not internal policy modules. Each view emphasizes one demand without
+removing the other. A Mind task still requires routine grasping and placing, and an Act task still requires
+Research preprint
+7
+mmlab@SIGS
+reading the cue that it responds to. Strong performance on the separate demands with weak performance
+on their combination is therefore consistent with a composition problem. Because the views contain
+different tasks and Mind2Act workflows are also longer, view-level differences do not by themselves
+identify composition failures (Section 5.2). Matched interventions are left to future work (Section 7).
+(iii) Outcomes are physically verified and traced within the episode. Task scores depend on simulator
+states and events. A deposit counts only after an object is released and supported at the target. A dial
+reading must remain stable after release, and a key strike must produce an effective press. The task
+records also distinguish incorrect decisions from failed execution, such as selecting the wrong object
+versus failing to place the correct one. Partial-progress scores and event records show which stages
+were completed and where the first observable error occurred.
+(iv) Evaluation is architecture-agnostic. The benchmark supports comparisons across architectures
+using shared tasks, instances, and scoring rules. End-to-end policies act from observations after training on
+the shared demonstrations; agents act through declared motion tools. Section 4 specifies what each interface
+exposes, so that differences in performance can be read against differences in information and control.
+3.2 Task Design
+Task design follows the three views introduced above. Mind tests decisions that depend on earlier
+information (Section 3.2.1). Act tests whether a specified operation produces the required physical
+effect within spatial and temporal constraints (Section 3.2.2). Mind2Act tests their composition across
+dependent operations (Section 3.2.3). Within each view, tasks are grouped by capability. The following
+subsections explain each category through representative tasks and describe the failures it can reveal.
+Appendix Table 20 lists all tasks, their source workflows, categories, and difficulty variables. Appendix F
+provides the full specifications.
+3.2.1 Mind: Reasoning over Long-Horizon Dependencies
+A decision may depend on information that is no longer visible, such as a part on an earlier tray, the effect
+of an unlabeled control, or the portion of an order already served. These dependencies require a system to
+retain evidence and update task state throughout an episode. Many end-to-end visuomotor policies use only
+the current observation or a short history of recent frames [15, 16, 19, 20]. Recent memory-augmented
+policies have begun to address this limitation [29, 30, 55, 56]. Mind tasks examine whether a system can
+make correct decisions after relevant cues disappear, while requiring only routine execution.
+Memory categories. The ten Mind tasks cover five memory categories, with two tasks per category. The
+categories differ in how earlier information supports later decisions. Entity memory retains an object’s
+identity or an associated value when its current appearance is insufficient. Feedback-rule learning uses
+interaction to infer and retain a rule or hidden configuration. Examples include learning the effects of
+unlabeled controls and recovering an arrangement from feedback that reports only the number of correct
+positions. Process memory tracks completed operations and their order, such as fulfilled requests or the
+original order of disassembled layers. Spatial memory retains locations when a reference frame moves
+or a map is hidden. Integrated memory combines identity, location, and order, as in tracking a covered
+workpiece or matching cards revealed two at a time. Difficulty increases the information to retain, such as
+bindings, layers, hazard cells, card pairs, or exchanges, while keeping precision demands low.
+Representative cases. We demonstrate representative cases in Fig. 3. In workpiece tracking and route
+replay (M1), the robot remembers the target location and station route, tracks the hidden target through
+cover exchanges, and retrieves it to visit the required stations in order. This tests integrated memory
+of identity, location, and sequence. In steamer-stack order restoration (P2), the robot observes each
+basket’s contents as it unstacks the baskets, then restores their original order and replaces the lid. On
+Hard, distractor baskets have identical exteriors but different contents. The robot must retain the original
+Research preprint
+8
+mmlab@SIGS
+layer order and select the correct baskets, testing process memory.
+What Mind diagnoses. Mind task records distinguish decision errors from execution errors, such as
+choosing the wrong item versus failing to place the correct one. Because execution is routine, an error
+on a Mind task usually comes from the task state a system maintains.
+3.2.2 Act: Dynamic Response and Precise Physical Execution
+Correct decisions must be translated into physical effects that meet spatial and temporal constraints.
+Common examples include intercepting conveyor objects, passing through cyclic gates, maintaining
+instrument readings, carrying loose loads, and folding fabric. Act tasks specify what to do and evaluate
+how it is executed. Act provides a reference for execution demands that also occur in Mind2Act workflows,
+such as conveyor pickup in meal assembly. This allows performance on separate operations to be
+compared with performance in a dependent workflow.
+Execution categories. Dynamic response concerns the timing of an action’s effect relative to a changing
+scene. Examples include intercepting objects before they leave the reachable region, pressing a button
+within a cue window, and passing through a cyclic gate before it closes. Dynamic stability adds a related
+demand. The robot must control its own motion without disturbing a carried load, such as loose balls on a
+tray. Timing follows the simulation clock, which pauses during inference. Precise physical execution
+concerns spatial accuracy, contact, and stability. It includes setting instrument readings, maintaining tool
+contact along a path, controlling stamp orientation, folding cloth that remains flat after release, and spacing
+dominoes to complete a physical chain to a bell. Difficulty increases through shorter time windows,
+additional obstacles or loads, tighter tolerances, and less controllable materials or shapes.
+Representative cases. Cases are demonstrated in Fig. 3. In domino chain to a bell (PR6), the robot
+places dominoes upright along a curved band and pushes the first to trigger a chain that rings a bell.
+This requires precise spacing and orientation so that contact propagates through the chain. Difficulty
+increases with more dominoes, greater height variation, and a larger band span. In tray carrying with
+loose balls (DR4), the robot carries loose balls on a tray past obstacles while keeping each ball within
+its marked circle. This tests dynamic stability, as the robot must control tray motion to preserve the
+positions of the balls throughout transport.
+What Act diagnoses. Act tasks assess endpoint accuracy, stability after release, contact continuity,
+and timing. By limiting long-horizon reasoning demands, they provide a reference for interpreting
+execution failures in Mind2Act workflows.
+3.2.3 Mind2Act: Composition across Dependent Operations
+Mind2Act evaluates how reasoning and execution interact across a workflow. Retained information, such
+as an order, layout, or recipe sequence, determines the next operation and its execution requirements.
+Each physical outcome then changes the task state on which later decisions depend. A system may
+handle the separate demands yet struggle to combine them over time. Mind2Act therefore focuses
+on outcome-conditioned continuation, that is, choosing subsequent actions from the state produced
+by earlier operations. Each task combines a memory or reasoning demand with a physical execution
+demand, as listed in Appendix Table 20.
+Composition mechanisms. The tasks cover five composition mechanisms. In cumulative progress (CP01,
+CP03), remaining demand or slot occupancy determines the next operation. Progress advances only after
+successful delivery or stable plate placement. In state-dependent prerequisites and repair (CP02, CP08,
+CP09), later operations require a valid physical state. The robot may need to stop a turntable before
+covering a cake, rebuild a misplaced base to match a remembered blueprint, or redraw original strokes
+removed during erasing. In feedback-driven adjustment (CP04, CP06), temperature or balance-beam
+Research preprint
+9
+mmlab@SIGS
+deflection guides the next operation. In sequence and plan execution (CP05, CP07), a remembered
+sequence or a construction plan determines the order of operations. Progress requires effective strikes
+or stable placements; CP07 also requires a toy car to cross the completed bridge. In predictive decision
+under time pressure (CP10), the robot applies a fixed color rule to each incoming ball: return a white ball
+and let a red ball pass. It must select and time its response before the ball arrives.
+Representative cases. In rotating-cake decoration (CP02), the robot remembers a briefly shown macaron
+layout and reproduces it on a rotating cake. It must stop the turntable and verify that the cake is stationary
+before placing the cover. In temperature-controlled cooking (CP04), the robot adds ingredients in the
+remembered recipe order, then uses temperature feedback to switch from HEAT to KEEP WARM within
+the required time window. Bridge building for a toy car (CP07) requires selecting suitable parts and
+executing a construction plan. The assembled bridge must remain stable after release and support the car
+as it crosses the gap, linking plan execution to a physical test of the completed structure. In whiteboard
+restoration (CP09), the robot compares the current board with a remembered drawing to identify added
+strokes. It must erase these strokes and redraw any original content removed during erasing, so that the
+final board matches the remembered colors, shapes, and layout.
+What Mind2Act diagnoses. Mind2Act examines whether a system uses retained information to guide
+execution and updates that information from physical outcomes. Comparisons across views, supported
+by stage and event records, help identify composition failures.
+Difficulty inside the process. Task difficulty often arises during intermediate operations. Fig. 3 shows
+four steps from each of eight Hard-level demonstrations, two Mind, two Act and four Mind2Act tasks.
+At Hard, M1 involves seven cover exchanges, two of them irrelevant, and P2 involves four steamer tiers
+and two identical decoys. PR6 involves nine dominoes of mixed sizes along a 76 cm curved band, and
+DR4 involves four loose balls, two pillars and a marked circle of 20 mm radius. CP02 shows its sample
+for 3 s, CP04 involves bimanual jar handling and a switch from HEAT to KEEP WARM within 2 s of
+the pot reaching 80 °C, CP07 uses 13 of 28 parts across a 36 cm river, and CP09 requires uncapping
+pens with both hands. Failures in these intermediate operations can prevent later stages from succeeding,
+so we report stage progress alongside final success (Section 4.3).
+3.3 Difficulty Design
+Aggregate scores can obscure the conditions under which performance declines. We therefore define
+three difficulty levels for each task. The objective remains fixed, while memory load, reasoning demands,
+precision, timing, or workflow dependencies increase. Easy tests the core requirement under the least
+demanding conditions. Medium increases the information to retain, the required precision, or the number
+of operations. Hard introduces greater demands through tighter constraints, longer dependent sequences,
+or combinations of these factors. The levels define a progression within each task rather than a common
+numerical scale across tasks. Comparing success and partial-progress scores across the three levels shows
+how performance on the same task changes as its demands increase. Fig. 4 illustrates these variations.
+Mind tasks increase the information to retain, such as unknown mappings, blocks, hidden hazards, or card
+pairs, while requiring only routine execution. Act tasks vary physical demands, including load, path shape,
+fold geometry, and domino count. Mind2Act tasks vary orders, river width, shapes, or balls to increase the
+number and dependencies of operations. Appendix F specifies every task and difficulty level.
+3.4 Training Data and Collection
+To compare end-to-end policies fairly, we provide expert demonstrations collected under one protocol
+for every task and level. Section 3.4.1 describes how they are generated and checked, and Section 3.4.2
+summarizes the resulting data.
+Research preprint
+10
+mmlab@SIGS
+M1 Workpiece tracking
+Hard: 7 swaps · 6-station route
+1
+Piece hidden
+under one cover
+2
+7 swaps
+track every swap
+3
+Lift right cover
+pick from memory
+4
+Replay the route
+stations in order
+P2 Steamer stack
+Hard: 4 tiers · 2 identical decoys
+1
+4 tiers shown
+remember order
+2
+Unstack
+2 identical decoys
+3
+Restack in order
+same order again
+4
+Lid on the pot
+all 4 tiers back
+PR6 Domino chain
+Hard: 9 mixed dominoes · 76 cm curved band
+1
+9 dominoes
+7.7 to 13.4 cm tall
+2
+Stand on curve
+upright on a band
+3
+Set spacing
+a gap breaks it
+4
+Push once
+bell must ring
+DR4 Ball tray
+Hard: 4 balls · 2 pillars · 20 mm radius
+1
+Balls in circles
+balls roll freely
+2
+Lift, keep level
+tilt moves balls
+3
+Carry
+clear the pillar
+4
+Set down
+balls still in place
+CP02 Cake decorating
+Hard: sample 3 s · spinning cake · cover
+1
+Sample, 3 s
+note positions
+2
+Open the box
+box starts closed
+3
+Place, cake spins
+moving target
+4
+Stop, then cover
+stop cake first
+CP04 Cooking
+Hard: 3 ingredients · keep warm within 2 s
+1
+Recipe shown
+memorise recipe
+2
+Two arms: pour
+open, pour, return
+3
+Jars back
+caps to the tray
+4
+Keep warm
+80 °C: 2 s to act
+CP07 Bridge building
+Hard: 36 cm river · 13 of 28 parts
+36 cm
+1
+Pick 13 of 28
+river too wide
+2
+Unequal piers
+U-shaped seats
+3
+Spans and ramp
+must hold the car
+4
+Car crosses
+car reaches end
+CP09 Whiteboard restore
+Hard: 4 shapes · 3 colours
+1
+Original, 3 s
+remember drawing
+2
+Extras added
+erase only extras
+3
+Extras erased
+gaps to redraw
+4
+Uncap, redraw
+match colours
+Task ID: Mind
+Act
+Mind2Act
+motion trace
+faint trail: earlier frames of the same demo
+Fig. 3. Difficult steps inside eight Hard-level tasks. Each panel follows one Hard-level demonstration through four
+intermediate steps and shows what makes each step hard: the bold label under a frame names the operation, and the
+italic line the demand that makes it difficult. A failure at any of these steps blocks the stages after it. The color of the
+task ID gives its view, and the tag beside the task name the Hard-level setting; Fig. 4 compares the levels themselves.
+3.4.1 Data Collection and Quality Control
+Each episode has a setup defined at three levels. The task determines the objective and rules, the difficulty
+level determines the demands, and episode parameters specify variations such as object positions, orders, or
+target readings. Task scripts define the operation sequence and end-effector targets. Inverse kinematics and
+motion planning convert these targets into joint trajectories. Quality control checks physical completion
+against simulator states and events. For example, CP01 requires the requested items to be released into the
+correct tray and remain supported. Recording checks cover missing or corrupted frames, invalid state
+or action values, timestamp alignment, and duplicates. Demonstrations must also satisfy task-specific
+qualification conditions to provide clear examples for learning. A DR3 demonstration must retain at
+least one second of withdrawal margin, and an M2 demonstration must use only information revealed by
+actual card flips. These conditions are stricter than task success requirements and apply to demonstration
+selection rather than policy scoring. Every retained demonstration passes the evaluator used at test time.
+The collection therefore also shows that each task and level can be completed on this platform by a scripted
+controller with access to simulator state. Demonstration and evaluation seeds are disjoint.
+3.4.2 Data Statistics
+Each episode records the task instruction, RGB images from a head camera and two wrist cameras at
+640 × 480, and joint states and targets. Physics runs at 120 Hz, and the recorded data are sampled at
+30 Hz. Across the thirty tasks, the dataset contains 50 episodes per task and difficulty level, resulting
+in 4,500 episodes, 8.19 million frames per camera, and 75.8 hours of recordings, as detailed in
+Appendix Table 8. Mind and Mind2Act episodes average 58.5 and 99.6 seconds, compared with 23.9
+seconds for Act. These averages are approximately 2.5 and 4.2 times the Act average, respectively.
+Hard Mind2Act episodes average 127.6 seconds.
+Research preprint
+11
+mmlab@SIGS
+Mind memory and reasoning
+Easy
+Medium
+Hard
+F1 Button mapping
+mapping to infer
+1-D track
+3×3 grid
+4×4 grid
+F2 Color feedback
+blocks to arrange
+3 blocks
+4 blocks
+5 blocks
+S2 Hidden hazards
+hidden hazards
+3 hazards
+7 hazards
+12 hazards
+M2 Card matching
+pairs to remember
+2 pairs
+4 pairs
+8 pairs
+Act timing and precision
+Easy
+Medium
+Hard
+DR4 Ball tray
+balls and pillars
+2 balls
+3 balls, 1 pillar 4 balls, 2 pillars
+PR3 Pen tracing
+path shape
+straight
+2 half-waves
+4 half-waves
+PR4 Cloth folding
+fold geometry
+midline
+diagonal
+hexagon
+PR6 Domino chain
+dominoes
+5 uniform
+7 mixed
+9 mixed
+Mind2Act memory–action coupling
+Easy
+Medium
+Hard
+CP01 Meal assembly
+orders to assemble
+1 order
+2 orders
+3 orders
+CP07 Bridge building
+river width
+18 cm
+28 cm
+36 cm
+CP09 Whiteboard restore
+shapes to restore
+2 shapes
+3 shapes
+4 shapes
+CP10 Ball return
+balls and countdown
+5 balls, 4 s
+8 balls, 3 s
+12 balls, 2 s
+Harder:
+Load / count (14)
+Time window (5)
+Precision / tolerance (5)
+Distractors (3)
+Rule / structure (3)
+motion
+where it is hard
+Fig. 4. Easy, Medium and Hard levels of twelve tasks. Four tasks per view at Easy, Medium and Hard. A
+harder level keeps the goal and raises one or more task demands: Mind tasks add more to remember or infer, Act
+tasks require more spatial accuracy and physical stability, and Mind2Act tasks lengthen the workflow or shorten
+the response window. The label under each frame gives the parameter that changes, and the icon beside each task
+name gives the kind of demand (key below the panels; its counts cover all 30 tasks).
+Clean
+Random · five example slots
+CP05
+Hard
+Piano replay
+1
+2
+3
+4
+5
+CP02
+Easy
+Rotating
+cake decoration
+1
+2
+3
+4
+5
+DR1
+Easy
+Conveyor pickup
+1
+2
+3
+4
+5
+Per random slot
+ó Clutter
+distractors on free table space
+Surfaces
+23 table materials; floor varies
+Lighting · 6 types
+RGB × 0–2, intensity × 0.8–1.2
+ Same as in Clean
+objects, targets, events
+Fig. 5. Examples of the Clean and Random settings. Every task is evaluated in both settings; shown are
+the first head-camera frames of three example tasks. Clean scenes use default materials and lighting without
+clutter, and each Random slot adds clutter and varies surfaces and lighting (dots: table color, light tint) while
+keeping the task’s objects, targets and events.
+3.5 Evaluation Setting
+Policies are evaluated through closed-loop interaction with the environment. Each episode starts from a
+predefined test instance, and the system selects actions using updated observations. Execution ends on
+task completion, task-defined failure, system termination, or budget exhaustion. Each configuration is
+defined by a task, a difficulty level, and a scene setting. An end-to-end policy runs all 50 instances of
+each configuration, and an agent runs a shared subset of 5. Instance parameters are fixed in advance and
+shared across systems within the same evaluation protocol to control variation between runs.
+We report two metrics. Final success rate is the fraction of valid episodes that meet all completion
+Research preprint
+12
+mmlab@SIGS
+conditions. Task score ranges from 0 to 100 and measures partial progress under task-specific rules.
+High task scores with low final success indicate that a system completes parts of a task but often fails to
+meet all requirements. This distinction supports analysis of incomplete workflows in Mind2Act. Both
+metrics are computed from simulator states and events. Invalid or missing runs are recorded separately.
+Section 4 specifies the interfaces, timing, scoring, and aggregation rules.
+3.5.1 Episode Variation and Randomization
+Episodes share the same objective, rules, and difficulty level but vary task-specific initial states and
+parameters. These include object layouts, initial and target states such as end-effector poses, and event
+sequences such as piano-key order. Some tasks also vary continuous and hidden parameters. In CP10,
+launcher position and aim are sampled continuously, while the task seed determines the order of red
+and white balls. In PR5, the target angle is sampled from a set defined for each difficulty level. The
+sheet displays a target arrow without revealing the numerical angle or tolerance. These variations test
+whether a system can adapt its behavior rather than replay a memorized trajectory. Using shared test
+instances supports controlled comparisons. Each task and difficulty level is evaluated in two scene settings,
+which we treat as separate configurations, giving 180 configurations in total (30 tasks × 3 levels × 2
+settings). The Clean setting fixes scene appearance. The Random setting uses the same task instances
+and additionally varies clutter, table and floor materials, and lighting as depicted in Fig. 5. Because the
+two settings share task instances, comparing them isolates the effect of visual and scene perturbation
+from that of task demands. Appendix A.4 details how the two settings are generated.
+4 Technical Implementation and Evaluation Protocol
+Systems that act through different interfaces must face the same scenes, the same clock and the same
+notion of success. Building on the task design in Section 3, this section describes how policies connect to
+the tasks, how an episode is executed and timed, and how its outcome is scored and protected against
+shortcuts. Appendix B collects the implementation details needed for reproduction.
+4.1 Platform and Policy Interfaces
+Comparing agents and end-to-end policies requires a platform that both can drive and that produces the same
+physical effects for both. We implement Mind2Act World in Isaac Sim with two ARX X5 arms and parallel
+grippers. A fixed head camera captures the scene layout, while two wrist cameras capture local gripper-
+object interactions. RGB images are rendered at 640 × 480 for all cameras. Task scenes combine shared
+robot and workspace assets with task-specific objects and mechanisms as depicted in Fig. 7. Their geometry,
+motion, and contact properties are configured to reproduce the physical effects required by each task.
+All systems follow a common information contract detailed in Appendix B. Policies receive the task
+instruction, selected RGB views, and declared robot state. History access is limited to information
+previously exposed within the same episode. Hidden simulator state is accessible only to the evaluator.
+This includes unannounced parameters used for scoring, such as the numerical target angle and tolerance
+in PR5, gate timing in DR3, and allowable ball drift in DR4.
+The benchmark supports two action interfaces. End-to-end policies predict joint or end-effector actions.
+These predictions are converted to joint targets, and a configured number of actions is executed from
+each chunk before the next prediction. Agents are multimodal language models that issue structured
+tool calls. The move_eef tool accepts an end-effector pose target and gripper command. The backend
+handles inverse kinematics and motion planning. The wait_steps tool advances simulation while
+maintaining the current arm and gripper targets. Agents can use memory_resolve to retrieve a previously
+observed image by its observation identifier and add it to the model’s context. Retrieval does not advance
+simulation. An agent can also call give_up to end the episode itself. Every evaluated agent uses
+this one fixed harness of tools, planner and history access. The same two interfaces cover every task
+Research preprint
+13
+mmlab@SIGS
+Training
+j Fine-tune
+VLA · WAM
+4,500
+demos
+Æ Experts
+scripted, sim-checked
+Evaluation
+Observation 𝑜𝑡
+Ú instruction Å 3 views  state
+𝜋
+End-to-end policy
+VLA · WAM
+action chunk
+_ Agent
+LLM
+move_eef(...)
+memory_resolve
+Ô Joint targets · 30 Hz
+S1 Medium
+Isaac Sim · 120 Hz
+ Evaluator
+hidden state
+✓rotation over ✓4 placed p slots
+→failure, 0/100
+Diagnosis
+i Evidence
+ scorer
+ò sim events
+Å video
+_ tool calls
+Û Why it failed
+S1 Medium · recorded
+placing
+waits until the budget, 138 s
+b “all four match”, ≈70 s
+208 s
+score 0/100, no block in its slot
+first failure rotated layout mapped wrongly
+stage track the rotation →Mind
+è Model profile card sample
+first failure stage + code
+attributed to
+Mind
+Act
+Composition
+◎Next step
+memory module
+chunk, rate, force
+verify, recover
+recovery demos
+in development
+weights
+episode logs
+redesign, retrain
+Fig. 6. Training, evaluation and diagnosis pipeline. Training: end-to-end policies are fine-tuned on 4,500
+demonstrations generated by scripted experts. Evaluation: the policies predict action chunks and the agents call
+motion tools, while the evaluator decides success from simulator state hidden from both. Diagnosis: episode logs
+feed a model profile card, which records where each failed episode first breaks down and whether the failure lies in
+Mind, Act or their composition (Section 6.1). Dashed elements are the next stage of the loop. The failure codes on
+a card become concrete changes (Table 7), and the improved model is evaluated again (Section 7). The evaluation
+and diagnosis panels trace one recorded GPT-6 Astra episode on S1 Medium, and the card panel is illustrative.
+interaction, including count-only feedback (F2), an unnumbered needle gauge (CP06), unnumbered
+buttons (M2), keypad input (E2), bimanual uncapping (CP09), and tray carrying with loose balls (DR4).
+No task requires a task-specific interface.
+4.2 Episode Protocol and Timing
+Each episode starts from a fixed instance for its task, difficulty level and scene setting, and systems
+evaluated under the same protocol use the same instance list. Reset restores the robot, objects, task
+stage, evaluator, and random-number state. Policy memory is cleared between episodes and retained
+across stages within an episode. Physics simulation advances at 120 Hz, while arm and gripper targets
+are updated at 30 Hz. Simulation pauses during model inference. Task deadlines use simulation time,
+while inference latency and total runtime use wall-clock time, the elapsed real time. A delayed model
+response therefore consumes wall-clock time without reducing the simulated response window, so timed
+tasks measure responses in simulation time rather than real-time performance. For end-to-end policies,
+each task and difficulty level has an episode horizon set to 1.2 times the 90th percentile of demonstration
+durations, rounded up to a control step. These simulation-time limits range from 16.27–420.50 s for
+Mind, 6.27–156.47 s for Act, and 34.40–308.50 s for Mind2Act. Agents receive four times this physics
+budget and at most 150 decisions per episode, since a tool call spans many control steps. Wall-clock
+limits are safety stops, not task limits. An episode stopped by one is scored like any other unfinished
+episode. Episodes end on completion, policy termination, or budget exhaustion. Simulator crashes and
+incomplete records are not counted as task failures, and infrastructure aborts are rerun. Appendices A
+and B specify episode horizons, model-call budgets, and scheduling.
+Research preprint
+14
+mmlab@SIGS
+Shared robot
+Two ARX X5 arms
+Task view
+Mind
+Act
+Mind2Act
+» Home & Food Service
+CP02 Cake
+turntable
+CP04 Cooking
+station
+P2 Steamers
+CP03 Moving
+racks
+{ Instruments & Tool Use
+F1 Button
+map
+E2 Keypad sums
+PR2 Voltage
+dial
+PR1 Rheostat
+CP06 Balance
+ï Manufacturing & Logistics
+DR3 Cyclic gate
+DR4 Ball tray
+ó Assembly & Physical Reasoning
+PR6 Domino chain
+CP07 Bridge, toy car
+CP08 Blueprint
+s Companion & Edutainment
+S2 Hazard grid
+M2 Cards
+F2 Color
+code
+CP05 Piano
+CP10 Paddle court
+Fig. 7. Task setups grouped by application domain. Nineteen of the thirty tasks are shown with the objects and
+equipment each one uses. All thirty tasks are performed by the same two-arm ARX X5 robot.
+4.3 Metrics and Aggregation
+A success rate alone says how often a task is finished but not how far a failed episode got, while a
+progress score alone can reward work that never completes the task. We therefore report the final success
+rate (SR), where success requires the complete task predicate, together with a 0–100 task score that
+credits task-specific progress and equals 100 exactly when the episode succeeds. Partial credit never
+overrides an unmet terminal requirement. For a task, level and system with 𝑁eligible attempts and
+outcomes 𝑠𝑖∈{0, 1}, the success rate is
+ˆ𝑆= 1
+𝑁
+𝑁
+∑︁
+𝑖=1
+𝑠𝑖,
+(1)
+with protocol timeouts counted as failures and infrastructure aborts rerun. View summaries average the ten
+tasks of a view, each pooled over its three levels, and the primary result averages the Clean and Random
+settings. A robot is useful when it completes whole workflows, and in such workflows remembered
+information and physical execution depend on each other, so strength in either capability alone is not
+enough. For this reason, the Overall score weights the views as 0.25 Mind + 0.25 Act + 0.50 Mind2Act,
+so that Mind2Act counts as much as the two single views together. The Overall SR is the plain fraction
+of successful episodes. A Mind2Act task is scored as a whole. Which side failed is assigned by the
+episode-level diagnosis (Section 6). Partial-credit rules are task-specific, so scores are comparable across
+systems on one task. For success rates we report 95% Wilson score intervals over episodes, which capture
+sampling over the fixed instance lists rather than variation between tasks or repeated runs. As a descriptive
+reference for composition, we also compare a system’s Mind2Act success rate with the product of its Mind
+and Act success rates, the value expected if a Mind2Act workflow required one independent success of each
+kind. The task score is defined in Appendix B.3, and per-task success predicates are listed in Appendix F.2.
+4.4 Evaluation Integrity
+Because an agent can declare that it has finished and a policy can repeat an action until something
+happens, the evaluator has to judge outcomes. Completion is therefore assessed using environment-side
+Research preprint
+15
+mmlab@SIGS
+predicates. Commands and success declarations receive credit only when the required physical conditions
+are met. Repeating an action earns credit only when it satisfies a new requirement. Task rules distinguish
+irreversible failures, unscored actions, and valid exploration. For example, in DR4, a ball leaving its circle
+causes failure even if it later rolls back. In F2, submitting an incomplete layout does not consume an
+attempt. In M2, revealing a mismatched pair is valid exploration. Any action sequence that satisfies the
+task rules is valid. A run is classified as a valid failure only when its record is sufficient to evaluate the final
+success conditions. Unavailable observations and infrastructure interruptions are recorded separately.
+5 Benchmark Results
+Building on the protocol in Section 4, we evaluate nine systems that span the two main routes to embodied
+manipulation: multimodal agents that act through tools and end-to-end policies trained on demonstrations.
+Section 5.1 describes the systems and the evaluation procedure. Section 5.2 analyzes how well they reason,
+act and compose the two, where and why they fall short across views, conditions and application domains,
+and what the evaluation costs in time and money. Section 5.3 summarizes which system suits which task.
+5.1 Experimental Setup
+5.1.1 Systems
+We evaluate two system families, each ranked on its own leaderboard. Agents are multimodal language
+models that select motion tools from camera images and robot state, without any training on Mind2Act
+World. We evaluate GPT-6 Astra [70], DeepSeek-V4.1-Flash [71] and Gemini-4-Argon [72]. End-to-end
+policies map observations and the instruction to robot actions after fine-tuning on the shared demonstrations.
+We evaluate the VLAs KinRT [73], 𝜋0.5 [20], G0.5 [22] and X-VLA [74], and the WAMs InternW0 [76]
+and FastWAM [75]. Appendix C lists the evaluated systems.
+5.1.2 Training and Adaptation
+We fine-tune each end-to-end policy from its public checkpoint on the shared collection of 4,500
+demonstrations, fifty per task and difficulty level (Section 3.4.2), with the initialization, global batch
+size, and training steps of each system detailed in Appendix C. In contrast, we use the agents directly
+as provided through their APIs, without fine-tuning.
+5.1.3 Inference and Evaluation Instances
+All evaluations run at 120 Hz physics and 30 Hz control/RGB observations, with simulation paused
+during inference so that task deadlines are measured in simulation time and inference cost in wall-clock
+time. Across the 180 configurations (30 tasks × 3 levels × 2 settings), the nine evaluated systems
+account for 56,700 scored episodes.
+At the start of an episode, each system receives the English task instruction, selected camera views,
+and declared robot state. End-to-end policies generate action chunks that are converted to robot targets
+at 30 Hz, whereas agents issue pose-level motion-tool requests and may retrieve earlier observations
+from the same episode. For each task and difficulty level, we fix a shared list of 50 instances and
+evaluate them in both Clean and Random settings (Table 3). End-to-end policies run on all 100 resulting
+episodes per task and level (9,000 episodes per policy), while agents run on a shared subset of 5 Clean
+and 5 Random episodes (900 episodes per agent).
+Random instances preserve the underlying task instance while adding table clutter, one of 23 table materials,
+and one of six light types (with RGB channels scaled in [0, 2] and intensity in [0.8, 1.2]). The range
+is deliberately wide, so Random serves as an appearance stress test. End-to-end policies are allotted a
+Research preprint
+16
+mmlab@SIGS
+simulation-time horizon of 1.2× the 90th percentile of demonstration durations, shared across Clean
+and Random, with a 2-hour wall-clock safety limit. Agents receive 4× this physics budget, up to 150
+decisions per episode, and a 6-hour wall-clock safety limit. All three agents are evaluated at medium
+reasoning effort. Appendix B details the remaining run settings.
+Table 3. Evaluation episodes per system. Every system runs the same 180 configurations: thirty tasks at three
+difficulty levels, each in a Clean and a Random scene setting. An end-to-end policy runs ten times as many
+episodes per configuration as an agent. Counts are per system. The primary result combines the Clean and Random
+configurations of each task and difficulty with equal weight.
+Allocation
+Agent
+End-to-end policy
+Tasks / difficulty levels / scene settings
+30 / 3 / 2
+30 / 3 / 2
+Configurations
+180
+180
+Episodes per configuration
+5
+50
+Clean + Random episodes per task and difficulty
+10
+100
+Episodes per task, across three difficulties
+30
+300
+Episodes per view, ten tasks
+300
+3,000
+Clean episodes across the full suite (90 configurations)
+450
+4,500
+Random episodes across the full suite (90 configurations)
+450
+4,500
+Total episodes across the full suite
+900
+9,000
+5.1.4 Metrics and Statistical Reporting
+Following Section 4.3, we report the final success rate (SR) and partial-progress task score (0–100),
+aggregated across difficulty levels and averaged equally over Clean and Random settings. Alongside
+point estimates, we provide 95% Wilson score intervals in Appendix D.
+5.2 Main Results and Analysis
+A failure can come from forgetting task state, failing to execute, or failing to connect the two. We first ask
+how well current systems reason, act and compose the two, taken as a whole (¡ OVERALL). We then look
+at the two capabilities apart before putting them together. j MIND asks whether a system can remember
+what it has seen. § ACT asks whether it can act precisely and on time. M MIND2ACT asks whether the two
+still work together inside one workflow. ¶ APPEARANCE changes how the scene looks, and ó DIFFICULTY
+makes the task harder. The last two look beyond the simulator. 7 LATENCY & COST asks whether a system
+would keep up in real time, and what the evaluation costs.  REAL WORLD reads the results by application
+domain and asks how far each is from deployment. Table 5 lists the success rate of every system on each
+task, grouped by application domain, and Appendix E.2 gives the full episode counts.
+¡ OVERALL
+How well do current systems reason, act and compose the two?
+Current systems can perform single skills but rarely combine them. Table 4 ranks agents and end-
+to-end policies on separate leaderboards because the two families are evaluated under different settings
+(Section 5.1). On both leaderboards, the leading systems succeed in only a minority of episodes, with
+34.6% for GPT-6 Astra among the agents and 8.7% for InternW0 among the end-to-end policies. The
+remaining seven systems stay between 2.9% and 7.0%, far below either leader. These low rates are not
+explained by the tasks themselves, because under the same evaluator a scripted controller with access
+to simulator state completes every task at every level (Section 3.4.1). Nor is the agent harness the only
+limit, since the three agents share one harness and GPT-6 Astra still succeeds more than five times as
+often as the next agent. The shortfall therefore most likely lies in the models themselves.
+This progress is also narrow, as Mind and Act tasks, each of which tests a single capability, supply between
+81% and 100% of the successes of every system. Within these tasks, the successes cluster on a few
+Research preprint
+17
+mmlab@SIGS
+Table 4. Mind2Act World leaderboards. Each cell reports task score (0–100) / success rate (%) for one view.
+For each model, the first row pools the three difficulty levels, and All is the mean of the Clean and Random
+settings. The Overall score is 0.25 Mind + 0.25 Act + 0.50 Mind2Act, which gives Mind2Act as much weight as
+the two single views together (Section 4.3). The Overall success rate pools all episodes. Agents and end-to-end
+policies are ranked separately; within each leaderboard, the best and second-best All values of each column (by
+task score) are marked as Best and Second Best.
+Model
+Type
+Mind
+Act
+Mind2Act
+Overall
+All
+Clean
+Rand.
+All
+Clean
+Rand.
+All
+Clean
+Rand.
+Agents under one fixed harness
+GPT-6 Astra [70]
+OpenAI, 2026
+Agent
+All
+53.9/52.7
+55.9/54.7
+51.9/50.7
+40.4/39.0
+44.6/43.3
+36.3/34.7
+13.3/12.0
+13.3/12.0
+13.3/12.0
+30.2/34.6
+Easy
+64.7/64.0
+65.1/64.0
+64.3/64.0
+44.9/44.0
+47.7/46.0
+42.0/42.0
+27.3/26.0
+27.0/26.0
+27.5/26.0
+41.0/44.7
+Med. 52.1/50.0
+63.2/62.0
+40.9/38.0
+41.0/39.0
+45.2/44.0
+36.8/34.0
+8.5/7.0
+7.8/6.0
+9.3/8.0
+27.5/32.0
+Hard 44.9/44.0
+39.4/38.0
+50.4/50.0
+35.5/34.0
+40.8/40.0
+30.1/28.0
+4.2/3.0
+5.2/4.0
+3.2/2.0
+22.2/27.0
+DeepSeek-V4.1-Flash [71]
+DeepSeek-AI, 2026
+Agent
+All
+12.4/11.0
+11.0/9.3
+13.8/12.7
+11.3/8.7
+11.8/9.3
+10.9/8.0
+0.3/0.0
+0.2/0.0
+0.4/0.0
+6.1/6.6
+Easy
+25.5/24.0
+20.1/18.0
+30.9/30.0
+15.1/11.0
+19.3/16.0
+10.9/6.0
+0.6/0.0
+0.3/0.0
+0.9/0.0
+10.4/11.7
+Med.
+7.7/6.0
+7.8/6.0
+7.6/6.0
+10.4/8.0
+6.7/4.0
+14.2/12.0
+0.3/0.0
+0.3/0.0
+0.3/0.0
+4.7/4.7
+Hard
+3.9/3.0
+5.1/4.0
+2.8/2.0
+8.5/7.0
+9.4/8.0
+7.6/6.0
+0.1/0.0
+0.1/0.0
+0.1/0.0
+3.2/3.3
+Gemini-4-Argon [72]
+Google DeepMind, 2026
+Agent
+All
+5.0/4.3
+5.7/5.3
+4.2/3.3
+12.3/9.7
+13.2/10.7
+11.4/8.7
+0.1/0.0
+0.1/0.0
+0.1/0.0
+4.4/4.7
+Easy
+12.1/11.0
+12.9/12.0
+11.2/10.0
+12.5/8.0
+15.2/10.0
+9.7/6.0
+0.3/0.0
+0.3/0.0
+0.2/0.0
+6.3/6.3
+Med.
+2.6/2.0
+4.1/4.0
+1.1/0.0
+11.1/9.0
+11.1/10.0
+11.2/8.0
+0.0/0.0
+0.0/0.0
+0.1/0.0
+3.5/3.7
+Hard
+0.2/0.0
+0.1/0.0
+0.3/0.0
+13.1/12.0
+13.1/12.0
+13.1/12.0
+0.0/0.0
+0.0/0.0
+0.0/0.0
+3.3/4.0
+End-to-end policies: VLAs and WAMs
+KinRT [73]
+IIGroup, Tsinghua, 2026
+VLA
+All
+5.6/4.4
+7.9/6.5
+3.4/2.3
+17.4/13.6
+17.8/14.0
+17.0/13.2
+4.3/2.9
+5.3/3.8
+3.3/2.1
+7.9/7.0
+Easy
+11.3/9.8
+15.3/13.6
+7.3/6.0
+24.8/19.0
+25.1/19.8
+24.4/18.2
+8.6/6.7
+10.1/8.2
+7.2/5.2
+13.3/11.8
+Med.
+4.1/2.7
+6.4/4.8
+1.9/0.6
+14.9/11.1
+16.2/12.0
+13.5/10.2
+2.9/1.6
+3.9/2.4
+1.9/0.8
+6.2/5.1
+Hard
+1.5/0.7
+1.9/1.0
+1.2/0.4
+12.6/10.7
+12.1/10.2
+13.0/11.2
+1.4/0.5
+1.8/0.8
+1.0/0.2
+4.2/4.0
+𝝅0.5 [20]
+Physical Intelligence, 2025
+VLA
+All
+4.5/3.5
+6.6/5.5
+2.3/1.5
+15.9/12.0
+16.7/12.7
+15.0/11.3
+5.1/3.6
+6.2/4.5
+4.0/2.7
+7.6/6.4
+Easy
+9.2/7.8
+13.6/12.0
+4.8/3.6
+22.9/16.6
+24.0/17.6
+21.7/15.6
+10.6/8.6
+12.9/10.8
+8.3/6.4
+13.3/11.0
+Med.
+3.2/2.2
+4.8/3.6
+1.5/0.8
+13.7/10.1
+15.2/11.2
+12.3/9.0
+3.6/2.2
+4.3/2.6
+2.9/1.8
+6.0/4.8
+Hard
+1.0/0.5
+1.3/0.8
+0.6/0.2
+11.1/9.3
+11.1/9.2
+11.1/9.4
+1.1/0.1
+1.5/0.2
+0.7/0.0
+3.6/3.3
+G0.5 [22]
+Galaxea Team, 2026
+VLA
+All
+2.8/1.9
+3.7/2.7
+1.9/1.1
+16.0/13.4
+16.7/14.1
+15.3/12.7
+3.1/2.3
+3.2/2.3
+2.9/2.3
+6.2/5.9
+Easy
+6.9/5.6
+9.1/7.8
+4.6/3.4
+25.4/21.9
+26.0/22.6
+24.8/21.2
+7.3/6.2
+6.8/5.6
+7.8/6.8
+11.7/11.2
+Med.
+1.0/0.2
+1.4/0.4
+0.7/0.0
+12.5/9.8
+13.4/10.6
+11.6/9.0
+1.2/0.5
+1.8/1.0
+0.6/0.0
+4.0/3.5
+Hard
+0.5/0.0
+0.6/0.0
+0.5/0.0
+10.0/8.6
+10.7/9.2
+9.4/8.0
+0.7/0.2
+0.9/0.4
+0.4/0.0
+3.0/2.9
+X-VLA [74]
+Zheng et al., 2025
+VLA
+All
+1.4/1.0
+2.1/1.6
+0.7/0.5
+21.9/19.6
+23.2/21.1
+20.6/18.2
+0.7/0.2
+0.9/0.3
+0.5/0.1
+6.2/7.0
+Easy
+3.3/2.8
+5.0/4.4
+1.5/1.2
+28.2/24.7
+29.8/26.6
+26.6/22.8
+1.5/0.6
+1.9/0.8
+1.2/0.4
+8.6/9.4
+Med.
+0.6/0.2
+0.8/0.2
+0.5/0.2
+14.6/12.6
+16.2/14.2
+13.1/11.0
+0.3/0.0
+0.4/0.0
+0.2/0.0
+4.0/4.3
+Hard
+0.4/0.1
+0.5/0.2
+0.2/0.0
+22.9/21.6
+23.6/22.4
+22.1/20.8
+0.3/0.0
+0.4/0.0
+0.2/0.0
+5.9/7.2
+InternW0 [76]
+Cai et al., 2026
+WAM
+All
+6.1/5.4
+6.0/5.2
+6.2/5.5
+20.3/17.6
+20.9/18.2
+19.8/17.0
+4.1/3.0
+4.9/3.7
+3.4/2.3
+8.7/8.7
+Easy
+14.4/13.5
+13.5/12.4
+15.4/14.6
+24.6/20.6
+25.0/21.0
+24.3/20.2
+9.4/8.0
+10.9/9.6
+7.9/6.4
+14.5/14.0
+Med.
+3.0/2.1
+3.4/2.4
+2.6/1.8
+22.1/19.5
+21.8/19.2
+22.3/19.8
+1.8/0.8
+2.4/1.2
+1.3/0.4
+7.2/7.5
+Hard
+1.0/0.5
+1.2/0.8
+0.7/0.2
+14.3/12.7
+15.9/14.4
+12.7/11.0
+1.2/0.3
+1.3/0.4
+1.0/0.2
+4.4/4.5
+FastWAM [75]
+Yuan et al., 2026
+WAM
+All
+1.2/0.9
+2.0/1.5
+0.4/0.3
+9.3/7.4
+13.3/10.7
+5.4/4.1
+0.9/0.5
+1.3/0.9
+0.4/0.1
+3.1/2.9
+Easy
+3.0/2.5
+4.9/4.2
+1.0/0.8
+11.2/7.9
+14.4/10.2
+7.9/5.6
+2.1/1.6
+3.4/2.8
+0.8/0.4
+4.6/4.0
+Med.
+0.4/0.2
+0.7/0.4
+0.1/0.0
+10.4/8.7
+13.3/11.0
+7.6/6.4
+0.2/0.0
+0.2/0.0
+0.2/0.0
+2.8/3.0
+Hard
+0.2/0.0
+0.3/0.0
+0.2/0.0
+6.4/5.6
+12.2/11.0
+0.7/0.2
+0.2/0.0
+0.3/0.0
+0.2/0.0
+1.8/1.9
+practiced motions. Gate passage (DR3) is the clearest case, as this single timed task supplies between
+36% and 41% of all successes of KinRT, 𝜋0.5 and X-VLA and about 70% of those of FastWAM. At
+the other extreme, eight of the thirty tasks (M1, DR4, PR5, PR6, CP03, CP04, CP07 and CP09) are
+completed by no system in any of the 56,700 episodes.
+The overall ranking hides this, because a system can lead it on single skills alone. For example, InternW0
+leads the end-to-end leaderboard because of its Mind and Act results, yet its Mind2Act success rate (3.0%)
+is below that of 𝜋0.5 (3.6%). The per-view results show that the two families fail in different ways, as
+the strongest agent retains task state but struggles to sustain contact, whereas the end-to-end policies
+execute practiced motions but retain little task state. Both families break down once the two capabilities
+must work together in one workflow. The VLAs also lose much of their memory when the scene looks
+different, and Mind2Act workflows collapse most steeply as the difficulty rises.
+j MIND
+Can it remember what it has seen?
+Agents can remember what they have seen and end-to-end policies seldom can, but no system reliably
+keeps track of objects that are moved. The Mind view asks a system to decide what to do from earlier
+observations, such as an item seen before, a rule learned from feedback, a layout, or the order of earlier
+Research preprint
+18
+mmlab@SIGS
+Table 5. Final success rate (%) on every task, grouped by application domain. Each block lists the tasks of one
+domain of Table 2 and closes with the domain mean, the mean of its task rates. In each block, the first three columns
+are the agents and the other six the end-to-end policies; task IDs are colored by view (Mind, Act, Mind2Act) and
+named in Table 20. Each cell pools the Clean and Random settings and the three difficulty levels: 30 episodes per
+task for an agent and 300 for an end-to-end policy. Shading, in the view’s color, deepens with the success rate, and a
+gray 0 marks a task that the system never completes. M1, DR4, PR5, PR6, CP03, CP04, CP07 and CP09 have no
+success in any of the 56,700 episodes. Appendix Table 13 gives task scores and the two settings separately.
+ID
+GPT-6
+DeepSeek
+Gemini
+KinRT
+𝜋0.5
+G0.5
+X-VLA
+InternW0
+FastWAM
+ID
+GPT-6
+DeepSeek
+Gemini
+KinRT
+𝜋0.5
+G0.5
+X-VLA
+InternW0
+FastWAM
+» Home & Food Service
+ï Manufacturing & Logistics
+P1
+43
+0
+0
+0.7
+1.0
+0
+0
+0.7
+0.3
+E1
+73
+20
+6.7
+6.7
+1.0
+0
+0
+0
+1.0
+P2
+0
+0
+0
+15
+14
+2.0
+0
+1.3
+0
+M1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+S1
+23
+0
+0
+0
+0
+0
+0.3
+0.7
+0
+DR1
+77
+6.7
+0
+19
+13
+25
+0
+23
+2.0
+PR4
+0
+0
+0
+18
+10
+17
+64
+6.3
+0
+DR3
+80
+27
+40
+79
+79
+51
+76
+73
+61
+CP01
+60
+0
+0
+8.0
+8.7
+8.0
+1.3
+1.7
+4.3
+DR4
+0
+0
+0
+0
+0
+0
+0
+0
+0
+CP02
+17
+0
+0
+0.3
+0.7
+0
+0
+0.3
+0
+Mean
+46.0
+10.7
+9.3
+20.9
+18.6
+15.2
+15.2
+19.2
+12.8
+CP03
+0
+0
+0
+0
+0
+0
+0
+0
+0
+CP04
+0
+0
+0
+0
+0
+0
+0
+0
+0
+ó Assembly & Physical Reasoning
+Mean
+17.9
+0
+0
+5.2
+4.3
+3.4
+8.2
+1.4
+0.6
+PR6
+0
+0
+0
+0
+0
+0
+0
+0
+0
+CP07
+0
+0
+0
+0
+0
+0
+0
+0
+0
+{ Instruments & Tool Use
+CP08
+13
+0
+0
+2.7
+6.0
+0
+0
+12
+0
+E2
+63
+20
+6.7
+0.7
+0
+0
+1.0
+0.3
+0.3
+Mean
+4.4
+0
+0
+0.9
+2.0
+0
+0
+4.0
+0
+F1
+77
+17
+6.7
+3.0
+5.7
+8.3
+5.0
+9.3
+4.0
+DR2
+90
+6.7
+3.3
+1.0
+0
+37
+13
+32
+0
+s Companion & Edutainment
+PR1
+100
+40
+40
+19
+16
+3.0
+43
+40
+10
+F2
+53
+0
+3.3
+5.7
+3.7
+0.7
+0
+14
+0
+PR2
+43
+6.7
+13
+0.3
+1.0
+1.7
+0.7
+2.7
+0.3
+M2
+93
+33
+10
+7.3
+2.0
+6.7
+4.0
+18
+3.3
+PR3
+0
+0
+0
+0
+1.0
+0
+0
+0
+0
+S2
+100
+20
+10
+4.7
+7.3
+1.7
+0
+10
+0
+PR5
+0
+0
+0
+0
+0
+0
+0
+0
+0
+CP05
+20
+0
+0
+0
+0
+0
+0
+0
+0
+CP06
+10
+0
+0
+17
+21
+12
+0.7
+16
+0.3
+CP10
+0
+0
+0
+1.3
+0.3
+2.7
+0
+0.7
+0.7
+CP09
+0
+0
+0
+0
+0
+0
+0
+0
+0
+Mean
+53.3
+10.7
+4.7
+3.8
+2.7
+2.4
+0.8
+8.5
+0.8
+Mean
+42.6
+10.0
+7.8
+4.6
+5.0
+6.9
+7.0
+11.1
+1.7
+operations. On this view, GPT-6 Astra leads by its widest margin and succeeds in 52.7% of Mind episodes
+(Table 4). By comparison, the other two agents reach only 11.0% and 4.3%, and the end-to-end policies
+stay between 0.9% and 5.4%. Even these few successes of the end-to-end policies come mostly at Easy,
+where there is least to remember, so these policies retain little task state of any kind.
+However, GPT-6 Astra does not remember equally well on every Mind task. It solves hidden-hazard
+navigation (S2) in every episode and card matching (M2) in 93%, and it also does well on button mapping
+(F1, 77%) and repeated-item recognition (E1, 73%). In all four tasks, what the agent remembers stays
+fixed once seen, and the agent uses it through button presses or simple placements. In contrast, the agent
+completes no episode of workpiece tracking (M1) or steamer-stack restoration (P2), and M1 remains
+unsolved by every system. Unlike the other four, these two tasks move the objects that the agent must
+remember. In M1 the covers are swapped while they hide the workpiece, and in P2 the baskets are unstacked
+and must be restacked in their original order. As a result, the agent must keep identities, positions and
+orders up to date while the robot itself lifts and moves the objects. Retrieving its earlier observations does
+not help here, because a stored image no longer shows where a swapped cover or a moved basket now is.
+P2 is also the only Mind task on which the end-to-end policies outperform all three agents, as four of the six
+policies complete some episodes and KinRT and 𝜋0.5 reach 15% and 14%. Because these policies retain
+little task state on the other Mind tasks, their P2 successes more likely come from practiced handling of the
+baskets than from memory. This also suggests that handling, and not memory alone, limits the agent on P2.
+§ ACT
+Can it execute precisely and on time?
+End-to-end policies act on time and the strongest agent also acts precisely, but neither family sustains
+control through contact. The Act view isolates physical execution, since each task states what to do
+and success depends on doing it precisely and on time. Every end-to-end policy performs best on this
+view, where the four VLAs reach 12.0 to 19.6% (Table 4), but GPT-6 Astra still leads at 39.0%. For the
+Research preprint
+19
+mmlab@SIGS
+VLAs, timing is much easier than precision, as on average they succeed in 22 to 28% of the episodes
+on the four dynamic tasks but in only 4 to 18% on the six precision tasks.
+GPT-6 Astra succeeds where the target can be read from the scene and reached in a few deliberate moves.
+It completes every resistance-adjustment episode (PR1) and 77 to 90% of the episodes on the three timed
+tasks DR1 to DR3, and it also reaches 43% on voltage setting (PR2), on which no end-to-end policy
+exceeds 3%. The end-to-end policies, by contrast, succeed where one practiced motion fits the task. On
+gate passage (DR3), KinRT, 𝜋0.5 and X-VLA succeed in 76 to 79% of episodes, close to the agent’s 80%,
+and X-VLA folds the cloth (PR4) in 64% of episodes, where the agent never succeeds.
+Both kinds of success break down once a task requires sustained control, meaning that the robot must keep
+adjusting while it stays in contact with an object. Tasks such as DR4, PR3 and PR6 demand such control,
+because every small slip changes the state that the next motion must respond to. GPT-6 Astra completes
+none of the five tasks of this kind (DR4, PR3, PR4, PR5 and PR6), and its profile card shows that the
+failures occur during the contact itself (Appendix E.4). All 30 of its DR4 episodes are lost while the tray
+is lifted, and 21 of its 30 PR6 episodes end with dominoes knocked over during placement. Apart from
+PR4, which one practiced fold can cover, the end-to-end policies fare no better, and no system completes
+DR4, PR5 or PR6 in any of the 56,700 episodes. These failures point to missing correction during contact
+rather than to a misunderstanding of the task. Both families execute open-loop between observations, as
+the agent’s motion tools turn each target into a complete planned trajectory and each end-to-end policy
+executes a fixed number of actions from each chunk before predicting again (Appendix B). A ball that
+starts to roll or a domino that starts to tip therefore goes uncorrected until the next observation.
+(a) Success rate by view
+95% intervals
+0
+20
+40
+60
+success rate (%)
+53
+39
+12
+GPT-6
+11
+8.7
+0.0
+DeepSeek
+4.3
+9.7
+0.0
+Gemini
+4.4
+14
+2.9
+KinRT
+3.5
+12
+3.6
+𝜋0.5
+1.9
+13
+2.3
+G0.5
+1.0
+20
+0.2
+X-VLA
+5.4
+18
+3.0
+InternW0
+0.9
+7.4
+0.5
+FastWAM
+agents, 300 episodes per view
+end-to-end policies, 3,000 episodes per view
+Mind
+Act
+Mind2Act
+(b) Random vs. Clean successes
+0%
+50%
+100%
+36
+94
+KinRT
+28
+89
+𝜋0.5
+41
+90
+G0.5
+29
+86
+X-VLA
+106
+93
+InternW0
+17
+38
+FastWAM
+Random successes as a share of Clean successes
+Fig. 8. Success rates by view, and Random versus Clean successes. (a) Success rate by view. Final success rate
+on Mind, Act and Mind2Act, with 95% Wilson intervals. (b) Random vs. Clean successes. For the six end-to-end
+policies, the ratio of successful Random episodes to successful Clean episodes on the same instances.
+M MIND2ACT
+Do reasoning and execution work together?
+Mind2Act workflows mostly end at their first steps, before reasoning and execution ever have to work
+together. The Mind2Act view chains dependent operations into one workflow, in which remembered
+information guides each action and each physical outcome decides what comes next. Table 4 and Fig. 8a
+show that every system succeeds less often on this view than on Act. GPT-6 Astra drops from 52.7%
+on Mind and 39.0% on Act to 12.0% on Mind2Act, while the other two agents complete no Mind2Act
+episode. The end-to-end policies reach only 0.2 to 3.6%, close to their Mind rates and far below their
+Act rates. For example, X-VLA, the strongest VLA on Act, drops from 19.6% to 0.2%. This shows that
+strength on a single view does not carry over to workflows that need both, and that for the end-to-end
+policies the missing memory, rather than execution, sets the limit.
+The few Mind2Act successes come from workflows that a system can finish with steps it already performs
+on the single views. GPT-6 Astra succeeds reliably only on conveyor meal assembly (CP01), in 60%
+of its episodes, and the picks in CP01 resemble the conveyor pickup of DR1, on which it succeeds in
+77%. CP01 alone supplies 18 of its 36 Mind2Act successes, whereas the agent completes no episode of
+CP03, CP04, CP07, CP09 or CP10. The end-to-end policies, by contrast, succeed mostly at Easy, where
+Research preprint
+20
+mmlab@SIGS
+a single order or item turns the workflow into little more than an Act task. For KinRT, 𝜋0.5 and G0.5,
+produce weighing (CP06) and CP01 supply 81 to 88% of all Mind2Act successes, and 𝜋0.5 succeeds
+in 8.6% of its Mind2Act episodes at Easy but in only 0.1% at Hard. These successes therefore reflect
+practiced steps rather than reasoning and execution working together.
+Partial scores further indicate that most Mind2Act episodes fail early rather than near completion. For
+every system, the Mind2Act score exceeds the success rate by at most 1.5 points, and on CP07 and CP09
+no system reaches even the first scored stage. For example, G0.5 never grasps a piece in 202 of its 300
+CP07 episodes (Appendix E.4). Errors in the composition itself appear only when an episode gets that far,
+as when InternW0 switches on the heat before all ingredients are in the pot in 271 of its 300 CP04 episodes.
+This suggests that Mind2Act failures are driven less by the coordination of reasoning and execution than
+by single steps that reasoning or execution gets wrong. Reliable composition therefore first requires each
+capability to hold up at every step of a workflow, which no current system achieves.
+¶ APPEARANCE
+Does it hold up when the scene looks different?
+A change of appearance leaves the strongest agent’s memory largely intact, whereas the VLAs lose
+most of theirs. The Clean and Random settings use the same task instances, and Random only adds clutter
+and changes the table materials and the lighting, so comparing the two shows how much a change of
+appearance alone affects each system. Because all demonstrations were recorded in Clean scenes, Random
+scenes also look different from what the end-to-end policies saw in training. In overall score the change
+matters little, since no system gains or loses more than about three points (Appendix Table 11).
+The four fine-tuned VLAs, however, keep most of their Act successes and lose most of their Mind
+successes. They still complete 86 to 94% as many Act episodes in Random scenes as in Clean scenes, but
+only 28 to 41% as many Mind episodes (Fig. 8b). Their Mind successes fall from 97 to 35 for KinRT,
+from 82 to 23 for 𝜋0.5, from 41 to 17 for G0.5 and from 24 to 7 for X-VLA. An Act task shows its
+target in the current image, so the policy can still find it among new clutter and lighting. A Mind task
+instead requires the policy to decide from earlier observations, and in Random scenes those observations
+look unlike the demonstrations it was trained on. The VLAs therefore seem to remember how a scene
+looked in training rather than what it contained.
+GPT-6 Astra behaves the other way round, as its Mind success rate only moves from 54.7% to 50.7%
+and its Mind2Act rate stays at 12.0%. It appears to remember what the scene contains, such as which
+items it has seen and where they are, and new textures, lighting and clutter do not change that. Its Act
+successes drop more, from 65 to 52 of 150, so for the agent a new appearance hurts execution more
+than memory. The two world-action models differ from each other, as InternW0 completes 83 Mind
+episodes in Random against 78 in Clean and keeps 93% of its Act successes, whereas FastWAM falls
+from 198 to 67 successes overall. For the world-action models, coping with a new appearance therefore
+depends on the individual model rather than on the model type.
+ó DIFFICULTY
+Does it hold up when the task gets harder?
+Harder levels hurt most where they add dependent operations, so Mind2Act workflows collapse
+while timed Act tasks barely change. Each harder level keeps the goal of a task and raises the demand
+its view is built around (Section 3.3), so Mind tasks give more earlier observations to decide from, Act
+tasks require more precise or timely execution, and Mind2Act tasks chain more dependent operations.
+Under these heavier demands every system succeeds less often, but four of the six end-to-end policies lose
+far more than the strongest agent. Over all tasks, GPT-6 Astra keeps 60% of its success rate from Easy to
+Hard, falling from 44.7% to 27.0%, whereas KinRT, 𝜋0.5, G0.5 and InternW0 keep only 26 to 34%.
+This loss is not spread evenly across the views but concentrates where a harder level adds dependent
+operations. GPT-6 Astra falls from 64% to 44% on Mind and from 44% to 34% on Act, but from 26% to
+3% on Mind2Act. This order follows the average length of the demonstrations, which is 23.9 seconds
+on Act, 58.5 seconds on Mind and 99.6 seconds on Mind2Act (Section 3.4.2). Longer tasks contain
+more operations that can fail, and each harder Mind2Act level adds more orders, shapes or balls, so a
+Research preprint
+21
+mmlab@SIGS
+Table 6. Evaluation time and cost per system. Time per call is the mean duration of one API request of an agent
+or one action prediction of an end-to-end policy, run locally on one GPU; episode time is the mean wall-clock
+time of an episode, over all tasks and by view. API cost is the mean cost of an agent episode at the providers’
+list prices and the cost per successful episode.
+Model
+Type
+Time
+Episode time (min)
+API cost (USD)
+/ call
+All
+Mind
+Act
+Mind2Act
+/ episode
+/ success
+Agents under one fixed harness (900 episodes each)
+GPT-6 Astra
+Agent
+11.0 s
+22.2
+19.1
+16.8
+30.7
+25.13
+72.7
+DeepSeek-V4.1-Flash
+Agent
+35.6 s
+96.1
+91.9
+93.0
+103.2
+1.24
+18.9
+Gemini-4-Argon
+Agent
+27.8 s
+18.0
+15.2
+15.8
+22.9
+1.12
+24.0
+End-to-end policies: VLAs and WAMs (9,000 episodes each)
+KinRT
+VLA
+110.9 ms
+4.8
+3.5
+3.3
+7.5
+–
+–
+𝝅0.5
+VLA
+77.1 ms
+8.6
+5.7
+6.5
+13.5
+–
+–
+G0.5
+VLA
+170.3 ms
+6.7
+7.5
+4.6
+8.0
+–
+–
+X-VLA
+VLA
+153.0 ms
+16.5
+16.0
+6.5
+27.2
+–
+–
+InternW0
+WAM
+488.1 ms
+19.2
+17.6
+7.4
+32.5
+–
+–
+FastWAM
+WAM
+262.1 ms
+12.4
+10.9
+4.5
+21.9
+–
+–
+workflow fails as soon as one added operation fails. The end-to-end policies follow the same pattern,
+with Act holding up best. For example, InternW0 falls from 13.5% to 0.5% on Mind and from 8.0% to
+0.3% on Mind2Act but still reaches 12.7% on Act at Hard. Robustness to appearance does not protect
+against this loss, as InternW0’s Mind rate and GPT-6 Astra’s Mind2Act rate barely change between
+Clean and Random but fall to 0.5% and 3% at Hard.
+The timed Act tasks behave differently, because their harder levels mainly shorten the time in which the
+physical effect must happen. In DR2 the time allowed to press a lit button drops from 4.0 to 2.6 seconds,
+yet G0.5 still succeeds in 37, 39 and 34 of 100 episodes at the three levels. DR3 behaves the same way, as
+the gates stay open for less time while 𝜋0.5 succeeds in 76, 81 and 79 (Appendix Table 14). A policy with
+a practiced motion can simply perform it faster, and less time adds no operation that could go wrong. On
+the precision tasks, success can even depend on the fold a level asks for more than on its difficulty. X-VLA
+folds the cloth (PR4) in 97 Easy, 1 Medium and 94 Hard episodes of 100, so its learned motion seems to
+suit the rectangle and hexagon folds but not the diagonal fold of Medium. Harder levels therefore hurt
+most when they add dependent operations and much less when they mainly shorten the time.
+7 LATENCY & COST
+Would it keep up in real time, and what does each success cost?
+Agent episodes take longer and cost more as the workflow grows, while end-to-end policies respond
+within a fraction of a second. Simulation pauses while a model computes, so a timed task measures
+whether the right action is chosen and executed, not whether it is chosen in time. The pause hides a
+speed gap of one to nearly three orders of magnitude. As shown in Table 6, an agent call takes 11.0 to
+35.6 s, whereas an end-to-end policy takes 77.1 to 488.1 ms, and model requests fill 67 to 86% of an
+agent episode’s wall-clock time, against 2 to 29% for the end-to-end policies.
+For an agent, this time goes to deliberation and grows with how much a task leaves to be decided. GPT-6
+Astra spends 16.8 minutes on an Act episode and 19.1 on a Mind episode, but 30.7 on a Mind2Act
+episode, where each physical outcome changes the next decision and its calls take longest (13.0 s against
+9.2 s on Act), yet it completes only 12.0% of these workflows. A longer run does not by itself bring
+more success, as DeepSeek-V4.1-Flash is the slowest agent (96.1 minutes per episode) but completes
+only 6.6% of its episodes, against 34.6% for GPT-6 Astra. GPT-6 Astra, in turn, costs about twenty
+times as much per episode as the other two agents (USD 25.13 against USD 1.12 to 1.24 at list price),
+but because it succeeds far more often, its cost per success (USD 72.7) is only about four times that
+of DeepSeek-V4.1-Flash (USD 18.9).
+End-to-end policies are much faster, and X-VLA, for example, predicts in 153 ms, about seventy times
+faster than a GPT-6 Astra call. It finishes an Act episode in 6.5 rather than 16.8 minutes and reaches
+19.6% on Act, the highest among end-to-end policies and half the agent’s 39.0%. Speed also varies
+among the end-to-end policies, as InternW0 succeeds slightly more often than KinRT (8.7% against
+Research preprint
+22
+mmlab@SIGS
+7.0%) but needs 19.2 rather than 4.8 minutes per episode. The agent’s lead on timed tasks depends
+on the paused clock, because many of GPT-6 Astra’s Act successes come from conveyor pickup (DR1,
+77%) and light-cued response (DR2, 90%), while its mean request time on Act tasks (9.2 s) is more
+than three times the 2.6 s response window of the Hard light-cued task. In a real setting, the conveyor
+would keep moving and the light keep changing during that time.
+ REAL WORLD
+How far is each application domain from deployment?
+Domains built on pressing and placing reach at best about half of episodes, and kitchens and
+assembly remain far from deployment. Each task is built from a need in one of five application domains
+(Table 2), so the per-task results can also be read by domain (Mean rows of Table 5). GPT-6 Astra
+succeeds in 53.3% of the companion and edutainment episodes and in 46.0% and 42.6% of those in
+manufacturing and logistics and in instrument and tool use, whose tasks mostly come down to pressing
+buttons, setting a slider or placing an item. It falls to 17.9% in home and food service and to 4.4% in
+assembly, where at least half of the tasks are Mind2Act workflows.
+The end-to-end policies rank the domains differently, as they do best in manufacturing and logistics (KinRT
+20.9%), where conveyor pickup and gate passage repeat one practiced motion, and stay below 12% in every
+other domain. Four of the five domains each hold two tasks that no system completes, namely kitchen
+loading and cooking (CP03, CP04), workpiece tracking and tray carrying (M1, DR4), oriented stamping
+and whiteboard restoration (PR5, CP09), and the domino chain and bridge building (PR6, CP07).
+The best domain value, 53.3%, still means failing about every second attempt, so no domain is yet close
+to deployment even in simulation. Agents come closest in edutainment and manufacturing, end-to-end
+policies come closest in repetitive factory motions, and neither comes close in kitchens or assembly.
+5.3 Which System Suits Which Task
+The leaderboards and the analysis of Section 5.2 show how the systems rank and where each of
+them succeeds and fails. Together they show that agents and end-to-end policies currently handle
+different kinds of task demand.
+Agents for reasoning-heavy steps. A strong agent is suited to the steps of a task that turn on what was
+seen before and on what to do next. GPT-6 Astra remembers and reasons well (52.7% on Mind), keeps
+that memory when the scene changes, and solves tasks whose target can be read and reached in a few
+deliberate moves. Its limits lie in contact and timing. It completes none of the five contact-rich tasks,
+and its timed successes are measured with a simulator that waits for it. The other two agents use the
+same tools yet differ widely on Mind, so this profile is specific to the model.
+End-to-end policies for execution-heavy steps. End-to-end policies are suited to steps that one practiced
+motion can cover. The four evaluated VLAs retain 86–94% of their Act successes under scene randomization,
+and each has its own strength: G0.5 on timed reactions, X-VLA on resistance adjustment and cloth folding,
+and KinRT and 𝜋0.5 on memory, where the VLAs show little. They retain almost no task state, so any
+step that depends on earlier information is better left to another system.
+World-action models differ widely. InternW0 is the only end-to-end policy whose memory survives
+scene changes, and it nearly matches the agent on the blueprint task. It still follows its learned sequence
+without checking preconditions, as in cooking. FastWAM drops in both views under scene randomization,
+so this advantage is not inherent to world-action models.
+Some demands are met by no system yet. No evaluated system succeeds on M1, and GPT-6 Astra
+completes no episode of P2. No system sustains contact under force (DR4, PR5 and PR6 are never
+completed), and none completes Mind2Act workflows reliably. GPT-6 Astra reaches 12.0% on Mind2Act,
+and no end-to-end policy exceeds 3.6%. Neither family yet covers both reasoning and execution.
+Research preprint
+23
+mmlab@SIGS
+(a) Three-layer diagnosis
+every failed episode (8,343 of 9,000)
+i Episode records
+scorer, simulator events, video, actions
+L1 Rules
+scorer and simulator events
+L2 LLM judge
+video and actions; cannot overturn L1
+L3 Human check
+uncertain cases
+about a third settled
+the rest to the judge
+Perceive
+Reason
+Execute
+Close
+A-GRASP
+grasp fails (CP07, 265/300)
+attributed to
+Mind
+Act
+Comp.
+(b) Beyond the success rate
+failed episodes by where they stop
+CP09
+whiteboard drawing
+success 0 of 300
+297 of 300 never take the board off its stand
+CP07
+bridge construction
+success 0 of 300
+265 of 300 stop at the grasp
+PR1
+linear resistor
+success 8 of 300
+255 of 292 stop at coarse adjustment
+Success is near zero on all three, and most
+failures stop at one early step.
+(c) Across all failures
+8,283 of 8,343 failed episodes
+first step
+failure code
+cases
+Perceive
+905 (11%)
+M-PERCEIVE
+905
+Reason
+3,460 (41%)
+M-MEMORY
+1,812
+M-PLAN
+806
+M-RULE
+541
+M-SPATIAL
+301
+Execute
+3,112 (37%)
+A-GRASP
+1,400
+A-PRECISION
+1,121
+A-COLLISION
+591
+Close
+806 (10%)
+C-PREREQ
+478
+C-NO-UPDATE
+328
+◎Next step (Table 7)
+memory; grasp control; recovery demos
+Fig. 9. Failure diagnosis on an example profile card. An illustrative example, the same as in Fig. 10 and on the
+project website; the measured cards of three representative systems are in Appendix E.4. (a) Three-layer diagnosis.
+The workflow as a funnel: in this example, the rule layer settles about a third of the failed episodes, and the rest
+pass to the LLM judge and, where it is uncertain, to the human check. (b) Beyond the success rate. The example
+end-to-end policy rarely completes these three tasks, and most of its failures on each task occur at a single early step.
+(c) Across all failures. The card follows the failed episodes from the step at which each first breaks to its failure code.
+6 Diagnostic Analysis
+Success rates measure task completion, and task scores measure partial progress. But they cannot identify
+where or why a system fails within an episode, which is what model developers need to know. In
+this section, we examine where tasks fail, which errors recur across systems, and how these findings
+inform improvement priorities. Episode-level diagnosis and model profile cards (Section 6.1) connect
+failure patterns to task progress, budget use, and stopping decisions (Section 6.2), and the failure codes
+point to directions for improvement (Section 6.3). Inference latency, runtime and API cost are analyzed
+alongside success rates in Section 5.2.
+6.1 Diagnosis Harness and Model Profile Cards
+Diagnosis harness design. We classify failures by the first unrecoverable error identified in the episode,
+using 21 failure codes (Appendix E.1). Mind errors concern perception and task reasoning, Act errors
+concern physical execution, and composition errors concern using physical outcomes to guide subsequent
+actions. Three episode-level codes capture timeouts, stalls, and cases with insufficient evidence. The label
+follows the observed error, regardless of the task’s view. A Mind failure involves an error in perception or
+task reasoning. Examples include selecting the wrong object based on a misremembered order (M-MEMORY)
+and incorrectly predicting how the scene will change (M-PREDICT). An Act failure occurs when the system
+selects an appropriate action but executes it incorrectly. Examples include losing a grasp (A-GRASP) and
+executing the correct action too early or too late (A-TIMING). A composition failure occurs when the system
+proceeds without verifying a required outcome or fails to update its next action based on feedback. For
+example, the system may continue pressing the same button after the light cue changes (C-NO-UPDATE).
+The harness combines three layers of review as in Fig. 9a. First, deterministic rules use scorer outputs
+and simulator events to isolate the failure or bound the step at which it occurred. For cases left open by
+rules, an LLM judge inspects the video and action or tool-call history without overturning rule-based
+verdicts, flagging ambiguous cases as uncertain. Finally, human reviewers settle the cases the judge marks
+as uncertain. Fig. 9 shows the workflow on an illustrative example, and Appendix E.4 reports the results
+of this procedure for every failed episode of three representative systems.
+Research preprint
+24
+mmlab@SIGS
+Model profile cards. A model profile card summarizes the failure profile of a single system. Fig. 9 walks
+through the diagnosis of an illustrative end-to-end policy, and Fig. 10 shows the full card format with
+illustrative numbers. The cards of three representative evaluated systems are given in Appendix E.4.
+è Model profile card
+an end-to-end VLA · illustrative example, as on the project website
+Results by view
+7.3%
+success over all
+9,000 episodes
+2.6
+Mind
+16.6
+Act
+2.6
+Mind2Act
+success rate (%) per view
+Where failures break
+8,343
+failed
+perceive
+10.8%
+reason
+41.5%
+execute
+37.3%
+close the loop
+9.7%
+episode level
+0.7%
+first unrecoverable step
+Which side failed
+52.7
+37.6
+Mind
+Act
+composition
+9.7%
+share of failures (%)
+First failures
+M-MEMORY
+forgot or misremembered
+1,812
+A-GRASP
+grasp failed or not held
+1,400
+A-PRECISION
+fine-control error
+1,121
+M-PERCEIVE
+misread an object or reading
+905
+most frequent failure codes
+Where tasks break
+CP09
+297 of 300 never lift the board
+CP07
+265 of 300 stop at the first grasp
+P1
+236 of 297 forget the order
+where progress stops, three tasks
+Model
+Æ
+Example
+VLA
+illustrative example
+end-to-end board
+behavioural profile
+ENFP
+Goalkeeper (App. E.6)
+Capability profile
+E1
+E2
+Entity
+P1
+P2
+Process
+S1
+S2
+Spatial
+F1
+F2
+Rule
+M1
+M2
+Integrated
+Mind
+DR1
+DR2
+DR3
+DR4
+Dynamic
+PR1
+PR2
+PR3
+PR4
+PR5
+PR6
+Precision
+Act
+CP01
+CP03
+Cumulative
+CP02
+CP08
+CP09
+Repair
+CP04
+CP06
+Feedback
+CP05
+CP07
+Plan
+CP10
+Predict
+Mind2Act
+30 tasks, 12 capabilities
+Rings
+Easy, Medium, Hard outward
+Success (%)
+0
+1+
+10+
+30+
+60+
+Mind
+Act
+M2A
+Act carries the successes;
+Mind and Mind2Act stay pale
+Under pressure
+success rate (%) by difficulty, bars 0–30%
+Mind
+Easy
+5.9
+Medium
+1.7
+Hard
+0.3
+Act
+Easy
+26.1
+Medium
+14.4
+Hard
+9.3
+Mind2Act
+Easy
+5.8
+Medium
+1.7
+Hard
+0.5
+All tasks
+Easy
+12.6
+Medium
+5.9
+Hard
+3.4
+What could help
+from the failure codes and breakpoints above
+1
+Memory of orders and progress
+Memory errors are the largest cause of failure (1,812 episodes), concentrated
+in meal orders, workpiece tracking and meal assembly.
+Where.
+Mind: process and integrated memory; Mind2Act: cumulative
+progress.
+Data to add. Demonstrations in which earlier information or progress must
+be carried through many steps.
+2
+The first physical contact
+Building, drawing and slider-setting tasks break at the first grasp, lift or ad-
+justment, before any reasoning step is tested.
+Where. Act: precise execution; Mind2Act: prerequisites, repair and plan-
+ning.
+Data to add. Contact-rich demonstrations of grasping, lifting and millimetre-
+level alignment.
+Fig. 10. Overview of the model profile card. The card reads from top to bottom, as on the project website.
+Results by view gives the success rate in each view. Where failures break and Which side failed give the step
+at which failed episodes first break down and whether Mind, Act or their composition failed. First failures and
+Where tasks break give the most frequent failure codes and where typical tasks stop. Model gives a four-letter
+behavioral profile (Appendix E.6). Capability profile and Under pressure give the success of each task at Easy,
+Medium and Hard, grouped by capability and view, and the success rate by difficulty. What could help turns
+the codes into directions for improvement. The numbers are an illustrative example; the measured cards of three
+representative systems are given in Appendix E.4.
+Research preprint
+25
+mmlab@SIGS
+6.2 Failure Patterns of the Evaluated Systems
+We read the measured cards of G0.5, InternW0 and GPT-6 Astra (Appendix E.4), together with
+the run logs of the agents.
+The overall pattern. Physical execution is the largest diagnosed failure group in all three systems,
+accounting for 41.4% of G0.5’s failures, 37.2% of InternW0’s, and 55.3% of GPT-6 Astra’s. GPT-6 Astra’s
+failures are particularly concentrated in execution, whereas G0.5 and InternW0 also show substantial
+perception and reasoning failures, at 27.7% and 32.8%, respectively; 6–11% of each system’s failures
+occur while closing the loop. These proportions refer to the first unrecoverable error identified in
+each failed episode. The rule layer alone would overstate Mind-side errors for the end-to-end policies
+(Appendix Table 17), because scorer records reveal a misremembered item more readily than video
+reveals a motor fault. A card therefore combines the layers.
+The dominant execution errors differ across systems. Failed or lost grasps are the most frequent errors
+for G0.5 and GPT-6 Astra, with 1,324 and 120 cases, while fine-control errors lead InternW0’s profile
+with 1,132 cases. The two end-to-end policies also record 924 and 1,011 memory failures. These profiles
+identify distinct priorities: grasp reliability for G0.5 and GPT-6 Astra, fine control for InternW0, and
+task-state retention for both end-to-end policies.
+Differences across tasks. The dominant failure also varies by task, even within the same system. For
+G0.5, 202 of 300 bridge-building episodes (CP07) fail to grasp a construction piece (Fig. 13), making
+object acquisition the main obstacle to further progress. In light-cued pressing (DR2), however, 90 of 190
+failures involve a misread light (M-PERCEIVE) and 88 involve a response that is not updated after the light
+changes (C-NO-UPDATE). Only eight concern the press itself or its timing. In incremental meal orders (P1),
+memory errors account for 210 of G0.5’s 300 failed episodes and 245 of InternW0’s 298 failed episodes.
+Where progress stops. No evaluated system completes whiteboard restoration (CP09) or bridge building
+(CP07), and failures on such workflows often occur before their reasoning stages are reached. On
+CP09, 299 of 300 G0.5 episodes stop before board removal. GPT-6 Astra fails during the lift in all
+30 tray-carrying (DR4) episodes (Fig. 15). Zero success on these tasks is therefore consistent with
+early physical bottlenecks rather than failures in downstream planning or repair. Most episodes fail in
+Mind or Act before closed-loop composition is tested.
+Analysis of budget use. Under the same decision budget, the agent logs show distinct termination patterns
+(Appendix Table 18). Gemini-4-Argon voluntarily stops in 829 of 900 episodes and uses approximately
+33 decisions per episode. DeepSeek-V4.1-Flash uses 111.8 decisions on average, voluntarily stops in 385
+episodes, and exhausts the decision and physics budgets in 286 and 94 episodes, respectively. GPT-6
+Astra averages 79.6 decisions per episode. It voluntarily stops in 460 episodes, and only one of them
+succeeds, a gate-passage episode (DR3) whose task was already complete when it stopped. The other
+459 account for 77.9% of its 589 failed episodes, and in 264 of them the agent has used no more than
+100 of the 150 allowed decisions. Among these 459 stops, the first unrecoverable error is attributed
+to execution in 289 cases, perception or reasoning in 127, and composition in 28. The remaining 15
+cases fall outside these three capability groups.
+These results distinguish resource limits from the errors that prevent task completion. DeepSeek frequently
+exhausts its budget. GPT-6 Astra shows a different pattern: many unsuccessful episodes end with
+substantial decision budget remaining, and execution errors dominate its voluntary stops, often after its
+motion planner rejects the requested poses. For episodes affected by execution errors, additional decisions
+are useful only if they enable effective retries or corrective actions (Table 7).
+6.3 From Failure Codes to Directions
+A diagnosis helps a model developer only if it says what to change, and the profiles narrow broad
+improvement goals to specific behaviors. Because each failure code names the step and the side of the
+Research preprint
+26
+mmlab@SIGS
+loop at which an episode broke, a group of codes points to the capability that most needs to improve. An
+evaluation speaks most directly to two levers that a developer can adjust without redesigning the model.
+One is the training data of an end-to-end policy. The other is the harness of an agent, that is, the tools and
+control loop through which it acts. Table 7 maps the three groups of the profile card, and the breakpoints
+shared by all of them, to such directions. The paragraphs below give the evidence behind each.
+Table 7. Directions for improvement by failure group.
+Grouped as on the profile card (Mind, Act and
+Composition). The directions concern the training data of end-to-end policies and the harness of agents. Evidence
+is from the measured cards of Appendix E.4 and the results of Section 5.
+Failure group
+Evidence in this report
+Direction
+Mind: M-MEMORY,
+M-SPATIAL,
+M-RULE
+924 misremembered-information
+failures of G0.5 and 1,011 of
+InternW0; VLAs lose 59–72% of
+Mind successes under Random
+scenes
+Task state across stages: keeping what was seen and recognizing
+items under a new appearance. Data: varied scenes and longer gaps
+between when information is shown and when it is needed
+Act: A-GRASP,
+A-PRECISION,
+A-TIMING
+1,324 grasp failures of G0.5 and
+1,132 fine-control failures of
+InternW0; 202 of 300 G0.5
+episodes on CP07 never grasp a
+piece
+Grasp, contact and timing: reliable grasps and fine contact, and
+responses within the windows of DR2 and DR3. Data:
+demonstrations weighted toward these segments, with more variation
+in pose, contact and timing. Harness: finer motion tools
+Composition:
+C-NO-VERIFY,
+C-NO-REPAIR,
+C-PREREQ
+761 precondition failures of
+InternW0, 271 of them on CP04,
+which heats the pot before all
+ingredients are in; agents that stop
+with budget left (Section 6.2)
+Checking and repairing outcomes: checking a step before the next
+one and repairing it when it failed. Data: demonstrations that include
+failed steps and their repair. Harness: the outcome of each step
+returned, a check required before moving on, and a retry before
+stopping
+All groups, by
+breakpoint
+299 of 300 G0.5 episodes on CP09
+end before the board is lifted
+Targeted data for end-to-end policies: demonstrations that start
+from the states in which episodes stop and from perturbed states near
+them, instead of new full-length trajectories
+Mind failures: task state across stages. Misremembered information is the most frequent Mind-side
+code of both measured end-to-end policies, with 924 failures of G0.5 and 1,011 of InternW0, and the VLAs
+lose 59–72% of their Mind successes when the scene is randomized (Section 5.2). These failures point to
+maintaining task-relevant identities, order, and progress across operations, and to recognizing an item
+under a new appearance. Closing this gap calls for data that stress what the failures expose, with varied
+scene appearance and longer gaps between the moment information is shown and the moment it is needed.
+Act failures: grasp, contact and timing. Failed or lost grasps account for 1,324 failures of G0.5 and
+fine-control errors for 1,132 of InternW0. On bridge building (CP07), 202 of 300 G0.5 episodes never
+grasp a piece. G0.5’s frequent grasp failures motivate training and control changes that improve contact
+acquisition and object retention. InternW0’s fine-control errors motivate closer examination of action
+resolution and feedback during manipulation. Responses must also fall within the short windows of timed
+tasks such as the light-cued button (DR2) and the cyclic gates (DR3). On DR3, most failures of the two
+end-to-end policies come from the withdrawal after delivery rather than from the gate timing. The arm is
+still inside the gate corridor when the gate closes, or touches the gate while it closes. Demonstrations
+can be weighted toward these segments, with more variation in object pose, contact and timing, instead
+of being spread evenly over whole episodes.
+Composition failures: checking and repairing outcomes. InternW0 has 761 precondition failures, 271
+of them on cooking (CP04), where it switches on the heat before all ingredients are in the pot. Each step is
+executed, but its outcome is not checked before the next one starts. Such failures call for checking whether
+the required physical state has been achieved before proceeding, and repairing a step that failed. The
+scripted demonstrations show only steps that succeed, so a policy never sees a failed step followed by
+its repair. Recovery demonstrations can begin at frequently observed failures, such as a slipped grasp
+or an incomplete placement, and show how to restore progress.
+Research preprint
+27
+mmlab@SIGS
+Breakpoints: targeted data for end-to-end policies. These diagnoses also guide data collection.
+Because an end-to-end policy learns its behavior from demonstrations, the cards show where new data for
+it should be built. On whiteboard restoration (CP09), 299 of 300 G0.5 episodes end before the board is
+lifted off its stand, so the later stages of the task are never reached. Adding full-length demonstrations
+would spend most of their steps on later stages, which the policy almost never reaches. Demonstrations
+constructed around the breakpoint instead, starting from the states in which episodes stop and from
+perturbed states near them, concentrate the training data where the policy fails.
+Agents: the harness. For agents, the same codes also point to the harness. GPT-6 Astra breaks
+down mostly during execution and often stops after its motion planner rejects the requested poses
+(Section 6.2), so finer motion tools and a retry step before stopping come first. Tool feedback should
+help distinguish an ineffective request from a completed operation and support an appropriate retry or
+alternative action. The harness can also return the outcome of each step and require a check before
+the next one, which addresses composition failures. It can also keep a record of earlier failures, so
+that an agent recognizes a breakpoint it has met before.
+7 Limitations and Future Directions
+7.1 Limitations
+Limited causal attribution. Each view is a set of tasks, not an intervention on one system. A Mind
+task still requires routine manipulation, an Act task still requires the robot to perceive its cue, and the
+Mind2Act workflows are longer than the single-view tasks and differ from them in content (Section 5.2).
+A low Mind2Act result therefore cannot yet be separated from the effect of a longer horizon or of an
+early execution error. The diagnosis harness attributes failures within each episode, where rules settle
+22 to 38% of the failures of the three diagnosed systems and the LLM judge, with human review of
+uncertain cases, attributes the rest.
+Paused clock and a fixed agent harness. Simulation pauses during inference, so timed tasks test whether
+an action is chosen and timed correctly in simulation time, not in real time (Section 5.2). The agents
+also receive an inverse-kinematics and motion-planning service and four times the physics budget of the
+end-to-end policies, and they are not trained on the benchmark. All three agents use the same fixed harness,
+so the results do not show what a model would achieve with its own tools, controllers or memory. We
+therefore rank agents and end-to-end policies on separate leaderboards and treat the lead of the strongest
+agent as a result under the paused clock rather than as real-time ability.
+Limited system coverage. The results cover three agents, four VLAs and two WAMs, and they include
+no hybrid or memory-augmented system. This is enough to compare the two families but too few for a
+broader analysis, for example of how model size, training data or architecture shapes the results on Mind,
+Act and Mind2Act. Each agent is also evaluated on only ten episodes per task and level, so its results by
+difficulty level are coarse. Some episodes were run again after infrastructure failures (Appendix B).
+Limited embodiments and settings. All tasks are tabletop manipulation tasks in simulation on one
+bimanual platform with parallel grippers, and each task and level uses one fixed English instruction. Other
+embodiments and settings, such as dexterous hands, mobile manipulation, navigation and humanoid
+robots, are not yet covered. The Random setting changes appearance over a wide range and is not meant
+to model a deployment scene. Each capability category contains between one and six tasks, which is
+too few to support claims about a single category. How the results in simulation relate to results on
+the physical robot has not yet been measured.
+7.2 Future Directions
+We group the planned extensions into four directions that match the panels of Fig. 11, and the leaderboards
+will be updated with new systems, tasks and results as these extensions are added.
+Research preprint
+28
+mmlab@SIGS
+In this report: 30 tasks · 3 views · 180 configurations · event traces · model profile cards
+4 Outcome feedback
+same history and goal
+4
+shown
+6
+withheld
+
+Fix state, budget, remaining goal
+
+Vary feedback after grasp or contact
+Ì Measure valid actions, repairs, success
+	 Coverage and cost
+reruns × instances
+á
+á
+á
+á
+á
+á
+á
+á
+á
+á
+workers
++
+Add longer sequences, new arms
+º
+Repeat same and new instances
+¡
+Report variation, time, resources
+¶ Transfer
+CP02
+CP04
+task in
+other suite
+
+matched step conditions
+
+Pair Mind2Act tasks with others
+
+Specify when to proceed, when done
+8 Compare traces under equal budgets
+è Diagnosis: from cards to better models
+cards are reported here; the loop is planned
+
+1 Evaluate
+30 tasks, 3 levels,
+Clean and Random
+score and success
+è
+2 Sharper cards
+every failed episode
+attributed; process score
+more models, incl. WAM, hybrid
+
+3 What helps
+end-to-end →targeted data
+hybrid →plan–act handoff
+agent →experience library
+å
+4 Improve
+the model developer
+makes the change
+we do not train the model
+º evaluate again on the same instances: did the change help?
+Fig. 11. Planned work beyond this report. Top: Outcome feedback, matched runs with and without it; Coverage
+and cost, broader and repeated evaluation with its cost; Transfer, the analysis carried to other simulators. Bottom:
+Diagnosis, sharper profile cards for more models and the planned loop from a card to a better model that is
+evaluated again. The small drawings are schematic.
+Composition and outcome feedback. The current views show where a system fails, and the next step is
+to show why. On the Mind2Act tasks, an oracle for Mind will supply the task state that would otherwise
+have to be remembered or inferred, and an oracle for Act will let a system call scripted skills for the
+physical operations. The gain from each oracle shows how much that capability contributes, and the gap
+that remains with both oracles shows the cost of composition. Each Mind2Act workflow will also be paired
+with the Mind and Act tasks that share its demands, and progress will be reported for each stage as the share
+of episodes that pass it among those that reach it, which removes the effect of horizon length. Matched pairs
+of runs that start from the same task state and differ only in whether the system receives feedback on a grasp,
+a placement or a contact will then measure how much the outcome of an action guides the next decision.
+Broader and fairer comparison. The leaderboards will cover more systems and settings, so that the
+comparison between the two families no longer rests on one fixed setup. The task suite will also grow
+beyond tabletop bimanual manipulation to dexterous hands, mobile manipulation, navigation and humanoid
+robots, so that the three views can be tested on other embodiments. Human teleoperation and a scripted
+expert acting through each interface will give every task a reachable upper bound, and a version of the
+protocol that adds inference time to the simulation clock will show how much of the agents’ result on
+timed tasks remains in real time. A sandbox setting with its own leaderboard will let an agent bring its
+own harness, which runs in an isolated container with access only to the cameras, the robot state and
+joint-level control. The evaluated systems will extend to memory-augmented end-to-end policies, which
+test whether the weak memory of the VLAs comes from their architecture, and to hybrid systems that
+pair a language-model planner with a learned executor, which test whether combining the memory of
+the best agent with the practiced motions of the VLAs closes part of the gap. Repeated runs of the same
+instances will show how much results vary, together with the time and cost of each evaluation, and the
+difficulty levels of tasks on which the levels currently make no difference will be recalibrated.
+From diagnosis to better models. The diagnosis will move from explaining failures to guiding
+improvement. It will cover every evaluated system rather than three representative ones, and its rules and
+prompts will be released. The current harness reports only the first unrecoverable error of each episode,
+which shows where an episode breaks but not what happens after it. The diagnosis will therefore trace the
+Research preprint
+29
+mmlab@SIGS
+whole course of a failed episode and record multiple breakpoints, including how an early error leads to
+later ones and whether the system notices a mistake and recovers from it. Episodes will also start from
+verified intermediate states of the scripted demonstrations, so that each stage of a workflow is measured
+even when an earlier stage fails. A developer can then change a model in response to its profile card and
+evaluate the new model on the same instances to check whether the change helped.
+Transfer to real robots. The last direction tests whether the findings hold outside simulation. Mind2Act
+World will add real-robot experiments in which its tasks are mapped to physical counterparts, starting with
+Mind2Act tasks such as CP02 and CP04 and extending to a wider set of tasks, so that the Mind, Act and
+Mind2Act results can be verified on physical hardware. The same tasks will also be paired with similar
+tasks in other simulators, which shows how much of the failure analysis carries across platforms.
+8 Conclusion
+We introduce Mind2Act World, a benchmark that measures what a robot retains and decides, how well it
+executes, and whether the two hold together when each physical outcome sets the next decision. Thirty
+tasks in three views, each with three difficulty levels and paired Clean and Random scenes, yield 180
+configurations, all scored from physical outcomes by the same evaluator for agents and end-to-end policies.
+Our evaluation of three agents, four VLAs, and two WAMs over 56,700 episodes yields three main
+findings. First, the strongest agent leads every view without task-specific training, operating under a
+paused clock and with a motion planner, while the four fine-tuned VLAs have similar Overall success
+rates and differ mainly in the tasks they handle best. Second, single-view ability does not carry over to
+Mind2Act tasks: the best system falls from 52.7% on Mind and 39.0% on Act to 12.0% on Mind2Act,
+and no end-to-end policy exceeds 3.6%. Third, the VLAs are limited even before composition, by
+memory that mostly disappears when the scene changes and by the first physical contact of the longer
+workflows. Eight of the thirty tasks are completed by no system.
+Wang Yangming held that knowing and acting are one. In current embodied systems, they remain
+separate abilities, unevenly developed and not yet joined. Mind2Act World makes the distance between
+them measurable. The interventions, references and additional systems described in Section 7 are
+our next steps toward explaining it.
+Acknowledgments
+We thank Chang Wu and Jiaen Huang for the additional manual review in our evaluation loop, and
+Yuankun Lv, Zixu Lin, and Yegang Tang for their work on optimizing the project website. We are
+grateful to Velabot AI, Simple AI, and Baidu AI Cloud for providing computing resources, covering
+API token costs, and optimizing our evaluation infrastructure.
+Research preprint
+30
+mmlab@SIGS

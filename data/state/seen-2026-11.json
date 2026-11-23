@@ -106,5 +106,115 @@
     "angles": [
       "如果你对 agent 的记忆安全理解仍停留在“prompt injection 要过滤”，这篇会把记忆投毒、RAG 污染、多 agent 传染、卸载失败放到同一条跨会话链上，并给出五条可写成谓词的治理要求，省掉你按生命周期重新归位这批文献、"
     ]
+  },
+  "arxiv-2203.02155": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "classic",
+    "title": "Training language models to follow instructions with human feedback",
+    "count": 1,
+    "angles": [
+      "今天做偏好学习仍以这篇的三段式（SFT→reward model→PPO）为参照系，差别主要在奖励信号怎么来。它的工程结论可直接复用：RM 不必与策略同规模；KL 惩罚与预训练梯度混合是两个独立旋钮，分别管 reward hacking 与"
+    ]
+  },
+  "arxiv-2611.26629": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Posterior Matching Distillation",
+    "count": 1,
+    "angles": [
+      "值得读的是机制而非又一个蒸馏损失：在 Gaussian corruption 下，指数倾斜后验 qλ(x|zt) 严格等于把噪声输入平移到 zt+ρtλ 后的原后验，因此每个 tilted mean 只需一次冻结 teacher 前向；作者"
+    ]
+  },
+  "arxiv-2611.26444": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Mind2Act World: A Diagnostic Benchmark for Embodied Mind, Physical Action, and Mind-Action Composition in Robotic Manipulation",
+    "count": 1,
+    "angles": [
+      "值得读的是它把失败来源拆成 Mind、Act 与 Mind2Act 三个视图，并用同一套物理谓词评分；最强 agent 在三个视图上的 52.7%、39.0%、12.0% 形成明显落差，直接暴露“会想也会做但不会闭环”的问题。诊断 harn"
+    ]
+  },
+  "arxiv-2611.25387": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "TuringSpace: Grounding Spatial Intelligence in Action with Interactive CAPTCHAs",
+    "count": 1,
+    "angles": [
+      "它把空间推理从静态选择题改成可验证的屏幕动作闭环：人类通过率为 94.1%，最强模型 GPT-6 Astra 只有 74.1%；在生成的交互轨迹上微调 Qwen3.5-9B，可从 1.6% 提升到 33.1%，并在 VSI-Bench 上获"
+    ]
+  },
+  "arxiv-2611.25980": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Learning What Actions Change: Action Effect Matching for Dynamics-Faithful World Models",
+    "count": 1,
+    "angles": [
+      "机制很具体：给 play policy 的关节目标动作注入时间相关噪声（每 episode 声明幅度 ρ 与固定形状 c，白噪声沿时间高斯平滑宽度 4 步），记录注入的 u_t，再用冻结编码器把中心化后的扰动特征与视频 latent 的手工"
+    ]
+  },
+  "arxiv-2606.16062": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Auditing Reward Hackability in Code RL Training Environments",
+    "count": 1,
+    "angles": [
+      "它把“测试通过”与“行为正确”拆开：用 gold patch 做差分探针，发现 22.4% 的 SWE-bench Verified 任务可被错误补丁通过，强攻击者下升至 57.8%；再把同一检查用于 873 条训练轨迹，19.4% 在 i"
+    ]
+  },
+  "arxiv-2611.24193": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "WM^MLLM: Turning MLLMs into World Models",
+    "count": 1,
+    "angles": [
+      "世界状态不放在任何生成器里，而是写进一张带 revision 的全景图——这是本文最值得看的设计。它换来的是可检验的硬保证而不是观感改善：46 次回看在相同 revision 上像素级复现，112 次局部编辑的盲评完成率从 34.8% 提到"
+    ]
+  },
+  "arxiv-2611.21885": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Language Models Can Rewrite Their Own Weights",
+    "count": 1,
+    "angles": [
+      "核心看点是闭环：模型先读自己的 hidden states 和失败答案，再写一个很小的 tensor 编辑，用同 seed 的配对测试决定提交或撤回；27B 在 490 个未见题上 +6.6 点，且对损坏副本的修复能跨到图像任务。"
+    ]
+  },
+  "arxiv-2611.20455": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Embeddings vs. Grep: Rethinking the Dense Advantage in Code Search",
+    "count": 1,
+    "angles": [
+      "它把「dense 比 BM25 强」拆成可测量的成分：BM25 的分块设置、把改动的测试文件算作相关、查询里有没有代码的稀有标识符。三个干预的效应量都很具体——整文件 BM25 让 curated 池的溢价从 +0.121 降到 +0.03"
+    ]
+  },
+  "arxiv-2611.24636": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "Clover-35B-A3B-Preview Technical Report",
+    "count": 1,
+    "angles": [
+      "关心扩散模型能否进入 agent 循环的读者应重点看 3.2 节：BD-GDN 把已完成前缀压成单个 readout logit，与当前块内全部 token value 在同一个 softmax 里分配概率，并用可学习的 c_h·log(N"
+    ]
+  },
+  "arxiv-2611.21383": {
+    "last_recommended": "2026-11-23T14:56:48.927311+00:00",
+    "arxiv_announce_date": "2026-11-23",
+    "recommendation_type": "frontier",
+    "title": "The Mask Is Not the Object: Volumetric Supervision for 3D Gaussian Segmentation",
+    "count": 1,
+    "angles": [
+      "它把“渲染出的 mask 对”与“选出的 Gaussian 集合是否完整”明确拆开，并给出机制解释：alpha 混合特征的梯度按 w=Transmittance×alpha 分配，被遮挡与低不透明度 Gaussian 几乎收不到监督。VOD"
+    ]
   }
 }

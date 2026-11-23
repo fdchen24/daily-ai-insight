@@ -1,0 +1,1245 @@
+WMMLLM: Turning MLLMs into World Models
+Baiang Li1,3, Enze Xie2,†, Jincheng Yu2, Jin Wang2, Haozhe Liu2, Yitong Li2,
+Juanxi Tian3, Felix Heide1
+1Princeton University
+2NVIDIA
+3OpenEnvision
+†Project Lead
+Abstract
+Video world models keep the world in the context of a generator, so a revisit is synthesized
+again and earlier edits can drift or disappear. We present WMMLLM, the first interactive
+world model built on multimodal large language models (MLLMs), for persistent, editable
+world generation from a single image. WMMLLM keeps the world state outside every gen-
+erator, as a panorama with a revision history, and lets the MLLMs write it: they turn each
+request into operations on this state, select where a local edit is written, and check every
+candidate before it becomes the next state. Image generators only propose views, and video
+only presents them. Users can walk to new places and return, edit objects through text or
+a box, place subjects, and change lighting, weather or season. By construction, a revisit at
+the same revision reproduces the earlier view exactly, a local edit leaves every panorama
+pixel outside its region unchanged, and each request starts from the result of the previous
+one. Against six world model baselines on MBench-A, WMMLLM has the highest mean on
+all four environment-recovery metrics (Epipolar 91.5 versus 0.1 to 74.0) and completes the
+most camera round trips (85.3% versus at most 50.9%). It has the best value in all 15
+CompBench columns against 15 baselines. On 112 local edits judged blind, selecting the
+region to write after generation raises completion from 34.8% to 83.0%. On 258 WBench
+and MBench-A items, all 46 revisits recover their earlier views, and all 97 local edits that
+pass the check leave panorama pixels outside their region unchanged.
+Project page: https://ztmotalee.github.io/wmmllm/
+Contents
+1
+Introduction . . . . . . . . . . . . . . . . . . . .
+2
+2
+Related Work . . . . . . . . . . . . . . . . . . .
+4
+3
+Method
+. . . . . . . . . . . . . . . . . . . . . .
+6
+4
+Experiments
+. . . . . . . . . . . . . . . . . . .
+9
+5
+Limitations
+. . . . . . . . . . . . . . . . . . . .
+14
+6
+Conclusion
+. . . . . . . . . . . . . . . . . . . .
+14
+References . . . . . . . . . . . . . . . . . . . . . .
+15
+A1 Implementation Details . . . . . . . . . . . . . .
+18
+A2 Evaluation Protocols . . . . . . . . . . . . . . .
+19
+A3 Component Studies
+. . . . . . . . . . . . . . .
+20
+A4 Runtime and Limitations . . . . . . . . . . . . .
+21
+A5 Capability Comparison Sources . . . . . . . . .
+22
+A6 Qualitative Examples . . . . . . . . . . . . . . .
+22
+1
+arXiv:2611.24193v1  [cs.CV]  18 Nov 2026
+WMMLLM Technical Report
+WMMLLM
+Open object “Open the orange cargo pod lid…”
+panorama state after the turn
+rendered view
+Relight “Golden sunset over the whole floating dock…”
+panorama state after the turn
+rendered view
+Walk “…through the pressure tunnel to the moon pool…”
+panorama state after the turn
+rendered view
+Move subject “…onto the empty orange rack…”
+panorama state after the turn
+rendered view
+Return after a camera round trip on the same MBench-A world
+start
+Infinite-World
+Yume-1.5
+Matrix-Game 3.0
+Matrix-Game 2.0
+LingBot-World
+WMMLLM
+Figure 1
+Overview of WMMLLM results. WMMLLM opens objects, relights scenes, walks to new places and moves
+subjects; each panel shows one turn: video frames, the panorama state and the rendered view. After one camera
+round trip, five baselines end on different scenes and WMMLLM on the starting view (mean pixel difference between
+the first and last frame, 0–255: 88.4 to 101.3 against 1.1).
+1 Introduction
+A user opens a container, relights the room and turns away. Turning back should show the open container
+under the new light (figure 1).
+A world model keeps a persistent state of its environment that actions
+update [1], so an interactive world model needs three properties: a revisit shows the content saved there
+(return), a local edit changes nothing outside its region (locality), and every request builds on the result of
+the previous one (persistence).
+Where the world lives decides whether these properties hold.
+Video world models generate observations
+from camera moves, actions and event prompts, and streaming variants extend them to long, interactive
+rollouts [2–5]. Their world lives in the context of the generator, so a revisit synthesizes the view again and
+earlier edits can drift or disappear; after one camera round trip, five baselines, all video world models, end
+on a different scene (figure 1, bottom row). 3D world models build an explicit scene, such as a mesh or a
+set of Gaussian surfels, that a renderer displays from new viewpoints and that supports regional edits [6–8].
+Among the systems with an explicit world state in table 1, none documents all four of an MLLM planner,
+object edits, exact return and checks of an edit before it enters the state. World models for control, such
+as vision-language-action models [9, 10] and joint-embedding predictive architectures [11], output actions or
+embeddings and no editable images.
+Multimodal large language models (MLLMs) and image generators such as Nano Banana and GPT-Image [12–
+14] understand a scene, follow detailed instructions and accept both text and image inputs. We investigate
+whether these models can be turned into an interactive world model that users keep editing and exploring.
+WMMLLM turns MLLMs into such a world model by keeping the world state outside every generator and
+letting the MLLMs write it (figure 2). For each scene revision, the state stores a panorama and patches at
+native resolution; it also stores scene relations and facts observed in images. The MLLM GPT-6.1-sol [15]
+2
+WMMLLM Technical Report
+WMMLLM
+(a)
+One turn
+“…tumbling forward… The
+camera pans to the right.”
+ot
+ot
+ut
+t
+MLLM planner
+GPT-6.1-sol
+d1
+d2
+d3
+rotate
+revisit
+local
+global
+walk
+C e
+t
+Ct+ 1
+Sol-H3
+1
+2
+GPT-Image
+3
+MLLM
+4
+5
+ECC̄
+It
+⊙
+βt
++
+It
+⊙
+1−βt
+=
+Jt
+6
+0
+12
+✓  ✓✓✓✓
+7
+commit
+(b)
+Routes on the state t →t+1
+t+1
+
+r
+persistence
+
+
+
+rotate
+(t,Ct+1)
+revisit
+return
+va
+vb
+=
+✓
+Δ=0
+hash
+local
+locality
+At
+global
+GPT-Image
+t+1 =∅
+walk
+GPT-Image
+va
+vb
+t+1
+Figure 2 WMMLLM Overview. Pretrained models read the explicit state, and only commits that pass the checks write
+it. (a) One MBench-A turn with two local subject actions and a 45◦pan; the wedges show the editing camera (red)
+and the camera after the pan (blue). In steps 1–7, the MLLM marks the old and new footprints on the GPT-Image
+proposal, which are rasterized into Ut and dilated into Mt; the proposal is registered on the stable background St
+and blended with weight βt; and the check finds no panorama change outside At. We recompute steps 4–6 from the
+records of this turn. (b) The commit writes the state Wt+1 (scene graph, revision history, and the base, composite
+and patches of this turn), and each route changes a different part of it; diamonds mark the parts that give return,
+locality and persistence. Rotation, revisit, global change and walking come from turns 3–6 of the session in figure 3.
+place A · revision 0
+place A · revision 1
+place B · revision 1
+place A · revision 1
+place A · revision 1
+place A · revision 2
+1
+rotate
+“Turn to the clock face”
+3
+global
+“Golden evening sunlight”
+4
+walk
+“Walk to the bell”
+6
+revisit
+“Walk back”
+7
+rotate
+“Turn to the drum”
+8
+local
+“Open the drum cover”
+view
+panorama
+  identical pixels  
+Figure 3 One session in one world. The state carries every change: the light of turn 3 is still there after the walk
+to the bell and back, and turn 8 opens the drum under it. Turn 6 reproduces the view of turn 3 pixel for pixel, and
+turn 8 changes only the 2.1% of the panorama pixels in the red box. Yellow outlines mark each camera; blue routes
+call no image generator. Turns 2 and 5 are not shown: turn 2 fails and keeps the state, and turn 5 tilts the camera.
+3
+WMMLLM Technical Report
+WMMLLM
+maps each request and optional box to operations on this state, selects where a local edit is written, and
+checks every candidate before it becomes the next state. Rotations and revisits render the state and call
+no image generator; GPT-Image proposes candidate views, and the video generator Sol-H3 [16] presents
+transitions without writing the state. Return, locality and persistence therefore follow from how each turn
+writes the state (section 3.7), whereas a video world model has to reproduce them from its context. In one
+session of eight requests, a room keeps its new light after the user walks away and back, and a later edit
+builds on it (figure 3).
+A local edit is written inside a region, its support, and WMMLLM selects this support after generation. An
+image generator can move a subject or change its silhouette beyond a region predicted in advance, so such a
+region can cut off part of the change (figure 4). An MLLM therefore compares the source and the proposal
+and selects the old and new footprints and necessary effects.
+WMMLLM achieves state-of-the-art scene consistency and camera return and the best CompBench editing
+scores. Against six world model baselines under the same MBench evaluator, it has the highest mean on
+all four environment-recovery metrics, with Epipolar 91.5 versus 0.1 to 74.0. It completes 85.3% of camera
+round trips versus 0.4% to 50.9% (table 3). On CompBench, it has the best value in all 15 metric columns
+against 15 baselines (table 4).
+Contributions.
+• The first interactive world model built on MLLMs. WMMLLM composes navigation, object editing, envi-
+ronmental change and subject placement in one world built from a single image. Its state lives outside
+every generator, and view reuse, compositing inside the support and lookup by revision give return,
+locality and persistence by construction (table 2, Propositions 1–3): all 46 revisits and all 97 local edits
+that pass the check satisfy them exactly, and over 21 sequential requests in one world the state keeps
+every earlier change (section 4.4).
+• Local edits in the panorama state. An MLLM compares the source with the proposal to select the old
+and new footprints of an object and their effects. On 112 local edits, completion rises from 34.8% with
+support predicted before generation to 83.0% with support selected after it (figure 7).
+• State-of-the-art consistency and editing. WMMLLM leads six baselines on MBench-A and 15 baselines on
+CompBench (section 4).
+2 Related Work
+2.1 World Representation and Memory
+Video world models maintain interaction by conditioning new frames on actions and visual context. Ge-
+nie 3 supports navigation and promptable events [2], and LongLive updates its context cache when the
+prompt changes [5]. Camera-aware context improves spatial continuity through memory retrieval in Matrix-
+Game 3.0 [3], RGB-D generation in HunyuanWorld-Voyager [17], and reframing of historical observations in
+HY-WorldPlay [4]. WorldDirector adds planning of object and camera trajectories by a language model and
+preserves the appearance of dynamic objects that leave and return [18]. Genie 4 uses Gemini models to plan
+and verify steps on the frames it generates [19].
+Memory extends the visual context available to these generators. WorldMem retrieves frames by pose and
+time [20], Context-as-Memory by field-of-view overlap [21], and VMem through a surfel index [22]. Alaya-
+EVOKE maintains a geometry bank indexed by camera [23], while ActWorld stores event and object tokens
+with visual anchors in a memory of constant capacity [24]. Other approaches use spatial or planar memories
+or compress visual context [25–28]. Persistent Computational State saves and restores the generator’s runtime
+state [29]. These memories condition a new synthesis on return.
+Explicit 3D worlds support rendering and editing through scene representations. HunyuanWorld 1.0 recon-
+structs a mesh from a panoramic proxy [6], and WonderWorld connects scenes through Gaussian surfels [7].
+Marble edits and expands persistent navigable worlds by region, including weather, time of day and sea-
+son [8].
+HOLODECK 2.0 and PERSIST update assets or latent 3D state [30, 31].
+State updates from
+language also appear in WorldWeave, whose video synthesis reads an explicit 3D world [32], and StateFlow,
+which translates intent into transitions of persistent 3D state [33]. WorldAgents adds new views from a
+generator to a reconstruction after checks by a vision-language model (VLM) in image and reconstruction
+4
+WMMLLM Technical Report
+WMMLLM
+Table 1 Capability comparison. WMMLLM combines an MLLM planner, object edits, exact return and edit checks
+in one persistent world state. Rows cover video world models with memory or agentic control, an agent that edits
+and animates a target image, and systems with an explicit world state; solid, half and empty circles mark capabilities
+that the sources document, document in part or do not document (appendix A5).
+System
+World state
+MLLM
+planner
+Object
+edits
+Exact
+return
+Edit
+checks
+LingBot-World v2 [42]
+Video context, key/value cache
+WorldDirector [18]
+Video context, memory of dynamic
+objects
+Alaya-EVOKE [23]
+Geometry bank indexed by camera
+ActWorld [24]
+Event and object tokens, visual anchors
+LongLive [5]
+Key/value recache, frames in memory
+WorldGPT [35]
+Endpoint image after editing
+Marble [8]
+Persistent splats or mesh
+WorldWeave [32]
+Metric terrain, asset instances,
+interfaces
+StateFlow [33]
+Object geometry, poses, attributes
+WorldAgents [34]
+Views with poses after verification, 3D
+splats
+WMMLLM
+Panorama, patches, scene graph, facts
+space [34]. WMMLLM uses a panorama and patches at native resolution as its editable visual state. Each
+physical change advances the revision, and a revisit selects a view of the current revision.
+2.2 MLLM Planning and Feedback
+Visual agents connect language planning, image generation and feedback. Yang et al.’s WorldGPT expands
+a request, edits a target image and animates the initial and final frames [35].
+GenArtist plans through
+tool trees [36], and EditAgent routes steps to general and task-specific editors and then judges parallel
+candidates [37]. Agent Banana retains the editing paths that pass its checks, rolls back image history and
+edits layers in isolation [38].
+IMAGAgent corrects multi-turn edits through feedback from several VLM
+experts [39]. Ge et al.’s WorldGPT learns multimodal state transitions [40], and World Agent tests whether
+language models update an explicit world state from events in an ongoing narrative [41].
+Agentic video systems connect this feedback to worlds that change over time. LingBot-World v2 uses a
+vision-language director for semantic rules, events and environmental changes, with SAM tracking objects
+for interaction [42]. Regions that leave its context window tend to be regenerated on return. AgiWorld
+updates a world state from video chunks stored with geometry in spatial memory [43]. ATAS adds clips to
+scene and event memories after review and state checks [44]. WMMLLM gives MLLMs control over edits and
+navigation in a panorama state, and its transition videos read the endpoints of each turn.
+2.3 Image Editing and Consistency
+Image editors such as Nano Banana and GPT-Image follow complex instructions [12–14]. Spherical editors
+extend this capability to panoramas. SE360 and World-Shaper edit spherical imagery [45, 46], FocusDiff edits
+regions of indoor panoramas [47], and Mover360 moves, inserts and removes objects [48]. ZONE extracts the
+region that an edit changes as a layer and blends it into the source image [49]. WMMLLM selects the support
+from the source and the proposal to cover the old and new footprints of an object and their effects. It installs
+this region in a world that later operations navigate, revisit and edit again.
+CompBench measures local, multi-object and implicit-reasoning edits [50]. Scene-memory benchmarks mea-
+sure recovery after the camera leaves and returns [51, 52], while WRBench tests whether events evolve outside
+the view [53]. WorldFoundry provides infrastructure for inference and evaluation across video, 3D, 4D and
+interactive world systems [1]. We evaluate both image editing and scene recovery. Table 1 compares world
+representations, MLLM planning, object edits, exact return and edit checks.
+5
+WMMLLM Technical Report
+WMMLLM
+3 Method
+WMMLLM stores each scene as a panorama with local patches and a revision history. A deterministic ren-
+derer produces its views (figure 2). GPT-6.1-sol plans operations, selects the support of local edits, checks
+candidates and records observations. GPT-Image proposes endpoint images, and Sol-H3 generates transition
+videos. The executor applies each operation through one of five routes, and each route changes a fixed part
+of the state (table 2). The state after each turn becomes the source of the next turn, and these update rules
+give return, locality and persistence.
+3.1 Problem Formulation
+A session is a sequence of requests u1, . . . , uT , each a free-form instruction with an optional box on the current
+view. A world model keeps a state Wt and a camera Ct, shows the view ot, and answers each request with a
+new state, camera and view and a transition video,
+(Wt+1, Ct+1, ot+1) = F(Wt, Ct, ut),
+Vt = Present(Wt, Ct, Wt+1, Ct+1, dt),
+(1)
+where dt is the sequence of operations from the planner. An interactive world requires return, locality and
+persistence (section 1). In a video world model, one generator computes both F and Present, so these
+properties depend on what it reproduces from its context.
+3.2 World State
+The world state is
+Wt = (Gt, vt, {Pv,r}, Ot, Mt),
+(2)
+where Gt is a graph of scenes and views with parent and portal relations, vt is the active scene, Pv,r is the
+visual state of scene v at physical revision r, Ot holds object records with selections and affordances, and
+Mt holds facts observed in images. A visual state Pv,r = (B, E, Q) stores two equirectangular images of
+4096 × 2048 pixels around one camera center (a rendering base B and a panorama E into which local edits
+are composited) and a list Q = (Q1, . . . , QK) of patches at native resolution in compositing order, each with
+a camera and an alpha map. The renderer R maps each pixel of camera C to its ray d and composites
+c0 = B
+ π(d)
+
+,
+ck = αk(d) Qk(d) +
+ 1 −αk(d)
+
+ck−1,
+(3)
+returning cK rounded to 8-bit color. Here π(d) = ( 1
+2 + λ
+2π, 1
+2 −φ
+π ) maps the longitude λ and latitude φ of d to
+panorama coordinates, sampled bilinearly, and Qk(d) and αk(d) are bilinear samples of the color and alpha of
+patch k, with αk = 0 outside it. The view is ot = R(Pvt,rt, Ct) at the current revision rt; R is deterministic
+and calls no model. A rotation changes Ct and keeps r; a physical change advances r, so turning back shows
+the new revision.
+Initialization outpaints the input image, registers the expansion and completes the panorama. Keeping the
+input image as a native patch reconstructs the initial view exactly in all 246 benchmark items that obtain
+a panorama (appendix A2.2). Appendix A1.1 gives the projection and the initialization steps. The example
+worlds of figures 1 and 3 start instead from a panorama that GPT-Image generates from text.
+3.3 Turn Transition
+Each visual request follows algorithm 1.
+A user describes a target in text or draws a box on the view;
+WMMLLM maps the box to a perspective crop and a spherical mask that wraps across the panorama border.
+The operation planner reads the request, the current view, the panorama context, the scene relations, facts
+from memory and the optional selection, and returns operations in order
+dt = (dt,1, . . . , dt,nt),
+dt,i = (zt,i, at,i, Ωt,i, qt,i),
+(4)
+where zt,i is the route, at,i the target, Ωt,i the change that the operation may make and qt,i the executor
+arguments. Figure 2b shows how each route changes the state, and table 2 gives the part of the visual state
+each one changes, the generator it calls and its check. Subject actions, including placement, follow the local
+or global route according to their scope. The executor composes the operations in order into one candidate
+endpoint. For example, it can apply a local edit at a fixed camera while the viewing camera pans. When a
+turn commits, it records the new state, camera, view and facts.
+6
+WMMLLM Technical Report
+WMMLLM
+Algorithm 1
+One visual turn.
+A candidate writes the state only when no criterion fails and Readyt holds, and
+presentation only reads the state.
+Require: state Wt, camera Ct, view ot, request ut
+1: dt ←Plan(ut, ot, Wt, Ct)
+▷ordered operations
+2: if dt changes only the camera then
+3:
+(c
+Wt, ˆCt, ˆot) ←Render(Wt, Ct, dt)
+▷Eq. (3)
+4:
+s ←Check(ot, ˆot, ut)
+▷MLLM
+5: else
+6:
+for attempt = 1, 2 do
+7:
+p ←EndpointPlan(ut, ot, Wt, dt, feedback)
+8:
+(c
+Wt, ˆCt, ˆot) ←Execute(Wt, Ct, dt, p)
+▷Eq. (7)
+9:
+s ←Check(ot, ˆot, ut)
+▷MLLM
+10:
+if ∀k: sk̸ = Fail then break
+11:
+feedback ←failure record and proposal that failed
+12:
+end for
+13: end if
+14: ft ←Observe(ot, ˆot) if no sk = Fail
+▷MLLM
+15: if ∀k: sk̸ = Fail and Readyt then
+16:
+(Wt+1, Ct+1) ←Commit(c
+Wt, ˆCt, ft)
+17: else
+18:
+hold (Wt, Ct) and record the request, or stop
+19: end if
+20: Vt ←Present(Wt, Ct, Wt+1, Ct+1, dt)
+▷reads only
+Table 2 Transition routes. Camera operations reuse the current visual revision. Local edits append a patch, global
+changes replace the panorama, and navigation starts a new scene. The right column lists the checks that each route
+requires.
+Route
+Visual state: before → after
+Image generator
+Required checks
+Rotate
+r
+r
+same revision; new camera
+Image: none
+MLLM
+Revisit
+r
+r
+earlier view; same revision
+Image: none
+stored state, view
+and camera match
+Local edit
+r
+r'
+At
+new native patch in At; keep B and prior Q
+GPT-Image
+crop
+MLLM
+outside At invariant
+Global
+change
+r
+r'
+new B and E; retire prior patches
+GPT-Image
+panorama
+MLLM
+Navigation
+v
+v'
+destination panorama; no patches
+GPT-Image
+panorama
+MLLM
+projection, movement,
+layout, entities
+B, E: panoramas     Q: native patches     r: revision     v: scene
+changed component
+7
+WMMLLM Technical Report
+WMMLLM
+Skateboarder
+Source
+Before generation
+WMMLLM
+Bowler
+Source
+Before generation
+WMMLLM
+Figure 4 Support selection after generation. The support that the MLLM selects after generation keeps the change
+in the request: the region predicted before generation cuts off the skateboarder and the bowler, and the support
+selected from the same proposal retains them.
+An MLLM verifier compares the source view and the candidate (c
+Wt, ˆCt, ˆot) against the request on four
+criteria: the source description, the action, the change in the request and scene identity. For navigation it
+also checks projection, movement, layout and the continuity of entities. Each applicable criterion receives
+sk ∈{Pass, Uncertain, Fail}, and an observer records subject, property and value facts ft from both
+images. The state is updated by
+(Wt+1, Ct+1) =
+(
+Commit(c
+Wt, ˆCt, ft)
+if ∀k: sk̸ = Fail and Readyt,
+(Wt, Ct)
+otherwise,
+(5)
+where Readyt requires a valid observation and the geometric and installation checks, such as equation (7).
+An Uncertain criterion does not block a commit, and the commit keeps the Uncertain label. A candidate
+that fails is retried once on the same route, and the endpoint planner receives the failure record as feedback.
+A second failure keeps the current state and camera and records the request (a failure hold), or ends the
+session. Each endpoint uses at most two image proposals and at most one Sol-H3 clip. Commit installs the
+panorama revision, camera, endpoint and facts as the source for the next request, so proposals that fail and
+video frames never enter memory.
+3.4 Rotation and Return
+Rotation renders the current revision at a new orientation and calls no image or video generator. A revisit
+reuses a view in memory only when its physical revision, view identity, camera and rendering profile match.
+The executor checks that the hashes of the panorama state and arrival view agree (figure 2b), and a return
+from another scene is also compared with a render at the target profile.
+3.5 Editing and Navigation
+A local edit or placement generates an endpoint crop ˆIt at the editing view It. The endpoint planner predicts
+a box and polygons inside it, but the generator can move an object, change its silhouette or add a shadow
+outside them (figure 4). WMMLLM therefore selects the support from the proposal: a GPT-6.1-sol selector
+compares It with ˆIt and returns polygons Πt,1, . . . , Πt,L that cover the old and new footprints and necessary
+effects such as shadows and contact.
+Let ¯It be the proposal after bounded rigid registration to the background of It. If registration fails its check,
+¯It = ˆIt. We blend
+Mt = δ16
+  S
+j Πt,j
+
+,
+Jt = βt ⊙¯It + (1 −βt) ⊙It,
+(6)
+where δ16 rasterizes the polygons and dilates them by 16 pixels with a square filter, and the weight βt rises
+from 0 at the boundary of the mask Mt to 1 at 12 pixels inside it, so Jt = It outside Mt. An empty or invalid
+selection fails the operation without falling back to the planner’s box, and an edit region that covers the
+whole view skips the selector. The compositor projects Mt through the editing camera into the panorama as
+an alpha map At and updates the panorama as
+Et+1 = At ⊙eEt + (1 −At) ⊙Et,
+Et+1[At=0] = Et[At=0],
+(7)
+where eEt is the crop Jt after reprojection. The executor aborts the operation if any pixel with At = 0 changes
+(figure 2a, step 7), and otherwise appends Jt with alpha Mt as a new native patch, which equation (3)
+composites over the base B.
+8
+WMMLLM Technical Report
+WMMLLM
+A global change such as lighting, weather or season replaces both B and E and retires earlier patches, which
+would otherwise bring back the old appearance. Navigation to a new place generates a destination panorama
+for a new scene node.
+3.6 Video Presentation
+Presentation never writes the state. Rotations and revisits around the same center render the panorama along
+a camera path between the two views with equation (3). Other transitions, including returns from another
+scene, use Sol-H3 conditioned on the source and endpoint views and the request caption. SoL-Refiner [54]
+can optionally super-resolve the video. A failure hold repeats the current view. A view at rest can also play
+as a loop: Sol-H3 takes the same view as its first and last frame, with a caption that names motion in place.
+A loop writes nothing to the state, and no benchmark uses one.
+3.7 Properties
+Three properties follow from table 2 and equation (5). A rotation or revisit reads its endpoint from the state,
+a local edit writes only inside its support, and each request starts from the preceding endpoint.
+Proposition 1 (Return). A revisit that completes with the same physical revision, view identity, camera and
+rendering profile reproduces the earlier image pixel for pixel. Proof. The revisit reuses the image in the state
+after checking that the hashes of the panorama state and arrival view agree; a revisit from another scene is
+also compared with a deterministic render of the same state, camera and profile.
+Proposition 2 (Locality). A local update keeps every panorama pixel with At = 0. With B, the earlier patches,
+the camera and the profile fixed, it also keeps every pixel of the render whose ray has zero alpha in the new
+patch. Proof. Equation (7) copies Et where At = 0, including its 8-bit values, and the executor aborts on
+any violation. For a ray with zero alpha, the renderer skips the new patch, so cK+1 = cK.
+Proposition 3 (Persistence).
+Each request starts from the endpoint of the preceding request, and a view
+lookup never installs a different physical revision. Proof. Retrieval and Commit require the source to equal
+the preceding endpoint, and the executor advances the source and visual state after each request. A hold
+keeps the visual state and camera, presentation never replaces the visual state, and the lookup rejects views
+of another revision.
+4 Experiments
+We use two public benchmarks, ablations on fixed image proposals and session studies. MBench-A measures
+environment memory [51]; 224 of our 227 environment items have a video from all six baselines, public world
+models conditioned on actions. CompBench [50] measures image editing on 2,709 GPT-Image proposals
+across local, multi-object and implicit-reasoning edits. We score all methods with the same public MBench
+evaluator, which preserves the ranking of the six baselines on 30 items per baseline. The benchmark run
+contains 158 WBench [55] navigation items and 100 MBench-A causal items, with 817 segments. Two paired
+studies with sessions of eight turns examine observation memory, the planner, the source of the next state
+and the endpoint check. A blind Claude Opus 5.5 judge assesses camera motion, edits and session outcomes
+from frame samples. Appendices A2 and A3.3 give the protocols.
+4.1 MBench-A Memory and Camera Return
+We first test scene recovery after the camera leaves and returns (figure 5, top row): WMMLLM has the
+highest mean on all four environment-recovery metrics against the six baselines (table 3). Its Epipolar mean
+is 91.5, 95% confidence interval [89.6, 93.1], against 0.1 to 74.0, and on all four metrics its interval does not
+overlap that of any baseline. This result comes from reusing the state exactly: of the 454 segments in the
+227 environment items, 88.3% are geometric (215 rotations, 186 scene restores). On the 191 items whose
+WMMLLM segments contain no hold or terminal failure, Epipolar is still 93.9 versus at most 74.5, so holds
+do not explain the lead.
+WMMLLM also completes the most camera round trips. A round trip is complete when the camera turns at
+least 15◦in the direction of the request during the first half and returns within 10◦of the start. WMMLLM
+completes 191 of the 224 items (85.3%) and the six baselines 0.4% to 50.9% (table 3). Figure 6a shows every
+item: WMMLLM turns a median of 43◦and returns within 0.1◦on 189 of the 224 items, while the baselines
+turn a median of 82◦to 173◦and complete 1 to 114 items. With outbound thresholds of 10◦to 20◦and
+9
+WMMLLM Technical Report
+WMMLLM
+return thresholds of 5◦to 15◦, WMMLLM completes the same 191 items and the best baseline at most 158
+(appendix A2.1). On 40 of these items, the judge labels from frame samples whether the camera goes out
+and back and whether the result is usable; joint success requires both and a final view that shows the starting
+content. WMMLLM reaches joint success on 31 of 40 videos and the baselines on 0 to 13 (table 3b).
+A camera that returns does not guarantee a scene that returns. In the top row of figure 5, Infinite-World
+and Yume-1.5 bring the camera back to about 8.2◦and 4.9◦from the start and still show a different counter.
+In the middle row, an event occurs during the round trip: Yume-1.5 and LingBot-World end on a different
+scene, and WMMLLM on its starting scene with the pieces of the target. Between outbound and return frames
+matched by pose, the median LPIPS is 0.037 for WMMLLM and 0.32 to 0.65 for the six baselines (figure 6b).
+Over 36 directions, the judge rates 87.6% [85.7, 89.4] of the views of WMMLLM usable, and most defects lie
+30◦to 60◦from the input view, around its border (figure 6c).
+Video world models
+Image editor
+Return
+Start
+Infinite-World
+8.2° Yume-1.5
+4.9° WMMLLM
+0.0°
+Event
+First frame
+“the target splits apart” Yume-1.5
+LingBot-World
+WMMLLM
+Locality
+Source
+Direct editing
+54% Threshold paste
+25% WMMLLM
+0%
+Figure 5 Where video world models and image editors fail. WMMLLM returns to its starting view, keeps the pieces
+of the target after the camera round trip and confines local edits to their support. Angles give the distance of the final
+camera from its start, and percentages the fraction of pixels outside this support with a maximum channel change
+above 16/255; insets magnify the region in the box.
+0.01
+1
+100
+WMMLLM
+191/224
+HY-WorldPlay
+114/224
+Infinite-World
+56/224
+0
+90
+180
+Yume-1.5
+46/224
+0
+90
+180
+0.01
+1
+100
+Matrix-Game 3.0
+2/224
+90
+180
+Matrix-Game 2.0
+4/224
+90
+180
+LingBot-World
+1/224
+complete
+one video
+wrong first
+direction
+0.0
+0.5
+1.0
+LPIPS of frame pairs matched by pose
+WMMLLM
+HY-WorldPlay
+Infinite-World
+Matrix-Game 3.0
+Yume-1.5
+LingBot-World
+Matrix-Game 2.0
+94
+97
+97
+92
+81
+77
+77
+76
+81
+88
+96
+95
+89
+89
+93
+89
+74
+77
+98
+80
+79
+91
+98
+89
+87
+92
+95
+91
+76
+80 82 86
+88
+96
+97
+88
+viewer
+behind (yaw 180 ∘)
+rings from the center: pitch −30 ∘, 0 ∘, +30 ∘
+largest turn away from the start [ ∘]
+return error [ ∘]
+(a) Camera round trips, 224 items
+(b) Outbound and return frames
+input view (yaw 0 ∘)
+(c) Usable views [%], 36 directions
+Figure 6
+Return and consistency across models.
+WMMLLM completes the most round trips and changes least
+between frames matched by pose. (a) Camera round trips on the 224 common items, one point per video; the shaded
+region counts as complete (values below 0.01◦drawn at 0.01◦). (b) LPIPS between outbound and return frames
+matched by pose, per item (bars: quartiles and median). (c) Share of views of 219 WMMLLM worlds that a blind
+model judge rates usable.
+10
+WMMLLM Technical Report
+WMMLLM
+Table 3 MBench-A results. On MBench-A, WMMLLM leads all six baselines in environment recovery, pose return,
+usability and joint success; one baseline has higher camera motion. (a) Environment-recovery means on 224 common
+items with one evaluator version; (b) pose return on those items and blind frame judgments on 40 of them. Brackets
+give 95% bootstrap CIs: over valid items for (a) and pose return, and over the 40 items, stratified by condition, for
+the frame judgments.
+(a) Environment recovery with one evaluator version (224 common items)
+Method
+Epipolar ↑
+Reprojection ↑
+Lighting ↑
+Style ↑
+Baselines: public models conditioned on actions
+HY-WorldPlay [4]
+74.0 [71.5, 76.3]
+75.6 [73.1, 78.0]
+98.6 [98.4, 98.7]
+97.9 [97.8, 98.1]
+Infinite-World [56]
+59.5 [56.5, 62.3]
+60.9 [58.1, 63.6]
+94.8 [94.5, 95.1]
+96.2 [96.0, 96.4]
+Matrix-Game 3.0 [3]
+47.5 [43.8, 51.1]
+53.8 [50.7, 56.9]
+94.4 [93.9, 94.8]
+93.5 [93.1, 93.9]
+Yume-1.5 [57]
+18.9 [15.7, 22.3]
+21.3 [18.0, 24.7]
+90.5 [90.1, 91.0]
+91.5 [90.9, 92.0]
+Matrix-Game 2.0 [58]
+0.7 [0.0, 1.6]
+1.3 [0.3, 2.5]
+85.6 [84.7, 86.5]
+74.1 [72.4, 75.8]
+LingBot-World [59]
+0.1 [0.0, 0.2]
+2.1 [1.2, 3.2]
+89.6 [89.0, 90.2]
+85.1 [84.4, 85.7]
+WMMLLM
+91.5 [89.6, 93.1]
+92.2 [90.3, 93.8]
+99.4 [99.1, 99.6]
+99.3 [99.0, 99.5]
+(b) Camera behavior and frame quality [%]
+Method
+Pose return ↑
+Camera motion ↑
+Usable ↑
+Joint success ↑
+Baselines: public models conditioned on actions
+HY-WorldPlay
+50.9 [44.2, 57.6]
+92.5 [82.5, 100.0]
+47.5 [32.5, 62.5]
+32.5 [17.5, 47.5]
+Infinite-World
+25.0 [19.2, 30.8]
+42.5 [27.5, 57.5]
+37.5 [22.5, 52.5]
+2.5 [0.0, 7.5]
+Matrix-Game 3.0
+0.9 [0.0, 2.2]
+27.5 [17.5, 37.5]
+17.5 [7.5, 27.5]
+2.5 [0.0, 7.5]
+Yume-1.5
+20.5 [15.6, 25.9]
+15.0 [5.0, 27.5]
+15.0 [5.0, 27.5]
+0.0 [0.0, 0.0]
+Matrix-Game 2.0
+1.8 [0.4, 3.6]
+0.0 [0.0, 0.0]
+0.0 [0.0, 0.0]
+0.0 [0.0, 0.0]
+LingBot-World
+0.4 [0.0, 1.3]
+0.0 [0.0, 0.0]
+0.0 [0.0, 0.0]
+0.0 [0.0, 0.0]
+WMMLLM
+85.3 [80.4, 89.7]
+82.5 [70.0, 92.5]
+80.0 [67.5, 92.5]
+77.5 [65.0, 90.0]
+4.2 Image Editing
+WMMLLM has the best value in all 15 CompBench columns, five metrics on three editing tasks, against 15
+baselines in 16 configurations (table 4). The baseline scores are those that CompBench reports, with HIVE
+in two configurations. LC-T is the local CLIP text score ×100, and LC-I is the foreground CLIP similarity
+to the target. PSNR, SSIM and LPIPS measure background preservation. The LC-I of WMMLLM is 0.845,
+0.911 and 0.880 on the local, multi-object and implicit-reasoning groups, against 0.838, 0.883 and 0.874
+for BAGEL, the strongest baseline on this measure. Because edits stay inside their support, background
+preservation shows the largest margins: PSNR is 30.440, 29.104 and 32.868 against at most 27.692, 26.849
+and 28.891 for the baselines. Table 4 lists five of the baselines, including the strongest one of every column,
+and direct editing, which keeps the whole GPT-Image proposal.
+4.3 Ablations
+Applying a proposal. Table 5 keeps the 2,709 CompBench proposals fixed and changes only how a proposal
+enters the image: direct editing applies the whole proposal, threshold paste copies every pixel whose color
+change exceeds a threshold, and WMMLLM composites inside its support. In the bottom row of figure 5, the
+whole GPT-Image proposal also adds a rock that the request does not ask for; direct editing and threshold
+paste change 54% and 25% of the pixels outside the support by more than 16 intensity levels, and WMMLLM
+none. WMMLLM has the best LC-I, SSIM and LPIPS in all three groups, and the 95% confidence intervals
+of its LC-I differences against both alternatives exclude zero (appendix A3.1); threshold paste has the higher
+multi-object LC-T. In a blind comparison on 150 of these proposals, WMMLLM completes the request without
+any other change in 52.6% of the cases, against 30.0% for direct editing and 22.0% for threshold paste (groups
+and subtasks weighted equally); direct editing completes the most instructions (figure 7).
+Selecting the support after generation. On the benchmark run, we compare, for each local edit, the polygons
+that the endpoint planner predicts before generation with those that the selector returns after it. With the
+same registration, dilation and feathering on the first proposals of the 112 local edits, completion in blind
+11
+WMMLLM Technical Report
+WMMLLM
+Table 4 CompBench results. WMMLLM has the best value in all 15 metric columns against 15 baselines. The rows
+include the strongest baseline of every column and direct editing, which keeps the whole GPT-Image proposal. Each
+panel reports one editing task.
+Method
+LC-T ↑
+LC-I ↑
+PSNR ↑
+SSIM ↑
+LPIPS ↓
+Local editing (n = 2,465)
+GoT [60]
+20.268
+0.807
+24.675
+0.889
+0.067
+Step1X-Edit [61]
+20.495
+0.817
+23.372
+0.882
+0.078
+BAGEL [62]
+21.059
+0.838
+27.692
+0.935
+0.045
+FLUX.1 Kontext [63]
+21.328
+0.821
+25.613
+0.941
+0.050
+Qwen-Image-Edit [64]
+21.522
+0.828
+24.968
+0.892
+0.072
+Direct editing
+21.729
+0.832
+26.760
+0.898
+0.064
+WMMLLM
+21.910
+0.845
+30.440
+0.964
+0.025
+Multi-object editing (n = 144)
+GoT [60]
+20.225
+0.827
+22.486
+0.842
+0.108
+Step1X-Edit [61]
+20.459
+0.861
+23.782
+0.886
+0.078
+BAGEL [62]
+20.856
+0.883
+26.849
+0.932
+0.051
+FLUX.1 Kontext [63]
+21.020
+0.868
+26.278
+0.952
+0.048
+Qwen-Image-Edit [64]
+20.722
+0.864
+23.492
+0.826
+0.103
+Direct editing
+20.359
+0.871
+26.144
+0.888
+0.073
+WMMLLM
+21.070
+0.911
+29.104
+0.956
+0.032
+Implicit reasoning (n = 100)
+GoT [60]
+19.246
+0.821
+24.889
+0.860
+0.088
+Step1X-Edit [61]
+19.175
+0.847
+23.408
+0.869
+0.083
+BAGEL [62]
+19.719
+0.874
+28.891
+0.919
+0.052
+FLUX.1 Kontext [63]
+19.596
+0.867
+25.401
+0.932
+0.061
+Qwen-Image-Edit [64]
+20.046
+0.859
+22.815
+0.775
+0.124
+Direct editing
+20.193
+0.863
+27.624
+0.893
+0.063
+WMMLLM
+20.241
+0.880
+32.868
+0.970
+0.019
+Table 5 Compositing the same proposals. Compositing inside the support gives the best LC-I, SSIM and LPIPS in
+every group. All three rules use the same 2,709 GPT-Image proposals and evaluator.
+Composition
+PSNR ↑
+SSIM ↑
+LPIPS ↓
+LC-T ↑
+LC-I ↑
+Local (n = 2,465)
+Direct editing
+26.760
+0.898
+0.064
+21.729
+0.832
+Threshold paste
+29.747
+0.950
+0.033
+21.867
+0.828
+WMMLLM
+30.440
+0.964
+0.025
+21.910
+0.845
+Multi-object (n = 144)
+Direct editing
+26.144
+0.888
+0.073
+20.359
+0.871
+Threshold paste
+29.055
+0.941
+0.041
+21.335
+0.898
+WMMLLM
+29.104
+0.956
+0.032
+21.070
+0.911
+Implicit reasoning (n = 100)
+Direct editing
+27.624
+0.893
+0.063
+20.193
+0.863
+Threshold paste
+31.867
+0.954
+0.029
+20.014
+0.851
+WMMLLM
+32.868
+0.970
+0.019
+20.241
+0.880
+12
+WMMLLM Technical Report
+WMMLLM
+Instruction completed
+Completed without
+other changes
+0
+25
+50
+75
+100
+Share [%]
+91.3
+30.0
+60.6
+22.0
+86.6
+52.6
+CompBench: 150 proposals
+Direct editing
+Threshold paste
+WMMLLM
+Instruction completed
+Completed without
+other changes
+86.6
+10.7
+34.8
+16.1
+83.0
+49.1
+Benchmark run: 112 local edits
+Direct editing
+Support before generation
+Support after generation
+Figure 7 Blind evaluation of composition. Keeping the whole proposal completes the most instructions, and support
+selected after generation most often completes the edit without other changes.
+Left: 150 CompBench proposals,
+with groups and subtasks weighted equally. Right: the first proposals of the 112 local edits of the benchmark run.
+Completion without other changes is computed after judging.
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+20
+21
+Figure 8 Playing in one world. The state keeps every earlier change over 21 sequential requests. Rows 1–3: the red
+box at the start (0) and after each of requests 1–20, which change only this box (10.7% of the panorama). Row 4:
+the panorama after request 20 and after request 21, which relights the whole panorama. Table A3 lists the requests.
+evaluation rises from 34.8% with the support before generation to 83.0% after it, a difference of 48.2 points
+[37.9, 58.3] (figures 4 and 7). The support selected after generation keeps the parts of the change that the
+region from the planner cuts off (appendix A3.1).
+Lookup by revision. Without the revision in the view lookup, 60 of the 198 lookups of the benchmark run
+(30.3%) would return a view from before a later edit, and each of them passes the hash checks (appendix A3.2).
+4.4 Verification of the State Properties
+The benchmark run meets the properties of section 3.7 in every case. All 46 revisits match their panorama
+state and arrival view hashes, and all 195 geometric segments run without a generator. Of the 112 local edits,
+97 pass the verifier, and all 97 leave every panorama pixel outside their support unchanged (equation (7));
+in 92, the judge finds that the region matches the request (appendix A4). Over 21 sequential requests in one
+world, the state keeps every earlier change, and requests 1–20 change only 10.7% of the panorama (figure 8).
+Figure A5 shows five more worlds with 20 or 21 sequential requests each. An agent writes each request of
+these sessions from the current state, and candidates that fail the checks are generated again, so these sessions
+do not measure success at the first attempt.
+4.5 Session Studies
+Observation memory. Edits survive a return equally often without the observation memory. In 20 paired
+eight-turn sessions without video, the full system and the variant without the observer’s facts and the retrieval
+13
+WMMLLM Technical Report
+WMMLLM
+a
+b
+Figure 9 Failure cases. Two endpoints from the benchmark run pass the verifier while the blind judge labels the
+change in the request absent. Each pair shows the source and the endpoint. (a) For the request “…accelerates down
+a bright orange plastic slide”, the motorcycle stays on the floor beside the slide; both images use the same editing
+camera, and the verifier returns Pass. (b) For the request “The camera moves to the right.”, the coastal view shifts
+in the wrong direction; both images use the viewing camera, and the verifier returns Uncertain.
+of earlier images both keep the edit on 32 of 40 returns and complete 7 of 20 sessions. The panorama state
+carries the edits across returns in both settings (appendix A3.2).
+Planning, next state and endpoint checks. Twenty new scripts compare the full system with a variant whose
+planner has a minimal prompt and with a variant that takes the last video frame as the next state. The
+primary results are close and their difference intervals include zero (table A2). A smaller study changes both
+the endpoint check and the proposal cap; on the same five sessions, both settings complete 23 of 40 turns.
+Appendix A3.3 describes these settings and the secondary reruns.
+4.6 Cost and Latency
+The median time for state processing is 120 s for rotation, 215 s for navigation and 267 s for multiple op-
+erations. Sol-H3 generates a 124-frame clip in a median of 71.9 s on four H100 GPUs. In the multi-turn
+component study (appendix A3.3), with two A6000 GPUs per job, the full system takes a median of 609.4 s
+from request to first playback. Once a state is committed, every view of it renders from equation (3) without
+a model call. Appendix A4 defines these measurements.
+5 Limitations
+The main limitation is that WMMLLM does not complete every request: 276 of the 280 failure holds of the
+benchmark run follow a rejection of the final endpoint, and these holds raise appearance scores while the
+motion in the request is missing. The endpoint verifier also passes some partial changes and rejects some
+complete ones: a blind judge labels as complete 190 of the 309 endpoints that pass the verifier and 83 of the
+276 that it rejects (appendix A4). Because each request starts from the endpoint of the preceding one, an
+error carries forward: the next segment completes in 100 of 153 cases after a correct endpoint commits and
+in 25 of 95 after an incorrect one. Weak camera motion and incorrect placement relations also cause failures.
+Figure 9 shows a motorcycle that stays beside the slide and a coastal view that shifts in the wrong direction.
+The panorama represents a world around one camera center (appendix A4). Translation and unseen re-
+gions require generation, and the generation log flags a seam in 208 of the 227 environment items. Video
+presentation also takes a median of about ten minutes from request to first playback (section 4.6).
+The endpoint verifier and the blind judge lack human calibration, and frame samples do not establish the
+motion between two samples. The session studies have wide intervals and use new scripts on worlds from
+earlier studies.
+6 Conclusion
+WMMLLM turns MLLMs into a persistent, editable world model by keeping the world state outside every
+generator: the MLLMs write it under update rules that give return, locality and persistence, and generators
+only propose. Its panorama state carries object edits, environmental changes and navigation across turns, and
+over 21 sequential requests in one world it keeps every earlier change. Selecting the support after generation
+raises the completion of local edits from 34.8% to 83.0%. WMMLLM achieves the best mean on all four
+MBench-A recovery metrics against six baselines, completes the most camera round trips and has the best
+value in all 15 CompBench columns.
+14
+WMMLLM Technical Report
+WMMLLM
+This design makes image generation part of an ongoing interaction in which users can revisit and revise the
+same world. More accurate endpoint decisions and faster video would extend the range and pace of these
+interactions.
+LLM Usage Statement
+In our system, GPT-6.1-sol [15] plans operations, selects the support of local edits, checks endpoint candi-
+dates and records observations. GPT-Image 2 [13] supplies the CompBench proposals, GPT-Image 2.5 [14]
+generates the endpoints in the other experiments, and GPT-Image also generates the initial panoramas.
+Sol-H3 [16] generates the transition videos, and SoL-Refiner [54] optionally super-resolves them. Diagnos-
+tic images from earlier development also used Qwen-Image-Edit-2511. In the evaluation, Claude Opus 5.5
+supplies all blind judgments and Qwen3-VL-8B-Instruct supplies the WBench [55] judge fields described in
+appendix A2.2; no human raters take part. Claude Code and OpenAI Codex serve as coding and writing
+assistants: they help to implement the system and the evaluation scripts, run the experiments, analyze the
+results, prepare the figures and tables, and draft and edit the text of this report. The authors direct and
+check this work and are responsible for the methods, results and final manuscript.

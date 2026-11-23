@@ -1,8 +1,8 @@
 {
   "2026-11-23": {
     "arxiv_announce_date": "2026-11-23",
-    "generated_at": "2026-11-23T14:43:17.926840+00:00",
-    "stage": "collect",
+    "generated_at": "2026-11-23T14:56:48.937549+00:00",
+    "stage": "daily",
     "collect_status": "ok",
     "sources": {
       "arxiv": {
@@ -109,30 +109,30 @@
     "duration_seconds": 271.7,
     "llm": {
       "deepseek-flash": {
-        "calls": 22,
+        "calls": 20,
         "failures": 0,
-        "tokens_in": 250655,
-        "tokens_out": 152590,
-        "cache_hit_tokens": 117248
+        "tokens_in": 301832,
+        "tokens_out": 166589,
+        "cache_hit_tokens": 137856
       }
     },
     "output": {
       "classic": 1,
-      "frontier": 9,
-      "survey": 1
+      "frontier": 10
     },
     "stages": {
       "filter": {
-        "input": 1964,
-        "passed_rules": 907,
+        "input": 1967,
+        "passed_rules": 898,
         "dropped": {
-          "channel_stale": 1056,
+          "cooldown": 10,
+          "channel_stale": 1058,
           "short_abstract": 1
         },
-        "survey_matched": 1,
+        "survey_matched": 0,
         "pool_sizes": {
           "frontier": 120,
-          "survey": 1,
+          "survey": 0,
           "classic": 0
         },
         "classic_pool": 10
@@ -144,19 +144,14 @@
           "failed_batches": 0,
           "tiers": {
             "A": 24,
-            "B": 80,
-            "C": 16
+            "B": 82,
+            "C": 14
           },
           "kept": 40
         },
         "survey": {
-          "input": 1,
-          "batches": 1,
-          "failed_batches": 0,
-          "tiers": {
-            "A": 1
-          },
-          "kept": 1
+          "input": 0,
+          "kept": 0
         },
         "classic": {
           "input": 10,
@@ -178,7 +173,7 @@
         },
         "dropped": {
           "frontier": {
-            "topic": 0,
+            "topic": 2,
             "affiliation": 0,
             "similar": 0
           },
@@ -196,16 +191,24 @@
         "affiliation_constraint": "inactive_no_data"
       },
       "summarize": {
-        "input": 12,
+        "input": 11,
         "cached": 0,
-        "failed": 1,
+        "failed": 0,
         "skipped_budget": 0,
         "levels": {
-          "fulltext": 12
+          "fulltext": 11
         },
         "degraded": [
           {
-            "id": "arxiv-2509.07295",
+            "id": "arxiv-2611.26444",
+            "note": "全文超长已截断"
+          },
+          {
+            "id": "arxiv-2611.25387",
+            "note": "全文超长已截断"
+          },
+          {
+            "id": "arxiv-2611.21885",
             "note": "全文超长已截断"
           }
         ]
@@ -213,25 +216,27 @@
       "validate": {
         "checked": 11,
         "dropped": [],
-        "dropped_claims": 6,
+        "dropped_claims": 9,
         "downgraded": [],
         "link_failures": []
       }
     },
     "validation": {
       "items_dropped": 0,
-      "claims_dropped": 6,
+      "claims_dropped": 9,
       "downgraded": 0,
       "link_failures": 0,
-      "warnings": 2
+      "warnings": 3
     },
     "cost": {
       "currency": "CNY",
       "amount": null,
       "note": "pricing 未配置，成本待首周实测单价后折算"
     },
-    "pipeline_duration_seconds": 1201.3,
+    "pipeline_duration_seconds": 783.4,
     "status": "ok",
-    "notes": []
+    "notes": [
+      "survey 仅选出 0/1 篇：候选不足或受多样性约束，减量投放不降门槛"
+    ]
   }
 }
