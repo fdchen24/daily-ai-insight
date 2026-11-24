@@ -81,11 +81,14 @@ jobs:
       # 这里只读取已有的 Pages 配置。首版用过 enablement: true 想顺手建站，
       # 但内置 GITHUB_TOKEN 建不了 Pages 站点（创建要 admin 权限），这一步
       # 直接失败。建站是一次性操作，交给人点一下更省事。
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      # 三个 action 的大版本必须配套：deploy-pages v4 读不了新 artifact 后端
+      # 存的包，upload 步骤明明成功，deploy 还是报"找不到 github-pages artifact"
+      # （实测 run #3/#4），只有同步升到 v5/v6 这一代才对得上。
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
