@@ -6,8 +6,10 @@
    最贵的 token 付两次。这里一次调用同时拿回 `scores`、`reading` 和 `claims`。
 2. **正常路径不做 L2 初筛**。DESIGN 9.1 列了"L2 初筛 30–40 条 @ intro_conclusion"
    与"解读 10–12 条 @ fulltext"，但阶段五的配额已经把当日压到约 12 条，再插一轮
-   初筛等于为同一批条目付两次钱。因此只有入场条目数超过 `final_count` 时才启用
-   初筛分支（`screen_count` 上限、intro_conclusion 取材），正常日子直接读全文。
+   初筛等于为同一批条目付两次钱。因此只有入场条目数超出 `final_count` 达
+   `screen_margin`（默认 5）条时才启用初筛分支，正常日子直接读全文。小幅超额
+   （实测 2026-11-24 是 13 对 12）照 L1 分截取：为淘汰一条付 13 次 intro_conclusion
+   调用不划算，而真正大幅过剩时初筛仍有用——它用更长的材料复核了 L1 的排序。
 3. **按 `content_hash` 复用解读**。重跑、经典复推和 README 未变的仓库都命中缓存
    （DESIGN 9.2 第 5–7 条）；缓存键含模板、取材层级与模型名，摘要级解读不会被当成
    全文级复用，换模型也不会复用上一个模型的输出。
@@ -54,11 +56,12 @@ def summarize_selected(selected: dict[str, list[dict]], *, batch: date,
     entries.sort(key=lambda row: _score(row[1]), reverse=True)
 
     final_count = int(cfg.get("final_count") or 12)
+    screen_margin = int(cfg.get("screen_margin") or 5)
     screened: list[tuple[str, dict]] = []
     stats: dict[str, Any] = {"input": len(entries), "cached": 0, "failed": 0,
                              "skipped_budget": 0, "levels": {}, "degraded": []}
 
-    if len(entries) > final_count:
+    if len(entries) >= final_count + screen_margin:
         entries, screen_stats = _screen(entries, cfg, llm, stats)
         stats["screen"] = screen_stats
     entries = entries[:final_count]

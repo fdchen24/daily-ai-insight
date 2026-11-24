@@ -111,6 +111,10 @@ summarize:
   # 用 intro_conclusion 取材做 L2 初筛的条数，再从中选最终入选项取全文
   screen_count: 30
   final_count: 12
+  # 入场条目超出 final_count 多少条才值得初筛。小幅超额（实测 13 对 12）跑初筛，
+  # 等于为淘汰一条付 13 次 intro_conclusion 调用；大幅过剩时初筛才划算，它用
+  # 比摘要长得多的材料复核了 L1 的排序。
+  screen_margin: 5
   # 16384 不够：flash 在 effort=high 下思维链也计入输出，实测一条 44 页论文的
   # 解读撞上上限，返回截断的 JSON 整条被丢。截断修不回来且重试会再撞一次，
   # 那条目的输入 token（约 36K）就白付了，所以上限给足——按实际用量计费，
