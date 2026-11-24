@@ -219,8 +219,8 @@ web/
 - [x] 阶段一 采集与候选池
 - [x] 阶段二 筛选、排序、解读、校验、落盘
 - [x] 阶段三 前端与 GitHub Pages
-- [ ] 阶段四 PWA 与移动端（manifest、SW、离线与安装已接入，真机验收未做）
-- [ ] 阶段五 稳定性与成本调优
+- [x] 阶段四 PWA 与移动端（Android Chrome 实测通过；iPhone Safari 待测）
+- [ ] 阶段五 稳定性与成本调优（进行中）
 
 验收清单见 [DESIGN.md](DESIGN.md) 第十一节。
 
