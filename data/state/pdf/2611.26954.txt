@@ -1,0 +1,1385 @@
+Learning Video Foresight Reasoning from Unlabeled Videos
+via On-Policy Self-Distillation
+Jingchen Sun1*
+Jiaxing Zhang*
+Qingqiao Hu2
+Dingqiang Ye3
+Yuqi Jia4
+Yijun Liang5
+Di Fu
+Yunjie Tian
+Dongdi Zhao†
+Changyou Chen1
+1University at Buffalo
+2Stony Brook University
+3Johns Hopkins University
+4Duke University
+5University of Maryland, College Park
+Abstract
+Video foresight reasoning requires vision-language models
+to anticipate future events or next actions from currently
+observed videos. Existing methods fit future captions, ra-
+tionales, or full visual states, but face two limitations. First,
+they rely on annotations or external large models for su-
+pervision, limiting scalability.
+We address this with an
+on-policy self-distillation framework that turns past–future
+video pairs into a natural self-supervised signal without ex-
+tra annotations or LLM supervision. Second, they treat the
+whole future clip as equally valuable, although most of it
+is irrelevant context information. We address this by defin-
+ing a foresight score, from which we obtain a contrastive
+privilege advantage that drives the model to learn the most
+valuable future information. Since the score is intractable,
+we optimize a tractable lower-bound surrogate that interpo-
+lates this advantage, computed between the true and a ran-
+dom reference future, with a teacher–student distillation ad-
+vantage; together, they amplify decision-relevant content in-
+formation and suppress irrelevant context information. We
+call the resulting framework Future-OPSD. On open-ended
+prediction and closed-ended planning, Future-OPSD im-
+proves base models by up to 14.2 and 15.9 points without
+compromising general video understanding. Code will be
+available at https://jingchensun.github.io/future-opsd/.
+1. Introduction
+Video foresight reasoning aims to infer plausible future
+events or states from an observed video by reasoning over
+its visual dynamics, causal relations, and agent intentions.
+This ability has been studied through diverse task formu-
+lations, including activity forecasting and action anticipa-
+tion [10, 17, 19, 22, 29, 62], trajectory forecasting [2, 23,
+43], future frame and representation prediction [14, 39, 54],
+and video-language future event prediction [31, 59]. With
+the advent of vision-language models (VLMs), recent work
+*Equal contribution.
+†Corresponding author.
+Q: Given what I see now,
+what will I do next?
+dish rack
+tap
+sink
+sponge
+Content
+information
+rinse the knife
+Context
+information
+tap, dish rack,
+sink, sponge
+time
+past
+now
+future
+Not all of the future is equally important
+VLM
+80% context information
+20% content information
+Existing methods learn
+all the information equally
+Figure 1. Not all of the future is equally important. To answer
+what will I do next? from what is seen now, only a small part of
+the future clip carries content information (rinse the knife); most of
+it is context information (tap, dish rack, sink, sponge) that neither
+answers the question nor reflects the expected action and trajectory
+of the ongoing event.
+recasts foresight as high-level reasoning, with dedicated
+benchmarks [6, 21, 30, 46] and reasoning-oriented train-
+ing. Foresight underpins world models for planning and
+control [3, 12, 24, 25], and is essential for autonomous driv-
+ing [26], embodied robotics [3, 12, 14], and proactive ego-
+centric assistants [10, 22].
+Recent VLM-based methods have begun to explicitly
+train foresight reasoning.
+Merlin [60] injects foresight
+through trajectory-based pre-training and instruction tun-
+ing. Next-Event Prediction [55] learns from captions of fu-
+ture segments and text-only LLM rationales, and further ap-
+plies reinforcement learning with multiple-choice answers.
+Another line grounds reasoning in future visual states:
+TwiFF [35] reasons with explicit future frames, FUTURE-
+L1 [27] aligns latent reasoning with future-frame embed-
+dings before answer-based reinforcement learning with an
+LLM judge, and IVT [65] adds next-embedding prediction
+to fine-tuning on annotated event descriptions.
+Despite this progress, these methods share two limita-
+tions.
+First, their supervision relies on ground-truth an-
+1
+arXiv:2611.26954v1  [cs.CV]  20 Nov 2026
+swers, annotated descriptions, or external large models such
+as LLM rationale generators and judges [27, 48, 55, 65],
+which limits scalability. Second, they treat the future clip
+as a uniformly valuable target and fit its full textual or vi-
+sual content [27, 35, 55, 65], yet future information is not
+equally useful for a given question. As shown in Fig. 1, to
+predict what to do next, only rinse the knife is event-relevant
+content information, while most of the scene (e.g., tap, dish
+rack, sink) is irrelevant context information.
+To address the first limitation, we adopt an on-policy
+self-distillation framework to turn naturally occurring past–
+future video pairs into a self-supervised learning signal. We
+split each video into a past clip and its future clip (the paired
+future).
+The student sees only the past and generates a
+reasoning-and-answer response, while a frozen copy of the
+initial student that additionally sees the paired future acts
+as the teacher and scores each token of that response. As
+supervision comes from the video’s own future, this frame-
+work needs no annotations or external large models and thus
+scales well.
+To address the second limitation, we define a foresight
+score to teach the model to identify the most valuable fu-
+ture information. It measures how well a student response
+matches the true future. Directly optimizing this score is
+intractable, as it averages over all possible futures.
+We
+therefore derive a tractable surrogate objective that prov-
+ably lower-bounds the foresight score. The surrogate inter-
+polates between a contrastive privilege advantage, which
+compares the teacher’s scores of the same response under
+the paired true future and an unrelated reference future, and
+a teacher–student distillation advantage toward the paired-
+future teacher. The joint interpolated objective suppresses
+shared context information and amplifies content informa-
+tion specific to the paired future (Fig. 2). We refer to the
+framework combining these two designs as Future-OPSD.
+We evaluate Future-OPSD on Qwen3-VL and Qwen3.5
+across two video foresight tasks: open-ended prediction and
+closed-ended planning. Future-OPSD improves the fore-
+sight reasoning of the base models by up to 14.2 and 15.9
+points, respectively, and consistently outperforms Naive
+OPSD, which does not optimize the foresight score (Tabs. 1
+and 2). The gains transfer across tasks and largely preserve
+general video understanding. Stronger teachers and more
+data bring further gains. Token-level analyses and discus-
+sions show that the interpolated objective suppresses con-
+text information and amplifies content information.
+Our contributions are:
+• We propose Future-OPSD, which is, to our knowledge,
+the first on-policy self-distillation framework for video
+foresight reasoning.
+It turns naturally occurring past–
+future video pairs into a self-supervised signal, requiring
+no extra annotations.
+• We introduce a foresight score and derive its tractable
+lower bound as a token-level training objective, which en-
+ables the model to automatically identify and learn the
+most valuable future information.
+• Experiments on Qwen3-VL and Qwen3.5 show gains of
+up to 14.2 and 15.9 points on open-ended prediction and
+closed-ended planning, with strong cross-task transfer, no
+compromise in general video understanding, and gains
+that grow with stronger teachers and more data.
+2. Related Work
+Video Foresight Reasoning. Early studies on video fore-
+sight focus on action anticipation with recurrent and trans-
+former models [18–20, 38, 54], future event prediction in
+natural language [31], and LLM-based long-term action
+planning [28, 62].
+With the rise of VLMs, benchmarks
+such as FutureBench, TwiFF-Bench, EgoPlan-Bench, and
+SEED-Bench-R1 evaluate future-event reasoning and next-
+action planning [7, 8, 35, 55], while CausalVQA, Future-
+Omni, and RIVER extend evaluation to physical, audio-
+visual, and streaming settings [6, 15, 46]. Existing train-
+ing methods fall into three lines: (i) supervised learning
+of textual future targets and rationales [55, 60]; (ii) model-
+ing explicit or latent future visual states, or predictive video
+representations [3, 27, 35, 49, 50, 65]; and (iii) reinforce-
+ment learning with answer-, event-, or generation-based re-
+wards [9, 48, 55]. These methods rely on annotations or
+external large models for supervision, or fit the whole fu-
+ture clip uniformly. In contrast, Future-OPSD does not fit
+the future: it uses future clips as privileged evidence to score
+the student’s own responses, without annotations or an extra
+large LLM as a judge to provide supervision signals.
+On-Policy Self-Distillation. Learning using privileged in-
+formation trains a student with information available only
+during training [37, 52].
+On-policy distillation has a
+teacher score student-generated trajectories to reduce expo-
+sure bias [1], and OPSD uses the same model, conditioned
+on privileged context, as its own teacher [63]. Multimodal
+variants use temporal, high-resolution, or localized visual
+evidence for video understanding [32, 53, 56–58, 64], and
+related ideas extend to world-action models and video gen-
+erators [13, 34]. Recent analyses show that privileged con-
+text can shift the teacher in task-irrelevant ways, termed
+privilege illusions [47, 61]; RLCSD contrasts textual hints
+within outcome-reward RL [40]. In contrast, Future-OPSD
+is, to our knowledge, the first OPSD framework for video
+foresight reasoning, and differs from prior contrastive distil-
+lation in two ways. (1) Data: it contrasts the true future clip
+of the same video with a future clip from an unrelated video,
+rather than textual hints [40]. (2) Objective: grounded in a
+foresight score and its KL-regularized lower bound (Theo-
+rem 2), it interpolates contrastive and distillation advantages
+rather than relying on contrast alone.
+2
+3. Future-OPSD
+We propose Future-OPSD, whose overview is shown in
+Fig. 2. We first set up the problem (Sec. 3.1) and define
+the foresight score (Sec. 3.2). We then derive a tractable
+contrastive surrogate (Sec. 3.3), control its gap with KL reg-
+ularization (Sec. 3.4), and turn the objective into token-level
+PPO updates (Sec. 3.5).
+3.1. Problem Setup and Notation
+For paired data (X, Z) ∼p, X denotes past frames and a
+question, and Z the paired future, i.e., the subsequent clip
+recorded in the same video. The student πθ generates a
+reasoning-and-answer response Y from X alone; the frozen
+teacher π0 scores it given (X, Z). Thus, Y ∼πθ(· | X) and
+pθ(y | x, z) = πθ(y | x). This gives Y ⊥⊥Z | X and the
+Markov chain Z →X →Y . We sample a reference future
+˜z ∼pZ from another video, independently of (X, Z, Y ),
+where pZ is the future marginal. Training requires no an-
+swer or rationale labels. Inference uses only the student.
+We assume finite past, future, and response spaces and pos-
+itive teacher probabilities for all allowed responses. Full
+assumptions and proofs appear in Appendix A.
+3.2. Defining the Foresight Score
+How to measure video foresight? A general prediction
+may be compatible with many futures.
+Inspired by In-
+foNCE [41, 51], we measure how specifically the paired
+future supports a response by comparing its teacher prob-
+ability with the average under reference futures. We define
+the foresight score
+Φ(θ) = E (x,z)∼p
+y∼πθ(·|x)
+
+log
+π0(y | x, z)
+E˜z∼pZπ0(y | x, ˜z)
+
+.
+(1)
+Normalizing the teacher likelihoods defines a verifier distri-
+bution q(z | x, y) ∝pZ(z)π0(y | x, z). Since the teacher
+is frozen, θ affects the foresight score only through the stu-
+dent’s sampling distribution πθ(y | x): different parameters
+generate different responses, which receive different rela-
+tive support. The score corresponds to the limit of normal-
+ized InfoNCE as the number of reference futures tends to
+infinity; the connection is detailed in Appendix A.2.
+Theorem 1 (Foresight identity). Under the conditions in
+Appendix A.1, a past-only student satisfies
+Φ(θ) = I(X; Z) −D(θ) ≤I(X; Z),
+D(θ) = Ex,yDKL(p(· | x) ∥q(· | x, y)) .
+(2)
+Here, D(θ) is the average KL divergence from the true
+conditional future distribution p(z | x) to the teacher-
+defined verifier q(z | x, y). Since I(X; Z) is fixed by the
+data, maximizing Φ is equivalent to reducing this discrep-
+ancy. Training thus favors responses that better align the
+verifier with the true future distribution. The proof is pro-
+vided in Appendix A.2.
+However, evaluating Φ requires the normalizer of q, an
+expectation over the full future distribution that is gener-
+ally intractable to compute exactly. We therefore introduce
+a surrogate that can be estimated from sampled reference
+futures and decomposes over tokens.
+3.3. Comparing Scores across Futures
+How to optimize Φ(θ) token by token?
+We compare
+the teacher’s log-probabilities of the same response under
+paired and reference futures. Their difference decomposes
+over tokens, giving the surrogate:
+L(θ) = Ex,z,y,˜z [log π0(y | x, z) −log π0(y | x, ˜z)] . (3)
+Both teacher evaluations use the same past, response, and
+input format, so shared additive score components cancel.
+Log-probabilities add over tokens, enabling token-level su-
+pervision. However, the contrast includes an extra nonneg-
+ative Jensen gap:
+L(θ) = Φ(θ) + Γ(θ),
+Γ(θ) = Ex,y
+
+log E˜zπ0(y | x, ˜z)
+−E˜z log π0(y | x, ˜z)
+
+≥0.
+(4)
+The student may increase Γ by favoring responses with
+larger score differences across reference futures, raising the
+contrastive score without improving foresight. We therefore
+regularize this objective.
+3.4. Controlling the Contrastive Gap
+How to control the gap between L and Φ? We encour-
+age future discrimination while using a KL penalty to limit
+the student’s deviation from the paired-future teacher. The
+sequence-level penalty is
+R(θ) = Ex,zDKL(πθ(· | x) ∥π0(· | x, z)) .
+(5)
+We maximize the regularized objective
+Jλ(θ) = λL(θ) −(1 −λ)R(θ),
+λ ∈[0, 1].
+(6)
+For 0 < λ < 1, set β = λ/(1 −λ) > 0. A change-of-
+measure inequality gives Γ(θ) ≤R(θ)/β + Cβ (see Ap-
+pendix A.3 for the derivation and proof). Substituting this
+into Φ = L −Γ yields a lower bound.
+Theorem 2 (KL lower bound on the foresight score). Un-
+der the conditions in Appendix A.1, fix 0 < λ < 1 and
+β = λ/(1 −λ). There is a finite constant Cβ, depending
+only on the data, frozen teacher, and β, such that
+Φ(θ) ≥L(θ) −R(θ)
+β
+−Cβ = Jλ(θ)
+λ
+−Cβ.
+(7)
+For fixed λ, maximizing Jλ maximizes this lower bound.
+Since Cβ is independent of θ, training need not compute it.
+A higher bound need not imply a higher Φ.
+3
+(a) SFT
+“To make salsa,
+what’s next?”
+x
+πθ
+trained
+label y ⋆
+“The person finishes
+dicing the onion,
+pushes it aside, then
+chops the cilantro
+finely with the knife.”
+CE loss
+−logπθ(y ⋆|x)
+(b) Naive OPSD
+x
++
+z
+π0
+❄frozen
+x
+πθ
+trained
+distill
+at = ℓz
+t −ℓS
+t
+PPO loss
+(c) Future-OPSD (ours)
+Teacher  (true future z)
+x
++
+z
+π0
+❄frozen
+ℓz
+t
+Teacher  (wrong future ̃z)
+new
+x
++̃
+z
+π0
+❄frozen
+ℓ̃z
+t
+Student  (past x only)
+x
+πθ
+trained
+ℓS
+t̂
+y
+next
+chop
+the
+cilantro
+Objective
+contrast
+ℓz
+t −ℓ̃z
+t
+distill
+ℓz
+t −ℓS
+t
+at = λ ¢ contrast
++(1 −λ) ¢ distill
++0.1
+next
++0.3
+chop
++0.3
+the
++3.0
+cilantro
+advantage
+At = clip±5(at) −̄ a
+PPO loss L(θ)
+update θ ←θ −ηrθL
+Figure 2. Overview of Future-OPSD and comparison with other training paradigms. (a) SFT learns annotated future descriptions y⋆
+from past observations x using cross-entropy. (b) Naive OPSD uses a frozen future-aware teacher π0 to score the student’s own response
+ˆy, converting the teacher–student log-probability gap into token advantages for PPO. (c) Future-OPSD (ours) has a frozen teacher score
+the same response under the true future z (blue) and a reference future ˜z from another video (orange). The contrastive privilege advantage
+ℓz
+t −ℓ˜z
+t compares the two futures, and the teacher–student distillation advantage ℓz
+t −ℓS
+t compares the true-future teacher with the past-only
+student. Their interpolation at down-weights context tokens supported by both futures (next / chop / the) while keeping content tokens
+specific to the true future (cilantro), helping the student focus on the most valuable future information. The advantages are clipped and
+centered into At for PPO, and inference uses only the student.
+The weight λ balances the contrastive privilege and
+teacher–student distillation advantages. At λ = 0, the ob-
+jective reduces to naive distillation toward the paired-future
+teacher; at λ = 1, it retains only the contrast without teacher
+regularization, which may lead to training collapse (Fig. 5).
+We next derive token-level updates for this sequence objec-
+tive.
+3.5. Updating the Student Policy
+How to turn Jλ into a practical update? We use im-
+mediate token advantages and clipped PPO updates.
+At
+each iteration, we fix a rollout policy πold, sample re-
+sponses, and draw one reference future per response. Let
+ht = (x, y<t), ℓu
+t = log π0(yt | ht, u) for u ∈{z, ˜z}, and
+ℓS
+t = log πold(yt | ht). We approximate the policy gradient
+by ignoring later rewards and using each token’s immediate
+reward under πold as its advantage (Appendix A.4):
+at = λ
+(ℓz
+t −ℓ˜z
+t )
+|
+{z
+}
+contrastive privilege
++(1 −λ)
+(ℓz
+t −ℓS
+t )
+|
+{z
+}
+teacher–student distillation
+.
+(8)
+One independent reference gives an unbiased estimate of
+the reference-averaged contrast before clipping. The two
+terms provide the contrastive privilege advantage and the
+teacher–student distillation advantage, respectively.
+We clip advantages to [−c, c] and center them over the
+set T of valid batch-token pairs (i, t), where i indexes re-
+sponses:
+¯a =
+1
+|T |
+X
+(i,t)∈T
+clip(ai,t, −c, c),
+Ai,t = clip(ai,t, −c, c) −¯a.
+(9)
+Let ρi,t = πθ(yi,t | hi,t)/πold(yi,t | hi,t), with hi,t =
+(xi, yi,<t), and ¯ρi,t = clip(ρi,t, 1 −ϵl, 1 + ϵh). Holding
+Ai,t fixed, we minimize the token-averaged PPO loss [44]:
+LPPO(θ) = −1
+|T |
+X
+(i,t)∈T
+min
+ ρi,tAi,t, ¯ρi,tAi,t
+
+.
+(10)
+Here, ϵl and ϵh set the clipping range. Only the student is
+updated; the teacher, rollout policy, and advantages remain
+fixed. Since at includes the KL penalty, no separate KL
+loss is needed. The algorithm flowchart and pseudocode
+are provided in Appendix A.5.
+4. Experiments
+We organize our experiments around three research ques-
+tions (RQs) and three discussions (DSs).
+RQ1:
+Does
+4
+Table 1. Open-ended prediction (trained on Future-L1).
+Blue cells denote in-domain evaluation. Abbreviations: Temp. = Tem-
+pCompass, T-B. = TemporalBench, V-M. = Video-MME, and MVB = MVBench. Bold marks the highest score in each column within
+each model. Future-OPSD improves in-domain performance by up to 14.2 points over the base models while preserving general video
+understanding.
+TwiFF-Bench
+SEED-Bench-R1
+General Video Understanding
+Model
+Method
+Labels
+CoT
+Ans.
+Avg
+L1
+L2
+L3
+Temp.
+T-B.
+V-M.
+MVB
+Avg
+Qwen3-VL-8B
+Base
+–
+58.6
+48.7
+53.6
+45.4
+47.5
+39.7
+78.3
+18.6
+61.7
+65.5
+56.0
+SFT [55]
+✓
+61.3
+55.7
+58.5
+33.8
+35.1
+33.4
+71.8
+16.3
+54.1
+57.0
+49.8
+Naive OPSD [63]
+–
+66.0
+56.4
+61.2
+45.9
+47.3
+38.7
+79.0
+20.9
+62.0
+66.2
+57.0
+Future-OPSD
+–
+71.9
+63.5
+67.8
+46.1
+48.3
+40.0
+79.6
+20.4
+63.0
+67.0
+57.5
+∆vs. Base
+–
++13.3
++14.8
++14.2
++0.7
++0.8
++0.3
++1.3
++1.8
++1.3
++1.5
++1.5
+Qwen3.5-9B
+Base
+–
+62.4
+54.5
+58.5
+44.3
+44.9
+37.9
+79.9
+21.4
+61.2
+65.6
+57.0
+SFT [55]
+✓
+63.5
+57.4
+60.5
+36.4
+37.6
+31.3
+73.7
+19.4
+56.4
+48.2
+49.4
+Naive OPSD [63]
+–
+66.2
+59.1
+62.7
+43.3
+42.4
+35.2
+79.9
+21.4
+60.7
+65.0
+56.7
+Future-OPSD
+–
+70.4
+66.1
+68.2
+45.4
+47.1
+38.0
+79.3
+21.5
+63.1
+65.9
+57.2
+∆vs. Base
+–
++8.0
++11.6
++9.7
++1.1
++2.2
++0.1
+−0.6
++0.1
++1.9
++0.3
++0.2
+Table 2. Closed-ended planning (trained on EgoPlan-IT).
+Yellow cells denote in-domain evaluation. Abbreviations: Temp. = Tem-
+pCompass, T-B. = TemporalBench, V-M. = Video-MME, and MVB = MVBench. Bold marks the highest score in each column within
+each model. Future-OPSD improves in-domain performance by up to 15.9 points over the base models while preserving general video
+understanding.
+SEED-Bench-R1
+TwiFF-Bench
+General Video Understanding
+Model
+Method
+Labels
+L1
+L2
+L3
+CoT
+Ans.
+Avg
+Temp.
+T-B.
+V-M.
+MVB
+Avg
+Qwen3-VL-8B
+Base
+–
+45.4
+47.5
+39.7
+58.6
+48.7
+53.6
+78.3
+18.6
+61.7
+65.5
+56.0
+SFT [55]
+✓
+47.4
+48.6
+42.9
+50.0
+45.7
+47.8
+66.9
+16.3
+55.4
+55.4
+48.5
+TTRL [66]
+–
+45.8
+50.3
+42.9
+60.7
+50.1
+55.4
+78.9
+19.8
+61.5
+66.7
+56.7
+Naive OPSD [63]
+–
+50.1
+51.7
+44.9
+60.9
+47.7
+54.3
+78.6
+20.1
+61.3
+65.7
+56.4
+Future-OPSD
+–
+54.3
+55.8
+50.6
+63.8
+53.1
+58.5
+78.8
+19.3
+62.7
+65.1
+56.5
+∆vs. Base
+–
++8.9
++8.3
++10.9
++5.2
++4.4
++4.9
++0.5
++0.7
++1.0
+−0.4
++0.5
+Qwen3.5-9B
+Base
+–
+44.3
+44.9
+37.9
+62.4
+54.5
+58.5
+79.9
+21.4
+61.2
+65.6
+57.0
+SFT [55]
+✓
+47.5
+50.1
+44.9
+53.1
+48.1
+50.6
+73.5
+17.4
+57.0
+57.2
+51.3
+TTRL [66]
+–
+27.3
+29.7
+26.4
+53.9
+54.6
+54.2
+75.7
+20.3
+56.0
+61.0
+53.3
+Naive OPSD [63]
+–
+48.2
+49.9
+40.7
+58.5
+53.1
+55.8
+79.2
+21.7
+59.4
+64.6
+56.2
+Future-OPSD
+–
+58.4
+59.7
+53.8
+63.7
+57.9
+60.8
+81.4
+21.9
+61.2
+65.0
+57.4
+∆vs. Base
+–
++14.1
++14.8
++15.9
++1.3
++3.4
++2.3
++1.5
++0.5
+0.0
+−0.6
++0.4
+Future-OPSD improve VLMs’ video foresight reasoning?
+RQ2: Do the performance gains persist with stronger teach-
+ers or more training data? RQ3: How does Future-OPSD
+work? DS1: How does Future-OPSD compare with GRPO-
+based methods? DS2: Which design choices in Future-
+OPSD matter? DS3: What is the computational cost?
+4.1. Main Results (RQ1)
+Models and datasets.
+We use two open VLM families,
+Qwen3-VL [4] and Qwen3.5 [42], with Qwen3-VL-8B-
+Instruct and Qwen3.5-9B as the students in RQ1. Both use
+reason-then-answer prompting, with native thinking dis-
+abled for Qwen3.5-9B. We consider two video foresight
+tasks:
+(a) Open-ended prediction:
+we train on Future-
+L1 [27] (50K clips, one open-ended question per clip) and
+evaluate in-domain on TwiFF-Bench [35] (1,078 questions).
+(b) Closed-ended planning: we train on EgoPlan-IT [8]
+(43,294 four-way next-action questions on 30.5K progress
+clips from 610 EPIC-KITCHENS-100 videos [11]) and
+evaluate in-domain on SEED-Bench-R1 [7] (L1–L3).
+Training and evaluation.
+We fine-tune all student param-
+eters for 100 steps (256 queries, one rollout each), with
+learning rate 10−6, temperature 1.0, c = 5, λ = 0.75, and
+no separate KL loss (Sec. 3.4). Teachers remain frozen at
+initialization and receive up to three future frames; refer-
+ence futures use the same format from other videos. Fol-
+lowing Future-L1 [27], a Qwen3.6-27B judge scores open-
+ended reasoning and answers separately on a 1–5 scale,
+rescaled to 0–100; planning uses A–D accuracy (%). We
+also report accuracy (%) on TempCompass [36], Tempo-
+ralBench [5], Video-MME [16], and MVBench [33] under
+standard settings.
+Baselines.
+(i) Base:
+pretrained models without task-
+specific fine-tuning. (ii) SFT [55]: cross-entropy predic-
+5
+tion of future states and answers from current observations,
+using textual targets generated from future frames by a
+stronger external model. (iii) Naive OPSD [63]: token-level
+distillation from a frozen teacher with future context to a
+past-only student, without future contrast. (iv) TTRL [66]:
+label-free RL with majority-vote pseudo-rewards from eight
+rollouts (closed-ended planning only).
+Future-OPSD improves video foresight reasoning in
+both open-ended prediction and closed-ended planning
+while preserving general video understanding.
+Ta-
+ble 1 evaluates Qwen3-VL-8B and Qwen3.5-9B trained on
+Future-L1, using TwiFF-Bench for open-ended prediction.
+Table 2 uses the same students trained on EgoPlan-IT, with
+SEED-Bench-R1 for closed-ended planning.
+Both show
+consistent gains over Base and Naive OPSD without an-
+swer labels, spanning reasoning and answer quality as well
+as planning across all three generalization levels. The gains
+also transfer across foresight tasks while retaining general
+video understanding.
+4.2. Teacher and Data Scaling (RQ2)
+Using stronger VLM teachers further improves video
+foresight reasoning. We train on EgoPlan-IT in two set-
+tings: (i) a Qwen3-VL-2B-Instruct student with a frozen
+Qwen3-VL-4B teacher, and (ii) a Qwen3-VL-4B student
+with a frozen Qwen3-VL-8B teacher. As all else is fixed,
+the gain of Future-OPD over Future-OPSD comes from the
+stronger teacher. It improves in-domain planning in both
+settings and transfers to open-ended prediction (Tab. 3).
+Future-OPSD improves video foresight reasoning
+with more training data, and a stronger teacher further
+amplifies the gains. We train Qwen3-VL-2B-Instruct on
+increasing amounts of EgoPlan-IT data, up to 50K prompts,
+with either a frozen self-teacher or a frozen Qwen3-VL-4B-
+Instruct teacher. Figure 3 shows that Future-OPSD scales
+better than Naive OPSD and overtakes SFT and GRPO
+at larger scales without answer labels, while the stronger
+teacher enables more sustained gains.
+4.3. How Does Future-OPSD Work? (RQ3)
+Future-OPSD amplifies supervision on content informa-
+tion and suppresses supervision on context information.
+In Fig. 4, Naive OPSD reinforces generic descriptions such
+as “observation” while penalizing the decision-relevant to-
+ken “greaseproof.” Future-OPSD redirects supervision to-
+ward evidence for the immediate next action. After train-
+ing, it correctly predicts picking up the paper (A), whereas
+Naive OPSD jumps to placing dough on it (B). This case il-
+lustrates how future contrast helps distinguish the next step
+from the overall goal.
+4.4. Comparison with GRPO (DS1)
+GRPO is less effective than Future-OPSD for open-
+ended prediction. We compare Qwen3-VL (2B/8B) and
+Table 3. Teacher scaling on EgoPlan-IT. OPSD uses a frozen
+copy of the student as teacher; OPD uses a larger frozen teacher
+(Qwen3-VL-4B for the 2B student, Qwen3-VL-8B for the 4B stu-
+dent). Stronger teachers improve planning and open-ended predic-
+tion, and future contrast outperforms naive distillation.
+SEED-Bench-R1 (%)
+TwiFF
+Method
+L1
+L2
+L3
+Avg
+Avg
+Qwen3-VL-2B-Instruct student
+Base
+34.7
+36.9
+30.0
+33.9
+34.0
+SFT
+39.8
+42.1
+37.9
+39.9
+40.3
+OPSD (frozen 2B as the teacher)
+Naive OPSD
+37.0
+38.5
+33.8
+36.4
+22.6
+Future-OPSD
+40.4
+44.0
+37.9
+40.8
+40.7
+∆vs. Base
++5.7
++7.1
++7.9
++6.9
++6.7
+OPD (frozen Qwen3-VL-4B as the teacher)
+Naive OPD
+44.4
+48.9
+36.9
+43.4
+34.3
+Future-OPD
+48.4
+51.9
+44.4
+48.2
+41.3
+∆vs. Base
++13.7
++15.0
++14.4
++14.3
++7.3
+Qwen3-VL-4B student
+Base
+40.2
+42.0
+34.1
+38.8
+50.5
+SFT
+41.2
+41.3
+41.8
+41.4
+47.5
+OPSD (frozen 4B as the teacher)
+Naive OPSD
+47.2
+49.4
+40.3
+45.6
+51.1
+Future-OPSD
+50.6
+51.2
+45.0
+48.9
+54.1
+∆vs. Base
++10.4
++9.2
++10.9
++10.1
++3.6
+OPD (frozen Qwen3-VL-8B as the teacher)
+Naive OPD
+48.1
+50.1
+42.2
+46.8
+55.7
+Future-OPD
+51.4
+54.2
+46.7
+50.8
+58.0
+∆vs. Base
++11.2
++12.2
++12.6
++12.0
++7.5
+0
+10K
+20K
+30K
+40K
+50K
+Training prompts N
+33
+36
+39
+42
+45
+48
+SEED-Bench-R1 avg. (%)
+Future-OPD (teacher: Qwen3-VL-4B-Instruct)
+SFT
+GRPO
+Naive OPSD
+Future-OPSD
+Figure 3.
+Data scaling on EgoPlan-IT (Qwen3-VL-2B). We
+compare SFT and GRPO trained with answer labels against Naive
+OPSD, Future-OPSD, and its stronger-teacher variant (frozen
+Qwen3-VL-4B-Instruct). Future-OPSD scales better than naive
+distillation and surpasses SFT and GRPO at larger data scales,
+with further gains from a stronger teacher.
+Qwen3.5 (2B/9B) trained on Future-L1. GRPO [45] runs
+for 100 steps with eight rollouts per query, using the stu-
+dent’s frozen base model as its reward judge. It underper-
+6
+Goal: place dough on greaseproof paper.
+Q: What is my next step toward this goal?
+A. pick up greaseproof paper  B. put dough on greaseproof paper C. put down chopstick D. pick up dough balls
+video frames of the current progress
+greaseproof paper
+𝑧: the true future from the same video
+˜𝑧: the wrong future from another video
+The rollout of the initial student model:
+The current observation shows … the greaseproof paper is visible on the counter … based on the goal, … pick up …
+−3
+0
+0.5
+1
+1.5
+token advantage at
+1.1
+0.2
+1.4
+0.5
+0.8
+0.3
+−2.9
+1.4
+0.2
+0.6
+0.1
+0.7
+current
+Ct=1.1   It=0.0
+observation
+Ct=1.2   It=0.2
+based
+Ct=0.7   It=0.1
+greaseproof
+Ct=−5.7   It=2.8
+visible
+Ct=−0.5   It=0.7
+pick
+Ct=−0.8   It=0.9
+(a) Context tokens are suppressed
+(b) Content tokens are amplified
+Naive OPSD
+Future-OPSD
+The rollout of the trained student model (Naive OPSD):
+The current observation shows … The next logical step, based on
+the context …, is to place the prepared dough onto the greaseproof
+paper. Answer: B (wrong)
+The rollout of the trained student model (Future-OPSD):
+… The greaseproof paper is visible on the counter, but not yet in
+use. The next logical step … is to pick up the greaseproof paper.
+Answer: A (correct)
+Figure 4. Case study: why Future-OPSD improves video foresight reasoning. On an EgoPlan-IT example with Qwen3-VL-8B, we
+compare the initial token advantages and trained predictions of Naive OPSD and Future-OPSD. A frozen teacher scores the same initial
+rollout under the paired future z and a reference future ˜z from another video, giving token log-probabilities ℓz
+t and ℓ˜z
+t ; ℓS
+t is the past-only
+student’s log-probability. The context and content components are Ct = ℓ˜z
+t −ℓS
+t and It = ℓz
+t −ℓ˜z
+t . Before clipping and centering, Naive
+OPSD uses at = It + Ct, while Future-OPSD uses at = It + (1 −λ)Ct with λ = 0.75. Plotted values are initial advantages, with Ct
+and It below each token. Future-OPSD suppresses context information and amplifies decision-relevant content information, yielding the
+correct next-action prediction.
+Table 4. GRPO versus Future-OPSD. Models are trained on
+Future-L1 and evaluated on TwiFF-Bench and SEED-Bench-R1
+(mean of L1–L3). GRPO uses the student’s own base model as an
+LLM judge to provide rewards.
+Blue cells indicate in-domain
+evaluation.
+Train data
+Model
+Method
+TwiFF
+Avg
+SEED
+Avg
+Future-L1
+Qwen3-VL-2B
+GRPO
+52.1
+26.5
+Future-OPSD
+59.2
+35.5
+Qwen3-VL-8B
+GRPO
+66.1
+41.3
+Future-OPSD
+67.8
+44.8
+Qwen3.5-2B
+GRPO
+52.7
+32.8
+Future-OPSD
+55.9
+35.2
+Qwen3.5-9B
+GRPO
+64.4
+41.6
+Future-OPSD
+68.2
+43.5
+forms on both in-domain TwiFF-Bench and cross-domain
+SEED-Bench-R1 (Tab. 4). We see two possible causes: (1)
+open-ended answers lack verifiable rewards, and the LLM
+judge cannot provide accurate reward signals; (2) even with
+accurate rewards, reinforcing only the student’s own roll-
+Table 5. Text versus image privilege on Future-L1. Teachers
+receive future text or frames during Future-L1 training; students
+are evaluated on TwiFF-Bench. Blue parentheses show gains over
+the paired Naive OPSD row. Future frames outperform text, and
+Future-OPSD surpasses Naive OPSD with either modality.
+Method
+CoT
+Ans.
+Avg
+Qwen3-VL-8B
+Naive OPSD (z = text)
+63.4
+52.6
+58.0
+Future-OPSD (z = text)
+67.9 (+4.5)
+58.5 (+5.9)
+63.2 (+5.2)
+Naive OPSD (z = image)
+66.0
+56.4
+61.2
+Future-OPSD (z = image)
+71.9 (+5.9)
+63.5 (+7.1)
+67.8 (+6.6)
+Qwen3.5-9B
+Naive OPSD (z = text)
+64.4
+59.0
+61.7
+Future-OPSD (z = text)
+69.6 (+5.2)
+62.1 (+3.1)
+65.8 (+4.1)
+Naive OPSD (z = image)
+66.2
+59.1
+62.7
+Future-OPSD (z = image)
+70.4 (+4.2)
+66.1 (+7.0)
+68.2 (+5.5)
+outs may not yield cross-domain generalization.
+4.5. Which Design Matters? (DS2)
+Images outperform text. On Future-L1, z = text com-
+prises descriptions generated by Qwen3.5-27B from the
+7
+frames used as z = image. Both methods achieve higher
+scores with images (Tab. 5).
+A possible explanation is
+that captions compress the future before teacher scoring,
+whereas frames let the teacher select event evidence condi-
+tioned on the prediction question. The Qwen3-VL-8B im-
+age advantage is consistent with retaining cues omitted by
+question-agnostic captions, although the score comparison
+alone does not establish this mechanism.
+Our search identifies λ = 0.75 as the best overall set-
+ting. We sweep λ ∈{0, 0.25, 0.5, 0.75, 1} for both stu-
+dents on EgoPlan-IT and Future-L1 (Fig. 5). Combining
+contrastive and distillation signals improves performance,
+while pure contrast (λ = 1) collapses training on Future-
+L1. This is consistent with Sec. 3.4: at λ = 1, the KL
+anchor to the frozen future-conditioned teacher disappears,
+allowing policy drift and a larger surrogate gap without im-
+proved foresight.
+0
+0.25
+0.5
+0.75
+1
+λ
+45
+50
+55
+Avg. Acc.
+(a) SEED-Bench-R1
+0
+0.25
+0.5
+0.75
+1
+λ
+55
+60
+65
+Avg. Acc.
+(b) TwiFF-Bench
+Qwen3-VL-8B
+Qwen3.5-9B
+Base
+Figure 5. Search over the mixing weight λ. We sweep λ ∈
+{0, 0.25, 0.5, 0.75, 1} for Qwen3-VL-8B and Qwen3.5-9B on
+both tasks: (a) EgoPlan-IT training with SEED-Bench-R1 evalua-
+tion; (b) Future-L1 training with TwiFF-Bench evaluation. Among
+the tested values, λ = 0.75 achieves the best overall performance,
+balancing contrastive learning and distillation.
+A frozen teacher and a trainable vision encoder work
+best. We vary which components are updated during train-
+ing: the teacher (frozen at initialization or updated by EMA)
+and the student’s vision encoder (trained or frozen). Keep-
+ing the teacher frozen without EMA works best, suggesting
+that a fixed teacher gives a more stable reference, and jointly
+training the vision encoder further improves SEED-Bench-
+R1 accuracy (Fig. 6).
+4.6. What Is the Computational Cost? (DS3)
+Future-OPSD adds only constant-factor overhead to
+Naive OPSD. Let U denote student forward/backward op-
+timization, R rollout generation and shared policy scoring,
+and F one frozen-teacher forward pass. For matched up-
+date budgets, SFT costs U, Naive OPSD R + U + F, and
+Future-OPSD R+U +2F per query. The additional scoring
+pass reuses the teacher without extra generation, backpropa-
+gation, or optimizer states, preserving asymptotic complex-
+ity. Table 6 shows approximately 19–33% more FLOPs and
+L1
+L2
+L3
+Avg
+SEED-Bench-R1 level
+35
+40
+45
+50
+SEED-Bench-R1 acc. (%)
++6.7
++6.2
++10.2
++7.7
+Base
+EMA teacher
+Frozen ViT
+Default (frozen teacher, trained ViT)
+Figure 6. Teacher weights and vision encoder (Qwen3.5-2B,
+EgoPlan-IT). Each variant changes one setting of the default
+(frozen teacher, trained ViT).
+8–15% more training time than Naive OPSD with similar
+memory, consistent with bounded overhead.
+Table 6. Training cost of Qwen3-VL-8B (8 B200 GPUs). FLOPs
+in EFLOPs; Mem is the peak allocated memory averaged over the
+eight GPUs (GiB); Time is wall-clock hours (node-normalized for
+Future-OPSD on Future-L1).
+Data
+Method
+FLOPs
+Mem
+Time (h)
+Score
+EgoPlan-IT
+SFT
+4.0
+63.4
+0.62
+44.3
+Naive OPSD
+9.4
+53.6
+3.28
+48.9
+Future-OPSD
+11.2
+54.0
+3.77
+53.6
+Future-L1
+SFT
+1.4
+68.4
+0.20
+57.3
+Naive OPSD
+4.3
+43.0
+1.60
+61.2
+Future-OPSD
+5.7
+42.5
+1.73
+66.9
+5. Conclusion
+Existing methods for video foresight reasoning depend on
+annotations or external large models, and learn from the en-
+tire future clip even though not all of it is equally important.
+To address both limitations, we proposed Future-OPSD. It
+adopts on-policy self-distillation to turn naturally occur-
+ring past–future video pairs into a self-supervised signal,
+and optimizes a tractable lower bound of a foresight score
+that interpolates a contrastive privilege advantage with a
+teacher–student distillation advantage, helping the student
+focus on the most valuable future information.
+Experi-
+ments on Qwen3-VL and Qwen3.5 show that Future-OPSD
+improves video foresight reasoning without compromis-
+ing general video understanding, and scales with stronger
+teachers and more data. Token-level analyses confirm that it
+amplifies content information and suppresses context infor-
+mation. Although our conclusions are limited to the datasets
+and models studied here, we believe our findings provide
+useful guidance for improving VLM foresight reasoning.

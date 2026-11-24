@@ -1,0 +1,129 @@
+{
+  "title_zh": "AutoPILOT：面向实时游戏的可视化智能体运行框架",
+  "affiliations": [
+    "University of Illinois Urbana-Champaign",
+    "Georgia Institute of Technology",
+    "Northwestern University"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把实时智能体的核心瓶颈从感知与记忆转到 harness 如何把模型输出随时间转成动作，并给出公开基准与可复用设计，对实时 GUI、机器人和游戏 agent 都有意义。",
+    "novelty": 80,
+    "novelty_reason": "相对 VISTA 的单步循环，实质变化是让模型现场写宏或闭环控制器并管理唤醒与接管；但“代码即策略”和 temporal abstraction 并非全新，贡献在实时像素设定与系统化评测。",
+    "technical_depth": 85,
+    "technical_depth_reason": "基准、多模型、预算与速度扫描、组件消融和配对检验齐全，主要结论有数据支撑；但闭环读屏的独立增益不显著，首次实时通关仍弱，削弱方法叙事。"
+  },
+  "reading": {
+    "why_read": "提出 AutoPILOT 可视化智能体运行框架，单次模型调用可发送原子动作、开放环宏或现场编写的闭环控制器，并构建 AFK-Bench 实时游戏基准；相同预算下实时成功率从 VISTA 的 38.3% 提升到 68.6%。",
+    "task": "多模态模型在会暂停的游戏中表现不错，但真实界面和游戏不会等模型思考。现有 harness 多优化“看什么、记什么”，却沿用一次模型调用至多一个动作的单步循环，导致动作落在过期帧上，且重试很快耗尽模型调用预算；这直接限制实时游戏、实时 GUI 与机器人等在线场景。",
+    "findings": [
+      {
+        "point": "瓶颈在动作随时间的转换，而非感知或记忆。",
+        "detail": "VISTA 的视觉记忆与检查工具在实时下并不优于普通 Codex（38.3% 对 38.9%），说明只改善看到或记住的帧，无法解决动作执行时机。"
+      },
+      {
+        "point": "单步循环把延迟直接写进动作。",
+        "detail": "一次模型调用只产出一个动作，动作在模型思考数秒后才执行；实时时钟一开，VISTA 在 GameWorld 上从 84.1% 掉到 42.9%。"
+      },
+      {
+        "point": "单步循环还快速耗尽调用预算。",
+        "detail": "VISTA 的 222 次实时失败中 208 次耗尽 100 次调用，平均只执行 78 步；AutoPILOT 用 43 次调用发出 681 步，重试仍有预算。"
+      }
+    ],
+    "method": "针对动作时机与预算，AutoPILOT 在 VISTA 上增加两种执行模式：run_macro 发送不看屏幕的动作序列，python 让模型现场写 run(api) 闭环控制器，在沙箱中读帧、用普通代码判断并约每 0.4 s 动作，无需新模型调用；控制权在 handoff、程序结束、决策屏、场景变化或超时等唤醒事件交回模型。另构建 AFK-Bench，含 120 个浏览器游戏，按 idle 后果分三类，每局可用实时或暂停时钟，统一限制模型调用、游戏时间与环境步数。",
+    "results": "GPT-6.1 Sol、同预算：AFK-Bench 实时 68.6% 对 38.3%，hostile 62.5% 对 16.7%；GameWorld 实时 80.0% 对 42.9%，VISTA 从 84.1% 掉下来；达其最终成功率仅 0.2 倍成本。",
+    "limitations": "作者承认像素控制器更适合 2D 浏览器游戏，3D 杂乱场景更难；hostile 胜利多来自重启后重试，首次实时通关未解决；读屏控制器相对开环仅多 5 个胜局且不显著。"
+  },
+  "claims": [
+    {
+      "claim": "在 AFK-Bench 实时设定下，AutoPILOT 成功率为 68.6%，VISTA 为 38.3%。",
+      "numbers": [
+        "68.6",
+        "38.3"
+      ],
+      "source_span": "Abstract",
+      "quote": "AutoPILOT reaches 68.6% real-time success against 38.3% for VISTA"
+    },
+    {
+      "claim": "实时下 VISTA 与普通 Codex harness 持平（38.3% 对 38.9%），视觉记忆未带来总体增益。",
+      "numbers": [
+        "38.3",
+        "38.9"
+      ],
+      "source_span": "Sec. 5.2",
+      "quote": "38.3% vs. 38.9% with GPT-6.1 Sol"
+    },
+    {
+      "claim": "在 GameWorld 实时设定下，AutoPILOT 保持 80.0%，VISTA 从暂停时钟的 84.1% 降到 42.9%。",
+      "numbers": [
+        "80.0",
+        "84.1",
+        "42.9"
+      ],
+      "source_span": "Abstract; Table 6",
+      "quote": "it keeps 80.0% in real time while VISTA drops from 84.1% to 42.9%"
+    },
+    {
+      "claim": "VISTA 的 222 次实时失败中 208 次耗尽 100 次模型调用，平均仅执行 78 步。",
+      "numbers": [
+        "222",
+        "208",
+        "100",
+        "78"
+      ],
+      "source_span": "Sec. 5.3",
+      "quote": "208 of its 222 real-time failures end by exhausting its 100 calls, after only 78 steps per episode."
+    },
+    {
+      "claim": "AutoPILOT 用 43 次模型调用发送 681 步，约每次调用 16 步。",
+      "numbers": [
+        "43",
+        "681",
+        "16"
+      ],
+      "source_span": "Sec. 5.3",
+      "quote": "AutoPILOT instead sends 681 steps from 43 model calls, about 16 per call"
+    },
+    {
+      "claim": "闭环控制器不需新模型调用，约每 0.4 s 读帧并动作。",
+      "numbers": [
+        "0.4"
+      ],
+      "source_span": "Sec. 3.2",
+      "quote": "acts about every 0.4 s"
+    },
+    {
+      "claim": "AFK-Bench 含 120 个浏览器游戏，按 idle 时的环境反应分组。",
+      "numbers": [
+        "120"
+      ],
+      "source_span": "Abstract",
+      "quote": "AFK-Bench, 120 diverse browser games grouped by how they respond to inaction"
+    },
+    {
+      "claim": "在 AFK-Bench hostile real-time 子集上，AutoPILOT 为 62.5%，VISTA 为 16.7%。",
+      "numbers": [
+        "62.5",
+        "16.7"
+      ],
+      "source_span": "Sec. 1",
+      "quote": "62.5% vs. 16.7% of hostile real-time ones"
+    },
+    {
+      "claim": "AutoPILOT 以 VISTA 的 0.2 倍 API 成本达到其最终成功率。",
+      "numbers": [
+        "0.2"
+      ],
+      "source_span": "Abstract",
+      "quote": "reaches VISTA’s final success rate at 0.2× its API cost"
+    },
+    {
+      "claim": "读屏的闭环控制器相对开环版本只多 5 个胜局，差异不显著。",
+      "numbers": [
+        "5"
+      ],
+      "source_span": "Sec. F.3",
+      "quote": "Reading the screen at run time adds five wins, a difference that is not significant."
+    }
+  ]
+}

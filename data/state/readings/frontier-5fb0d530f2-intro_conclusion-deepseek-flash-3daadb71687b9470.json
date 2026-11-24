@@ -1,0 +1,93 @@
+{
+  "title_zh": "Claw-Eval：面向自主智能体的端到端可信评测",
+  "affiliations": [],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "面向真实部署中的 agent 可信评测，问题重要；统一轨迹审计、安全/鲁棒性打分和跨模态覆盖，并公开套件，对该方向有基础设施价值。",
+    "novelty": 76,
+    "novelty_reason": "不是新算法，但把多模态、多轮、可审计轨迹、内嵌安全约束和受控扰动收进同一执行/评分协议（Table 1）。",
+    "technical_depth": 84,
+    "technical_depth_reason": "三阶段隔离执行、三路独立证据、人工核验 rubric、多 trial 指标，以及阈值与 α 的排序稳定性、judge 自偏好检验，证据链较完整。"
+  },
+  "reading": {
+    "why_read": "提出端到端评测套件 Claw-Eval，用执行轨迹、审计日志与环境快照三路证据联合打分，统一考察完成度、安全与鲁棒性，覆盖通用服务、多模态与多轮对话。",
+    "task": "LLM 智能体已进入真实软件环境执行多步工作流，评测重点从“知道什么”转向“能否可靠完成目标”。现有基准多只校验最终产物，难以区分真实执行与伪造/捷径；安全与鲁棒性常被单独评测或缺失，且任务多局限于单一模态或交互范式，无法预测跨场景表现。",
+    "findings": [
+      {
+        "point": "输出级判分无法验证执行过程",
+        "detail": "只看最终答案时，智能体可伪造中间步骤或用捷径产出看似合理的结果；缺少轨迹证据也使安全违规与鲁棒性失败难以被发现。"
+      },
+      {
+        "point": "安全与鲁棒性未嵌入常规工作流",
+        "detail": "安全基准多在独立风险场景中测意识，普通任务很少内嵌约束；超时、限流等部署扰动也缺少受控注入，导致失败率被低估。"
+      },
+      {
+        "point": "单次、单模态评测混淆能力与一致性",
+        "detail": "单一任务或单轮运行会把偶然成功当作能力；只覆盖一种模态/交互范式，也无法反映模型在服务编排、视觉理解与多轮咨询间的排名变化。"
+      }
+    ],
+    "method": "Claw-Eval 将每次运行分为 Setup/Execution/Judge 三阶段，用时间防火墙隔离评分资源，并采集执行轨迹、服务端审计日志与环境快照三路证据。300个任务、9类，统一 schema 覆盖通用服务、多模态和多轮对话。评分把完成度、安全与鲁棒性耦合：$s = s_{\\text{safety}}(\\alpha s_{\\text{completion}} + \\beta s_{\\text{robustness}})$，安全是乘性门控，命中禁用动作即清零；完成度由2,159条 rubric 核验（确定性检查+LLM judge），鲁棒性用受控错误注入测恢复率。每任务跑3次，报告 Average Score、Pass@3、Pass^3，区分能力上限与可靠性下限。",
+    "results": "14个模型中 Overall Pass^3 最高70.4%（Claude-Opus-4.6），Multimodal 最高仅25.7%（GPT-5.4）；vanilla LLM judge 漏检44%安全违规与13%鲁棒性失败。",
+    "limitations": "鲁棒性只覆盖注入的传输故障，语义故障被归入完成度/安全评分；安全约束只嵌入部分任务。评分依赖 LLM judge 与模拟用户，仍有偏差风险，作者仅做有限自偏好检验。"
+  },
+  "claims": [
+    {
+      "claim": "任务套件包含 300 个任务、覆盖 9 个类别",
+      "numbers": [
+        "300",
+        "9"
+      ],
+      "source_span": "Abstract",
+      "quote": "300 human-verified tasks spanning 9 categories"
+    },
+    {
+      "claim": "全基准共 2,159 条细粒度 rubric 项",
+      "numbers": [
+        "2,159"
+      ],
+      "source_span": "Abstract",
+      "quote": "2,159 fine-grained rubric items"
+    },
+    {
+      "claim": "每个任务在独立 Docker 沙箱中跑 3 次 trial",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "§4.2 Evaluation settings",
+      "quote": "each task runs in an isolated Docker sandbox for 3 independent trials"
+    },
+    {
+      "claim": "评测覆盖 14 个前沿模型",
+      "numbers": [
+        "14"
+      ],
+      "source_span": "Abstract",
+      "quote": "14 frontier models"
+    },
+    {
+      "claim": "Claude-Opus-4.6 的 Overall Pass^3 为 70.4%",
+      "numbers": [
+        "70.4"
+      ],
+      "source_span": "§4.3 Main results",
+      "quote": "Claude-Opus-4.6 leads Pass^3 (70.4%) while Claude-Sonnet-4.6 leads Score (81.4%)"
+    },
+    {
+      "claim": "Multimodal 最高 Pass^3 仅 25.7%（GPT-5.4）",
+      "numbers": [
+        "25.7"
+      ],
+      "source_span": "§4.3 Main results",
+      "quote": "the highest Pass^3 is only 25.7% (GPT-5.4)"
+    },
+    {
+      "claim": "vanilla LLM judge 漏检 44% 的安全违规与 13% 的鲁棒性失败",
+      "numbers": [
+        "44",
+        "13"
+      ],
+      "source_span": "Introduction, contributions",
+      "quote": "A vanilla LLM judge misses 44% of the safety violations and 13% of the robustness failures detected by our hybrid grading pipeline"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "title_zh": "Agentic Harness Engineering：可观测性驱动的编程智能体 harness 自动演化",
+  "affiliations": [
+    "Fudan University",
+    "Peking University",
+    "Shanghai Qiji Zhifeng Co., Ltd",
+    "Shanghai Innovation Institute"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把 harness 工程从人工手艺变成可自动演化的闭环，并用跨 benchmark、跨基座的迁移实验说明演化出的组件是可复用的工程经验，对 coding agent 落地有直接价值；但只在 89 任务上做单次演化，外部复现性尚未验证。",
+    "novelty": 75,
+    "novelty_reason": "相对 ACE、TF-GRPO 等只动 prompt/playbook 的工作，AHE 联合演化 7 类 harness 组件；真正的差异点是三条可观测性支柱加可证伪的 change manifest，但端到端 harness 优化本身已有 Meta-harness 等先例。",
+    "technical_depth": 78,
+    "technical_depth_reason": "基线覆盖 3 个人工 harness 与 2 个自演化方法，另有 SWE-bench-verified 迁移、5 个基座的跨模型实验、组件级消融和自归因 precision/recall 量化；扣分在单次 campaign、每任务仅 k=2、Easy 层只有 4 个任务，无多 seed 方差，Hard 落后 Codex 的解释偏事后。"
+  },
+  "reading": {
+    "why_read": "提出 AHE，把 coding agent 的 harness 拆成 7 类文件级可编辑组件，用分层轨迹证据与带自预测的变更清单构成可回滚的可证伪闭环，十轮演化在 Terminal-Bench 2 上把 pass@1 从 69.7% 提到 77.0%。",
+    "task": "harness（system prompt、工具、middleware、记忆等模型外可编辑组件）对长程编程任务成败的影响可与基座模型相当，且最优 harness 随基座更换需重新适配；现实中这一适配全靠人工读轨迹、逐个改组件，跟不上模型迭代速度。已有的自动优化多只动单一表面——prompt、skill 或 in-context playbook——一旦要联合演化全部组件，就会因动作空间耦合、轨迹噪声和效果无法归因而退化成试错。",
+    "findings": [
+      {
+        "point": "动作空间异构且耦合，非 prompt 编辑难以落地",
+        "detail": "组件混写在数百行 prompt 与框架代码里，加一个 middleware 或改工具行为容易牵连其它部分并直接崩溃；不先把组件拆到固定挂载点，任何自动编辑都不可定位、不可回滚。"
+      },
+      {
+        "point": "可用信号被海量轨迹 token 淹没",
+        "detail": "每个任务 k 条轨迹合计数百万 token，真正的根因散落在原始消息里；演化 agent 无法直接消费日志，必须先蒸馏成可下钻的分层证据，才能形成可执行的修改方向。"
+      },
+      {
+        "point": "编辑效果无法归因，演化退化为试错",
+        "detail": "组件相互耦合使 pass@1 的波动难以归到某一次改动，缺预测-验证机制时无效编辑会不断累积并掩盖真实增益。"
+      }
+    ],
+    "method": "三条根因各配一个可观测面。组件可观测：在 NexAU 上把 system prompt、工具描述与实现、middleware、skill、sub-agent、长期记忆 7 类组件暴露为工作区文件，一次编辑即一个 git commit，回滚粒度到文件。经验可观测：Agent Debugger 为每个任务的 k 条轨迹建可导航环境，产出 per-task 报告（失败/成功根因 + 通过状态）与 benchmark 级 overview，原始 trace 留存供下钻，按需加载以省 token。决策可观测：每次编辑写入 change manifest，记录失败证据、推断根因、目标修复与预测修复/风险任务集，下一轮用任务级 delta 做 per-edit 判定并回滚未兑现项。另有可控性约束：只能写 workspace，runs/ 与 LLM 配置只读，seed prompt 不可删，杜绝关掉 verifier 之类的捷径；seed 仅含 bash 工具，避免预置能力污染归因。",
+    "results": "Terminal-Bench 2 的 89 个任务上十轮迭代把 pass@1 从 69.7% 提到 77.0%，高于 Codex（71.9%）与 TF-GRPO（72.3%）；冻结 harness 迁到 SWE-bench-verified 后 token 比 seed 少 12%，跨三个模型族再得 +5.1 到 +10.1pp。组件消融把增益定位在 tool、middleware、长期记忆，单换 system prompt 反而下降。",
+    "limitations": "单一演化 campaign、每任务仅 2 次 rollout，Easy 层只有 4 个任务，Hard 档仍低于 Codex；step budget 与 timeout 拟合在 GPT-5.4 high，跨模型增益与操作点耦合；回归预测接近随机，作者也承认自修改治理尚不完整。"
+  },
+  "claims": [
+    {
+      "claim": "十轮 AHE 迭代把 Terminal-Bench 2 上的 pass@1 从 69.7% 提升到 77.0%",
+      "numbers": [
+        "69.7",
+        "77.0"
+      ],
+      "source_span": "Abstract",
+      "quote": "ten AHE iterations lift pass@1 on Terminal-Bench 2 from 69.7% to 77.0%"
+    },
+    {
+      "claim": "AHE 超过人工设计的 harness Codex（71.9%）",
+      "numbers": [
+        "71.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "surpassing the human-designed harness Codex (71.9%)"
+    },
+    {
+      "claim": "自演化基线 TF-GRPO 在该基准上为 72.3%，低于 AHE",
+      "numbers": [
+        "72.3"
+      ],
+      "source_span": "Figure 1",
+      "quote": "TFGRPO (72.3)"
+    },
+    {
+      "claim": "在 SWE-bench-verified 上 AHE 的聚合 token 比 seed 少 12%，比 TF-GRPO 少 21%，比 ACE 少 32%",
+      "numbers": [
+        "32",
+        "21",
+        "12"
+      ],
+      "source_span": "Section 4.3, Cross-benchmark transfer",
+      "quote": "cuts aggregate tokens by 32% against ACE, 21% against TF-GRPO, and 12% against the seed"
+    },
+    {
+      "claim": "跨三个模型族的增益为 +5.1 到 +10.1 个百分点",
+      "numbers": [
+        "5.1",
+        "10.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "+5.1 to +10.1pp cross-family gains across three alternate model families"
+    },
+    {
+      "claim": "三个正增益的单组件变体之和为 +11.1pp，超过完整 AHE 的 +7.3pp，说明组件非可加",
+      "numbers": [
+        "11.1",
+        "7.3"
+      ],
+      "source_span": "Section 4.4.1",
+      "quote": "The three positive single-component gains sum to +11.1 pp against full AHE’s +7.3 pp"
+    },
+    {
+      "claim": "单独换入 AHE 的 system prompt 反而使总分下降 2.3pp",
+      "numbers": [
+        "2.3"
+      ],
+      "source_span": "Section 4.4.1",
+      "quote": "inserted alone it scores −2.3 pp aggregate"
+    },
+    {
+      "claim": "自预测的修复 precision/recall 为 33.7%/51.4%，约为随机基线 6.5%/10.6% 的 5 倍",
+      "numbers": [
+        "33.7",
+        "51.4",
+        "6.5",
+        "10.6"
+      ],
+      "source_span": "Section 4.4.2, Figure 4 left",
+      "quote": "Cross-iteration fix-precision of 33.7% and fix-recall of 51.4% sit roughly 5x above the random-prediction baselines of 6.5% and 10.6%"
+    },
+    {
+      "claim": "回归预测 precision/recall 仅 11.8%/11.1%，相对随机基线 5.6%/5.4% 只高出约 2 倍",
+      "numbers": [
+        "11.8",
+        "11.1",
+        "5.6",
+        "5.4"
+      ],
+      "source_span": "Section 4.4.2, Figure 4 right",
+      "quote": "cross-iteration regression-precision of 11.8% and regression-recall of 11.1% sit only about 2x above their random baselines of 5.6% and 5.4%"
+    }
+  ]
+}

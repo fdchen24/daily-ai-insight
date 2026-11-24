@@ -1,0 +1,125 @@
+{
+  "title_zh": "AI 辅助如何影响编程技能形成",
+  "affiliations": [
+    "Anthropic"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "用随机对照实验直接检验 AI 辅助对在岗学习新编程库的技能形成影响，问题重要且关系到人类监督 AI 代码的能力。",
+    "novelty": 84,
+    "novelty_reason": "把研究对象从代码产出与任务效率转向技能形成，结合预注册 RCT、录屏标注与交互模式划分，给出 AI 使用异质性的证据。",
+    "technical_depth": 82,
+    "technical_depth_reason": "有预注册、平衡表、pilot 修订、效应量与协变量控制，并用逐段录屏标注解释机制；但样本小、单一任务与短时测验限制外推。"
+  },
+  "reading": {
+    "why_read": "构建随机对照实验，让开发者在使用或不使用 AI 助手时学习新异步 Python 库 Trio，发现 AI 辅助降低概念理解、代码阅读与调试成绩且平均效率无显著提升，并归纳出高低分组的交互模式。",
+    "task": "软件开发中 AI 助手对新手产出提升最明显，但多数研究只看代码产出或任务完成时间；若工程师把不熟悉的任务大量交给 AI，可能失去理解、检查和调试 AI 代码的能力。论文用学习新异步 Python 库 Trio 的编程任务模拟在岗学习，检验 AI 辅助是否同时带来效率与技能形成。",
+    "findings": [
+      {
+        "point": "错误与独立排查是技能形成的关键路径",
+        "detail": "对照组中位错误数 3 次、AI 组 1 次，且对照组更多遇到 Trio 相关 TypeError/RuntimeWarning；这些错误迫使参与者理解 coroutine 与 await，与其更高的调试和概念成绩一致。"
+      },
+      {
+        "point": "AI 交互时间抵消了代码生成的速度收益",
+        "detail": "部分参与者总交互达 11 分钟、单条 query 达 6 分钟；完全委托者只占约 20% 且明显更快，整体平均任务时间因此无显著差异。"
+      },
+      {
+        "point": "认知投入方式而非是否使用 AI 决定学习结果",
+        "detail": "低分模式（完全委托、渐进依赖、迭代调试）平均 quiz 24%–39%，高分模式（概念提问、生成后理解、混合解释）65%–86%；直接粘贴与手动抄写无显著差异。"
+      }
+    ],
+    "method": "采用组间随机对照：52 名有 Python 经验但未用过 Trio 的开发者，经 warm-up 后限时完成两项 Trio 任务；处理组可用基于 GPT-4o 的 chat 助手，控制组仅用网页搜索与说明。随后所有人在无 AI 条件下完成 14 题、27 分的测验（概念、代码阅读、调试），题目经 pilot 与预注册评分标准校准；并逐段标注录屏，分析 query 类型、交互时长、错误与活跃编码时间。",
+    "results": "主实验 52 人（每组 26）在 27 分测验上，AI 组平均低 4.15 分（15.4%，d=0.738，p=0.010），任务时间无显著差异（p=0.391）；但完全委托子组明显更快，代价是落入低分区间。",
+    "limitations": "样本小且只覆盖单一 Trio 任务与短时学习窗口，AI 助手为 chat 形态；作者承认未验证 agentic 工具、真实工作激励、长期保持及人类辅助对照。"
+  },
+  "claims": [
+    {
+      "claim": "主实验共 52 人，每组 26 人",
+      "numbers": [
+        "52",
+        "26"
+      ],
+      "source_span": "Section 5.2.1",
+      "quote": "In our main study, 52 participants completed the task, 26 for each of the control and treatment groups."
+    },
+    {
+      "claim": "最终测验为 14 题、27 分",
+      "numbers": [
+        "14",
+        "27"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "The final evaluation we used contained 14 questions for a total of 27 points."
+    },
+    {
+      "claim": "AI 组测验平均低 4.15 分",
+      "numbers": [
+        "4.15"
+      ],
+      "source_span": "Section 5.2.2",
+      "quote": "There is a 4.15 point difference between the means of the treatment and control groups."
+    },
+    {
+      "claim": "AI 组测验低 15.4%，Cohen's d=0.738，p=0.010",
+      "numbers": [
+        "15.4",
+        "0.738",
+        "0.010"
+      ],
+      "source_span": "Section 1.1",
+      "quote": "reduction in the evaluation score by 15.4% or two grade points (Cohen’s d = 0.738, p = 0.010)"
+    },
+    {
+      "claim": "任务时间无显著差异，p=0.391",
+      "numbers": [
+        "0.391"
+      ],
+      "source_span": "Figure 6",
+      "quote": "p = 0.391"
+    },
+    {
+      "claim": "AI 组中位错误数 1 次、对照组 3 次",
+      "numbers": [
+        "1",
+        "3"
+      ],
+      "source_span": "Section 6.2",
+      "quote": "the median participant in the treatment group encountered only one error in the entire task, while the median for the control group was three errors."
+    },
+    {
+      "claim": "部分参与者总交互达 11 分钟",
+      "numbers": [
+        "11"
+      ],
+      "source_span": "Section 6.1",
+      "quote": "spending up to 11 minutes composing AI queries in total"
+    },
+    {
+      "claim": "单条 query 达 6 分钟",
+      "numbers": [
+        "6"
+      ],
+      "source_span": "Section 6.1",
+      "quote": "spent up to six minutes composing a single query"
+    },
+    {
+      "claim": "完全委托者约占总处理组的 20%",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Section 7",
+      "quote": "this group only accounted for around 20% of the participants in the treatment group."
+    },
+    {
+      "claim": "低分模式 quiz 24%–39%，高分模式 65%–86%",
+      "numbers": [
+        "24",
+        "39",
+        "65",
+        "86"
+      ],
+      "source_span": "Section 7",
+      "quote": "high-scoring interaction patterns (65%-86% quiz score) vs low-scoring interaction patterns (24%-39% quiz score)"
+    }
+  ]
+}

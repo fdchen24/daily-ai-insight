@@ -1,0 +1,120 @@
+{
+  "title_zh": "WeightCode：用权重空间编程为已训练网络安装新能力",
+  "affiliations": [],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把权重程序从一次性编辑变成可重跑、可叠加的构造过程，并在同等样本、检查与保留约束下与八种微调方法对照，对模型编辑与能力累积有明确意义。",
+    "novelty": 86,
+    "novelty_reason": "相对并行的权重读写工作，关键差异是保留“如何构造更新”的程序而非数值 $\\Delta W$，并用 rerun 与 copy 的对照证明可迁移性。",
+    "technical_depth": 86,
+    "technical_depth_reason": "协议严格匹配样本、检查次数与保留规则，划分 evidence/check/selection/held-out，并配合因果干预与复制基线，证据链完整。"
+  },
+  "reading": {
+    "why_read": "提出 Weight-Space Programming 框架 WeightCode：冻结的 LLM 写出可执行权重程序，直接读取并改写已训练网络的权重以安装新能力，程序可在独立训练网络上重跑与叠加。",
+    "task": "训练让网络获得能力，但往已训练网络里加一项新能力是另一回事：要把任务知识翻译成新计算，同时不能破坏原有能力。fine-tuning 与 model editing 依赖梯度或数值权重差，样本少时容易遗忘，更新也难以迁移到独立训练的网络。",
+    "findings": [
+      {
+        "point": "更新只留下数值差，构造过程丢失",
+        "detail": "fine-tuning 与 model editing 只留下数值权重差 $\\Delta W$；独立训练的网络把相近功能放在不同权重坐标，直接复制 $\\Delta W$ 收益可忽略。"
+      },
+      {
+        "point": "新能力可从已有计算挂接，不必从输出端重学",
+        "detail": "梯度方法在 64 个样本上从输出端拟合条件，受保留约束时收益有限；把规则挂到网络已算出的组合结构上，只需改很少权重。"
+      },
+      {
+        "point": "网络内存在可写入的闲置接口",
+        "detail": "ViT-Lite 的 MLP 中有对干净图像近乎闲置的单元，改写成仅在 token 沿噪声方向移动时开启的门，才能在纠错时不损干净精度。"
+      }
+    ],
+    "method": "WeightCode 把“构造更新”与“执行更新”分开：冻结 LLM 在持有 $W$、前向代码与任务知识 $I$ 的 Python kernel 中交替检查网络、写候选程序、跑 check，学到的是 $W' = p(W,I)$ 这段代码而非权重值本身。程序只用权重/激活统计、SVD/PCA、闭式拟合与单元消融，不在网络输出上做梯度优化；check split 上同时计新条件修好数与旧条件损失，超限或没有合格候选就不改网络。保留的程序可在同架构的独立训练网络上重跑，重新测量目标网络并生成其坐标下的编辑；后续程序读取已编辑网络，并把此前条件一并纳入 check。",
+    "results": "SCAN 未见组合 0→99.8% EM 只改 257 个权重；BabyAI 用 8 条演示把 pickup 从 0 提到 98.4%；ImageNet 四个程序 net gain 8.84–17.62，最佳微调 +8.67/+3.38；重跑保留 83–110% 增益。",
+    "limitations": "程序由 Claude Opus 写出，质量与 8 次检查预算绑定；验证限于 ViT-Lite、ResNet、SCAN、BabyAI 等小网络，单次编辑上限 20% 权重，能否用于现代大模型未验证。"
+  },
+  "claims": [
+    {
+      "claim": "每个对比方法只拿到 64 张损坏图像与 64 张干净图像",
+      "numbers": [
+        "64"
+      ],
+      "source_span": "Sec. 4.1, ImageNet 对比设置",
+      "quote": "the same 64 labeled images of a corruption and 64 labeled clean images"
+    },
+    {
+      "claim": "程序编辑上限为网络权重的 20%",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Sec. 3.1, implementation constraints",
+      "quote": "a maximum edit size of 20% of the network’s weights"
+    },
+    {
+      "claim": "一次会话有 8 次检查",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Sec. 3.1, Writing and checking",
+      "quote": "A session has 8 checks."
+    },
+    {
+      "claim": "SCAN 上未见命令组合的 exact match 从 0.0% 升到 99.8%",
+      "numbers": [
+        "0.0",
+        "99.8"
+      ],
+      "source_span": "Sec. 1 / Sec. 4.1, SCAN add-primitive",
+      "quote": "from 0.0% to 99.8%"
+    },
+    {
+      "claim": "该程序只修改 257 个权重",
+      "numbers": [
+        "257"
+      ],
+      "source_span": "Sec. 1, SCAN 结果",
+      "quote": "modifies 257 weights"
+    },
+    {
+      "claim": "BabyAI 只给 8 条演示",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Sec. 3.3 / Sec. 4.1",
+      "quote": "Given 8 demonstrations of the mission pick up"
+    },
+    {
+      "claim": "pickup 成功率从 0.0% 提升到 98.4%",
+      "numbers": [
+        "0.0",
+        "98.4"
+      ],
+      "source_span": "Sec. 4.1, BabyAI",
+      "quote": "raises pickup success from 0.0% to 98.4%"
+    },
+    {
+      "claim": "ImageNet 上四个权重程序的 net gain 为 8.84–17.62 分",
+      "numbers": [
+        "8.84",
+        "17.62"
+      ],
+      "source_span": "Abstract / Sec. 1",
+      "quote": "four weight programs achieve 8.84–17.62 points of net gain"
+    },
+    {
+      "claim": "最佳八种微调方法的 net gain 为 +8.67 与 +3.38",
+      "numbers": [
+        "8.67",
+        "3.38"
+      ],
+      "source_span": "Sec. 4.1, ImageNet 对比",
+      "quote": "against +8.67 and +3.38 for the best of eight fine-tuning methods"
+    },
+    {
+      "claim": "十个程序在独立训练网络上重跑保留 83–110% 的源网络增益",
+      "numbers": [
+        "83",
+        "110"
+      ],
+      "source_span": "Sec. 1 / Sec. 4.3",
+      "quote": "ten weight programs retain 83–110% of their source-network gains"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "title_zh": "Agentic Harness Engineering：以可观测性驱动的 coding agent harness 自动演化",
+  "affiliations": [
+    "Shanghai Qiji Zhifeng Co., Ltd."
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把 harness 工程从人工手艺变成可自动迭代的闭环，直接针对 coding agent 落地的关键瓶颈（harness 与基座模型绑定、需反复重调），并给出跨 benchmark、跨模型族的迁移证据。",
+    "novelty": 80,
+    "novelty_reason": "与只改 prompt/skill/playbook 的自进化方法不同，AHE 同时演化七类组件，并把每次编辑写成带预测修复集与风险回归集的 manifest、由下一轮任务级 delta 裁决，机制层面是新的。",
+    "technical_depth": 82,
+    "technical_depth_reason": "最小 seed、只读 runs/verifier/模型配置、每任务 k≥2 rollout、组件级消融与跨 benchmark/跨基座迁移一并给出；但只有单次十轮 campaign、单一优化目标，自归因对回归不敏感，Hard 档仍略逊 Codex。"
+  },
+  "reading": {
+    "why_read": "提出 Agentic Harness Engineering (AHE)，用组件、经验、决策三层可观测性把 harness 编辑变成文件级可回滚、可证伪的契约，十轮迭代将 Terminal-Bench 2 的 pass@1 从 69.7% 提到 77.0%。",
+    "task": "coding agent 在长程软件工程任务上的表现，很大程度由模型之外的 harness（system prompt、工具、middleware、记忆等）决定，且最优 harness 与基座模型绑定，换模型就得重调。目前这轮适配靠人工读轨迹、手写改动，模型迭代速度已让手工回路跟不上；而已有的自动进化方法基本只动 prompt、skill 或 in-context playbook，不敢碰其余组件。",
+    "findings": [
+      {
+        "point": "原始轨迹的信号密度过低",
+        "detail": "可操作的失败模式散落在数百万 token 的原始 message 里，演化 agent 拿到的是日志而不是结构化根因，无法据以决策。"
+      },
+      {
+        "point": "harness 组件紧耦合，动作空间不明确",
+        "detail": "prompt 之外的工具与 middleware 改动牵一发动全身，代价高、易出错，于是自动优化退化为只改 prompt 这一层。"
+      },
+      {
+        "point": "编辑效果缺乏可归因的判据",
+        "detail": "没有与编辑绑定的可检验预测，就分不清增益来自哪次改动，长期演化滑向 trial-and-error，无效甚至有害的编辑留在仓库里。"
+      }
+    ],
+    "method": "对应三条根因：NexAU 把七类组件（prompt、工具描述与实现、middleware、skill、sub-agent、长期记忆）拆成固定路径下的独立文件，失败模式能映射到单一组件类，每次编辑即一次 git commit，白得文件级 diff 与回滚；seed 只留一个 shell 工具，避免初始配置污染归因。Agent Debugger 把每条轨迹消息拆成文件、组织成可用 shell 下钻的文件系统，逐任务产出根因报告加 benchmark 级总览，原始轨迹保留备查，按需展开省 token。Evolve Agent 只写 harness workspace（runs、verifier、模型配置只读，seed prompt 不可删），每个编辑在 manifest 里登记证据、根因、修复与预测的修复/风险回归集合，下一轮用任务级 delta 求交裁决，否决即按文件回滚。",
+    "results": "Terminal-Bench 2 上十轮迭代把 pass@1 从 69.7% 提到 77.0%，超过人工设计的 Codex（71.9%）与两个自进化基线；冻结 harness 迁到 SWE-bench-verified 仍领先，且比 seed 少 12% token；换五个基座增益 +2.3 到 +10.1pp。",
+    "limitations": "进化只在单一 benchmark 与单一基座档位上做；作者承认组件收益非可加、自我归因对回归不敏感，timeout 与 step budget 绑定 GPT-5.4 high，换推理档位增益明显缩水。"
+  },
+  "claims": [
+    {
+      "claim": "十轮 AHE 迭代把 Terminal-Bench 2 的 pass@1 从 69.7% 提升到 77.0%",
+      "numbers": [
+        "69.7",
+        "77.0"
+      ],
+      "source_span": "Abstract; Introduction, 第 3 段",
+      "quote": "ten AHE iterations lift pass@1 on Terminal-Bench 2 from 69.7% to 77.0%"
+    },
+    {
+      "claim": "该结果超过人工设计的 Codex harness 的 71.9%",
+      "numbers": [
+        "71.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "surpassing the human-designed harness Codex-CLI (71.9%)"
+    },
+    {
+      "claim": "冻结后的 harness 在 SWE-bench-verified 上聚合成功率最高，且比 seed 少用 12% token",
+      "numbers": [
+        "12"
+      ],
+      "source_span": "Abstract",
+      "quote": "on SWE-bench-verified it tops aggregate success at 12% fewer tokens than the seed"
+    },
+    {
+      "claim": "在五个替代基座上 pass@1 全部为正增益，范围为 +2.3 到 +10.1pp",
+      "numbers": [
+        "2.3",
+        "10.1"
+      ],
+      "source_span": "Section 4.3 Cross-model transfer",
+      "quote": "five positive pass@1 gains from +2.3 to +10.1 pp"
+    }
+  ]
+}

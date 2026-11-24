@@ -1,0 +1,91 @@
+{
+  "title_zh": "Plan4D：可规划的生成式 4D 世界模型",
+  "affiliations": [],
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "把动作条件世界模型从 RGB 合成推进到外观与稠密 4D 几何（深度、相机射线、点云、场景流）的同步生成，并给出绕开配对 4D 标注缺口的可行路线。",
+    "novelty": 72,
+    "novelty_reason": "模型缝合本身承接 VIST3A、Geometry Forcing、Gen3R 一线，实质新意在于把它用于动作条件的未来 4D 生成，以只读 scene-flow 头补 DA3 的运动能力，并让冻结解码器充当几何 critic。",
+    "technical_depth": 74,
+    "technical_depth_reason": "注入块由正则化线性拟合而非启发式选定，蒸馏与 GT 监督混合，几何损失经可微冻结解码器回传到干净 latent 估计，设定可检验；但材料中只见场景流表，且缝合在 PointOdyssey 上反而变差，动作条件生成与视觉指标被截断。"
+  },
+  "reading": {
+    "why_read": "提出 Plan4D，把视频生成器 LongCat-Video 的 VAE latent 经可学习缝合层注入冻结的 Depth Anything 3 编码块，使同一 latent 轨迹一次前向就解码出 RGB、深度、相机射线与场景流。",
+    "task": "给定观测视频上下文与文本动作，一次性前向预测未来 RGB 帧及其稠密 4D 几何——深度、相机射线与位姿、点云、场景流，使智能体能据此在显式 3D 环境里规划并执行长时程、细粒度动作。现有世界模型多把未来预测做成逐帧 RGB 合成，看起来逼真但物理落地弱、几何随时间漂移；4D 框架则只从观测帧推断运动，无法按动作生成未来。核心瓶颈是缺少同时带动作标注与稠密 4D 标注的数据。",
+    "findings": [
+      {
+        "point": "动作标注与稠密 4D 标注天然分散在不同数据集",
+        "detail": "Action-100M 有细粒度动作却无 3D 标注，动态 3D 数据集规模小或缺自然动作，视频-文本数据集又缺物理细粒度动作描述，所以无法用配对监督直接训练 4D 世界模型。"
+      },
+      {
+        "point": "像素生成、动作世界模型与 3D 重建是互不相通的孤立系统",
+        "detail": "三者虽在同一个物理世界上训练，表示空间却不共享：像素生成器物理一致性弱，3D 模型以重建为中心且静态，4D 框架只能从观测帧推断运动，无法接受动作条件生成未来。"
+      },
+      {
+        "point": "DA3 的冻结 token 已含跨帧运动线索，缺的只是读出头",
+        "detail": "作者分析显示冻结编码器 token 已编码跨帧运动信息，因此补一个轻量 DPT 风格头即可得到稠密 3D 运动，不必重训运动模型；该头还反哺深度、相机与重建精度。"
+      }
+    ],
+    "method": "把“取得几何先验”与“生成未来动态”解耦：几何交给冻结的 Depth Anything 3，动态交给预训练视频生成器 LongCat-Video，再用缝合模块接到同一 latent 轨迹。为补运动能力，在 DA3 冻结编码器的中间 token map 上接轻量 DPT 风格 scene-flow 头，预测帧内相机基下的前向 3D 位移，再以 $\\mathbf{R}_{t\\to 0}$ 只做旋转对齐到首帧基，保住向量语义。缝合层 $S_\\theta$ 是 3D 卷积，把上采样后的 Wan 2.1 VAE latent 投到 DA3 第 $k$ 块，$k$ 与初始化由正则化线性拟合选为“从视频 latent 最线性可达”的块。缝合解码器先蒸馏、再加 GT 几何微调，视频 DiT 冻结；随后它作为可微几何 critic 参与联合训练，损失为 $\\mathcal{L}_{\\text{joint}}=\\mathcal{L}_{\\text{FM}}+\\lambda_{\\text{geo}}\\mathcal{L}_{\\text{geo}}(\\mathcal{D}_{\\text{stitch}}(\\hat{\\bm{z}}_0))$，几何项作用在由速度场换算出的干净 latent 估计上，无 4D 标注的动作视频因此也能提供几何监督。",
+    "results": "场景流上缝合版 MOVi-F EPE 13.10、APD0.05 93.32，训练帧数仅 0.97M，低于表中全部对比方法；但 Dynamic Replica EPE 0.61 仍不及 Zero-MSF+GT 的 0.45，PointOdyssey 缝合后 EPE 由 0.93 升到 1.22，劣于未缝合版本。",
+    "limitations": "两个基座全程冻结，推理成本与域偏移未评估；缝合接口并非处处无损（PointOdyssey 变差）；动作条件 4D 生成与视觉保真度的结果在给定材料中被截断，作者声称的 SOTA 无法核验。"
+  },
+  "claims": [
+    {
+      "claim": "在 MOVi-F 场景流上，缝合版 Plan4D 的 EPE 为 13.10",
+      "numbers": [
+        "13.10"
+      ],
+      "source_span": "场景流表，行 'Ours (Stitched)'，MOVi-F 列",
+      "quote": "13.10"
+    },
+    {
+      "claim": "同一设定下 APD0.05 为 93.32",
+      "numbers": [
+        "93.32"
+      ],
+      "source_span": "场景流表，行 'Ours (Stitched)'，MOVi-F 列",
+      "quote": "93.32"
+    },
+    {
+      "claim": "Plan4D 在表中仅用 0.97M 训练帧，低于所有对比方法",
+      "numbers": [
+        "0.97"
+      ],
+      "source_span": "场景流表，Train frames / M 列",
+      "quote": "0.97"
+    },
+    {
+      "claim": "Dynamic Replica 上缝合版 Plan4D 的 EPE 为 0.61",
+      "numbers": [
+        "0.61"
+      ],
+      "source_span": "场景流表，行 'Ours (Stitched)'，Dynamic Replica 列",
+      "quote": "0.61"
+    },
+    {
+      "claim": "同数据集上 Zero-MSF + GT 的 EPE 为 0.45，优于 Plan4D",
+      "numbers": [
+        "0.45"
+      ],
+      "source_span": "场景流表，行 'Zero-MSF [63] + GT'，Dynamic Replica 列",
+      "quote": "0.45"
+    },
+    {
+      "claim": "PointOdyssey 上缝合版 EPE 为 1.22",
+      "numbers": [
+        "1.22"
+      ],
+      "source_span": "场景流表，行 'Ours (Stitched)'，PointOdyssey 列",
+      "quote": "1.22"
+    },
+    {
+      "claim": "同数据集上未缝合的 DA3 版本 EPE 为 0.93，缝合后反而变差",
+      "numbers": [
+        "0.93"
+      ],
+      "source_span": "场景流表，行 'Ours (DA3)'，PointOdyssey 列",
+      "quote": "0.93"
+    }
+  ]
+}

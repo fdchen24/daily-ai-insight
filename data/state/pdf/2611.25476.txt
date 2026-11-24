@@ -1,0 +1,1687 @@
+WeightCode: Installing New Capabilities into Neural Networks
+via Weight-Space Programming
+Bo Li1,2,∗, Taoyong Cui3,∗,†, Bob Zhang1,‡, Mengran Li4,
+Chengyang Zhang5, Yang Zhang2, Pheng Ann Heng3,
+Wanli Ouyang3, Zhenfei Yin6,‡, Yingcheng Wu7,‡, Ling Yang8,‡
+1University of Macau
+2National University of Singapore
+3The Chinese University of Hong Kong
+4Sun Yat-sen University
+5Sichuan University
+6University of Oxford
+7Stanford University
+8Peking University
+∗Equal contribution.
+†Project lead.
+‡Corresponding authors.
+Code: https://github.com/Gen-Verse/WeightCode
+a An executable program installs a new capability into a trained network
+b Task knowledge becomes capabilities in trained networks
+c One program recomputes effective edits on other networks
+d New programs build on already edited networks
+trained network W
++
+rule
+demos
+examples
+task knowledge I
+LLM
+frozen LLM
+writes
+checks
+excerpt, Fig. 3
+...
+W1[j1] = kappa * d
+b1[j1] = -kappa * t
+weight program p
+W′ = p(W, I)
+without gradients
+p
+updated network W′
+runs without the LLM
+program p is kept
+rerun on other networks (c)
+From a rule SCAN
+Use a word seen only alone inside known commands
+before
+after
+jump twice
+→
+p
+grammar
+jump twice
+→ JUMP JUMP
+known:  walk twice → WALK WALK   ·   jump → JUMP
+0% → 99.8%
+exact match
+on new commands
+old commands unchanged · 257 weights changed
+trained on grammar data: 99.6% · 152,718 weights
+From 8 demonstrations BabyAI
+Add a new action to a navigation policy
+before
+after
+p
+8 demos
+carried
+carried
+reaches the ball
+picks it up
+0% → 98.4%
+pickup
+success
+navigation kept · old mission +0.4 pt
+behavior cloning on the 8 demos: 1.1%
+From labeled examples ImageNet
+Recognize noisy images among 1,000 classes
+before
+after
+top-1 21.7%
+1  32.4%
+2  39.7%
+top-1, two programs
+p
+64 + 64 images
++10.47 / +17.62 pt
+net gain
+under noise
+clean top-1 −0.25 / −0.40 pt
+best of 8 fine-tuning methods: +8.67 pt
+p
+noise
+program p
+rerun p on each network, with its own I
+copy the weight edit ∆W made on the source network
++28.14 pt
+−0.10 pt
+mean gain
+under noise
+mean gain
+under noise
+n = 5 independently trained ViT-Lites · mean over the 5 · selection split
+W0
+W1
+W2
+p1
+noise
+p2 × 6
+contrast
+robustness to
+noise
+contrast
+base
+base
+base
+added
+kept |∆| ≤ 0.23 pt
++5.2 to +14.5 pt
+six alternative p2, each written for W1; changes relative to W1 · held-out test
+Figure 1.
+WeightCode installs, reuses, and extends capabilities through Weight-Space Programming. (a) A frozen LLM uses a
+trained network’s weights W and task knowledge I to write an executable weight program p, which computes W ′ = p(W, I) without
+gradients. (b) Weight programs turn rules, demonstrations, and labeled examples into new capabilities across language, navigation, and
+visual recognition while preserving existing capabilities. (c) Rerunning the same program recomputes effective edits across independently
+trained networks, whereas copying its fixed weight edit does not reproduce the gain. (d) Programs written for an already edited network
+install a second capability while preserving the first.
+1
+arXiv:2611.25476v1  [cs.LG]  19 Nov 2026
+Abstract
+Neural networks encode learned capabilities in their
+weights, yet extending those capabilities with explicit task
+knowledge remains a fundamental challenge.
+Here we
+show that Weight-Space Programming (WSP), in which ex-
+ecutable programs read, construct or modify a network’s
+weights directly, can install new capabilities within trained
+neural networks. WeightCode, a WSP framework, uses a
+frozen language model to write executable weight programs
+that install new computations into trained neural networks
+using task knowledge and their existing weights, without
+gradient-based training. Once installed, the new capabil-
+ities run independently of the language model.
+Given a
+grammar or eight demonstrations, weight programs enable
+previously unseen command compositions (0% to 99.8% ex-
+act match) and a new pickup action (0% to 98.4% success),
+while preserving the original command and navigation ca-
+pabilities. On ImageNet, four weight programs achieve net
+gains of 8.84–17.62 points while preserving clean accuracy,
+outperforming the best of eight fine-tuning methods under
+matched examples, checks, and retention constraints. In a
+Vision Transformer, causal interventions show that installed
+noise-correction gates drive robustness gains, while their
+selective activation preserves clean accuracy. Rerun on five
+independently trained Vision Transformers without further
+language model calls, ten weight programs retain 83–110%
+of their source-network gains on average, whereas copy-
+ing their fixed weight edits yields negligible gains. Six pro-
+grams written for an already edited network add 5.23–14.50
+points of contrast robustness while retaining the previously
+installed noise gain. Together, these results establish WSP
+as a new route to acquiring and accumulating capabilities
+in trained neural networks through reusable weight pro-
+grams.
+1. Introduction
+Learning a capability during training and installing one
+into an already trained neural network are distinct prob-
+lems. The latter requires translating task knowledge into
+new computations while preserving previously acquired ca-
+pabilities. Unlike software, whose functionality can be ex-
+tended through executable instructions, neural networks en-
+code learned computations in distributed weights. Can exe-
+cutable programs directly construct new capabilities within
+these weights, and can subsequent programs build upon
+those already installed?
+Following [1, 2], we call this paradigm Weight-Space
+Programming (WSP): executable programs read, construct
+or modify the weights of a neural network directly. Its arti-
+fact, the executable weight program, retains how a network-
+specific update is constructed, rather than only the numer-
+ical weight changes it produces. Fine-tuning [3, 4], model
+editing [5, 6], and test-time adaptation [7, 8] provide es-
+tablished ways to update trained networks.
+Meanwhile,
+large language models (LLMs) can generate and refine exe-
+cutable programs through evaluation feedback [9, 10] and
+have recently been shown to inspect and modify neural
+weights directly [1]. Four fundamental questions define the
+scope of WSP:
+• Installation. Can a weight program install a new capa-
+bility into a trained network while preserving previously
+acquired capabilities?
+• Mechanism. What computation does a weight program
+install, and how does it produce the new capability?
+• Reuse. Can the same weight program be rerun without the
+LLM to construct effective edits in independently trained
+networks?
+• Succession. Can a new weight program extend an already
+edited network while preserving capabilities installed by
+earlier programs?
+Here we introduce WeightCode, a WSP framework in
+which a frozen LLM writes executable weight programs
+that install, reuse and accumulate capabilities in trained
+neural networks (Fig. 1a). A weight program p reads the
+network’s weights W and task knowledge I, such as a rule,
+demonstrations, or labeled examples, and constructs up-
+dated weights W ′ = p(W, I). Evaluation feedback selects
+programs that improve the new capability while preserving
+existing behavior. The updated network executes the in-
+stalled computation within its original architecture, without
+the LLM at inference. The retained program can be rerun
+on compatible networks to construct network-specific edits.
+New programs can then extend networks already modified
+by earlier programs.
+Across language, navigation, and visual recognition,
+weight programs transform rules, demonstrations, and la-
+beled examples into new capabilities (Fig. 1b, Fig. 2).
+On SCAN, a program modifies 257 weights to raise exact
+match on previously unseen command compositions from
+0.0% to 99.8%; on BabyAI, eight demonstrations enable
+a new pickup action with 98.4% success. On ImageNet,
+four weight programs achieve 8.84–17.62 points of net gain
+under corruption while preserving clean accuracy, outper-
+forming eight fine-tuning methods under matched exam-
+ples, checks, and retention constraints. Causal interventions
+reveal how installed noise-correction gates produce robust-
+ness gains while their selective activation preserves clean
+accuracy (Fig. 3). Rerun on five independently trained Vi-
+sion Transformers, ten weight programs retain 83–110%
+of their source-network gains on average, whereas copying
+fixed weight edits yields negligible gains (Fig. 1c, Fig. 4).
+Six second-round programs written for an already edited
+network add contrast robustness while retaining the pre-
+viously installed noise robustness (Fig. 1d, Fig. 5).
+To-
+2
+gether, these findings establish WSP as a new paradigm
+for extending trained neural networks: capabilities can be
+programmed into existing weights, reconstructed across in-
+dependently trained networks, and progressively expanded
+through successive weight programs.
+2. Related work
+Existing approaches to modifying trained networks differ in
+how they construct, represent and reuse changes to model
+parameters.
+Learning and retaining capabilities.
+Fine-tuning adds a
+capability by optimizing parameters on labeled data, in full
+or through parameter-efficient modules [3, 11], and regu-
+larized transfer keeps the new parameters close to the old
+ones [12]. Sequential training overwrites earlier capabili-
+ties [13, 14], and continual learning limits this forgetting by
+regularizing parameters [15] or outputs [4], or by replay-
+ing stored examples [16]. Test-time adaptation adjusts a
+network to a new input condition from unlabeled inputs,
+by re-estimating normalization statistics [7], minimizing
+prediction entropy [8, 17] or training on a self-supervised
+task [18].
+Targeted and lifelong model editing.
+Model editing
+changes a trained network’s behavior on target inputs while
+preserving it elsewhere: by gradient steps on a network
+trained to be editable [19], by learned editor networks [20],
+or by closed-form rewrites of layers viewed as associative
+memories [5, 6, 21, 22]. Lifelong editing applies edits in
+sequence, for example by storing each one in a discrete key-
+value codebook attached to a layer [23].
+Composing and transferring weight changes.
+Task
+arithmetic adds and subtracts the weight differences of fine-
+tuned models [24], and model merging resolves the interfer-
+ence between such differences when it combines them [25].
+Both act on models that share a pretrained starting point,
+and merging independently trained networks first aligns
+their units by permutation [26]. These methods operate on
+learned parameter differences, whose transfer and combina-
+tion depend on the relationship between model parameteri-
+zations.
+Program discovery and weight-space methods.
+Lan-
+guage models have been used to discover executable algo-
+rithms, reward functions, policies, skills and training objec-
+tives [9, 10, 27–30], and symbolic search and meta-learning
+discover optimizers [31, 32]. Separately, work on hyper-
+networks, weight-space learning and program-to-network
+compilation has established several ways to construct or an-
+alyze neural computation through weights [33–39].
+Weight-Space
+Programming.
+In
+concurrent
+work,
+Takehi et al. [1] show that a frontier LLM can read the
+weights of small networks, write networks from zero
+weights and edit trained networks, and Li et al. [2] have
+an LLM write an editor that refits the output weights or
+coefficients of trained predictors from measured feedback.
+These studies show that language models can carry out
+WSP, inspecting and modifying neural weights directly.
+WeightCode shows that the weight programs that construct
+such updates, retained after the update, can be rerun on in-
+dependently trained networks and extended by subsequent
+programs, so that the construction procedure itself becomes
+a reusable object.
+3. WeightCode
+WeightCode realizes WSP by separating the construction
+of an update from its execution: a frozen LLM writes
+an executable weight program, and the program computes
+network-specific weight changes (Fig. 1a).
+3.1. Installing a capability with a program
+Weight programs.
+A weight program p is code that takes
+a trained network’s weights W and task knowledge I, what
+is known about a new capability, and returns new weights:
+W ′ = p(W, I),
+∆W = p(W, I) −W.
+(1)
+∆W is the weight edit of one run. It depends on the network
+the program reads as well as on the program, so the same
+program run on another network computes another edit. A
+program may read every weight, run the network’s forward
+pass on inputs and read I. The updated network keeps its ar-
+chitecture and forward code, with only its weights changed,
+and runs on its own at inference. The experiments impose
+additional implementation constraints, including sandboxed
+execution and a maximum edit size of 20% of the network’s
+weights (Sec. A.1).
+What a program writes.
+In WeightCode, the form of the
+update is chosen for each capability and each network. The
+LLM proposes candidate computations and weight mod-
+ifications from the network’s weights, its activations and
+the task knowledge, and evaluation feedback determines
+which candidate is kept. The programs reported here con-
+nect the new capability to computation the network already
+performs (Tab. 9). The Gaussian-noise program for the ViT-
+Lite, for example, measures how noise shifts the patch to-
+kens, finds MLP units that are nearly idle on clean images,
+and rewrites two of them in each of three blocks as gates that
+open when a token moves along the noise direction and then
+subtract the measured shift (Fig. 3a). Other programs reuse
+the network’s own representations, such as the embeddings
+of known primitives on SCAN or of a known instruction in
+the BabyAI policy.
+3
+Writing and checking.
+The LLM writes the program in
+one session, in a Python kernel that holds W, the for-
+ward pass and I. Program construction alternates between
+inspecting the network, writing candidates and evaluating
+them. A check runs a candidate on the network and returns
+two counts on a check split that I does not contain: Snew,
+the inputs of the new condition that the candidate fixes mi-
+nus those it breaks, and Sold, the same count on old inputs.
+A session has 8 checks.
+Keeping existing behavior.
+Preservation is evaluated on
+task-specific reference conditions: clean-image accuracy
+for the image classifiers, the previously supported com-
+mands or mission for the sequence and navigation tasks,
+and the previously installed conditions for successive up-
+dates. Keeping these is part of how a program is chosen.
+The kept program is the checked candidate with the high-
+est Snew + Sold among those with Sold ≥−20, a loss of at
+most 0.5% of 4,000 clean check images (the retention rule).
+On SCAN the bound is 5 of 1,000 old commands and on
+BabyAI 3 of 500 old episodes. If no candidate qualifies,
+the network is left unchanged. The bound is applied on the
+check split, and the reference conditions are measured on
+held-out inputs (Sec. 3.3).
+Feedback without gradients.
+Weight programs construct
+updates through direct computations on weights, activations
+and forward passes, namely weight and activation statistics,
+SVD and PCA, label-free closed-form fits and single-unit
+ablations, rather than by optimizing an objective on the net-
+work’s outputs. Labeled feedback evaluates and selects can-
+didate programs rather than fitting their values: a single-
+round session scores at most 8 candidate edits against the
+labeled examples and receives 8 checks, as each fine-tuning
+method tries 8 configurations and receives the same checks.
+Label-scored work that changes no weight, and selection in-
+side a program’s own run, are counted separately from this
+cap (Sec. A.1). An automatic audit and a reading of the kept
+programs check these rules; three exploratory sessions that
+use finite differences are reported separately (Sec. A.11),
+and Sec. A.1 lists what the protocol admits.
+3.2. Rerunning and extending programs
+Programs as reusable construction procedures.
+An ex-
+ecutable weight program retains the procedure that con-
+structed an update: how the network is measured, how units
+or directions are selected and what is written into them. Run
+on another compatible network, the same program remea-
+sures that network and constructs a new edit in its weight
+coordinates.
+This matters for independently trained net-
+works, which may implement related functions in different
+coordinates [26], so that a numerical edit computed on one
+network need not apply to another.
+Copying, rerunning and successive updates.
+Three op-
+erations act on a program p1 kept for a network W0 and task
+knowledge I1, which produces W1 = p1(W0, I1). Copy-
+ing adds the edit W1 −W0 unchanged to another network.
+Rerunning executes the code of p1 unchanged and without
+another LLM session, while the program inspects the tar-
+get network and uses that network’s own task examples, so
+each rerun computes an edit from that network’s weights
+and data. A successive update asks the LLM for a new
+program p2 for the edited network W1, which produces
+W2 = p2(W1, I2). This new program is constructed with
+the edited network, the code of p1, labeled examples of the
+new condition and checks that also report every earlier con-
+dition, under the retention rule for each, so that the update
+can account for the computations installed earlier. We rerun
+programs on independently trained networks of the archi-
+tecture they were written for, and write second programs
+for edited networks.
+3.3. Experimental protocol
+Networks.
+Programs are written by Claude Opus 5.5 at
+maximum reasoning effort.
+The image networks are a
+Vision Transformer (ViT) [40], ViT-Lite-7/4 [41] (3.7M
+weights, 89.35% clean accuracy), and a ResNet-20 [42]
+(0.27M weights, 91.28%), both trained on 40,000 CIFAR-
+10 training images,
+and torchvision’s ImageNet [43]
+ResNet-18 in two forms: unchanged on its 1,000 classes
+(11.7M weights, 69.70% on our ImageNet test images) and
+fine-tuned to CIFAR-10 (11.2M weights, 95.78%).
+The
+other networks are a BabyAI policy trained by imitation
+to go to a named object and a Transformer per SCAN
+split [44, 45]. Five further networks per CIFAR-10 archi-
+tecture, trained from other seeds, serve reuse.
+Conditions.
+Corruptions are the CIFAR-10-C set at sever-
+ity 5 [46] and, on ImageNet, the ImageNet-C functions at
+the highest severity that costs at least 15 points and keeps
+at least 17% of the network’s accuracy above chance: 3 for
+Gaussian noise and 4 for contrast reduction. A condition
+is run on a network when it costs the network at least 15
+points of accuracy, which on the ViT admits Gaussian noise
+and contrast reduction. Table 1 summarizes what each task
+gives the LLM and the references, and Sec. A.1 gives train-
+ing, data and sandbox details.
+Task knowledge.
+I comes at several levels. Labeled ex-
+amples: 64 labeled images of the new condition (16 that
+the network misclassifies and 48 drawn at random, with the
+network’s predictions) and 64 labeled clean images. For
+the BabyAI policy, 8 demonstrations of the new mission
+(each step’s observation, instruction and expert action) and
+64 old steps. Condition labels withheld: the LLM receives
+the same condition images and the network’s predictions but
+4
+not their labels, and no statement of how they were chosen.
+The image pool and the selection are unchanged, including
+the use of labels to pick the 16 misclassified images, and
+the clean images and the checks keep their labels. A rule:
+SCAN’s published interpretation grammar with 64 old com-
+mands and, on the add-primitive split, the training row of
+the new primitive. For the ViT, the formula that generates
+the corruption and 64 labeled clean images, with no image
+of the condition. A capability’s name: one sentence ask-
+ing for robustness to additive Gaussian pixel noise, with no
+image, label or prediction, given with the 8 checks or with
+none, in which case the one program the LLM declares is
+scored once after the session. This is the only level at which
+the LLM is told the condition.
+References and criterion.
+Every fine-tuning comparison
+fits the same labels by gradient. It has eight methods: full,
+last layer, LayerNorm only (BatchNorm on the ResNet-
+18s), LoRA [3] with rank 4 and 16, full without the clean
+images, full with LwF [4] and full with L2-SP [12]. Com-
+parisons match the task examples, the number of external
+checks and the retention rule: each method sees the same la-
+beled images (the method without clean images only the 64
+of the condition), tries 8 configurations, receives the same
+8 checks and is kept by the same rule. The methods dif-
+fer in how they construct updates, including the pretrained
+prior of the LLM that writes each program. We also report
+each method’s best configuration on the check split with-
+out the clean-loss bound. Eleven fixed references per image
+network, label fits and label-free rules including Tent [8],
+BN adaptation [7] on the ResNets and SAR [17] on the ViT,
+are kept by the same rule. Before the sessions on the ViT
+and the ResNet-18s we fixed a performance criterion for
+the comparative evaluation, the success criterion: a gain
+of at least 10 points (on ImageNet, 15% of the accuracy
+the condition costs: 7.0 and 8.5 points), a clean change of
+at least −1.0 and a net gain at least one point above the
+strongest reference that obeys the program limits (for most
+conditions, gradient training of a fixed 19% of each tensor’s
+entries) given the labeled examples. Sessions given less in-
+formation on the ViT are read against the same bar.
+Splits.
+The held-out images form three disjoint splits per
+condition: the condition images of I are drawn from an ev-
+idence split (2,000 images), the checks use a check split
+(4,000) and analyses are read on a selection split (4,000).
+The clean images of I are one fixed draw from the network’s
+training images. On ImageNet the 50,000 validation images
+are divided by image: 12,000 form these three splits and the
+pool of clean images for I, and the other 38,000 are the test
+set. The selection split plays no part in any session, check,
+retention rule or fine-tuning configuration choice. The ta-
+bles report the held-out test sets: the official CIFAR-10 and
+CIFAR-10-C test files, the 38,000 ImageNet test images,
+the third of SCAN’s test commands kept for the final eval-
+uation, and held-out BabyAI episodes. Each kept network
+was read on them once, after every selection was final.
+Metrics and reporting.
+Gain is the accuracy change on
+the condition, clean change the accuracy change on clean
+images, and net gain their sum. The mechanism analyses
+(Sec. 4.2) and the copied edits (Sec. 4.3) are read on the
+selection split, and other numbers that exist only on the se-
+lection split are marked where they appear. Each program
+is one LLM session on one trained network. On the ViT we
+ran ten sessions, three per condition on the seed-100 net-
+work and one per condition on networks trained from seeds
+101 and 102, and report all of them (Tab. 7). On the Im-
+ageNet ResNet-18 we ran two sessions per condition and
+report both (Tab. 8). Table 3 shows the first session on each
+network.
+4. Results
+4.1. Weight programs turn task knowledge into new
+capabilities and keep existing behavior
+A rule becomes a new primitive inside existing computa-
+tion. SCAN’s add-primitive split [44] trains a Transformer
+on every command except those that compose the primitive
+jump, which it sees only alone, and the network executes
+none of these compositions (Fig. 2a, Tab. 2). Given SCAN’s
+interpretation grammar, 64 old commands and the jump
+row, the program raises exact match on them from 0.0% to
+99.8% by changing 257 weights, and the old commands do
+not change. It moves the embedding of jump to the centroid
+of those of walk, look and run and adds an output row for
+its action, so the composition the network already computes
+now carries the new primitive. A rule-to-data reference,
+trained on commands generated from the grammar, reaches
+99.6% with 152,718 changed weights, about 594 times as
+many, and fine-tuning on the given rows keeps at most +1.21
+points of net gain (selection split).
+A compact rule can
+therefore be installed by reusing the Transformer’s existing
+compositional computation, with 257 modified weights.
+The same principle extends to a different compositional
+setting. On the around-right split [45], where around was
+trained only with left, the program writes the rule directly
+into 25,056 weights, as rank-one edits of attention val-
+ues along the network’s own right-minus-left direction, and
+raises exact match on commands with around right from
+17.6% to 89.6% at −0.3 points on the old commands, where
+fine-tuning on the given rows keeps at most +2.61 points
+of net gain (selection split; the rule-to-data reference is in
+Fig. 2a and Tab. 2).
+Eight demonstrations become a new action. A BabyAI
+policy [47] trained by imitation to go to a named object
+5
+never uses the pickup action. Given 8 demonstrations of the
+mission pick up and 64 old steps, the program raises pickup
+success from 0.0% to 98.4%, and the old mission moves by
++0.4 points. The installed behavior generalizes beyond the
+demonstrations: success remains 98.9% on episodes whose
+object color and type never appear in the demonstrations
+(selection split). Behavior cloning on the same demonstra-
+tions reaches at most 1.1% while keeping the old mission
+(Fig. 2a). The program thus adds pickup to the navigation
+the policy already performs while retaining its original mis-
+sion (Sec. 4.2).
+With the same examples, programs reach larger gains
+than gradient training on ImageNet.
+On torchvision’s
+ResNet-18 unchanged on its 1,000 ImageNet classes, ev-
+ery method receives the same 64 labeled images of a cor-
+ruption and 64 labeled clean images, the same 8 checks
+and the same retention rule (Fig. 2b, Tab. 3). The two pro-
+grams written for Gaussian noise reach net gains of +10.47
+and +17.62 points and the two written for contrast reduc-
+tion +8.84 and +14.26, against +8.67 and +3.38 for the best
+of eight fine-tuning methods and +8.84 and +6.00 for the
+best fixed reference (Tab. 8). The four programs also keep
+clean accuracy within 0.89 points of the original network on
+ImageNetV2 [48], a test set collected separately following
+ImageNet’s procedure.
+The result holds across architectures on CIFAR-10: the
+first programs reach net gains of +32.79 and +16.51 on
+the ViT-Lite, against +22.78 and +7.89 for the best fine-
+tuning, and +35.23 and +21.28 on the ResNet-18 fine-tuned
+to CIFAR-10, 3.7 and 2.1 times the best fine-tuning. The
+resulting edits vary with the network and the computation,
+from 3,846 modified weights for the ViT-Lite noise gate to
+2,152,928 for the ImageNet noise correction (0.10% to 18%
+of each network).
+Independently written programs also exceed matched
+fine-tuning: on three ViT-Lites, eight of ten programs writ-
+ten in separate sessions do so on their own network, with
+net gains from +6.61 to +32.79 (Fig. 2c, Tab. 7).
+The program’s lead is largest where existing behavior
+must be kept and labeled data are scarce. On the ViT-Lite
+under Gaussian noise, full fine-tuning first matches the pro-
+gram’s net gain within the retention rule at 4,096 labeled
+corrupted images and as many clean ones, compared with
+64 of each for the program (selection split, Fig. 6). At clean-
+loss bounds of 0.5 and 1 point on the check split, the pro-
+gram has the highest net gain of every method on all four
+CIFAR-10 instances, by +2.7 to +25.5 points; Sec. A.2 and
+Fig. 7 chart the full trade-off between gain and retention.
+Programs can be written from the condition images with-
+out their labels. On the ViT-Lite under Gaussian noise, with
+the labels of the 64 noisy images withheld from the LLM
+and the network’s own predictions in their place, the pro-
+gram reaches a net gain of +34.43 at a clean change of
+−0.04, compared with +32.79 for the session given all la-
+bels (Tab. 3). The images are selected as in the labeled set-
+ting (16 that the network misclassifies), and the clean im-
+ages and the 8 checks are labeled. Given only the capabil-
+ity’s name, programs reach +9.43 and +15.10 on the selec-
+tion split (Fig. 8). Direct access to the condition labels is
+thus not required in this setting: the network’s predictions,
+statistics of the images and labeled check feedback suffice
+to construct an effective correction.
+4.2. Weight programs install computations that can
+be tested part by part
+Weight programs produce identifiable internal computa-
+tions whose causal contributions to the new behavior can
+be tested directly (Fig. 3; Tab. 9 describes every program
+and marks those tested by intervention; selection split).
+The noise program writes a conditional correction into
+existing units. The installed correction detects a shift in the
+network’s internal representations and subtracts a measured
+offset selectively from the affected tokens. By examining
+the supplied images and the network’s activations, the LLM
+finds that the corruption mainly shifts the patch tokens in the
+early residual stream, and builds the correction on that shift;
+untold, it also infers additive white Gaussian pixel noise
+of standard deviation about 25/255 (the generating value is
+0.10). The program measures this shift on synthetic noisy
+copies of the clean images, frees two little-used MLP units
+in block 2 by folding their mean output into the bias, and
+rewrites them as a ramp gate,
+g(z) = GELU
+ k(d⊤z −t)
+
+−GELU
+ k(d⊤z −t) −K
+
+,
+(2)
+which subtracts the measured offset only from tokens whose
+projection d⊤z on a whitened noise direction lies above the
+clean range (Fig. 3a). Two gates of the same form act on the
+class token in blocks 4 and 6.
+The installed gates carry the gain. Removing the block-2
+gate lowers the net gain from +31.75 to +10.05, and remov-
+ing all three gates returns the network to its original accu-
+racy (Fig. 3c).
+Selective activation keeps clean accuracy. The block-2
+gate opens on 99.5% of noisy and 0.5% of clean patch to-
+kens and cuts the mean noisy-minus-clean offset from 5.29
+to 0.50, while the program moves clean patch tokens by
+0.05 on average against 5.02 on noisy ones (Fig. 3b). Hold-
+ing the gates open lowers the net gain to +19.43 and clean
+accuracy by 5.03 points, 15.5 on the worst class. Gate acti-
+vation also tracks where the correction helps: on 25 cor-
+rupted versions of the test set, the program helps on the
+whole noise family and on frost, where the gate opens on
+27% to 100% of patch tokens, and changes no other set by
+more than 0.27 points on the test sets (Fig. 9).
+The gated computation matters more to the gain than the
+identity of the units that carry it (Fig. 3c). The gated struc-
+6
+a A rule or 8 demonstrations becomes new behavior
+existing behavior moves by at most 0.4 pt · held-out test sets
+new behavior (%)
+old (∆ pt)
+0
+50
+100
+−1
+0
+SCAN  a new verb in known compositions
+original
+trained on grammar data
+program
+0.0%
+152,718 weights
+99.6%
+257 weights
+99.8%
+0.0
+SCAN  a new combination of known words
+original
+trained on grammar data
+program
+17.6%
+19% of each tensor
+100.0%
+25,056 weights
+89.6%
+−0.3
+BabyAI  pick up
+original
+behavior cloning
+program
+0.0%
+1.1%
+21,482 weights
+98.4%
++0.4
+b On ImageNet, all four programs exceed every kept reference
+ResNet-18, 1,000 classes · 64 corrupted + 64 clean labeled images · 38,000 held-out images
+net gain
+pt
+top-1 on corrupted images (%)
+clean
+held-out
+clean
+ImageNetV2
+∆ pt
+0
+10
+20
+30
+40
+−1
+0
+−1
+0
+Gaussian
+noise
+severity 3
+21.7
+31.1
++8.67
+31.1
++8.84
+32.4
++10.47
+39.7
++17.62
+1
+2
+Contrast
+reduction
+severity 4
+14.1
+17.5
++3.38
+20.2
++6.00
+23.4
++8.84
+28.5
++14.26
+1
+2
+original network
+after the program (1, 2: independent sessions, 95% CI)
+fine-tuning or behavior cloning, best kept by the retention rule
+best fixed reference (label fits, label-free rules)
+best reference
+clean-change bound of the success criterion
+c Every independently written program gains under the retention rule
+CIFAR-10-C, severity 5 · 64 corrupted + 64 clean labeled images · net gain = gain on the corruption + clean change, held-out test
+0
+10
+20
+30
+40
+net gain (pt)
+ViT-Lite · Gaussian noise
+4 of 5 above fine-tuning · 3 meet the criterion
+32.79
+12.20
+30.83
+30.58
+17.97
+no rule
+−1.98 clean
+1
+2
+3
+seed 100
+101
+102
+ViT-Lite · contrast
+4 of 5 above fine-tuning · 2 meet the criterion
+16.51
+9.13
+10.74
+6.61
+7.93
+no rule:
+same pick
+1
+2
+3
+seed 100
+101
+102
+ResNet-18
+2 of 2 above fine-tuning · 2 meet
+35.23
+21.28
+−2.15
+−2.26
+noise
+contrast
+program, met the preset
+comparative criterion
+program, not met
+best kept fine-tuning,
+same network
+fine-tuning without
+the retention rule
+(its clean change)
+criterion fixed before
+the sessions
+Figure 2. Weight programs install new capabilities and keep existing behavior. (a) SCAN (a new verb in known compositions; a
+new combination of known words) and BabyAI before and after the program, with the weights each changes; gray, a rule-to-data reference
+trained on commands generated from the grammar (SCAN) and the best behavior cloning kept by the retention rule (BabyAI). (b) ImageNet
+ResNet-18: top-1 under corruption (95% intervals), net gain, and the change in clean top-1 on held-out ImageNet and on ImageNetV2;
+dashed red, the clean bound of the success criterion. (c) Net gain of every CIFAR-10 program, 10 of 12 above the best kept fine-tuning on
+its network; light bars, programs that do not meet the prespecified comparative criterion; diamonds, fine-tuning without the retention rule.
+Held-out test sets.
+ture keeps the gain when its parts are replaced: a gate built
+from the plain mean difference of the noisy and clean ex-
+amples keeps +31.13, and the same gate in two units drawn
+at random from the block gives +31.86 (Tab. 10).
+Gra-
+dient training of exactly the entries the noise and contrast
+programs change, from their original values with the fine-
+tuning grid and the same rule, reaches +3.60 and +0.72,
+and from the programs’ values it keeps +33.35 and +18.00:
+the program’s specific weight configuration, rather than
+the choice of edited entries alone, accounts for the gain.
+Network-specific information shapes the program: with ac-
+cess to the trained weights and outputs, the programs reach
++31.75 and +17.98, against +10.78 and +11.18 when the
+same LLM receives the parameter names and shapes, the
+forward code, the examples and the checks, but no weight
+value or network output (one session per condition).
+Different capabilities receive different computations.
+Unlike the noise program, the contrast program combines
+an input-wide adjustment of the patch-embedding filters
+with a condition-selective correction (Fig. 3d). It raises the
+zero-mean part of the filters by a factor of 1.45, a global
+gain on the first layer, and adds a gated rank-6 correction in
+eight freed units of block 2, whose gate, on its own, opens
+on 99.7% of low-contrast and 0.3% of clean patch tokens.
+On the original network the gain alone adds +10.95 points
+and the correction alone +9.63, at clean changes of 0.00 and
++0.30, and together they reach +17.93: each part adds 7.0
+and 8.3 points on top of the other. The noise computation
+contains no such first-layer gain; run as a template on con-
+trast, the noise gate reaches +5.40 (Tab. 10). The two com-
+ponents also differ in reach: on the ViT-Lite and the CIFAR-
+10 ResNet-18 alike, the input-wide gain accounts for the
+changes on other corruptions, the gains under blur and fog
+and the losses under noise, whereas the gated correction
+acts selectively on contrast reduction (Fig. 9). Across ar-
+chitectures and target conditions, programs construct dif-
+7
+a A weight program constructs a noise-correction gate within existing MLP units
+ViT-Lite, Gaussian noise · block 2 shown; the same gate form acts on the class token in blocks 4 and 6
+residual stream, patch token z
+block-2 MLP
+360
+503
+512 units
+1
+free
+the two units least
+used on clean images
+j1, j2 = free[0], free[1]
+2
+detect
+project z on a noise
+direction d; open above t
+W1[j1] = kappa * d
+b1[j1] = -kappa * t
+3
+correct
+subtract the noise
+shift measured on the data
+W2[:, j1] = -off / K_RAMP
+−g·shift
+clean token
+dTz below t
+gate closed
+passes unchanged
+noisy token
+dTz above t
+gate open
+noise shift removed
+measured in b
+b The gate opens where correction helps
+block-2 gate open, % of patch tokens
+noisy
+clean
+99.5%
+0.5%
+noise shift
+5.29 before
+0.50 after
+0
+10
+20
+30
+0%
+50%
+100%
+gate open on each of 25 corruption sets
+gain (pt)
+s1
+s2
+s3–s5
+frost
+noise family: Gaussian s1–s5,
+shot, impulse, speckle
+frost
+16 other sets
+clean images
+c The gate carries the gain; selectivity keeps clean accuracy
+net gain of the noise program and of each variant (pt)
+0
+10
+20
+30
+net gain (pt)
+interventions on the program
+full program
+31.75
+block-2 gate removed
+10.05
+all three gates removed
+0.05
+two random units of the block
+31.86
+gates held open
+19.43
+clean −5.03
+worst class −15.5
+other constructions, same inputs and rule
+gate from the plain mean difference
+31.13
+gradient on the same 3,846 entries
+3.60
+the LLM without weight values
+10.78
+program
+d Contrast receives a different computation
+ViT-Lite, contrast reduction
+always-on gain, first layer
+zero-mean part of every patch
+filter × 1.45; acts on every input
++
+gated correction, block 2
+rank 6, in 8 freed units; opens on
+99.7% of low-contrast patches
+and 0.3% of clean ones
+0
+10
+20
+first-layer gain only
+10.95
+gated correction only
+9.63
+both (the program)
+17.93
+gain on contrast reduction (pt)
+change on the 16 sets it was not written for (pt)
+−6
+−4
+−2
+0
++2
+← harm
+help →
+the program
+first-layer gain only
+gated part only
+Figure 3. Weight programs install identifiable, causally testable computations. (a) The noise program constructs a gate within existing
+MLP units that removes the noise shift (schematic). (b) The gate opens on noisy, not clean, inputs, and its activation tracks the corruptions
+where the program helps. (c) Causal interventions and alternative constructions identify the gated computation, more than the choice of
+units, as the source of this program’s gain (Tab. 10). (d) The contrast program combines an input-wide gain adjustment with a selective
+correction; the two components have distinct target-condition and off-target effects (Fig. 9). Selection split.
+ferent forms of computation, including gates in little-used
+units, corrections of activation shifts, input-layer rescaling
+and convolutional filtering (Tab. 9). Across the ten ViT-Lite
+programs, those that meet the criterion repurpose little-used
+capacity into a condition-specific computation: gated cor-
+rections in freed MLP units, or a nearly unused attention
+head rewritten to subtract the image’s mean color.
+The BabyAI program writes a stated rule into the policy,
+a complementary form of mechanistic evidence. It copies
+the embeddings of go and to into pick and up, builds from
+dead units an exact detector for a faced cell of the named
+color and type that raises the pickup action, and adds a de-
+tector that stops the policy from pressing forward into a
+blocking object. An explicit rule reconstructed from these
+three parts predicts the edited policy’s success or failure on
+all 2,000 evaluated episodes, 1,000 with the new mission
+and 1,000 with the old. The weights carry the stated rule,
+and the policy runs it with no outside code at the base net-
+work’s inference cost.
+4.3. Executable programs recompute effective edits
+across independently trained networks
+When the same program is executed on five independently
+trained ViT-Lites, using each network’s own 64 labeled ex-
+amples, it constructs a network-specific edit without an-
+other LLM session.
+Rerun this way, the Gaussian-noise
+program gains +27.55 to +30.54 points (mean +28.57) at
+clean changes of −0.19 to +0.07, and the contrast program
++16.04. All ten programs carry their gains over: on the five
+networks each was not written for, each keeps 83% to 110%
+of its own gain on the held-out test sets, and clean accu-
+racy stays within 1 point on 48 of the 50 transfers (Fig. 4c).
+Reused the same way, the best fine-tuning recipe reaches
++20.79 and +8.09 (Tab. 11).
+Across independently trained ViT-Lites, rerunning a pro-
+gram transfers its effect more reliably than copying the
+8
+a One program reads each network and writes a different edit
+The ViT-Lite Gaussian-noise program written for seed 100, rerun with no LLM call on an independently trained ViT-Lite (seed 102) with its own 64 + 64 labeled images
+p
+program p
+1
+measure
+on the network's own images, how
+well a gate at each block repairs it
+2
+locate
+the block with the lowest KL; the
+units least used on clean images
+3 write
+the gates, with thresholds and
+offsets measured on this network
+ViT-Lite, seed 100  ·  the network the program was written for
+block 0
+block 1
+block 2
+patch gate
+360, 503
+block 3
+block 4
+class gate
+31, 34
+block 5
+block 6
+class gate
+182, 418
+class-gate KL at blocks 3–5
+0.521
+✓ 0.447
+0.483
+ViT-Lite, seed 102  ·  independently trained, never seen by the LLM
+block 0
+block 1
+block 2
+patch gate
+118, 339
+block 3
+class gate
+431, 446
+block 4
+block 5
+block 6
+class gate
+135, 298
+class-gate KL at blocks 3–5
+✓ 0.477
+0.499
+0.532
+written for
+rerun
+copy ∆W
+the middle gate moves from block 4 to block 3; all six units differ
+on its own network
++31.63
+rerun p
++27.18
+copy ∆W
+−0.03
+gain under noise (pt)
+selection split
+patch gate in block 2 on both (lowest KL among blocks 1–3) · aligned unit by unit to seed 100, the copied edit gains −0.20
+b Rerunning outperforms copying the edit on independent networks
+mean gain on the five other networks (pt), selection split
+0
+10
+20
+30
+Gaussian noise
+contrast reduction
+seed 100 · 1
+28.14
+seed 100 · 2
+12.57
+seed 100 · 3
+27.88
+seed 101
+25.71
+seed 102
+18.28
+seed 100 · 1
+17.15
+seed 100 · 2
+9.85
+seed 100 · 3
+10.27
+seed 101
+7.81
+seed 102
+7.55
+aligned
+rerun p
+copy ∆W
+aligned copy
+c Rerun programs keep 83–110% of their source gains
+gain on the five other networks / gain on its own network, held-out test
+0.6
+0.8
+1.0
+1.2
+same gain
+0.87
+0.98
+0.91
+0.85
+0.98
+0.92 clean below −1 on 2 of 5 networks
+0.96
+0.83
+1.10
+0.84
+met its criterion
+missed it (b and c)
+Figure 4. Executable weight programs reconstruct effective edits across independently trained networks. (a) Rerun on an indepen-
+dently trained ViT-Lite, the noise program places its gates anew and keeps its gain, while its fixed weight edit, copied unchanged, produces
+no gain on this network (recorded placements, schematic). (b) Ten programs, rerun or copied to five other networks (selection split).
+(c) Share of each program’s own gain kept on the other networks (held-out test sets). For networks that share an initialization, see Fig. 10.
+source network’s numerical edit (Fig. 4a,b).
+Added un-
+changed to the other ViT-Lites, the edits of the ten programs
+gain −1.42 to +0.01 points on average, 7.6 to 28.2 below
+rerunning the programs (selection split). A rerun recom-
+putes where and how to write: on one network the noise
+program gates blocks 2, 3 and 6 instead of 2, 4 and 6, with
+thresholds measured on that network (Fig. 4a, Sec. A.8).
+Matching units does not recover this: aligned unit by unit to
+the original by activation matching on 2,048 clean images,
+the copied edits of the first program of each condition gain
+−0.01 and +4.17, whereas each rerun reconstructs its edit
+from the target network’s own computation. Copied edits
+transfer where networks share coordinates: when ResNet-
+18s share a pretrained initialization, they keep 96% and
+87% of the rerun gain (selection split, Fig. 10), while a
+program transfers across independently trained networks as
+well.
+4.4. Successive programs extend edited networks
+and keep earlier gains
+Executable weight programs install capabilities in succes-
+sion. On the ViT-Lite, after the Gaussian-noise program, six
+contrast programs written in separate sessions for the edited
+network add +5.23 to +14.50 points of contrast robustness
+on the held-out test sets, while the installed noise robustness
+moves by −0.17 to +0.23 and clean accuracy stays within
+1.47 points of the original network (Fig. 5a,c, Tab. 13); four
+exceed the 10-point threshold for the additional capability
+fixed before the sessions. In the reverse order, all six noise
+programs written for the contrast-programmed network add
++30.9 to +37.7 points of noise robustness while contrast
+moves by −0.28 to +0.03 (selection split, Fig. 5a).
+The earlier capability is kept in the computation itself.
+None of the six contrast programs writes the two units of
+the noise gate or blocks 4 and 6 (Fig. 5b): constructed from
+the edited network, the earlier program and checks on the
+earlier condition, they write around the installed gate.
+A counterfactual rerun shows why the current state of
+9
+a Second programs add robustness in either order
+gain over the original network (pt), selection split
+robust to noise and contrast
+0
+5
+10
+15
+20
+0
+10
+20
+30
+→  more robust to contrast reduction (pt gained)
+→  more robust to Gaussian noise (pt gained)
+fine-tuning,
+same two rounds
+clean −1.30
+p1 noise
+six p2 for contrast, each written for W1
+p1 contrast
+six p2 for noise,
+each written for W1
+W0ʼs contrast program, rerun on W1
+noise −26.6 pt (panel b)
+W0 original
+W1
+W1  contrast first; noise −3.9
+second capability added (≥ 10 pt)
+added (< 10 pt)
+fine-tuning
+b A program for the original network breaks the gate
+block 2 of the noise-programmed network: 512 MLP units
+W0ʼs contrast program, rerun on W1
+360
+503
+it frees the 8 least-used units (red boxes), both gate units among them:
+noise −26.6 pt (1,224 of 4,000 check images broken); the gate units explain 81%
+six contrast programs written for W1
+2 of 6 programs write 13 units here (purple), none a gate unit; 4 write none
+The gate is silent on clean images, so a clean-use ranking sees it as idle;
+programs written for W1 read the edited network and write elsewhere.
+c Held-out: six contrast gains, noise robustness kept
+the six programs p2, change against W1 (pt)
+contrast gained
+≥ 10 adds it
+0
+5
+10
+15
+noise change
+bound −3
+−3
+−2
+−1
+0
++1
+contrast +5.23 to +14.50 (4 of 6 reach 10); noise −0.17 to +0.23
+Figure 5. Programs written for an edited network add a capability and keep the earlier one. (a) Gains over the original network in
+both orders: six alternative second programs per order, each written for W1; red, the W0 program rerun on W1; gray, fine-tuning through
+the same two rounds (selection split). (b) Why a program written for the original network disrupts the installed noise gate when rerun on
+W1: the block-2 units each program writes. (c) Held-out test sets for the noise-first order: all six programs add contrast robustness, four
+by at least the 10-point threshold fixed in advance.
+the network matters. A contrast program written for the
+original network, applied after the noise program, frees the
+two block-2 units that hold the noise gate, because they are
+idle on clean images, and breaks 1,224 of 4,000 noisy check
+images; freeing those units accounts for 81% of its noise
+loss (selection split, Fig. 5a,b).
+5. Discussion
+The central finding is that a trained neural network can be
+extended by an executable construction procedure whose
+output becomes part of the network’s own computation.
+The updated network performs the new capability on its
+own, while the program retains the procedure that built it
+from existing computation. Capability installation therefore
+has an explicit implementation that can be tested by inter-
+vention and recomputed by rerunning the program. This
+separates the reusable specification of a capability from the
+network-specific weight values that implement it.
+These results reveal a mechanism of capability acquisi-
+tion in which task knowledge is translated into new com-
+putation by recruiting and reorganizing operations already
+represented within a trained network. Rules, examples and
+checks specify the desired behavior, while the network’s
+weights and activations inform how it can be implemented:
+programs reconnect existing representations, recruit learned
+operations or add corrections for particular inputs. In the
+noise-gating programs, preservation is built into the com-
+putation itself, in addition to the retention rule that selects
+them: the correction activates mainly on affected inputs and
+leaves clean representations nearly unchanged, and causal
+interventions separate the two roles, with the installed com-
+putation producing the robustness gain and its selective acti-
+vation protecting clean accuracy. The source of a new capa-
+bility and the reason the measured existing behavior is kept
+can thus be examined directly and used to inform the design
+of later programs.
+Reusability changes what can be retained after an up-
+date: not only the modified network, but also an executable
+description of how the modification was constructed. Re-
+run on another network, that description recomputes an edit
+for the network’s own weights; written for an edited net-
+work, a new program can account for what earlier programs
+installed. As capabilities accumulate, previously installed
+10
+computations become part of the foundation that later up-
+dates can use and preserve, and these properties motivate
+reusable program libraries and longer sequences of capabil-
+ity updates, each retained together with its checks.
+Natural next steps are programs that construct repre-
+sentations a network does not yet have (Sec. A.10) and
+programs that extend foundation models, including LLMs,
+with new procedures or behaviors after deployment. More
+broadly, WSP provides a foundation for self-directed capa-
+bility extension, in which proposed changes to a network’s
+computation are evaluated independently, retained and built
+upon through further weight programs, each remaining code
+that can be read and tested.
+Training establishes the initial computation of a neural
+network. Executable weight programs offer a complemen-
+tary route: task knowledge becomes part of the network’s
+own computation while its measured existing behavior is
+kept, and each update is retained as a procedure that can be
+inspected, rerun and extended. Weight-Space Programming
+thereby opens a path to cumulative capability acquisition, in
+which new computations are installed, reused and progres-
+sively extended within trained neural networks.
+References
+[1] Rikiya Takehi, Jayden Teoh, Alex Zhang, and Omar Khat-
+tab. Sparks of Weight-Space Programming: LLMs can na-
+tively read & write neural network weights.
+Blog post,
+https://rikiyat.github.io/blog/weight-
+space-programming/, 2026. Published November 2,
+2026. 2, 3
+[2] Mengran Li, Bo Li, Weijing Zhao, Chengyang Zhang, Boyu
+Zhang, Jinfeng Xu, Zelin Zang, Victor C. M. Leung, and
+Stan Z. Li. WeightLoop: Weight-Space Programming with
+Experimental Feedback. arXiv preprint arXiv:2611.07319,
+2026. 2, 3
+[3] Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen.
+LoRA: Low-Rank Adaptation of Large Language Models.
+In International Conference on Learning Representations
+(ICLR), 2022. 2, 3, 5
+[4] Zhizhong Li and Derek Hoiem. Learning without forgetting.
+IEEE Transactions on Pattern Analysis and Machine Intelli-
+gence, 40(12):2935–2947, 2018. 2, 3, 5
+[5] Kevin Meng, David Bau, Alex Andonian, and Yonatan
+Belinkov.
+Locating and Editing Factual Associations in
+GPT. In Advances in Neural Information Processing Sys-
+tems (NeurIPS), 2022. 2, 3
+[6] Kevin Meng, Arnab Sen Sharma, Alex Andonian, Yonatan
+Belinkov, and David Bau. Mass-Editing Memory in a Trans-
+former. In International Conference on Learning Represen-
+tations (ICLR), 2023. 2, 3
+[7] Steffen Schneider, Evgenia Rusak, Luisa Eck, Oliver Bring-
+mann, Wieland Brendel, and Matthias Bethge. Improving
+robustness against common corruptions by covariate shift
+adaptation. In Advances in Neural Information Processing
+Systems (NeurIPS), 2020. 2, 3, 5
+[8] Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Ol-
+shausen, and Trevor Darrell. Tent: Fully Test-time Adapta-
+tion by Entropy Minimization. In International Conference
+on Learning Representations (ICLR), 2021. 2, 3, 5, 20
+[9] Bernardino Romera-Paredes, Mohammadamin Barekatain,
+Alexander Novikov, Matej Balog, M. Pawan Kumar, Emi-
+lien Dupont, Francisco J. R. Ruiz, Jordan S. Ellenberg, Peng-
+ming Wang, Omar Fawzi, Pushmeet Kohli, and Alhussein
+Fawzi. Mathematical discoveries from program search with
+large language models. Nature, 625(7995):468–475, 2024.
+2, 3
+[10] Alexander Novikov, Ngˆan V˜u, Marvin Eisenberger, Emilien
+Dupont, Po-Sen Huang, Adam Zsolt Wagner, Sergey Shi-
+robokov, Borislav Kozlovskii, Francisco J. R. Ruiz, Abbas
+Mehrabian, M. Pawan Kumar, Abigail See, Swarat Chaud-
+huri, George Holland, Alex Davies, Sebastian Nowozin,
+Pushmeet Kohli, and Matej Balog. AlphaEvolve: A coding
+agent for scientific and algorithmic discovery. arXiv preprint
+arXiv:2506.13131, 2025. 2, 3
+[11] Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna
+Morrone, Quentin de Laroussilhe, Andrea Gesmundo, Mona
+Attariyan, and Sylvain Gelly. Parameter-Efficient Transfer
+Learning for NLP. In International Conference on Machine
+Learning (ICML), 2019. 3
+[12] Xuhong Li, Yves Grandvalet, and Franck Davoine.
+Ex-
+plicit Inductive Bias for Transfer Learning with Convolu-
+tional Networks. In International Conference on Machine
+Learning (ICML), 2018. 3, 5
+[13] Michael McCloskey and Neal J. Cohen. Catastrophic Inter-
+ference in Connectionist Networks: The Sequential Learning
+Problem, pages 109–165. Elsevier, 1989. 3
+[14] R French. Catastrophic forgetting in connectionist networks.
+Trends in Cognitive Sciences, 3(4):128–135, 1999. 3
+[15] James Kirkpatrick, Razvan Pascanu, Neil Rabinowitz, Joel
+Veness, Guillaume Desjardins, Andrei A. Rusu, Kieran
+Milan, John Quan, Tiago Ramalho, Agnieszka Grabska-
+Barwinska, Demis Hassabis, Claudia Clopath, Dharshan Ku-
+maran, and Raia Hadsell.
+Overcoming catastrophic for-
+getting in neural networks.
+Proceedings of the National
+Academy of Sciences, 114(13):3521–3526, 2017. 3
+[16] Arslan Chaudhry,
+Marcus Rohrbach,
+Mohamed Elho-
+seiny, Thalaiyasingam Ajanthan, Puneet K. Dokania, Philip
+H. S. Torr,
+and Marc’Aurelio Ranzato.
+On Tiny
+Episodic Memories in Continual Learning. arXiv preprint
+arXiv:1902.10486, 2019. 3
+[17] Shuaicheng Niu, Jiaxiang Wu, Yifan Zhang, Zhiquan Wen,
+Yaofo Chen, Peilin Zhao, and Mingkui Tan. Towards Sta-
+ble Test-Time Adaptation in Dynamic Wild World. In In-
+ternational Conference on Learning Representations (ICLR),
+2023. 3, 5, 20
+[18] Yu Sun, Xiaolong Wang, Zhuang Liu, John Miller, Alexei A.
+Efros, and Moritz Hardt.
+Test-Time Training with Self-
+Supervision for Generalization under Distribution Shifts.
+In International Conference on Machine Learning (ICML),
+2020. 3
+11
+[19] Anton Sinitsin, Vsevolod Plokhotnyuk, Dmitriy Pyrkin,
+Sergei Popov, and Artem Babenko.
+Editable Neural Net-
+works. In International Conference on Learning Represen-
+tations (ICLR), 2020. 3
+[20] Eric Mitchell, Charles Lin, Antoine Bosselut, Chelsea Finn,
+and Christopher D. Manning. Fast Model Editing at Scale.
+In International Conference on Learning Representations
+(ICLR), 2022. 3
+[21] David Bau, Steven Liu, Tongzhou Wang, Jun-Yan Zhu, and
+Antonio Torralba.
+Rewriting a Deep Generative Model,
+pages 351–369. Springer International Publishing, 2020. 3
+[22] Shibani Santurkar, Dimitris Tsipras, Mahalaxmi Elango,
+David Bau, Antonio Torralba, and Aleksander Madry. Edit-
+ing a classifier by rewriting its prediction rules. In Advances
+in Neural Information Processing Systems (NeurIPS), 2021.
+3
+[23] Thomas Hartvigsen,
+Swami Sankaranarayanan,
+Hamid
+Palangi, Yoon Kim, and Marzyeh Ghassemi.
+Aging with
+GRACE: Lifelong Model Editing with Discrete Key-Value
+Adaptors.
+In Advances in Neural Information Processing
+Systems (NeurIPS), 2023. 3
+[24] Gabriel Ilharco, Marco Tulio Ribeiro, Mitchell Wortsman,
+Suchin Gururangan, Ludwig Schmidt, Hannaneh Hajishirzi,
+and Ali Farhadi. Editing Models with Task Arithmetic. In In-
+ternational Conference on Learning Representations (ICLR),
+2023. 3
+[25] Prateek Yadav, Derek Tam, Leshem Choshen, Colin Raffel,
+and Mohit Bansal. TIES-Merging: Resolving Interference
+When Merging Models. In Advances in Neural Information
+Processing Systems (NeurIPS), 2023. 3
+[26] Samuel K. Ainsworth, Jonathan Hayase, and Siddhartha
+Srinivasa. Git Re-Basin: Merging Models modulo Permu-
+tation Symmetries. In International Conference on Learning
+Representations (ICLR), 2023. 3, 4
+[27] Yecheng Jason Ma, William Liang, Guanzhi Wang, De-An
+Huang, Osbert Bastani, Dinesh Jayaraman, Yuke Zhu, Linxi
+Fan, and Anima Anandkumar. Eureka: Human-Level Re-
+ward Design via Coding Large Language Models.
+In In-
+ternational Conference on Learning Representations (ICLR),
+2024. 3
+[28] Jacky Liang, Wenlong Huang, Fei Xia, Peng Xu, Karol
+Hausman, Brian Ichter, Pete Florence, and Andy Zeng. Code
+as policies: Language model programs for embodied control.
+In 2023 IEEE International Conference on Robotics and Au-
+tomation (ICRA), pages 9493–9500. IEEE, 2023.
+[29] Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Mandlekar,
+Chaowei Xiao, Yuke Zhu, Linxi Fan, and Anima Anandku-
+mar. Voyager: An Open-Ended Embodied Agent with Large
+Language Models. Transactions on Machine Learning Re-
+search (TMLR), 2024.
+[30] Chris Lu, Samuel Holt, Claudio Fanconi, Alex J. Chan,
+Jakob Foerster, Mihaela van der Schaar, and Robert Tjarko
+Lange.
+Discovering Preference Optimization Algorithms
+with and for Large Language Models. In Advances in Neural
+Information Processing Systems (NeurIPS), 2024. 3
+[31] Xiangning Chen, Chen Liang, Da Huang, Esteban Real,
+Kaiyuan Wang, Yao Liu, Hieu Pham, Xuanyi Dong, Thang
+Luong, Cho-Jui Hsieh, Yifeng Lu, and Quoc V. Le. Sym-
+bolic Discovery of Optimization Algorithms. In Advances in
+Neural Information Processing Systems (NeurIPS), 2023. 3
+[32] Marcin
+Andrychowicz,
+Misha
+Denil,
+Sergio
+Gomez,
+Matthew W. Hoffman, David Pfau, Tom Schaul, Brendan
+Shillingford, and Nando de Freitas.
+Learning to learn by
+gradient descent by gradient descent. In Advances in Neural
+Information Processing Systems (NeurIPS), 2016. 3
+[33] David Ha, Andrew Dai, and Quoc V. Le. HyperNetworks.
+In International Conference on Learning Representations
+(ICLR), 2017. 3
+[34] Aviv Navon, Aviv Shamsian, Idan Achituve, Ethan Fetaya,
+Gal Chechik, and Haggai Maron. Equivariant Architectures
+for Learning in Deep Weight Spaces. In International Con-
+ference on Machine Learning (ICML), 2023.
+[35] Allan Zhou, Kaien Yang, Kaylee Burns, Adriano Cardace,
+Yiding Jiang, Samuel Sokota, J. Zico Kolter, and Chelsea
+Finn. Permutation Equivariant Neural Functionals. In Ad-
+vances in Neural Information Processing Systems (NeurIPS),
+2023.
+[36] Konstantin Sch¨urholt, Dimche Kostadinov, and Damian
+Borth. Hyper-Representations: Self-Supervised Representa-
+tion Learning on Neural Network Weights for Model Charac-
+teristic Prediction. In Advances in Neural Information Pro-
+cessing Systems (NeurIPS), 2021.
+[37] Gail Weiss, Yoav Goldberg, and Eran Yahav.
+Thinking
+Like Transformers. In International Conference on Machine
+Learning (ICML), 2021.
+[38] David Lindner, J´anos Kram´ar, Sebastian Farquhar, Matthew
+Rahtz, Thomas McGrath, and Vladimir Mikulik.
+Tracr:
+Compiled Transformers as a Laboratory for Interpretabil-
+ity. In Advances in Neural Information Processing Systems
+(NeurIPS), 2023.
+[39] Dan Friedman, Alexander Wettig, and Danqi Chen. Learning
+Transformer Programs. In Advances in Neural Information
+Processing Systems (NeurIPS), 2023. 3
+[40] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,
+Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,
+Mostafa Dehghani, Matthias Minderer, Georg Heigold, Syl-
+vain Gelly, Jakob Uszkoreit, and Neil Houlsby. An Image is
+Worth 16x16 Words: Transformers for Image Recognition at
+Scale. In International Conference on Learning Representa-
+tions (ICLR), 2021. 4
+[41] Ali Hassani, Steven Walton, Nikhil Shah, Abulikemu
+Abuduweili, Jiachen Li, and Humphrey Shi. Escaping the
+Big Data Paradigm with Compact Transformers.
+arXiv
+preprint arXiv:2104.05704, 2021. 4
+[42] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+Deep residual learning for image recognition. In 2016 IEEE
+Conference on Computer Vision and Pattern Recognition
+(CVPR), pages 770–778. IEEE, 2016. 4
+[43] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, San-
+jeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy,
+Aditya Khosla, Michael Bernstein, Alexander C. Berg, and
+Li Fei-Fei.
+ImageNet large scale visual recognition chal-
+lenge.
+International Journal of Computer Vision, 115(3):
+211–252, 2015. 4
+12
+[44] Brenden M. Lake and Marco Baroni. Generalization without
+systematicity: On the compositional skills of sequence-to-
+sequence recurrent networks. In International Conference
+on Machine Learning (ICML), 2018. 4, 5
+[45] Jo˜ao Loula, Marco Baroni, and Brenden Lake. Rearranging
+the familiar: Testing compositional generalization in recur-
+rent networks. In Proceedings of the 2018 EMNLP Work-
+shop BlackboxNLP: Analyzing and Interpreting Neural Net-
+works for NLP, pages 108–114. Association for Computa-
+tional Linguistics, 2018. 4, 5
+[46] Dan Hendrycks and Thomas Dietterich. Benchmarking Neu-
+ral Network Robustness to Common Corruptions and Pertur-
+bations. In International Conference on Learning Represen-
+tations (ICLR), 2019. 4
+[47] Maxime Chevalier-Boisvert, Dzmitry Bahdanau, Salem
+Lahlou, Lucas Willems, Chitwan Saharia, Thien Huu
+Nguyen, and Yoshua Bengio. BabyAI: A Platform to Study
+the Sample Efficiency of Grounded Language Learning.
+In International Conference on Learning Representations
+(ICLR), 2019. 5
+[48] Benjamin Recht, Rebecca Roelofs, Ludwig Schmidt, and
+Vaishaal Shankar.
+Do ImageNet Classifiers Generalize to
+ImageNet? In International Conference on Machine Learn-
+ing (ICML), pages 5389–5400, 2019. 6, 19
+[49] Chi Zhang, Nan Song, Guosheng Lin, Yun Zheng, Pan Pan,
+and Yinghui Xu. Few-shot incremental learning with con-
+tinually evolved classifiers. In 2021 IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR), pages
+12450–12459. IEEE, 2021. 23
+13
+A. Supplementary material
+This appendix provides implementation details, complete
+session-level results, additional controls, cross-condition
+analyses and exploratory experiments beyond the main pro-
+tocol, in the order of Sec. 4. Tables 5, 6, 12 and 15 repeat
+Tabs. 3, 4, 11 and 14 with the numbers of the selection split.
+A.1. Protocol and implementation
+The protocol specifies the task knowledge, the evaluation
+feedback and the retention bound for each setting (Tab. 1).
+What the protocol admits.
+Under the main protocol,
+weight updates are constructed from forward evaluations,
+network statistics and closed-form computations. Gradient-
+based and finite-difference optimization of objectives com-
+puted from the network’s outputs (by automatic differen-
+tiation, hand-written backpropagation or finite differences),
+solvers on label-derived targets and iterated label-driven up-
+dates are excluded. Three practices fall within the proto-
+col: one overall edit strength found by a search against a
+label-free bound on the change of clean outputs, a one-shot
+closed-form bias set from the network’s own logit margins
+(on BabyAI, where the only label-derived quantity is the in-
+dex of the pickup action the task names), and a head bias set
+so that the edited network’s mean logits on label-free inputs
+equal the original network’s. Manual code inspection iden-
+tified three exploratory sessions that size their edits from fi-
+nite differences of label-free output quantities: the ViT-Lite
+session given only the noise formula, and rounds 1 and 3 of
+a ResNet-20 stream. They fall outside the main protocol,
+are reported in Sec. A.11, and are not used to support the
+claims of Sec. 4.
+Sessions and sandbox.
+The following measurements de-
+scribe the cost of constructing a program, distinct from the
+cost of rerunning a kept program. The LLM works in a
+Python kernel of at most 150 cells, within 90 to 120 min-
+utes (140 on ImageNet and 190 on the CIFAR-10 ResNet-
+18, whose checks take longer). A session takes 30 to 130
+minutes, and the CIFAR-10, SCAN and BabyAI sessions
+cost US$5 to 13 at API prices. Rerunning a kept program
+on a further network takes a few minutes with no LLM call.
+A program runs in a sandbox with NumPy only, no network
+access and a 300 s limit. It may change at most 20% of
+the weights, and the change to each tensor of rank two or
+more is at most half of that tensor’s Frobenius norm. The
+per-tensor limit applies to the image classifiers but not to
+the SCAN Transformers or the BabyAI policy, whose edits
+write whole embedding or output rows.
+Labels and computation in a session.
+The 8 external
+checks count labeled check images at every level of infor-
+mation, including the levels with condition labels withheld
+and with the name only. A single-round session scores at
+most 8 candidate weight edits against the labeled examples
+in I, as each fine-tuning method tries 8 configurations. Two
+kinds of label-scored work are not counted toward this cap:
+predictors that change no weight of the network, such as
+output offsets or nearest-class-mean probes on its features,
+and selection a program makes inside its own run. This
+counting rule was set on 2026-11-06, after two sessions had
+been read: the noise-formula session (Sec. A.11), which
+scores 5 candidate edits under the rule and 9 settings with
+its four logit offsets, and the CIFAR-10 ResNet-18 con-
+trast session, which scores 6 under the rule and 9 with its
+three nearest-class-mean probes. The rule applies to every
+session, and the automatic audit counts both kinds, so its
+counts are recorded beside the hand counts. The cap ap-
+plies to single-round sessions. A session that writes a later
+round scores 0 to 44 settings against that round’s labeled
+examples, including threshold sweeps, and the fine-tuning
+streams fit the same labels. On SCAN, whose grammar
+gives the answer to any command, the LLM may test can-
+didates against answers it derives from the rule. A kept
+program computes from the network it runs on each time
+it runs, with forward passes, activation statistics, SVD and
+PCA on the inputs in I. The contrast program written with-
+out weight values (Sec. 4.2) also selects among eight con-
+figurations by cross-validation on the labeled examples each
+time it runs. The audit flags gradients, solvers on label-
+derived targets, iterated label-driven updates and the num-
+ber of settings scored against labels.
+Data and networks.
+Corruptions are generated with the
+official CIFAR-10-C code on held-out CIFAR-10 training
+images. On the clean test images this code reproduces the
+official files exactly for defocus and contrast and within
+1.2% of their median pixel deviation for noise and snow.
+The ViT-Lite follows the authors’ CIFAR-10 recipe. Gaus-
+sian noise leaves it 35.55% accuracy and contrast reduction
+58.88%, while defocus and snow cost it 12 and 13 points.
+The ResNet-18 receives a new 10-way head and is fine-
+tuned in full with inputs upsampled to 128 × 128.
+The
+BabyAI policy is a feedforward network with FiLM condi-
+tioning on the instruction, trained by imitation on 50,000 ex-
+pert demonstrations of the go-to mission in one room. Each
+SCAN Transformer (width 128, 4 layers) is trained on the
+official training commands of its split except 3,000 held out
+for the old checks, selection and test commands. The reuse
+networks are trained from seeds 101 to 105, and from seed
+100 for programs written on seeds 101 and 102.
+A.2. Comparison with fine-tuning
+This section evaluates how the relative performance of
+weight programs and fine-tuning changes with the data bud-
+14
+Network and new
+condition
+Task knowledge I given to the LLM
+Checks and retention rule

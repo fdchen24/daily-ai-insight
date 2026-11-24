@@ -1,0 +1,1102 @@
+Published in Transactions on Machine Learning Research (06/2026)
+From Tables to Time:
+Extending TabPFN-v2 to time-series forecasting
+Shi Bin Hoo
+hoos@tf.uni-freiburg.de
+University of Freiburg
+Prior Labs
+Samuel Müller∗
+sammuller@meta.com
+University of Freiburg
+Meta
+David Salinas
+david.salinas@tue.ellis.eu
+ELLIS Institute Tübingen
+University of Freiburg
+Frank Hutter
+frank@priorlabs.ai
+Prior Labs
+ELLIS Institute Tübingen
+University of Freiburg
+Reviewed on OpenReview: https: // openreview. net/ forum? id= KIkQj8VOUY
+Abstract
+Recent progress in foundation models has enabled strong zero-shot performance for time-
+series forecasting. In this work, we show that these capabilities also emerge from tabular
+foundation models. We introduce TabPFN-TS, a simple method that treats forecasting as
+a tabular regression problem by combining lightweight temporal featurization with the pre-
+trained TabPFN-v2. This formulation requires no time-series–specific pretraining and natu-
+rally supports both univariate and covariate-informed forecasting. Despite its compact size
+(11M parameters), TabPFN-TS achieves state-of-the-art performance on covariate-informed
+forecasting and competitive accuracy on univariate forecasting across the GIFT-Eval and
+fev-bench benchmarks. We further provide controlled analyses examining how the model
+interprets temporal structure, how featurization choices affect accuracy, and how forecasts
+change under alternative tabular backbones. Together, our results demonstrate that tabular
+foundation models—when paired with suitable temporal features—offer an efficient and ver-
+satile alternative for forecasting, bridging tabular and time-series learning within a unified
+framework.
+1
+Introduction
+Recent advances in foundation models have reshaped time-series forecasting by enabling zero-shot prediction
+across a wide variety of domains. Large pretrained architectures can now generalize to unseen series and
+horizons without task-specific fine-tuning, setting a new paradigm for forecasting research. Comprehensive
+benchmarks (Aksu et al., 2024; Shchur et al., 2025) have further standardized evaluation, enabling fair and
+reproducible comparison.
+While most foundation models focus on univariate forecasting, real-world systems are often influenced by
+additional factors. Incorporating such covariates—e.g., weather, control inputs, or economic indicators—
+can make forecasts far more informative and actionable. Yet leveraging covariates remains challenging for
+∗Work conducted while at the University of Freiburg.
+1
+arXiv:2501.02945v5  [cs.LG]  23 Nov 2026
+Published in Transactions on Machine Learning Research (06/2026)
+current time-series foundation models, which are typically designed around purely sequential inputs.
+A
+unified and data-efficient framework capable of handling both univariate and covariate-informed forecasting
+would therefore be highly desirable.
+In parallel, foundation models for tabular learning have made remarkable progress. Recent tabular models
+exhibit strong zero-shot predictive performance across diverse supervised tasks (Erickson et al., 2025). Among
+them, TabPFN-v2 (Hollmann et al., 2025) is notable as the first tabular foundation model, supporting many
+tasks, including classification, regression, outlier detection, density estimation, synthetic data generation,
+embeddings that are useful for downstream tasks, and fine-tunability. This raises a natural question: Can
+a tabular foundation model also perform probabilistic time-series forecasting if the temporal structure is
+expressed through features? If so, tabular models would offer a unified representation for both tabular and
+time-series forecasting, sidestepping the need for specialized sequence architectures.
+In this work, we propose to treat time-series forecasting as a tabular regression problem.
+We introduce
+TabPFN-TS, a simple method that combines lightweight temporal featurization with the pretrained TabPFN-
+v2, enabling zero-shot forecasting without any time-series–specific pretraining or fine-tuning. Each time
+step is represented as a row of temporal features (and optional covariates) paired with its observed value.
+Forecasting then reduces to predicting future rows—whose temporal features are known in advance—using
+TabPFN-v2 as a tabular regressor. This formulation allows all future points within the prediction horizon
+to be predicted in a single forward pass.
+Despite its simplicity and compact size (11M parameters), TabPFN-TS achieves state-of-the-art performance
+on covariate-informed forecasting and competitive accuracy on univariate benchmark. Our analyses further
+show how the model interprets temporal structure, how featurization affects accuracy, and how forecasts
+change under different tabular backbones.
+Our main contributions are:
+1. Forecasting as Tabular Regression. We introduce a formulation that enables a pretrained tab-
+ular foundation model (TabPFN-v2) to perform both univariate and covariate-informed forecasting
+in a zero-shot manner.
+2. Lightweight Temporal Featurization. We design a compact feature scheme that encodes time
+progression, multi-scale seasonality, and covariates, allowing tabular models to act on temporal data
+effectively.
+3. Strong Empirical Performance. TabPFN-TS achieves state-of-the-art performance on covariate-
+aware forecasting and competitive accuracy on univariate forecasting across GIFT-Eval and
+fev-bench.
+4. Mechanistic and Ablation Studies. We provide analyses explaining how TabPFN-TS exploits
+temporal structure, how featurization choices affect performance, and how forecasting quality varies
+across tabular foundation model backbones.
+Taken together, these results demonstrate that tabular foundation models, paired with suitable temporal
+features, form a simple, efficient, and extensible alternative for general-purpose forecasting, bridging tabular
+and time-series learning within a unified framework.
+2
+Background and Related Work
+time-series forecasting.
+The goal is to predict future observations of a sequence based on its historical
+context and, optionally, a set of covariates—external variables that provide additional information about
+the system’s dynamics (e.g.
+holidays, known prices, or control inputs).
+Incorporating such signals can
+improve forecast accuracy by capturing influences beyond the intrinsic temporal patterns of the target series.
+Formally, the task can be expressed as modeling the conditional distribution
+P(yC+1:H | y1:C, Z1:C+H),
+2
+Published in Transactions on Machine Learning Research (06/2026)
+where y1:C = [y1, . . . , yC] denotes the observed history of the target series, yC+1:H = [yC+1, . . . , yH] are the
+future values to be predicted, and Z1:C+H = [z1, . . . , zC+H] represents the associated covariates. When no
+covariates are provided, the task reduces to univariate forecasting; otherwise, it corresponds to covariate-
+informed forecasting.
+Time Series Foundation Models.
+Time series foundation models (TSFMs) aim to provide zero-shot
+forecasting across domains by pretraining (potentially) large sequence models on broad collections of real-
+world time series. Early models such as Chronos (Ansari et al., 2024) and TimesFM (Das et al., 2024) adopt
+transformer architectures trained at scale for univariate forecasting. Chronos-Bolt improves efficiency beyond
+Chronos through patch-based encoding, while Toto (Cohen et al., 2024) targets multivariate forecasting
+with proportional factorized attention and a Student-t mixture output layer. TiRex (Auer et al., 2025b)
+leverages an xLSTM backbone with strong in-context learning, and Sundial (Liu et al., 2025) introduces a
+flow-matching objective for flexible probabilistic forecasting.
+Several TSFMs incorporate covariates. ChronosX (Arango et al., 2025) injects exogenous variables through
+modular adapters; and COSMIC (Auer et al., 2025a) augments forecasting with in-context covariate condi-
+tioning.1
+TabPFN-v2.
+TabPFN (Hollmann et al., 2023) is a foundation model pretrained to perform tabular pre-
+diction directly from examples. Instead of being optimized on a single dataset, it is pretrained on millions of
+synthetic regression and classification tasks. Each task consists of input–output pairs (X, y) as the context
+and query points X′ for which the model must predict corresponding targets y′. Through this large-scale
+pretraining, TabPFN learns general patterns of how features relate to targets that transfer across unseen
+problems.
+At inference, the model receives a table of feature-target pairs (X, y) as context and outputs the posterior
+predictive distribution p(y′ | X, y, x′) for new inputs X′. TabPFN represents this distribution as a Riemann
+distribution—a discretized probability density over possible target values—and is trained directly on this
+probabilistic representation. Having the model output a distribution allows to handle downstream cases
+which requires a distribution, for instance to account for the model uncertainty.
+TabPFN-v2 (Hollmann et al., 2025) extends its predecessor TabPFN with architectural improvements, a
+richer synthetic data generator, while adding native support for handling missing values, outliers, and unin-
+formative feature. Together, these properties make TabPFN-v2 a powerful probabilistic tabular regressor.
+Our approach to time-series forecasting is complementary to standard TSFMs: rather than pretraining a
+new sequence model, we use TabPFN-v2 and reformulate forecasting as tabular regression via temporal
+featurization. Unlike most TSFMs—which are designed around autoregressive or seq2seq architectures—
+TabPFN-TS predicts the full horizon in a single non-autoregressive forward pass, offering a strong alternative
+to sequence-based foundation models.
+3
+Methodology
+In this section, we present TabPFN-TS, a novel approach to using TabPFN-v2 for multi-step, univariate
+time-series forecasting.
+We recast time-series forecasting as a tabular regression problem, where a time
+series sequence is treated as a table, as shown in Figure 1.
+3.1
+From Time Series to Tabular Data
+Given a time series y1:C+H = [y1, . . . , yC+H], the first C observations define the historical context, and the
+remaining H correspond to the forecast horizon. As illustrated in Figure 1, we construct feature matrices
+Xtrain ∈RC×D and Xtest ∈RH×D, where D denotes the number of features. The corresponding historical
+targets form ytrain ∈RC. This representation, consisting of (Xtrain, ytrain) and Xtest, allows the use of any
+standard supervised tabular models, including TabPFN-v2.
+1ChronosX and COSMIC are not publicly available at the time of writing and are therefore not included in our comparison.
+3
+Published in Transactions on Machine Learning Research (06/2026)
+Timestamp
+Running
+Index
+Year
+Day of the
+Week
+...
+Covariate
+Target
+...
+...
+...
+...
+...
+...
+...
+2023-07-22
+135
+2023
+5
+...
+43
+103
+2023-07-23
+136
+2023
+6
+...
+45
+100
+2023-07-24
+137
+2023
+0
+...
+41
+98
+...
+...
+...
+...
+...
+...
+...
+2023-11-01
+237
+2023
+2
+...
+48
+?
+2023-11-02
+238
+2023
+3
+...
+49
+?
+...
+...
+...
+...
+...
+...
+...
+?
+history
+X_train
+y
+X_test
+extract features from timestamps
+TabPFN
+tabpfn.fit(X_train, y)
+future = tabpfn.predict(X_test)
+?
+Covariate 
+30
+40
+50
+extract covariates
+Target
+Timestamp
+Figure 1: Overview of TabPFN-TS. From a given time series, we construct feature matrices Xtrain and Xtest,
+optionally appending exogenous covariates when available. The two matrices represent the historical and
+future windows, respectively. The observed historical targets form ytrain. TabPFN-v2 then conditions on
+the context (Xtrain, ytrain) and predicts the corresponding targets at Xtest.
+Running Index.
+To introduce a temporal reference within the timeline, we include the index of each time
+step as a feature (e.g., 0 for the first time step in the time series, 4 for the fifth):
+Φindex(t) = t ∈R1.
+This provides a straightforward and effective way to track the progression of time across the observations.
+Calendar Features.
+From each timestamp, we encode eight cyclic calendar components: second of minute,
+minute of hour, hour of day, day of week, day of month, day of year, week of year, and month of year.
+We additionally include the calendar year as a separate (non-cyclic) feature. Let {Pi}8
+i=1 be the periods
+associated with these cyclic components. The corresponding features for each timestamp t are encoded as
+Φcal(t) = (cos
+2πt
+P1
+
+, sin
+2πt
+P1
+
+, . . . , cos
+2πt
+P8
+
+, sin
+2πt
+P8
+
+, year(t)) ∈R17
+For full implementation details, see Appendix A.1.
+Automatic Seasonal Features.
+Beyond the standard calendar periodicities, time series often have
+domain-specific cycles that calendar-based encodings fail to capture, e.g., depending on non-Gregorian cal-
+endars (Chinese birthdays) or the moon cycle (tides). To address this, we apply an automatic extraction
+process to identify the top-k periodicities and encode them as features, thereby enriching the seasonality
+inputs to the model.
+We first detrend each series via a simple linear least-squares regression. To reduce spectral leakage and
+improve frequency resolution, we apply a Hann window (Harris, 1978) and zero-pad the windowed signal by
+a factor of two (Oppenheim & Schafer, 1989). We then compute the real-valued discrete Fourier transform
+and remove the zero-frequency component of the spectrum, which corresponds to the mean of the time series
+and does not represent a seasonal oscillation. Finally, we select the k largest spectral peaks by magnitude.
+Algorithm 1 provides high-level pseudo-code for this extraction process.
+Given the detected frequencies f1, . . . , fk, we then build the following features:
+Φauto(t) = (cos(2πf1t), sin(2πf1t), . . . , cos(2πfkt), sin(2πfkt)) ∈R2k.
+Time-varying Covariates (when available).
+TabPFN-TS also supports time-varying covariates (al-
+though only those that are known for future points in time, such as holidays, not unknown ones like weather).
+We denote them by z1:C+H = [z1, . . . , zC+H], where each zt ∈RDz represents Dz external variables observed
+(or known) at time t.
+For each timestamp, the full feature vector becomes:
+xt = Φindex(t) ⊕Φcal(t) ⊕Φauto(t) ⊕zt ∈R(18+2k+Dz).
+4
+Published in Transactions on Machine Learning Research (06/2026)
+Algorithm 1 Automatically extract top-k Seasonalities, see Appendix A.2 for a detailed algorithm
+Require: univariate series series, the number of periods to obtain k, the smoothing window size L
+Preprocess series
+Detrend linearly: series[t] = series[t] −(αt + β), where α and β are found using least squares
+Apply Hann window: series = conv(series, wHann(L))
+Double length by symm. zero-padding: series = [0, . . . , 0, series[0], . . . , series[N], 0, . . . , 0]
+Fourier Transform
+Compute FFT magnitudes mags and frequencies freqs based on the preprocessed series
+Set mags[0] = 0 (remove the zero-frequency component)
+Select Peaks
+Find all peak indices peaks in mags (all (groups of) points larger than their neighbors)
+Convert & Clean
+Invert frequencies to periods and round periods = ⌊1/freqs⌉
+Remove duplicate and zero periods from the peak indices peaks
+Keep only top k peaks: peaks = [i for i in peaks if i in topk(mags[peaks])]
+return periods[peaks]
+Combining all Features.
+Stacking these feature vectors across all timestamps yields the full feature
+matrix that describes the time series
+X = [ x1; . . . ; xC+H ] ∈R(C+H)×D,
+where D = (18 + 2k + Dz) is the total number of features. Note that we do not rely on lagged or auto-
+regressive features (e.g., moving averages and lag terms), since these require past predictions and conflict
+with non-auto-regressive, multi-step forecasting making the inference much slower.
+As described in Section 3.1, we split X into Xtrain = X1:C,: and Xtest = XC+1:C+H, corresponding to the
+historical and forecast windows.
+3.2
+Point and Probabilistic Forecasting with TabPFN-v2
+We treat (Xtrain, ytrain) as a classical regression dataset and feed it into TabPFN-v2. For each test input x
+in Xtest, TabPFN-v2 outputs an approximate posterior predictive distribution p(y | Xtrain, ytrain, x) .
+In TabPFN-v2, this distribution is represented on a fixed numerical grid over the target space by assigning
+probabilities to bins (a discretized density). From this representation, we compute point predictions and
+probability summaries in the following way: the mean for squared-error evaluations, the median for absolute-
+error evaluations, and arbitrary quantiles (e.g. 5%, 50%, 95%) for probabilistic metrics and uncertainty
+bands.
+4
+Experiments
+We present quantitative comparisons of TabPFN-TS against state-of-the-art forecasting models on both
+univariate (Section 4.1) and covariate-aware forecasting (Section 4.2) tasks. For all evaluations, we use a
+fixed configuration of TabPFN-v2 described in Appendix A.3.
+4.1
+Univariate Forecasting
+We evaluate TabPFN-TS on GIFT-Eval (Aksu et al., 2024), a comprehensive benchmark developed to
+evaluate general time-series forecasting models.
+5
+Published in Transactions on Machine Learning Research (06/2026)
+0
+2
+4
+6
+8
+10
+12
+14
+Mean WQL Rank (lower is better)
+TiRex
+Toto-1.0
+Moirai-2
+TabPFN-TS
+TimesFM-2.0
+Chronos-Bolt-Base
+Sundial-Base
+PatchTST
+TFT
+DeepAR
+Auto-Arima
+Auto-Theta
+Seasonal-Naive
+2.515
+4.237
+4.464
+5.392
+5.454
+5.866
+6.402
+6.943
+7.222
+9.624
+10.284
+10.923
+11.675
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1.2
+Relative WQL (lower is better)
+0.413
+0.437
+0.436
+0.460
+0.465
+0.485
+0.472
+0.496
+0.511
+0.721
+0.770
+1.051
+1.000
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+Relative MASE (lower is better)
+0.642
+0.673
+0.654
+0.692
+0.680
+0.725
+0.673
+0.762
+0.822
+1.206
+0.964
+0.978
+1.000
+Time Series Foundation Model
+Tabular Foundation Model
+Deep Learning Time Series Model
+Statistical Time Series Model
+Figure 2: Univariate forecasting performance of TabPFN-TS and baseline models on GIFT-Eval benchmark.
+Although TabPFN-TS is not the top-ranked model, it achieves competitive performance on par with other
+time series foundation models (e.g. TimesFM2.0, Chronos-Bolt) while being a much smaller model (11M)
+and pretrained solely on tabular data.
+Scores are normalized by Seasonal Naive and aggregated across
+datasets; error bars show 95% confidence intervals.
+Datasets.
+GIFT-Eval comprises 23 datasets with diverse characteristics, encompassing over 144, 000 time
+series and 177 million data points across seven application domains and ten different sampling frequencies.
+It covers both univariate and multivariate forecasting settings, as well as a wide range of prediction horizons,
+from short- to long-term forecasts. Considering all valid combinations of datasets, sampling frequencies,
+and prediction horizons, GIFT-Eval contains a total of 97 distinct benchmarking tasks. An overview of the
+datasets and their corresponding statistics is provided in Appendix A.4.
+Baselines.
+We benchmark TabPFN-TS against a comprehensive set of baselines spanning statistical meth-
+ods, deep learning models, and time series foundation models2. For classical statistical methods, we include
+Seasonal Naive, AutoETS, AutoARIMA, and AutoTheta (Garza et al., 2022). Among deep learning ap-
+proaches, we evaluate DeepAR (Salinas et al., 2020) and Temporal Fusion Transformer (TFT) (Lim et al.,
+2021). For foundation models baselines, we include TiRex (Auer et al., 2025b), Toto-1.0 (Cohen et al., 2024),
+TimesFM-2.0 (Das et al., 2024), Chronos-Bolt (Ansari et al., 2024), and Moirai-2 (Woo et al., 2024).
+Evaluation Metrics.
+Following prior work (Ansari et al., 2024; Shchur et al., 2023; Aksu et al., 2024),
+we assess point forecast accuracy using the Mean Absolute Scaled Error (MASE) and probabilistic forecast
+accuracy using the Weighted Quantile Loss (WQL). MASE normalizes the absolute forecast error by the
+historical seasonal error of each series, yielding a scale-invariant measure comparable across datasets. WQL
+evaluates the discrepancy between the predictive distribution and the observed value across quantile levels,
+providing a proxy assessment of probabilistic calibration. Consistent with GIFT-Eval, we compute WQL at
+uniformly spaced quantiles {0.1, 0.2, . . . , 0.9}. Following Ansari et al. (2024), we aggregate relative scores
+across datasets using the geometric mean and additionally report the mean rank of WQL.
+Results.
+Figure 2 summarizes the forecasting performance of TabPFN-TS on the GIFT-Eval benchmark.
+In both probabilistic forecasting (WQL) and point forecasting (MASE), TabPFN-TS ranks closely behind
+the leading foundation models TiRex, Toto-1.0, and Moirai-2, and matches substantially larger models such
+as TimesFM-2.0 and Chronos-Bolt, despite being over two orders of magnitude smaller and trained without
+any time-series–specific pretraining. Qualitative visualizations are provided in Appendix A.5 for reference.
+These results demonstrate that TabPFN-TS produces accurate forecasts even though its backbone, TabPFN-
+v2, is pretrained solely on synthetic tabular data and relies on a simple temporal featurization. We addition-
+2All baselines included were publicly available before September 2025, our literature cutoff date.
+6
+Published in Transactions on Machine Learning Research (06/2026)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative WQL (lower is better)
+TabPFN-TS
+TiRex
+Chronos-Bolt
+Moirai-2.0
+Toto-1.0
+Sundial-Base
+Seasonal-Naive
+0.503
+0.597
+0.620
+0.621
+0.643
+0.673
+1.000
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative MASE (lower is better)
+0.666
+0.749
+0.758
+0.760
+0.787
+0.761
+1.000
+Tabular Foundation Model
+Time Series Foundation Model
+Statistical Time Series Model
+Figure 3: Covariate-informed forecasting performance of TabPFN-TS and baseline models on 28 fev-bench
+tasks with known dynamic covariates. As the only model that can directly incorporate covariate inputs,
+TabPFN-TS achieves the strongest results, outperforming all other models, including multivariate approaches
+such as Toto-1.0. Scores are normalized by Seasonal Naive and aggregated across datasets; error bars show
+95% confidence intervals.
+ally find that TabPFN-TS’s predictive intervals are comparably calibrated to most time-series foundation
+model baselines (see Appendix A.10). This finding suggests that (i) the knowledge learned from generic
+tabular data can transfer effectively to temporal prediction, and (ii) further improvements are likely if tabu-
+lar foundation models are exposed to real-world time-series data during pretraining. Together, these results
+position TabPFN-TS as a compact yet competitive alternative to large time-series foundation models.
+4.2
+Covariate-Informed Forecasting
+For this task, we evaluate TabPFN-TS on fev-bench (Shchur et al., 2025), a general time-series forecasting
+benchmark that includes forecasting tasks where covariates are available.
+Datasets.
+fev-bench comprises 100 forecasting tasks across multiple domains, of which 42 include co-
+variate information. We focus on the 30 tasks where covariates are available in both the historical and
+future horizons. This configuration is required by TabPFN-TS, which models the dependency between the
+target series and known covariates and relies on having those covariate values available at prediction time.
+When future covariates are missing, the model cannot properly condition its forecasts on relevant contextual
+signals. Two of these tasks are excluded because TabPFN-TS exceeded the 6-hour evaluation limit, leaving
+28 tasks for the final evaluation. Appendix A.6 provides an overview of the selected tasks.
+Baselines.
+We follow the standardized evaluation protocol of fev-bench, which reports results only on
+pretrained time series foundation models. Deep learning baselines are not included here as fev-bench does
+not include dataset-specific supervised deep learning baselines.
+Therefore, like Section 4.1, TabPFN-TS
+compares against the following pretrained models: TiRex (Auer et al., 2025b), Chronos-Bolt (Base) (Ansari
+et al., 2024), Toto-1.0 (Cohen et al., 2024), Moirai-2.0 (Woo et al., 2024), and Sundial (Liu et al., 2025).
+Evaluation Metrics.
+Consistently with Section 4.1, we assess point forecasting accuracy using the Mean
+Absolute Scaled Error (MASE) and probabilistic forecast accuracy using the Weighted Quantile Loss (WQL).
+Results.
+Across the 28 fev-bench tasks with known dynamic covariates, TabPFN-TS achieves the
+strongest overall performance. While strong foundation models, such as TiRex and Chronos-Bolt, remain
+highly competitive in the univariate setting (see Section 4.1 and Shchur et al. (2025)), TabPFN-TS outper-
+forms them when covariates are available. Notably, Toto-1.0, which is designed for the multivariate setting,
+7
+Published in Transactions on Machine Learning Research (06/2026)
+2023-01-03
+2023-01-18
+2023-02-02
+2
+0
+2
+4
+noise_hourly
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+2023-01-03
+2023-01-18
+2023-02-02
+80
+100
+120
+noise_weekly
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+(a) On i.i.d noise
+2023-01-03
+2023-01-18
+2023-02-02
+0
+25
+50
+75
+100
+trend_hourly_linear
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+2023-01-03
+2023-01-18
+2023-02-02
+0
+50
+100
+150
+trend_hourly_expo
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+(b) On linear and exponential trends
+2023-01-03
+2023-01-18
+2023-02-02
+1.0
+0.5
+0.0
+0.5
+1.0
+seasonal_hourly
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+2023-01-03
+2023-01-18
+2023-02-02
+2
+1
+0
+1
+2
+seasonal_composite
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+(c) On seasonal patterns
+2023-01-03
+2023-01-18
+2023-02-02
+0
+25
+50
+75
+100
+linear_trend_and_seasonal_hourly
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+2023-01-03
+2023-01-18
+2023-02-02
+100
+50
+0
+50
+100
+linear_trend_multiply_seasonal_hourly_composite
+Ground Truth
+Mean Prediction
+0.1-0.9 Quantile Range
+Train/Test Split
+(d) On additive and multiplicative combinations
+Figure 4: Qualitative performance of TabPFN-v2 across noise, trend, and seasonal structures. The model
+handles noise and periodicity well but cannot extrapolate linear or exponential trend beyond the observed
+target range.
+does not fully recover the benefit obtained when covariates are treated as first-class predictive features like
+in TabPFN-TS.
+These results provide strong evidence for the forecasting-as-tabular-regression formulation (Section 3): it al-
+lows TabPFN-TS to integrate covariates directly and without architectural changes or fine-tuning. Together,
+this positions TabPFN-TS as a practical and competitive alternative to current time series foundation mod-
+els, especially in settings where contextual or external drivers are known and informative.
+5
+Ablations
+We conduct ablation studies to understand how TabPFN-TS performs forecasting and to assess the con-
+tribution of its components. Section 5.1 provides qualitative examples illustrating the model’s forecasting
+behavior. Section 5.2 examines how the model interprets temporal structure within the tabular regression
+framework to perform forecasting. Section 5.3 studies the integration of covariate information under con-
+trolled synthetic setups. Section 5.4 evaluates alternative tabular regressors to assess the role of the pretrained
+backbone. Section 5.5 analyzes the impact of the temporal featurization design on overall performance.
+5.1
+Qualitative Analysis
+We complement the quantitative benchmarks (Section 4) with qualitative evaluations on controlled synthetic
+series, following the setups proposed by Ansari et al. (2024). In all cases, the first 800 points are provided as
+context and the model forecasts the next 200 steps. These experiments illustrate the characteristic strengths
+and limitations of TabPFN-TS in isolation from dataset-specific confounders.
+8
+Published in Transactions on Machine Learning Research (06/2026)
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+1.75
+2.00
+Time Units
+sin(1x)
+sin(2x)
+sin(3x)
+sin(4x)
+sin(5x)
+sin(6x)
+sin(7x)
+sin(8x)
+sin(9x)
+sin(10x)
+sin(11x)
+sin(12x)
+sin(13x)
+sin(14x)
+sin(15x)
+sin(16x)
+sin(17x)
+sin(18x)
+sin(19x)
+sin(20x)
+sin(21x)
+sin(22x)
+sin(23x)
+sin(24x)
+train/test split
+(a) Conditioning on sin(t) only
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+1.75
+2.00
+Time Units
+sin(1x)
+sin(2x)
+sin(3x)
+sin(4x)
+sin(5x)
+sin(6x)
+sin(7x)
+sin(8x)
+sin(9x)
+sin(10x)
+sin(11x)
+sin(12x)
+sin(13x)
+sin(14x)
+sin(15x)
+sin(16x)
+sin(17x)
+sin(18x)
+sin(19x)
+sin(20x)
+sin(21x)
+sin(22x)
+sin(23x)
+sin(24x)
+train/test split
+(b) Conditioning on sin(t) and cos(t)
+Figure 5: Reconstruction of sinusoidal signals under different temporal embeddings. TabPFN-v2 is evaluated
+on sin(nt) for n = 1, . . . , 24. (a) With sin(t) as the sole temporal feature, the non-injective embedding causes
+different time points to collapse to the same feature representation, and the model therefore reconstructs odd
+but not even harmonics. (b) With {sin(t), cos(t)}, the injective embedding allows the model to interpolate
+reliably in this phase space and reconstruct all harmonics. These results suggest that periodic generalization
+arises from interpolation in an expressive temporal embedding.
+I.I.D. Noise.
+Figure 4a shows the model’s predictions when the input is i.i.d. noise sampled from N(0, 1)
+and N(100, 10) at hourly and weekly resolution.
+TabPFN-TS does not overfit: it predicts the sample
+mean and produces predictive intervals that closely align with the corresponding Gaussian quantiles. This
+demonstrates stable behavior and reasonable uncertainty when no temporal structure is present.
+Seasonality.
+TabPFN-TS models seasonal structure exceptionally well (Figures 4c–d). When periodic
+patterns are represented in the features, the model not only reconstructs the signal accurately but also
+produces very tight predictive intervals that closely follow the ground truth.
+This strong behaviour is
+further discussed in Section 5.2, where we show that the sinusoidal embedding provides an expressive phase
+representation that enables precise interpolation of periodic components.
+Trend.
+Figure 4b illustrates a clear limitation: TabPFN-TS does not extrapolate trends when future values
+fall outside the range of the conditioning set (i.e. beyond the observed target range). This behavior appears
+both for linear and exponential trends. Since the model operates via interpolation in feature space (dis-
+cussed later in Section 5.2), it cannot extend predictions beyond the observed target domain—an important
+limitation for time series with sustained growth or decay.
+Takeaway.
+These qualitative results reveal a consistent pattern: TabPFN-TS behaves reliably when the
+future targets lie within the range of the conditioning set—capturing noise and seasonal patterns with
+accurate means and tight uncertainty intervals that align well with the underlying data distribution—but
+fails to extrapolate when forecasting requires moving beyond the observed target domain, as in linear or
+exponential trends. This contrast highlights that the model’s strengths and limitations depend heavily on
+how temporal structure is represented, motivating the deeper analysis in Section 5.2 and Section 6.1.
+5.2
+How TabPFN-TS Interprets Temporal Structure
+To understand why TabPFN-v2 handles seasonality effectively (see Section 5.1) despite being pretrained only
+on tabular data, we analyze how its backbone (TabPFN-v2) responds to minimal temporal featurization when
+forecasting periodic signals. This reveals the precise mechanism by which the model leverages temporal cues.
+9
+Published in Transactions on Machine Learning Research (06/2026)
+0
+5
+Target
+0
+200
+400
+600
+800
+1000
+0
+5
+Cov.
+5
+0
+5
+0
+200
+400
+600
+800
+1000
+5
+0
+5
+5
+0
+5
+0
+200
+400
+600
+800
+1000
+5
+0
+5
+Ground Truth
+Pred w/ cov.
+Pred w/o cov.
+Train/Test Split
+Figure 6: Forecasts of TabPFN-TS on synthetic time series augmented by time-varying covariates. Median
+predictions are shown in red (conditioned on covariates) and green (unconditioned), with shaded bands
+indicating the 10th - 90th percentiles.
+Setup.
+We generate target series of the form yt = sin(nt) for n = 1, . . . , 24. The model is evaluated under
+two featurization settings: (i) using sin(t) alone, and (ii) the pair (sin(t), cos(t)). This enables us to test
+whether the model can recover higher-order harmonics from a low-frequency base. We then extend this to
+composite signals formed by summing multiple sinusoids with random frequencies, amplitudes, and phases.
+Findings.
+With only sin(t), the model reconstructs odd harmonics but fails entirely on even ones (Fig-
+ure 5a). However, with the pair (sin(t), cos(t)), the model accurately recovers the higher-order harmonics.
+We hypothesize that this behavior stems from the injectivity of the temporal mapping. When only sin(t)
+is present, the mapping t 7→sin(t) is not injective; distinct time points (e.g., on the rising vs. falling edges
+of a cycle) share identical feature values, making local interpolation inherently ambiguous. The inclusion of
+cos(t) embeds time onto the unit circle, creating an injective mapping that uniquely identifies the phase (see
+Section A.7.1 for a detailed symmetry analysis). Under this representation, TabPFN-v2 accurately recovers
+harmonics across a wide frequency range (Figure 5b), and successfully reconstructs complex composite signals
+(Figure 16).
+We also observe a gradual deterioration in accuracy as the frequency increases (Figure 14 and 15). This
+is consistent with the finite resolution of the temporal embedding and classical aliasing effect (Oppenheim,
+1999): as frequency increases, the angular distance between successive samples in the coordinate system
+decreases, making adjacent phases increasingly difficult to be distinguished.
+While we considered an alternative hypothesis where the model performs global functional approximation
+(e.g., via Chebyshev expansion), our preliminary experiments (see Appendix A.7.2) suggest that TabPFN-
+v2’s behavior is more consistent with a retrieval mechanism.
+Takeaway.
+These results suggest that when supplied with an injective sinusoidal embedding of time,
+TabPFN-TS behaves as a meta-learned retrieval engine.
+It interpolates effectively within a feature
+space where time has been mapped to a unique circular coordinate (i.e. phase-space), enabling phase-aware
+pattern matching against the observed history in the support set.
+5.3
+How TabPFN-TS Utilizes Covariates
+In Section 4.2, we showed that TabPFN-v2 achieves the strongest performance on covariate-informed fore-
+casting tasks.
+To better understand this effect, we conduct controlled synthetic experiments where the
+informativeness and interaction structure of each covariate are known.
+Synthetic Setup.
+Similar to Arango et al. (2025) and Auer et al. (2025a), we generate synthetic time
+series where the relationship between the target and the covariates is fully controlled. Each series consists
+of a stationary stochastic process (Brockwell & Davis, 2016)—implemented here as a sum of sinusoids
+with random amplitudes, phases, and periods—augmented with one or more covariates that follow common
+temporal patterns such as linear trends, pulses, ramps, or stochastic drifts. Covariates influence the target
+through either additive or multiplicative coupling, resulting in ten interpretable synthetic classes (Figure 18).
+10
+Published in Transactions on Machine Learning Research (06/2026)
+linear_trend
+pulses
+ramps
+random_walk composite
+40
+20
+0
+20
+40
+60
+80
+100
+Improvement (%)
+No Improvement
+Additive Relation
+linear_trend
+pulses
+ramps
+random_walk composite
+No Improvement
+Multiplicative Relation
+MASE
+WQL
+Figure 7: Improvement when incorporating covariates across synthetic classes. Boxplots show relative im-
+provement (in percentage, %) in MASE (blue) and WQL (red). Most covariate types lead to substantial
+improvement, particularly for pulses, ramps, random walks, and composite signals. In contrast, for both
+additive and multiplicative linear trend series, covariates fail to improve forecasts, reflecting the model’s
+limitation in extrapolating linear growth.
+Evaluation Protocol.
+For each class, we evaluate TabPFN-TS under two conditions: (i) using temporal
+features only, and (ii) using both temporal features and covariates. This isolates the incremental contribution
+of covariate information.
+Findings.
+Figure 7 shows that incorporating covariates substantially improves forecasting accuracy for
+most synthetic classes—pulses, ramps, random walks, and composite signals—reducing both MASE and
+WQL and producing sharper uncertainty estimates (Figure 18). These gains are consistent with our bench-
+mark results and indicate that TabPFN-TS can reliably exploit informative auxiliary signals when their
+effects lie within the range covered by the conditioning set (detailed in Section 6.1).
+The main exception is the linear-trend setting, where covariates provide little benefit because the future
+targets fall outside the distribution observed in the context; TabPFN-TS does not extrapolate linear growth
+(discussed later in Section 6.1). Overall, these controlled experiments show that TabPFN-TS effectively
+leverages covariates across a wide range of scenarios, with extrapolation remaining the primary limitation.
+5.4
+Choice of Tabular Backbone
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+Relative MASE (lower is better)
+TabPFN-TS
+Chronos-Bolt-Base
+Chronos-Bolt-Small
+TimesFM-2.0-500m
+PatchTST
+Chronos-Bolt-Tiny
+LightGBM-TS
+TabDPT-TS
+CatBoost-TS
+TFT
+XGBoost-TS
+Auto-Theta
+Auto-Arima
+Seasonal-Naive
+DeepAR
+0.626
+0.652
+0.666
+0.669
+0.688
+0.691
+0.708
+0.716
+0.723
+0.759
+0.766
+0.948
+0.951
+1.000
+1.082
+Tabular Foundation Model
+Time Series Foundation Model
+Deep Learning Time Series Model
+Tabular Classical Model
+Statistical Time Series Model
+Figure 8:
+MASE comparison of differ-
+ent tabular backbones on 67 GIFT-Eval
+tasks.
+TabPFN-TS outperforms all al-
+ternatives by a clear margin, suggesting
+TabPFN-v2’s synthetic pretraining con-
+tributes beyond featurization alone.
+To assess whether our forecasting formulation depends on the
+choice of tabular backbone, we evaluate two categories of al-
+ternative backbones under the same temporal featurization: (i)
+classical tabular regressors XGBoost (Chen & Guestrin, 2016),
+LightGBM (Ke et al., 2017), and CatBoost (Prokhorenkova et al.,
+2018); and (ii) TabDPT (Ma et al., 2025), one of the few open-
+source tabular foundation models that supports regression (Er-
+ickson et al., 2025). As most of these models only produce point
+predictions, we evaluate on point forecasting (MASE) across 61
+of the 97 GIFT-Eval tasks (the remainder exceeded our compute
+budget).
+Figure 8 shows that all the alternative backbones achieve mean-
+ingful forecasting performance, yet fall short of TabPFN-TS.
+We attribute this to the pretraining: TabPFN-v2 TabPFN-v2 is
+trained on millions of synthetic tasks spanning diverse functional
+relationships and noise regimes, while the gradient-boosted mod-
+11
+Published in Transactions on Machine Learning Research (06/2026)
+Figure 9: Ablation of temporal featurization components in TabPFN-TS. Relative WQL (left) and MASE
+(right) show that all components contribute meaningfully to performance. Using only the index or only the
+auto-seasonal features yields substantially worse results, while combining all feature types achieves the best
+accuracy, underscoring the value of the proposed featurization scheme.
+els are fit from scratch per series and TabDPT is pretrained on real-world tabular data with narrower task
+diversity.
+Taken together, this experiment suggests that: (i) the temporal featurization generalizes across tab-
+ular foundation models—different tabular foundation models can perform zero-shot forecasting under
+the same representation; and (ii) the regression backbone matters—models pretrained on broader and
+more diverse task distributions (such as TabPFN-v2) appear to transfer more effectively to the time-series
+forecasting.
+5.5
+Impact of Temporal Featurization
+To assess the contribution of the each temporal feature type (Section 3.1), we evaluate TabPFN-TS under
+different combinations of these features on the 81 smallest tasks (out of 97) in GIFT-Eval.
+The results in Figure 9 highlight the importance of encoding time progression. Without an explicit index,
+calendar features provide both periodic structure and a weak notion of temporal progression, since some
+calendar attributes present monotonically within the timeline. Automatic seasonal features, by contrast,
+encode oscillatory components but offer no information about global temporal progression. When the index
+is present, it provides the primary temporal axis, while both calendar and automatic seasonal features
+contribute the complementary periodic structure.
+The best results are obtained when all feature types are combined. This indicates that calendar and automatic
+seasonal features capture different—and complementary—seasonal patterns. Together with the index, they
+provide a broad and expressive temporal representation.
+Overall, TabPFN-TS benefits from temporal features that jointly encode monotonic progression and
+multi-scale seasonality.
+The framework is naturally extensible, allowing practitioners to incorporate
+domain-specific periodic features to further improve forecasting accuracy when such knowledge is available.
+6
+Limitation
+6.1
+Extrapolation Beyond the Conditioning Range
+The analyses in Sections 5.1 and 5.3 reveal a persistent limitation of TabPFN-TS: it struggles in extrapolating
+trends, where the future target values lie outside the range observed in the conditioning set.
+This behavior is a direct consequence of how TabPFN-v2 is pretrained. During pretraining, each synthetic
+task is generated by sampling a tabular dataset and randomly partitioning it into a context set (X, y) and
+a query set X′. The model is then trained to predict the corresponding targets y′. Since both context and
+query are sampled from the same generating distribution, the query targets typically lie within the convex
+12
+Published in Transactions on Machine Learning Research (06/2026)
+hull of the observed targets. Consequently, TabPFN-v2 is primarily optimized for conditional interpolation
+and lacks the inductive bias required for unbounded trend extrapolation.
+TabPFN-TS inherits this inductive bias: when future targets lie outside the range of observed target, it
+has little basis—under its interpolation-oriented objective—to project the trajectory further. Predictions
+therefore remain within or close to the span of the observed targets.
+In summary, TabPFN-v2 is a strong conditional interpolator but lacks a mechanism for systematic trend
+extrapolation. This limitation is structural, stemming from the pretraining objective, rather than from the
+tabular regression formulation used for forecasting.
+6.2
+Inference Time
+10
+1
+100
+101
+102
+103
+104
+105
+Inference Time (seconds, lower is better)
+Chronos-Bolt
+(Base)
+TimesFM-2.0
+TabPFN-TS
+Figure 10: Per-task inference time on 97
+GIFT-Eval tasks (log scale; lower is bet-
+ter). Chronos-Bolt-Base and TimesFM-2.0
+run on one NVIDIA T4; TabPFN-TS runs
+across four T4s, and we report time normal-
+ized to one GPU.
+A second practical limitation of TabPFN-TS is its higher com-
+putational cost at inference.
+Although the model supports
+data-parallel evaluation across multiple GPUs, this only in-
+creases throughput but does not reduce the per-time-series
+cost. Figure 10 reports single-GPU-equivalent inference times,
+normalized by GPU count to allow direct comparison with
+Chronos-Bolt-Base and TimesFM-2.0. Under equal hardware
+assumptions, TabPFN-TS requires roughly 30× more inference
+time.
+This overhead arises from how TabPFN-v2 performs predic-
+tion. In tabular settings, one forward pass produces the predic-
+tion for an entire dataset. In time-series forecasting, however,
+a dataset contains many individual series—often hundreds or
+thousands—and each series becomes an independent query instance under our formulation. TabPFN-TS
+must therefore execute a separate forward pass for every series.
+Moreover, TabPFN-TS retains the full-attention architecture of TabPFN-v2, which incurs O(L2) computa-
+tional complexity in sequence length L. Recent time-series foundation models mitigate this cost by processing
+large batches of series and by using architectural techniques such as patching or lightweight decoders that
+reduce dependence on sequence length. Consequently, they achieve substantially faster inference.
+In summary, the higher inference cost of TabPFN-TS arises structurally from the combination of (i) its
+one-forward-pass-per-series formulation and (ii) its quadratic attention mechanism.
+Improving inference
+efficiency—through patching, batching, and/or architectural refinement (discussed in Section A.11)—remains
+an important direction for future work.
+7
+Conclusion
+Summary of Contributions.
+This work demonstrates that a tabular foundation model—pretrained solely
+on synthetic, non-temporal data—can be adapted into a competitive zero-shot forecaster through a simple
+reformulation of time-series prediction as tabular regression.
+Combining TabPFN-v2 with a lightweight
+temporal featurization yields TabPFN-TS, a compact (11M) model that requires no time-series–specific
+pretraining or fine-tuning, yet achieves strong performance on univariate forecasting and state-of-the-art
+accuracy on covariate-informed tasks.
+Key Empirical Insights.
+Our ablations highlight three central findings. (1) Temporal featurization is
+essential: performance improves substantially when monotonic progression and complementary periodicities
+are jointly encoded. (2) Pretraining induces distinct inductive biases: TabPFN-TS excels at interpolation in-
+side the observed target range, but—consistent with its pretraining objective—fails when forecasting requires
+systematic extrapolation. (3) Forecasting capability is model-agnostic: substituting the backbone with Tab-
+DPT still produces meaningful zero-shot forecasts, indicating that the overall formulation generalizes across
+tabular foundation models.
+13
+Published in Transactions on Machine Learning Research (06/2026)
+Implications.
+These results indicate that tabular foundation models constitute a surprisingly effective and
+data-efficient alternative to specialized time-series architectures. The tabular formulation naturally unifies
+univariate and covariate-aware forecasting, treats all inputs as general features, and enables probabilistic
+forecasting without architectural modifications to the backbone.
+Vision and Future Directions.
+More broadly, this work suggests a promising direction toward unified
+foundation models for structured data that operate seamlessly over tabular, temporal, and hybrid inputs.
+Addressing the core limitation—the inability to extrapolate trends beyond the conditioning range—may
+require new pretraining objectives that blend interpolation, controlled extrapolation, and explicit handling
+of out-of-support targets.
+Such advances open a path toward compact, domain-agnostic predictors that
+bridge long-standing gaps between tabular learning and time-series forecasting.

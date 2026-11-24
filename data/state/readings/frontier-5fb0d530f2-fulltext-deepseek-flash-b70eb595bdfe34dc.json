@@ -1,0 +1,65 @@
+{
+  "title_zh": "Future-OPSD：通过同策略自蒸馏从无标注视频学习视频前瞻推理",
+  "affiliations": [
+    "University at Buffalo",
+    "Stony Brook University",
+    "Johns Hopkins University",
+    "Duke University",
+    "University of Maryland, College Park"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把视频前瞻推理的监督从人工标注或外部 LLM 转为视频自身的过去-未来对，并给出可扩展的训练框架，对具身规划、自动驾驶等前瞻任务有直接意义。",
+    "novelty": 82,
+    "novelty_reason": "首次将 on-policy self-distillation 用于视频前瞻，并用 foresight score 的 KL 下界把真未来与随机未来的对比优势同师生蒸馏优势结合，区别于只拟合未来或普通 OPSD。",
+    "technical_depth": 87,
+    "technical_depth_reason": "给出 foresight score 与 KL 正则下界（Theorem 1/2），推导 token-level PPO 优势，并在两个模型族、两类任务、教师与数据 scaling、λ 与教师/视觉编码器消融及计算成本上验证。"
+  },
+  "reading": {
+    "why_read": "提出 Future-OPSD，无需标注，将同一视频的过去-未来对作为自监督信号，用冻结的未来感知教师对仅见过去的学生做 on-policy 打分，并以真未来/随机未来的对比优势结合师生蒸馏，提升视频前瞻推理。",
+    "task": "视频前瞻推理要求 VLM 从当前观察推断下一步动作或未来事件，是具身规划、自动驾驶和主动辅助的基础能力。现有做法或拟合未来描述与推理由，依赖人工标注或外部 LLM；或把整段未来视频等权拟合，但其中大部分是场景上下文，真正与问题相关的动作内容很少，监督容易被无关信息稀释。",
+    "findings": [
+      {
+        "point": "监督依赖标注或外部大模型",
+        "detail": "现有方法要未来描述、推理由或答案标签，或用 LLM judge 给奖励，这些外部信号成为扩展瓶颈；视频自身的未来片段其实已含监督信息。"
+      },
+      {
+        "point": "整段未来等权拟合导致上下文淹没内容",
+        "detail": "未来片段里大部分是水槽、沥水架等与问题无关的场景上下文，真正回答“下一步做什么”的动作内容很少，等权拟合会让模型强化通用描述。"
+      },
+      {
+        "point": "普通未来条件蒸馏会奖励真假未来共有的上下文 token",
+        "detail": "只让真未来教师给学生打分时，真未来和随机未来都支持的上下文 token 同样得到正优势；缺少真/假未来对比，模型难以只放大决策相关的内容信息。"
+      }
+    ],
+    "method": "将每段视频切成过去 $x$ 与未来 $z$：学生只读 $x$ 生成回答，冻结的初始模型副本读 $(x,z)$ 作教师，对同一回答逐 token 打分，无需答案或外部 LLM。为度量未来特异性，定义 $\\Phi(\\theta)=\\mathbb{E}\\log \\frac{\\pi_0(y|x,z)}{\\mathbb{E}_{\\tilde z}\\pi_0(y|x,\\tilde z)}$，用同视频真未来与另一视频随机未来 $\\tilde z$ 的教师对数概率差做对比；该分数不可直接算，作者推导 KL 正则下界，把对比优势与师生蒸馏优势插值为 $a_t=\\lambda(\\ell_t^z-\\ell_t^{\\tilde z})+(1-\\lambda)(\\ell_t^z-\\ell_t^S)$，裁剪中心化后做 PPO。$\\lambda=0.75$ 平衡两项；纯对比会失去教师锚点并崩溃，故保留蒸馏项。教师冻结、视觉编码器可训练，推理只用学生。",
+    "results": "在 Future-L1→TwiFF-Bench 的开放域预测和 EgoPlan-IT→SEED-Bench-R1 的封闭式规划上，Future-OPSD 相对 base 最高分别提升 14.2 与 15.9 分，且优于 SFT、Naive OPSD 和 GRPO 基线；在 TempCompass、TemporalBench、Video-MME、MVBench 上的通用视频理解基本不降。",
+    "limitations": "作者承认结论受限于所研究的数据集与模型；方法依赖冻结的未来感知教师，教师不足时增益有限；每个回答只采一个随机参考未来，方差与跨域泛化待检验。"
+  },
+  "claims": [
+    {
+      "claim": "在 Future-L1 训练、TwiFF-Bench 评测的开放域预测上，Future-OPSD 相对 base 最高提升 14.2 分。",
+      "numbers": [
+        "14.2"
+      ],
+      "source_span": "Table 1 caption",
+      "quote": "improves in-domain performance by up to 14.2 points over the base models"
+    },
+    {
+      "claim": "在 EgoPlan-IT 训练、SEED-Bench-R1 评测的封闭式规划上，L3 相对 base 最高提升 15.9 分。",
+      "numbers": [
+        "15.9"
+      ],
+      "source_span": "Table 2, row '∆vs. Base', L3 column",
+      "quote": "+15.9"
+    },
+    {
+      "claim": "训练采用 $\\lambda=0.75$ 以平衡对比优势与蒸馏优势。",
+      "numbers": [
+        "0.75"
+      ],
+      "source_span": "Sec. 4.1 / Sec. 4.5",
+      "quote": "λ = 0.75"
+    }
+  ]
+}

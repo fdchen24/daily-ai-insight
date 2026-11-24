@@ -1,0 +1,48 @@
+{
+  "title_zh": "Plan4D：可规划的生成式 4D 世界",
+  "affiliations": [
+    "Nanyang Technological University",
+    "Alibaba Group"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把动作条件下的未来 RGB 与稠密 4D 几何统一到同一 latent rollout，并用可微几何 critic 监督无 4D 标注动作视频，对世界模型与机器人规划都有直接意义。",
+    "novelty": 83,
+    "novelty_reason": "不是从零训练 4D 世界模型，而是把视频生成器与冻结 3D 重建器在早期 token 层拼接，让外观与几何从共享 latent 同步读出，区别于点级预测或后置几何解码。",
+    "technical_depth": 85,
+    "technical_depth_reason": "有 frozen-token 探针、注入 block 选择、stitching adapter 与监督策略消融，并在多数据集评测；但 stage-3 对比受额外控制信号限制，部分几何监督来自教师蒸馏。"
+  },
+  "reading": {
+    "why_read": "提出 Plan4D，将 LongCat-Video 与冻结的 Depth Anything 3 通过 latent 拼接耦合，由同一视频 latent 一次前向解码 RGB、depth、camera rays 与 scene flow，生成文本动作条件下的可规划 4D 世界。",
+    "task": "现有视频世界模型主要优化 RGB 观感，缺少显式 4D 建模，时间上的几何一致性弱；3D 重建器能恢复几何但以静态重建为主，4D 方法又多从观测帧推断运动，无法根据文本动作生成未来。任务要在给定观测场景与动作描述下，同时预测未来 RGB 与稠密 4D 几何，供下游测量、仿真与执行使用。数据瓶颈在于动作文本视频缺少 4D 标注，而 3D 数据规模小且缺少自然动作。",
+    "findings": [
+      {
+        "point": "动作视频缺少稠密 4D 标注",
+        "detail": "大规模视频-文本数据有动作语义但无相机轨迹、稠密 depth 与 motion；动态 3D 数据集规模小或缺少自然动作，导致从零联合训练 4D 世界模型数据不足。"
+      },
+      {
+        "point": "生成与重建先验彼此隔离",
+        "detail": "视频生成器擅长 RGB 但物理与几何一致性弱，3D 重建器几何强却静态且以重建为中心，4D 方法多只从观测帧推断运动，不能按动作生成未来。"
+      },
+      {
+        "point": "冻结 DA3 token 已含跨帧对应",
+        "detail": "在 PointOdyssey 上用相似度、最近邻检索与 token-flow 探针发现真匹配可分离且可检索，运动信号分布式编码而非线性单方向，因此轻量 DPT head 足以读出 scene flow。"
+      }
+    ],
+    "method": "保持 DA3 的 depth/ray/camera 分支冻结，只加 DPT 式 scene-flow head，从多尺度中间 token 图回归逐像素前向 3D 位移并旋到首帧相机基。用 ridge regression 自动选 Wan latent 最易线性到达的早期 DA3 block，以 3D 卷积把 Wan latent 投到 DA3 token 通道，再接剩余 DA3 decoder，让 RGB 与几何从同一 latent 同步读出。随后以 GT RGB 上的冻结 DA3 为教师、GT 几何为校正，联合 depth、ray、camera、point-cloud 与 temporal 损失微调 stitched decoder。最后冻结该 decoder 作为可微几何 critic，以 flow matching 加几何损失训练 LongCat-Video DiT 的 LoRA；Action100M 无 4D 标注视频只走蒸馏分支。",
+    "results": "在三组评测中，stitched 变体在 MOVi-F 上 EPE 最低，Dynamic-RE10K 相机 AUC30 略高于 DA3；Epic-Kitchens-100 的 13 项指标领先 10 项，并在各数据集取得最佳 subject consistency 与最低 depth AbsRel。",
+    "limitations": "依赖 LongCat-Video 与 DA3 先验和教师蒸馏；动作仅作文本条件，未与需要轨迹或机器人动作控制的系统同台比较；场景流在 PointOdyssey 上相对 DA3 退化，长时一致性与闭环执行未验证。"
+  },
+  "claims": [
+    {
+      "claim": "在 Epic-Kitchens-100 的 100 个五秒片段上，Plan4D 在 13 项指标中领先 10 项。",
+      "numbers": [
+        "100",
+        "13",
+        "10"
+      ],
+      "source_span": "Section 4.2, Joint 4D World Generation",
+      "quote": "On the 100 five-second Epic-Kitchens-100 clips, PLAN4D leads on 10 of the 13 metrics in the full comparison."
+    }
+  ]
+}

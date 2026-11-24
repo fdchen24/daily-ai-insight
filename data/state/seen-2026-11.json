@@ -216,5 +216,125 @@
     "angles": [
       "它把“渲染出的 mask 对”与“选出的 Gaussian 集合是否完整”明确拆开，并给出机制解释：alpha 混合特征的梯度按 w=Transmittance×alpha 分配，被遮挡与低不透明度 Gaussian 几乎收不到监督。VOD"
     ]
+  },
+  "arxiv-2103.00020": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "classic",
+    "title": "Learning Transferable Visual Models From Natural Language Supervision",
+    "count": 1,
+    "angles": [
+      "提出 CLIP，用图文对比学习把分类器变成文本编码器生成的零样本线性头，让视觉模型无需任务标注即可迁移；其图文对齐目标仍是多模态预训练的核心基线之一。"
+    ]
+  },
+  "arxiv-2604.06132": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "Claw-Eval: Towards Trustworthy Evaluation of Autonomous Agents",
+    "count": 1,
+    "angles": [
+      "提出 Claw-Eval，一个智能体评测套件：用执行轨迹、审计日志与环境快照三路证据对 300 个任务做轨迹级评分，统一覆盖通用服务、多模态与多轮对话，并把完成度、安全性与鲁棒性纳入同一评分，暴露仅看轨迹的 judge 会系统性漏检安全违规"
+    ]
+  },
+  "arxiv-2604.25850": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses",
+    "count": 1,
+    "angles": [
+      "提出 AHE，把 coding agent 的 harness 拆成 7 类文件级可编辑组件，用分层轨迹证据与带自预测的变更清单构成可回滚的可证伪闭环，十轮演化在 Terminal-Bench 2 上把 pass@1 从 69.7% 提到 "
+    ]
+  },
+  "arxiv-2611.26954": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "Learning Video Foresight Reasoning from Unlabeled Videos via On-Policy Self-Distillation",
+    "count": 1,
+    "angles": [
+      "提出 Future-OPSD，无需标注，将同一视频的过去-未来对作为自监督信号，用冻结的未来感知教师对仅见过去的学生做 on-policy 打分，并以真未来/随机未来的对比优势结合师生蒸馏，提升视频前瞻推理。"
+    ]
+  },
+  "arxiv-2611.28202": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "AutoPILOT: A Visual Agent Harness for Real-Time Gameplay",
+    "count": 1,
+    "angles": [
+      "提出 AutoPILOT 可视化智能体运行框架，单次模型调用可发送原子动作、开放环宏或现场编写的闭环控制器，并构建 AFK-Bench 实时游戏基准；相同预算下实时成功率从 VISTA 的 38.3% 提升到 68.6%。"
+    ]
+  },
+  "arxiv-2607.01204": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "TiRex-2: Generalizing TiRex to Multivariate Data and Streaming",
+    "count": 1,
+    "angles": [
+      "提出 TiRex-2，用 xLSTM 循环骨干与非对称组注意力同时建模多变量、过去/未来协变量，实现常量成本流式推理，并在 GIFT-Eval 零样本上优于 Chronos-2-Synth。"
+    ]
+  },
+  "arxiv-2611.25476": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "WeightCode: Installing New Capabilities into Neural Networks via Weight-Space Programming",
+    "count": 1,
+    "angles": [
+      "提出 WeightCode，用冻结 LLM 编写可执行权重程序，在无梯度训练下把规则、示范或样例安装为已训练网络的新能力，并让程序可在新网络上重跑、后续程序可继续叠加。"
+    ]
+  },
+  "arxiv-2606.18206": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "Fixed-Point Reasoners: Stable and Adaptive Deep Looped Transformers",
+    "count": 1,
+    "angles": [
+      "提出 FPRM，用 pre-norm 与残差缩放稳定深层 looped Transformer，并以不动点收敛作为端到端 halting，在 Sudoku-Extreme 上报告 94.2% 的测试准确率。"
+    ]
+  },
+  "arxiv-2601.20245": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "How AI Impacts Skill Formation",
+    "count": 1,
+    "angles": [
+      "构建随机对照实验，让开发者在使用或不使用 AI 助手时学习新异步 Python 库 Trio，发现 AI 辅助降低概念理解、代码阅读与调试成绩且平均效率无显著提升，并归纳出高低分组的交互模式。"
+    ]
+  },
+  "arxiv-2501.02945": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "From Tables to Time: Extending TabPFN-v2 to Time Series Forecasting",
+    "count": 1,
+    "angles": [
+      "提出 TabPFN-TS，把多步预测改写为以时间特征为列的表格回归，直接调用预训练 TabPFN-v2 单次前向输出整个 horizon 的概率分布，在 fev-bench 已知协变量任务上取得最佳 Relative WQL。"
+    ]
+  },
+  "arxiv-2611.26516": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "frontier",
+    "title": "Plan4D: Generative Plannable 4D Worlds",
+    "count": 1,
+    "angles": [
+      "提出 Plan4D，将 LongCat-Video 与冻结的 Depth Anything 3 通过 latent 拼接耦合，由同一视频 latent 一次前向解码 RGB、depth、camera rays 与 scene flow，生成"
+    ]
+  },
+  "arxiv-2611.30198": {
+    "last_recommended": "2026-11-24T06:33:17.829092+00:00",
+    "arxiv_announce_date": "2026-11-24",
+    "recommendation_type": "survey",
+    "title": "Geospatial foundation models and deep learning for climate resilience: a review of transfer, uncertainty and decision readiness",
+    "count": 1,
+    "angles": [
+      "梳理 137 篇灾害应用与 37 条模型/基准记录，按迁移检验与决策需求分成事件、区域、传感器等维度，指出传感器留出仅 2 篇、校准概率仅 2 篇，并提出决策倒推的评测框架。"
+    ]
   }
 }

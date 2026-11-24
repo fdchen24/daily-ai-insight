@@ -1,0 +1,135 @@
+{
+  "title_zh": "Claw-Eval：面向自主智能体的可信评测套件",
+  "affiliations": [
+    "Peking University",
+    "The University of Hong Kong"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把轨迹级审计、内嵌安全约束与受控故障注入统一到同一套可复现评测中，并用多个前沿模型给出诊断性结论，对智能体评测与部署决策有直接参考价值。",
+    "novelty": 80,
+    "novelty_reason": "轨迹审计、Pass^k、安全评测或扰动测试分别已有先例，新意在于用统一声明式 schema 把三路证据、乘性安全门控与故障注入组合进同一套任务集，并系统比较混合评分与单次 LLM judge。",
+    "technical_depth": 88,
+    "technical_depth_reason": "三阶段隔离、三路证据、确定性检查+LLM judge、人工盲审、阈值与权重敏感性、judge 替换实验相互支撑；证据以观测性研究为主，但设定可检验、基线公平、结论有数据支撑。"
+  },
+  "reading": {
+    "why_read": "提出 Claw-Eval，一个智能体评测套件：用执行轨迹、审计日志与环境快照三路证据对 300 个任务做轨迹级评分，统一覆盖通用服务、多模态与多轮对话，并把完成度、安全性与鲁棒性纳入同一评分，暴露仅看轨迹的 judge 会系统性漏检安全违规。",
+    "task": "LLM 正从对话助手变成能调用工具、读写文件、跨应用编排的自主智能体，评测重点随之从“知道什么”转向“能否在多步执行中可靠达成目标”。现有基准多只校验最终产物，难以区分真实执行与走捷径或伪造中间步骤；安全约束常被拆成独立测试，超时、限流等部署扰动少被系统评估；通用服务、视觉媒体与多轮咨询又分散在不同基准，同一部署下的能力无法横向比较。",
+    "findings": [
+      {
+        "point": "轨迹不透明使安全与鲁棒性检查失效",
+        "detail": "违规往往只出现在服务端审计日志或执行后环境快照里；单次 LLM judge 即使看到完整对话和评分源码，也难以稳定执行规则匹配，补上审计日志后仍漏掉同一批安全案例并新增误报。"
+      },
+      {
+        "point": "单次通过率掩盖了执行一致性",
+        "detail": "agent 运行本身随机，注入瞬时故障后模型常能在多次试验中成功一次，Pass@3 因此几乎不动；要求每次都成功时恢复失败累积，Pass^3 最大下降 24 个百分点，最佳情况指标会高估部署可靠性。"
+      },
+      {
+        "point": "多轮对话的瓶颈是提问精度而非轮数",
+        "detail": "任务把关键事实藏在渐进披露中，问得准不准决定能拿到多少信息：提问精度与 Pass^3 的相关系数 $r=0.87$、解释 76% 方差，轮数仅 $r=0.07$。"
+      }
+    ],
+    "method": "每次运行拆成 Setup、Execution、Judge 三阶段，时间防火墙把评分脚本与参考答案隔离到智能体退出之后；独立沙箱留下执行轨迹、服务端审计日志和环境快照三路证据。任务用统一声明式 schema 描述，覆盖通用服务、多模态与多轮对话，评分落到 2,159 条可核验 rubric。总分 $s_{safety}\\times(\\alpha s_{completion}+\\beta s_{robustness})$：安全是乘性门控，86 个任务声明 125 条禁止动作，命中即零分；鲁棒性按注入故障后的恢复工具类型比例计。可写成规则的条件交给确定性检查，开放式质量交给 LLM judge；每任务跑 3 次，同时报 Average Score、Pass@3 与 Pass^3。",
+    "results": "主实验 14 个模型各跑 3 次：Claude-Opus-4.6 Overall Pass^3 最高（70.4%），Average Score 却由 Claude-Sonnet-4.6 以 81.4% 领先；错误注入下 Pass@3 近乎不变、Pass^3 最多降 24 个百分点，仅看轨迹的 judge 漏检 44% 安全违规。",
+    "limitations": "鲁棒性只覆盖限流、服务器错误与延迟等传输故障，语义、对抗与权限故障尚未随机注入；开放式 rubric 依赖 LLM judge，与人工评分仍有偏差；公开基准存在被针对性优化的风险，作者用私有保留集缓解。"
+  },
+  "claims": [
+    {
+      "claim": "Claw-Eval 包含 300 个人工核验任务",
+      "numbers": [
+        "300"
+      ],
+      "source_span": "Abstract",
+      "quote": "300 human-verified tasks"
+    },
+    {
+      "claim": "评测套件共含 2,159 条细粒度 rubric",
+      "numbers": [
+        "2159"
+      ],
+      "source_span": "§3.3 Fine-grained rubrics",
+      "quote": "2,159 rubric items"
+    },
+    {
+      "claim": "86 个任务声明 125 条禁止动作规则",
+      "numbers": [
+        "86",
+        "125"
+      ],
+      "source_span": "Appendix E.1",
+      "quote": "86 of the 300 tasks carry 125 such rules"
+    },
+    {
+      "claim": "每个任务运行 3 次独立试验",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "§4.2 Evaluation settings",
+      "quote": "3 independent trials"
+    },
+    {
+      "claim": "实验覆盖 14 个前沿模型",
+      "numbers": [
+        "14"
+      ],
+      "source_span": "Abstract",
+      "quote": "14 frontier models"
+    },
+    {
+      "claim": "Claude-Opus-4.6 的 Overall Pass^3 最高，为 70.4%",
+      "numbers": [
+        "70.4"
+      ],
+      "source_span": "Table 3, Overall Pass^3, Claude Opus 4.6",
+      "quote": "70.4"
+    },
+    {
+      "claim": "Claude-Sonnet-4.6 的 Average Score 为 81.4%",
+      "numbers": [
+        "81.4"
+      ],
+      "source_span": "Table 3, Overall Score, Claude Sonnet 4.6",
+      "quote": "81.4"
+    },
+    {
+      "claim": "错误注入下 Pass^3 最多下降 24 个百分点",
+      "numbers": [
+        "24"
+      ],
+      "source_span": "Abstract / §5.2",
+      "quote": "up to 24 percentage points"
+    },
+    {
+      "claim": "仅看轨迹的 LLM judge 漏检 44% 的安全违规",
+      "numbers": [
+        "44"
+      ],
+      "source_span": "Abstract / §5.1",
+      "quote": "missing 44% of safety violations"
+    },
+    {
+      "claim": "提问精度与 Pass^3 的相关系数 r=0.87",
+      "numbers": [
+        "0.87"
+      ],
+      "source_span": "§5.3 / Figure 5b",
+      "quote": "r = 0.87"
+    },
+    {
+      "claim": "提问精度解释 76% 的 Pass^3 方差",
+      "numbers": [
+        "76"
+      ],
+      "source_span": "§5.3",
+      "quote": "76% of Pass^3 variance"
+    },
+    {
+      "claim": "对话轮数与 Pass^3 的相关系数仅 r=0.07",
+      "numbers": [
+        "0.07"
+      ],
+      "source_span": "§5.3 / Figure 5a",
+      "quote": "r = 0.07"
+    }
+  ]
+}

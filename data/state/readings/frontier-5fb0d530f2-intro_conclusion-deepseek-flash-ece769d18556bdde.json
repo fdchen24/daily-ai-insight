@@ -1,0 +1,85 @@
+{
+  "title_zh": "AutoPILOT：面向实时游戏的可视智能体运行框架",
+  "affiliations": [],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "将实时游戏中“一次模型调用如何转化为跨步行动”作为 harness 的核心设计维度，并用 AFK-Bench 的敌意/良性/回合制与实时/暂停协议量化延迟代价，问题对实时智能体具有普遍意义。",
+    "novelty": 85,
+    "novelty_reason": "相对 VISTA 只改观察与记忆、每次调用最多一个动作，AutoPILOT 让模型现场编写读屏闭环控制器，并用唤醒事件交还控制权，改动落在执行层而非换模型或堆工具。",
+    "technical_depth": 82,
+    "technical_depth_reason": "在相同模型与预算下比较 VISTA、Codex/Claude Code 及空操作/随机基线，覆盖多模型、两种时钟和 API 成本；但节选未展开控制器失败模式与全部消融。"
+  },
+  "reading": {
+    "why_read": "提出 AutoPILOT，让单次模型调用可发送原子动作、开环宏或现场编写读屏闭环控制器，在 AFK-Bench 上显著缩小实时与暂停时钟下的成功率差距。",
+    "task": "多模态模型能玩“会等它”的游戏，却常在游戏持续运行时失败。现有 VISTA 等 harness 主要改观察与记忆，仍沿用一次模型调用最多一个动作的单步循环：实时下动作既滞后，频率又被模型思考速度锁死。核心问题是让 harness 在模型调用之间持续行动。",
+    "findings": [
+      {
+        "point": "单步循环把行动频率锁在模型调用上",
+        "detail": "一次调用最多产生一个动作，模型思考多久，智能体就多久不能行动；在持续运行环境里，行动频率被模型延迟锁死。"
+      },
+      {
+        "point": "动作相对观测陈旧",
+        "detail": "动作基于调用开始时的画面计算，却要等模型生成结束才执行；实时下原本安全的决策到时可能已失效。"
+      },
+      {
+        "point": "改观察/记忆或增加推理不能消除瓶颈",
+        "detail": "VISTA 的视觉记忆和检查工具在实时下并不优于朴素 Codex harness，提高推理努力也只带来有限增益，说明瓶颈在执行层。"
+      }
+    ],
+    "method": "在 VISTA/Codex 之上加入委派执行：每次模型调用可选原子动作、开环宏，或现场编写一个读截图的闭环 Python 控制器；控制器在沙箱中高频读屏并行动，直到 handoff、程序结束、决策界面、场景变化或超时等唤醒事件把控制权交回模型。配套 AFK-Bench 按“不行动”的后果分敌意实时、良性实时、回合制三类，并用实时/暂停两种时钟测延迟代价。",
+    "results": "GPT-6.1 Sol 低推理努力下，AFK-Bench 实时成功率 68.6%，VISTA 38.3%；敌意实时 62.5% 对 16.7%；GameWorld 实时 80.0% 对 42.9%，API 成本约 VISTA 的 0.2×。",
+    "limitations": "控制器由模型现场编写，其失败率、超时率与沙箱安全边界未量化；评测集中在浏览器游戏和少数模型，跨任务外推仍待验证。"
+  },
+  "claims": [
+    {
+      "claim": "在 AFK-Bench 实时设置下，AutoPILOT 用 GPT-6.1 Sol 达到 68.6% 成功率。",
+      "numbers": [
+        "68.6"
+      ],
+      "source_span": "Table 2, Real-time Clock, AutoPILOT / GPT-6.1 Sol / Overall",
+      "quote": "68.6 .824"
+    },
+    {
+      "claim": "同一设置下 VISTA 的成功率为 38.3%。",
+      "numbers": [
+        "38.3"
+      ],
+      "source_span": "Table 2, Real-time Clock, VISTA / GPT-6.1 Sol / Overall",
+      "quote": "38.3 .613"
+    },
+    {
+      "claim": "敌意实时子集上 AutoPILOT 为 62.5%。",
+      "numbers": [
+        "62.5"
+      ],
+      "source_span": "Table 2, Real-time Clock, AutoPILOT / GPT-6.1 Sol / Hostile real-time",
+      "quote": "62.5 .784"
+    },
+    {
+      "claim": "VISTA 在敌意实时子集上仅 16.7%。",
+      "numbers": [
+        "16.7"
+      ],
+      "source_span": "Table 2, Real-time Clock, VISTA / GPT-6.1 Sol / Hostile real-time",
+      "quote": "16.7 .442"
+    },
+    {
+      "claim": "在 GameWorld 上 AutoPILOT 实时保持 80.0%，VISTA 从 84.1% 降到 42.9%。",
+      "numbers": [
+        "80.0",
+        "84.1",
+        "42.9"
+      ],
+      "source_span": "Abstract, GameWorld real-time result",
+      "quote": "keeps 80.0% in real time while VISTA drops from 84.1% to 42.9%"
+    },
+    {
+      "claim": "AutoPILOT 达到 VISTA 最终成功率所需的 API 成本约为 0.2×。",
+      "numbers": [
+        "0.2"
+      ],
+      "source_span": "Introduction, cost result (Fig. 4d)",
+      "quote": "0.2× its API cost"
+    }
+  ]
+}

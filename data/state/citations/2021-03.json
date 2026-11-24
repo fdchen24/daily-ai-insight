@@ -1,0 +1,24 @@
+{
+"2103.00020": {
+"citation_count": 62735,
+"reference_count": 212,
+"venue": "International Conference on Machine Learning",
+"year": 2021,
+"work_type": "conference-paper",
+"fwci": 1252.53,
+"citation_percentile": 1.0,
+"citations_by_year": {
+"2026": 21069,
+"2025": 19984
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"OpenAI (United States)"
+],
+"fetched_at": "2026-11-24T06:10:43.253868+00:00",
+"v": 2
+}
+}

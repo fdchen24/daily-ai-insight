@@ -1,0 +1,95 @@
+{
+  "title_zh": "CLIP：用自然语言监督学习可迁移视觉模型",
+  "affiliations": [
+    "OpenAI"
+  ],
+  "scores": {
+    "research_value": 96,
+    "research_value_reason": "CLIP 的双塔图文对比表征仍是图文检索、零样本分类与多模态模型视觉编码的常用基线。",
+    "novelty": 90,
+    "novelty_reason": "相对当时固定类别的弱监督，改用网络规模图文对与批次对比目标，并用文本编码器动态生成分类器。",
+    "technical_depth": 89,
+    "technical_depth_reason": "包含双塔架构、可学习温度、大规模分布式训练细节，以及多数据集的零样本、线性探针与鲁棒性实验。"
+  },
+  "reading": {
+    "why_today": "提出 CLIP，用图文对比学习把分类器变成文本编码器生成的零样本线性头，让视觉模型无需任务标注即可迁移；其图文对齐目标仍是多模态预训练的核心基线之一。",
+    "historical_context": "2021 年前，视觉预训练仍以 ImageNet/JFT 等人工或半自动标注的固定类别为主，弱监督模型用静态 softmax 头，类别数被固定；直接用自然语言监督的尝试规模小、零样本准确率远低于监督模型。",
+    "problem_then": "核心问题：能否把网络文本当作开放集监督信号，从零训练视觉编码器，并在不接触下游训练集、不训练新分类头的情况下，按自然语言描述迁移到任意类别？",
+    "contributions": [
+      {
+        "point": "把图文配对预测改造成批次内对比任务",
+        "detail": "在 N 对图文里做 N×N 匹配，正样本为对角项，用对称交叉熵替代逐词生成，训练效率高于 caption 预测。"
+      },
+      {
+        "point": "用文本编码器合成零样本分类器",
+        "detail": "类别名经 prompt 模板编码为权重，图像嵌入与文本嵌入的余弦相似度经 softmax 即分类概率；prompt ensembling 在嵌入空间平均。"
+      },
+      {
+        "point": "大规模多任务评测与鲁棒性分析",
+        "detail": "在多个数据集上比较零样本 CLIP 与监督基线，并系统报告分布偏移下的有效鲁棒性和数据重合审计。"
+      }
+    ],
+    "core_idea": "CLIP 是双塔：图像编码器（ResNet/ViT）与文本编码器（Transformer）各自线性投影到同一嵌入空间并 L2 归一化。一个 batch 的 N 对图文形成 N×N 余弦相似度矩阵，训练目标是在行和列上做交叉熵，使真实配对相似度最大、N²−N 个错误配对最小：$$\\mathcal{L}=\\frac{1}{2}\\left[\\mathrm{CE}(\\mathbf{S},y)+\\mathrm{CE}(\\mathbf{S}^{\\top},y)\\right],\\quad \\mathbf{S}_{ij}=e^{\\tau}\\,\\hat{\\mathbf{i}}_i^{\\top}\\hat{\\mathbf{t}}_j$$ 温度 $\\tau$ 作为可学习标量。零样本推理时，把类别文本过文本编码器得到分类器权重，图像嵌入与之做余弦相似度并 softmax；prompt 模板与多模板嵌入平均用来补上下文。",
+    "influence": "把图文对比预训练推成多模态表征的标准范式：图文检索、零样本分类、开放词表识别都以 CLIP 双塔为基线；其 zero-shot/linear-probe 评测协议、prompt engineering 和鲁棒性分析被后续多模态模型沿用。",
+    "modern_reading": "本解读基于全文。论文自述的短板——细粒度分类、计数、真正 OOD（如手写数字）、数据偏差与重合——仍是今天使用 CLIP 类模型时的审计项；其零样本头更多作为表征与基线，而非最终任务模型，论文估计达到全面 SOTA 还需约 1000x 计算。"
+  },
+  "claims": [
+    {
+      "claim": "预训练数据集 WIT 含 4 亿图文对",
+      "numbers": [
+        "400"
+      ],
+      "source_span": "Section 2.2",
+      "quote": "400 million"
+    },
+    {
+      "claim": "最佳 CLIP 在 ImageNet 零样本达到 76.2% top-1，匹配原始 ResNet-50",
+      "numbers": [
+        "76.2"
+      ],
+      "source_span": "Table 1",
+      "quote": "76.2"
+    },
+    {
+      "claim": "训练使用 32,768 的大 batch",
+      "numbers": [
+        "32,768"
+      ],
+      "source_span": "Section 2.5",
+      "quote": "32,768"
+    },
+    {
+      "claim": "零样本 CLIP 匹配同特征空间 4-shot 逻辑回归",
+      "numbers": [
+        "4"
+      ],
+      "source_span": "Figure 6 / Section 3.1.5",
+      "quote": "4-shot logistic regression"
+    },
+    {
+      "claim": "零样本 CLIP 把分布偏移下的鲁棒性差距最多缩小 75%",
+      "numbers": [
+        "75"
+      ],
+      "source_span": "Figure 13 / Section 3.3",
+      "quote": "by up to 75%"
+    },
+    {
+      "claim": "线性探针在 27 个数据集中 21 个超过 Noisy Student EfficientNet-L2",
+      "numbers": [
+        "21",
+        "27"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "21 of the 27 datasets"
+    },
+    {
+      "claim": "论文估计零样本 CLIP 达到全面 SOTA 需约 1000 倍计算",
+      "numbers": [
+        "1000"
+      ],
+      "source_span": "Section 6",
+      "quote": "around a 1000x increase in compute"
+    }
+  ]
+}

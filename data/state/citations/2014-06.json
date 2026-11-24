@@ -1,20 +1,27 @@
 {
 "1406.2661": {
-"citation_count": 12093,
-"reference_count": 20,
+"citation_count": 12148,
+"reference_count": 24,
 "venue": "neural information processing systems",
 "year": 2014,
 "work_type": "conference-paper",
-"fwci": 17.34,
+"fwci": 18.37,
 "citation_percentile": 0.995,
 "citations_by_year": {
-"2026": 1119,
-"2025": 1693
+"2026": 1129,
+"2025": 1694
 },
 "oa_topics": [
 "Generative Adversarial Networks and Image Synthesis",
 "Adversarial Robustness in Machine Learning"
 ],
-"fetched_at": "2026-11-23T13:49:30.492776+00:00"
+"institutions": [
+"Université de Montréal",
+"École Polytechnique",
+"Polytechnique Montréal",
+"Indian Institute of Technology Delhi"
+],
+"fetched_at": "2026-11-24T06:10:43.253868+00:00",
+"v": 2
 }
 }

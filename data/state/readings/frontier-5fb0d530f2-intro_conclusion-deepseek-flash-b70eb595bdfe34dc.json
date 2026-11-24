@@ -1,0 +1,69 @@
+{
+  "title_zh": "通过在线自蒸馏从未标注视频学习视频前瞻推理",
+  "affiliations": [],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把视频前瞻推理的监督信号从人工标注与外部 LLM 裁判换成视频自身的 past–future 对，直接消除了该方向的主要可扩展性瓶颈，并在开放预测与闭环规划两类任务上取得十余点提升。",
+    "novelty": 79,
+    "novelty_reason": "首次把 on-policy self-distillation 用于视频前瞻，并提出基于 InfoNCE 式 foresight score 的 KL 下界目标，用真实未来对随机参考未来的对比优势替代此前的纯蒸馏或纯对比。",
+    "technical_depth": 80,
+    "technical_depth_reason": "给出 Theorem 1 恒等式与 Theorem 2 下界，配有 Naive OPSD、SFT、TTRL、GRPO 基线与 teacher/data scaling 分析、token 级行为分析；但训练仅 100 步、未见多种子方差，开放预测分数由 Qwen3.6-27B judge 给出。"
+  },
+  "reading": {
+    "why_read": "提出 Future-OPSD，把同一视频的 past–future 片段当作特权信息做在线自蒸馏，用真实未来与随机参考未来下教师对数概率之差构成对比优势并与蒸馏优势插值成 token 级 PPO 优势，无需标注即在开放预测上提升最多 14.2 分。",
+    "task": "视频前瞻推理要求 VLM 从当前观察推断接下来会发生什么，是自动驾驶、具身操作与主动式第一人称助手的基础能力。现有路线要么拟合未来片段的文本目标或视觉状态，要么用 RL 加答案/事件奖励，但监督都依赖标注或外部大模型（rationale 生成器、LLM judge），难以规模化；同时它们把整段未来当作等价目标去拟合。",
+    "findings": [
+      {
+        "point": "监督信号来自外部，难以扩展",
+        "detail": "ground-truth 答案、未来片段描述、LLM 生成的 rationale 与 judge 奖励都需要额外获取，成本随数据量线性增长，这是现有方法不能继续 scaling 的直接原因。"
+      },
+      {
+        "point": "未来片段中只有小部分与当前问题相关",
+        "detail": "预测“接下来做什么”时，未来里只有 rinse the knife 这类 content information 真正相关，而 tap、sink、sponge 等场景元素是与问题无关、在多个未来中共享的 context information，均匀拟合会把监督稀释到这些 token 上。"
+      },
+      {
+        "point": "直接做未来对比会引入可被利用的 Jensen gap",
+        "detail": "真实未来与参考未来的对数概率差 $\\mathcal{L}$ 与 foresight score 相差一个非负的 $\\Gamma$，学生可以靠“在不同参考未来下差异大”刷高对比项而不提升真正的前瞻性，因此必须加正则约束。"
+      }
+    ],
+    "method": "学生只看 past 生成 reasoning 与答案；冻结的初始模型额外看真实 future $z$ 作为教师，逐 token 给同一回答打分，监督完全来自视频自身。为只学有价值的未来，定义 foresight score $\\Phi(\\theta)=\\mathbb{E}\\log\\left[\\pi_0(y|x,z)/\\mathbb{E}_{\\tilde{z}}\\pi_0(y|x,\\tilde{z})\\right]$，可证 $\\Phi=I(X;Z)-D(\\theta)$；归一化项不可解，改用真实未来与其他视频参考未来下的教师对数概率差作可解代理，以 KL 正则控制其非负 Jensen gap，并把该代理与蒸馏优势插值成 token 优势 $a_t=\\lambda(\\ell^{z}_t-\\ell^{\\tilde{z}}_t)+(1-\\lambda)(\\ell^{z}_t-\\ell^{S}_t)$，裁剪居中后做 PPO；$\\lambda=0$ 退化为 Naive OPSD，$\\lambda=1$ 会训练崩溃。这样两个未来都支持的 context token 被降权，只保留真实未来特有的 content token。",
+    "results": "TwiFF-Bench 上 Qwen3-VL-8B 平均 67.8、SEED-Bench-R1 的 L3 上 Qwen3.5-9B 53.8，即分别提升 14.2 与 15.9 分，且一致优于 Naive OPSD；通用视频理解几乎不变（57.5 对 56.0），全程无答案标注。",
+    "limitations": "增益集中在 in-domain 评测，通用视频理解有单项轻微下降；仅训 100 步、评测依赖 Qwen3.6-27B judge 的打分；作者亦承认下界更高不必然意味着 $\\Phi$ 更高。"
+  },
+  "claims": [
+    {
+      "claim": "TwiFF-Bench 上 Qwen3-VL-8B 平均分达 67.8",
+      "numbers": [
+        "67.8"
+      ],
+      "source_span": "Table 1, Qwen3-VL-8B, Future-OPSD 行",
+      "quote": "67.8"
+    },
+    {
+      "claim": "SEED-Bench-R1 的 L3 上 Qwen3.5-9B 达 53.8",
+      "numbers": [
+        "53.8"
+      ],
+      "source_span": "Table 2, Qwen3.5-9B, Future-OPSD 行（L3 列）",
+      "quote": "53.8"
+    },
+    {
+      "claim": "开放预测与闭环规划分别提升最多 14.2 与 15.9 分",
+      "numbers": [
+        "14.2",
+        "15.9"
+      ],
+      "source_span": "Abstract / Sec. 1",
+      "quote": "up to 14.2 and 15.9 points"
+    },
+    {
+      "claim": "通用视频理解平均分为 57.5，基线为 56.0",
+      "numbers": [
+        "57.5",
+        "56.0"
+      ],
+      "source_span": "Table 1, General Video Understanding Avg 列",
+      "quote": "57.5"
+    }
+  ]
+}

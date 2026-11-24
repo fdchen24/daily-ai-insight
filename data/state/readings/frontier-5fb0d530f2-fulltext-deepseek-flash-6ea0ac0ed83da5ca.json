@@ -1,0 +1,112 @@
+{
+  "title_zh": "从表格到时间：将 TabPFN-v2 扩展到时间序列预测",
+  "affiliations": [
+    "University of Freiburg",
+    "Prior Labs",
+    "Meta",
+    "ELLIS Institute Tübingen"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把时序预测整体改写为表格回归，正面检验了表格基础模型的能力边界，并在协变量预测这一现有 TSFM 的短板上拿到最佳成绩，方法极简、代码可直接复用。",
+    "novelty": 68,
+    "novelty_reason": "核心是轻量时间特征工程加复用现成的 TabPFN-v2，模型与训练层面几乎没有改动；新意主要在「表格 FM 零样本可做概率预测」这一实证结论，以及用相位空间单射性解释周期泛化的机制分析。",
+    "technical_depth": 75,
+    "technical_depth_reason": "有受控合成实验（正弦谐波、协变量耦合类型）、特征与骨干两组消融和机制分析，并如实报告外推失败与推理开销；但主榜只有聚合图、无逐数据集结果表，骨干对比只覆盖部分 GIFT-Eval 任务且只报 MASE。"
+  },
+  "reading": {
+    "why_read": "提出 TabPFN-TS，把多步预测改写为以时间特征为列的表格回归，直接调用预训练 TabPFN-v2 单次前向输出整个 horizon 的概率分布，在 fev-bench 已知协变量任务上取得最佳 Relative WQL。",
+    "task": "时间序列基础模型已能零样本预测，但大多围绕纯序列输入设计，天气、控制输入、经济指标这类协变量只能靠 adapter 或条件化旁路注入，能统一且数据高效地同时处理单变量与协变量预测的框架仍少见。另一侧，TabPFN-v2 这类表格基础模型在零样本回归上表现已很强。自然的问题是：把时序预测写成表格回归、用时间特征承载时序结构，表格基础模型能否直接做概率预测？",
+    "findings": [
+      {
+        "point": "周期能力来自单射时间嵌入中的插值/检索",
+        "detail": "只给 $\\sin(t)$ 时映射非单射，上升沿与下降沿塌缩到同一特征，模型只能重建奇次谐波；加入 $\\cos(t)$ 把时间映到单位圆后，全部谐波都能恢复，说明模型是在相位空间做检索式插值而非全局函数拟合。"
+      },
+      {
+        "point": "不外推趋势源于 TabPFN-v2 的预训练目标",
+        "detail": "预训练时 context 与 query 从同一分布采样，query 目标基本落在观测目标的凸包内，模型被优化成条件插值器，天然缺少无界外推的归纳偏置，因此预测被限制在历史取值范围内。"
+      },
+      {
+        "point": "时间推进与多尺度季节性互补，缺一不可",
+        "detail": "消融显示只用 running index 或只用自动季节特征都明显变差：日历与季节特征提供周期结构但推进信息弱，index 提供唯一主时间轴，三者组合才最佳。"
+      }
+    ],
+    "method": "把序列写成一张表：每行一个时间步，列为 running index（单调时间轴）、8 个周期的 sin/cos 日历编码加年份（共 17 维）、自动季节特征（线性去趋势后加 Hann 窗、二倍零填充做 FFT，去掉零频后取幅值最大的 $k$ 个峰，编码为 $2k$ 个 sin/cos）以及预测期已知的协变量 $z_t$，合计 $D=18+2k+D_z$ 列。$(X_{\\text{train}}, y_{\\text{train}})$ 作上下文、$X_{\\text{test}}$ 作查询一次性送入 TabPFN-v2，取离散化后验的均值、中位数或任意分位数。刻意不用 lag、滑动平均等自回归特征——它们依赖过去的预测值，会破坏单次非自回归前向。",
+    "results": "GIFT-Eval 97 个任务上 Relative WQL 0.460、Mean WQL Rank 5.392 排第 4，与 TimesFM-2.0、Chronos-Bolt 相当；fev-bench 28 个已知动态协变量任务上 Relative WQL 0.503、MASE 0.666，优于 TiRex 的 0.597，居首。",
+    "limitations": "作者承认：目标超出上下文取值范围（线性/指数趋势）时无法外推，这是预训练目标导致的结构性缺陷；每条序列一次前向加二次注意力，推理约慢 30 倍。增益主要来自协变量任务，单变量上仅算有竞争力。"
+  },
+  "claims": [
+    {
+      "claim": "模型仅 11M 参数却无需任何时序预训练",
+      "numbers": [
+        "11"
+      ],
+      "source_span": "Abstract",
+      "quote": "compact size (11M parameters)"
+    },
+    {
+      "claim": "GIFT-Eval 共含 97 个不同的基准任务",
+      "numbers": [
+        "97"
+      ],
+      "source_span": "Section 4.1 Datasets",
+      "quote": "97 distinct benchmarking tasks"
+    },
+    {
+      "claim": "在 GIFT-Eval 上 TabPFN-TS 的 Mean WQL Rank 为 5.392",
+      "numbers": [
+        "5.392"
+      ],
+      "source_span": "Figure 2, Mean WQL Rank 轴",
+      "quote": "5.392"
+    },
+    {
+      "claim": "在 GIFT-Eval 上 TabPFN-TS 的 Relative WQL 为 0.460",
+      "numbers": [
+        "0.460"
+      ],
+      "source_span": "Figure 2, Relative WQL 轴",
+      "quote": "0.460"
+    },
+    {
+      "claim": "fev-bench 最终使用 28 个已知协变量任务",
+      "numbers": [
+        "28"
+      ],
+      "source_span": "Section 4.2 Datasets",
+      "quote": "28 tasks for the final evaluation"
+    },
+    {
+      "claim": "在 fev-bench 28 个任务上 TabPFN-TS 的 Relative WQL 为 0.503，全部基线中最低",
+      "numbers": [
+        "0.503"
+      ],
+      "source_span": "Figure 3, Relative WQL 轴",
+      "quote": "0.503"
+    },
+    {
+      "claim": "在 fev-bench 上 TabPFN-TS 的 Relative MASE 为 0.666",
+      "numbers": [
+        "0.666"
+      ],
+      "source_span": "Figure 3, Relative MASE 轴",
+      "quote": "0.666"
+    },
+    {
+      "claim": "同一批任务上 TiRex 的 Relative WQL 为 0.597，高于 TabPFN-TS",
+      "numbers": [
+        "0.597"
+      ],
+      "source_span": "Figure 3, Relative WQL 轴",
+      "quote": "0.597"
+    },
+    {
+      "claim": "TabPFN-TS 的推理时间约为 Chronos-Bolt-Base 的 30 倍",
+      "numbers": [
+        "30"
+      ],
+      "source_span": "Section 6.2 Inference Time",
+      "quote": "requires roughly 30× more inference"
+    }
+  ]
+}

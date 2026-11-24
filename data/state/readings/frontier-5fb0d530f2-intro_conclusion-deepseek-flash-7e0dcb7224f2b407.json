@@ -1,0 +1,60 @@
+{
+  "title_zh": "TiRex-2：将 TiRex 推广到多变量数据与流式预测",
+  "affiliations": [],
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "把 TSFM 从离线单变量推进到多变量、含未来协变量且可常数成本流式的设定，问题在在线预测与系统监控中很实际。",
+    "novelty": 82,
+    "novelty_reason": "非对称组注意力把未来协变量的双向信息与目标的严格因果放在单次前向里，配合循环状态实现常数成本流式，和 Transformer 分解注意力路线有实质差别。",
+    "technical_depth": 76,
+    "technical_depth_reason": "架构、掩码与合成耦合管线描述完整，并给出 target-causality 的形式化引理/命题；但可见材料只到实验设置与部分结论，完整表格和消融未展开。"
+  },
+  "reading": {
+    "why_read": "提出 TiRex-2，以 xLSTM 循环主干和非对称组注意力变量混合器，把 TiRex 扩展到含过去/未来协变量的多变量流式预测，并用合成耦合管线扩充预训练分布。",
+    "task": "多变量时间序列预测需要在捕捉变量间依赖的同时利用过去协变量和未来已知协变量；在线系统还要求新观测到达后以近似常数成本更新预测。现有强单变量 TSFM 多按通道独立处理，忽略跨变量依赖；多变量 Transformer TSFM 虽能建模联合分布，但每摄入一个新 patch 的成本随上下文增长，非因果设计还需全上下文重算，与流式预测错配。",
+    "findings": [
+      {
+        "point": "时间混合的注意力复杂度与流式更新错配",
+        "detail": "主流多变量 TSFM 用 Transformer 沿时间轴做注意力，即使有 KV Cache，每来一个新 patch 仍需 O(L) 更新；若模型非因果，还要重算全上下文，延迟随回看长度线性增长。"
+      },
+      {
+        "point": "协变量信息流缺少目标因果约束",
+        "detail": "未来已知协变量要双向利用才充分，但若变量混合器允许协变量查询读取目标，未来目标信息会沿协变量通道泄漏到更早 patch，破坏流式预测的因果性。"
+      },
+      {
+        "point": "预训练分布缺少多变量耦合结构",
+        "detail": "现有多变量语料覆盖面窄，难以教会模型使用协变量与跨变量依赖；单变量语料丰富却天然缺少直接、间接和因果耦合，模型没有机会学习这些结构。"
+      }
+    ],
+    "method": "时间侧用 xLSTM 循环主干（交替 mLSTM/sLSTM）按 patch 维护状态，目标与过去协变量严格前向，新 patch 更新为常数成本；未来协变量另走权重共享的反向 xLSTM，再与正向表示融合。变量侧用分组注意力加非对称掩码：目标可读协变量，协变量不可读目标，并以引理/命题证明目标 token 不依赖未来目标 patch；单变量模式绕过变量混合器，仅激活 38.4M，多变量再激活 44.1M。训练分布侧，从单变量语料采样增强，按线性混合、协整、线性/非线性 SCM 等机制现场耦合成多变量样本，再做协变量丰富、时间扭曲、离散化与未来掩蔽；损失为逐时间步 pinball loss。",
+    "results": "零样本评测覆盖 fev-bench 与 GIFT-Eval。作者报告 GIFT-Eval 上全部统计量均优于零样本 Chronos-2-Synth，匹配语料后也优于 Chronos-2；fev-bench 上 Chronos-2 的 skill score 仍领先，但其平均激活参数是 TiRex-2 的 2.2 倍。流式压力测试中，连续输入 32M 步后预测质量未出现漂移。",
+    "limitations": "常数成本流式只覆盖目标与过去协变量；未来协变量要求整段已知，其双向表示在未来值变化时仍需重算。fev-bench 上仍未超过 Chronos-2，且可见材料未展开完整结果表与消融，结论强度受限。"
+  },
+  "claims": [
+    {
+      "claim": "TiRex-2 单变量模式激活 38.4M 参数，多变量模式额外激活 44.1M 参数。",
+      "numbers": [
+        "38.4",
+        "44.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "TiRex-2 uses 38.4M active parameters in univariate mode, plus 44.1M for multivariate forecasting."
+    },
+    {
+      "claim": "fev-bench 上 Chronos-2 的 skill score 仍领先，但其平均激活参数是 TiRex-2 的 2.2 倍。",
+      "numbers": [
+        "2.2"
+      ],
+      "source_span": "Abstract",
+      "quote": "On fev-bench Chronos-2 stays ahead on skill score at $2.2\\times$ the mean active parameters."
+    },
+    {
+      "claim": "连续流式输入 32M 步后，预测质量未出现漂移。",
+      "numbers": [
+        "32"
+      ],
+      "source_span": "Section 1 Introduction, contributions",
+      "quote": "Even after 32M streamed time steps, forecast quality shows no sign of drift."
+    }
+  ]
+}

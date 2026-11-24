@@ -1,0 +1,96 @@
+{
+  "title_zh": "定点推理器：稳定且自适应的深层 Looped Transformer",
+  "affiliations": [
+    "ELLIS Institute Tübingen",
+    "Max Planck Institute for Intelligent Systems",
+    "Tübingen AI Center",
+    "ETH Zurich",
+    "Swiss Institute of Bioinformatics"
+  ],
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "把 looped Transformer 的深度信号传播与自适应 halting 两个核心瓶颈放进同一框架，并在数独、迷宫、状态跟踪和 ARC 上给出较系统的证据。",
+    "novelty": 77,
+    "novelty_reason": "用 pre-norm 加两个尺度的残差缩放替代 post-norm 以恢复有界性，并把阻尼不动点迭代直接作为 halting、去掉 HRM/TRM 的层级结构；组合有新意，但固定点收敛与残差缩放本身并非全新。",
+    "technical_depth": 86,
+    "technical_depth_reason": "含 boundedness/contractivity/damping 三个定理、跨种子方差、归一化与阻尼消融、深度利用分析；主要疑点是主表高分与种子均值口径不同，且收敛假设未在训练中显式约束。"
+  },
+  "reading": {
+    "why_read": "提出 FPRM，用 pre-norm 与残差缩放稳定深层 looped Transformer，并以不动点收敛作为端到端 halting，在 Sudoku-Extreme 上报告 94.2% 的测试准确率。",
+    "task": "推理模型希望按输入难度分配测试时算力。Looped Transformer 通过深度循环提供这种灵活性，但有效层变深后会出现信号传播问题；halting 又常依赖固定/随机循环数或外挂 ACT——前者没有自适应，后者因离散目标松弛而难以优化，HRM/TRM 中未必随难度调节算力。",
+    "findings": [
+      {
+        "point": "post-norm 的有界性以牺牲深度利用为代价",
+        "detail": "循环模型用 post-norm 把每步激活压回有界范围，但反复归一化会抹掉径向信息并加剧 token 相似度/rank collapse；因此增加循环数不能转化为有效深度。"
+      },
+      {
+        "point": "pre-norm 会令激活随深度无界增长",
+        "detail": "把归一化移到子层输入后，残差流范数随有效层数上升；深层 loop 训练因此发散，必须在保留 pre-norm 的同时恢复有界性。"
+      },
+      {
+        "point": "固定点迭代可能围绕解振荡",
+        "detail": "即使 Jacobian 特征值实部小于 1，其模长仍可能不小于 1，迭代会在不动点附近螺旋而不收缩；只靠残差阈值不能保证停下时已收敛。"
+      }
+    ],
+    "method": "FPRM 改用 pre-norm，并在子层与迭代两个尺度加可学习残差缩放：$z_\\ell=\\alpha_1 z_{\\ell-1}+\\beta_1 f_\\ell(\\mathrm{Norm}(z_{\\ell-1}))$、$z_{i+1}^{0}=\\alpha_2 z_i^{2L}+\\beta_2 x$，按 Thm. 1 的耦合条件设 $\\beta_1,\\beta_2$ 以保持迭代有界。Halting 不设外挂 ACT，而以相对 $L_\\infty$ 残差 $r_i$ 低于阈值 $\\tau$ 为停止信号；为抑制不动点附近振荡，用阻尼 $g_\\eta=\\eta f_\\theta+(1-\\eta)z$，并按 patience 几何衰减 $\\eta$。训练采用 truncated-BPTT 与 deep supervision，并去掉 HRM/TRM 的层级循环。",
+    "results": "Table 1 中 FPRM 在 Sudoku-Extreme 达 94.2%（TRM 74.7%）；状态跟踪长度 128 时 A5/S5 为 98.1%/98.8%，平均 120/140 次迭代，TRM 固定 320 次。",
+    "limitations": "作者承认仅验证算法任务与 Transformer，未涉及自然语言；收敛保证依赖训练中未显式强制的假设。我另注意到主表 94.2% 与三次种子均值 80.6±4.4 有差距（γ=0.99 降低推理算力）。"
+  },
+  "claims": [
+    {
+      "claim": "FPRM 在 Sudoku-Extreme 的 Table 1 测试准确率为 94.2%。",
+      "numbers": [
+        "94.2"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "94.2%"
+    },
+    {
+      "claim": "TRM 在 Sudoku-Extreme 的 Table 1 测试准确率为 74.7%。",
+      "numbers": [
+        "74.7"
+      ],
+      "source_span": "Table 1, row 'TRM'",
+      "quote": "74.7%"
+    },
+    {
+      "claim": "在长度 128 的状态跟踪上，FPRM 在 A5 与 S5 分别达到 98.1% 和 98.8%。",
+      "numbers": [
+        "128",
+        "98.1",
+        "98.8"
+      ],
+      "source_span": "Sec. 3.2, state tracking",
+      "quote": "98.1% ± 2.2% on A5 and 98.8% ± 0.9% on S5 at length 128"
+    },
+    {
+      "claim": "FPRM 在 A5/S5 上平均每个样本用 120±18 与 140±14 次迭代，TRM 固定 320 次。",
+      "numbers": [
+        "120",
+        "18",
+        "140",
+        "14",
+        "320"
+      ],
+      "source_span": "App. H.1",
+      "quote": "120±18 iterations per sample on A5 and 140±14 on S5, compared with a fixed 320 iterations for TRM"
+    },
+    {
+      "claim": "三次种子实验中 FPRM 的 Sudoku-Extreme 均值为 80.6±4.4。",
+      "numbers": [
+        "80.6",
+        "4.4"
+      ],
+      "source_span": "Table 2, row 'Sudoku-Extreme', FPRM",
+      "quote": "80.6 ± 4.4"
+    },
+    {
+      "claim": "作者在 Table 2 的种子实验中使用 γ = 0.99 以降低推理算力。",
+      "numbers": [
+        "0.99"
+      ],
+      "source_span": "App. H.1",
+      "quote": "γ = 0.99"
+    }
+  ]
+}

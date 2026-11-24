@@ -1,0 +1,123 @@
+{
+  "title_zh": "从表格到时间：将 TabPFN-v2 扩展到时间序列预测",
+  "affiliations": [],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把表格基础模型的零样本能力迁移到时间序列预测，并在协变量任务上给出可操作方案，对统一表格与时序建模有实际参考价值。",
+    "novelty": 70,
+    "novelty_reason": "核心是轻量时间特征化加现成 TabPFN-v2，方法本身不复杂；新意在于系统验证表格基础模型的时序预测能力，并覆盖协变量设定。",
+    "technical_depth": 78,
+    "technical_depth_reason": "方法简单，但评测覆盖 GIFT-Eval 与 fev-bench，包含特征消融、骨干替换和校准分析；不足是协变量设定受限、部分任务超时。"
+  },
+  "reading": {
+    "why_read": "提出 TabPFN-TS，将时间序列预测改写为表格回归：用索引、日历周期、自动季节项与协变量构造特征矩阵，直接调用预训练 TabPFN-v2 完成零样本多步预测，在 fev-bench 协变量任务上取得最佳。",
+    "task": "时间序列基础模型已能在零样本下跨域预测，但多数围绕纯序列输入设计，难以把天气、价格、控制输入等协变量作为一等特征纳入，而协变量往往决定预测能否可操作。表格基础模型在零样本表格回归上已很强，能否把时间结构表达为特征、让表格模型直接做概率预测，仍缺少系统验证。",
+    "findings": [
+      {
+        "point": "现有 TSFM 的序列接口使协变量只能被附加注入",
+        "detail": "ChronosX 用 adapter、COSMIC 用 in-context 条件化，协变量没有和目标序列在同一特征空间里联合回归；fev-bench 上把协变量拼进表格特征后，TabPFN-TS 超过 Toto-1.0 等多元模型。"
+      },
+      {
+        "point": "表格骨干本身没有时间概念",
+        "detail": "TabPFN-v2 只在合成表格任务上预训练，不会自动从时间戳推断第几步或处于什么季节；running index、日历周期和自动检测的 top-k 周期把时间位置显式化，特征消融显示这些选择直接影响精度。"
+      },
+      {
+        "point": "滞后或滑动平均特征与单次多步预测冲突",
+        "detail": "这类特征依赖过去的预测值，会迫使模型自回归展开、增加推理时间并累积误差；改用未来时间戳可提前构造 Xtest，一次前向输出整个 horizon。"
+      }
+    ],
+    "method": "把历史 $C$ 步和预测 $H$ 步表示成特征矩阵：$X_{\\text{train}}\\in\\mathbb{R}^{C\\times D}$、$X_{\\text{test}}\\in\\mathbb{R}^{H\\times D}$，每行由 running index、日历周期编码、自动检测的 $k$ 个季节项和可选协变量组成：$$x_t=\\Phi_{\\text{index}}(t)\\oplus\\Phi_{\\text{cal}}(t)\\oplus\\Phi_{\\text{auto}}(t)\\oplus z_t\\in\\mathbb{R}^{18+2k+D_z}$$不使用滞后或滑动平均特征，避免自回归展开；把 $(X_{\\text{train}},y_{\\text{train}})$ 作为上下文交给 TabPFN-v2，直接对 $X_{\\text{test}}$ 输出离散后验分布，再取均值、中位数或分位数。",
+    "results": "GIFT-Eval 单变量任务上相对 WQL 0.460，接近 TimesFM-2.0 的 0.465，但落后 TiRex 的 0.413；fev-bench 28 个已知动态协变量任务上相对 WQL 0.503、MASE 0.666，均优于 TiRex（0.597、0.749）与 Toto-1.0（0.643、0.787）。",
+    "limitations": "只支持未来时刻已知的协变量，无法利用天气等未知未来变量；部分 fev-bench 任务超出 6 小时评测上限被剔除，说明大任务上的推理成本仍是瓶颈；结论主要来自零样本评测，微调收益未验证。"
+  },
+  "claims": [
+    {
+      "claim": "在 GIFT-Eval 单变量任务上，TabPFN-TS 的相对 WQL 为 0.460。",
+      "numbers": [
+        "0.460"
+      ],
+      "source_span": "Figure 2, Relative WQL panel, TabPFN-TS",
+      "quote": "0.460"
+    },
+    {
+      "claim": "TimesFM-2.0 的相对 WQL 为 0.465。",
+      "numbers": [
+        "0.465"
+      ],
+      "source_span": "Figure 2, Relative WQL panel, TimesFM-2.0",
+      "quote": "0.465"
+    },
+    {
+      "claim": "TiRex 的相对 WQL 为 0.413。",
+      "numbers": [
+        "0.413"
+      ],
+      "source_span": "Figure 2, Relative WQL panel, TiRex",
+      "quote": "0.413"
+    },
+    {
+      "claim": "fev-bench 最终保留 28 个任务。",
+      "numbers": [
+        "28"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "leaving 28 tasks"
+    },
+    {
+      "claim": "在 fev-bench 的已知动态协变量任务上，TabPFN-TS 的相对 WQL 为 0.503。",
+      "numbers": [
+        "0.503"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative WQL, TabPFN-TS",
+      "quote": "0.503"
+    },
+    {
+      "claim": "TiRex 的相对 WQL 为 0.597。",
+      "numbers": [
+        "0.597"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative WQL, TiRex",
+      "quote": "0.597"
+    },
+    {
+      "claim": "Toto-1.0 的相对 WQL 为 0.643。",
+      "numbers": [
+        "0.643"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative WQL, Toto-1.0",
+      "quote": "0.643"
+    },
+    {
+      "claim": "TabPFN-TS 的相对 MASE 为 0.666。",
+      "numbers": [
+        "0.666"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative MASE, TabPFN-TS",
+      "quote": "0.666"
+    },
+    {
+      "claim": "TiRex 的相对 MASE 为 0.749。",
+      "numbers": [
+        "0.749"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative MASE, TiRex",
+      "quote": "0.749"
+    },
+    {
+      "claim": "Toto-1.0 的相对 MASE 为 0.787。",
+      "numbers": [
+        "0.787"
+      ],
+      "source_span": "Section 4.2, covariate results, Relative MASE, Toto-1.0",
+      "quote": "0.787"
+    },
+    {
+      "claim": "部分 fev-bench 任务超出 6 小时评测上限。",
+      "numbers": [
+        "6"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "6-hour evaluation limit"
+    }
+  ]
+}

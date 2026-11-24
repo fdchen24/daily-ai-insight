@@ -1,0 +1,64 @@
+{
+  "title_zh": "WeightCode：通过权重空间编程为神经网络安装新能力",
+  "affiliations": [
+    "University of Macau",
+    "National University of Singapore",
+    "The Chinese University of Hong Kong",
+    "Sun Yat-sen University",
+    "Sichuan University"
+  ],
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "将部署后扩展能力表述为可执行、可重跑、可叠加的权重程序，并在语言、导航、图像分类上给出因果干预与跨网络迁移证据，对 post-training 和能力累积路线有直接影响。",
+    "novelty": 84,
+    "novelty_reason": "相对一次性 LLM 权重编辑，保留的是构造过程而非固定 ΔW：同一程序能在独立训练网络上重算编辑，第二程序还能绕开先前 gate 保留旧能力。",
+    "technical_depth": 85,
+    "technical_depth_reason": "标注样例、检查次数与保留阈值匹配 fine-tuning，并配合 copy-vs-rerun、门控消融和多随机种子重跑；但证据集中在小型网络与有限任务族，程序选择仍依赖 LLM 会话与人工协议。"
+  },
+  "reading": {
+    "why_read": "提出 WeightCode，用冻结 LLM 编写可执行权重程序，在无梯度训练下把规则、示范或样例安装为已训练网络的新能力，并让程序可在新网络上重跑、后续程序可继续叠加。",
+    "task": "在已训练网络中安装新能力而不破坏旧能力，是模型部署后扩展的核心问题。fine-tuning 依赖梯度与较多标注，易覆盖旧行为；模型编辑通常只改目标输入的预测，test-time adaptation 只调整归一化统计；已有权重空间方法能一次性改写权重，却把更新存成固定数值，难以迁移到独立训练的网络或继续叠加。",
+    "findings": [
+      {
+        "point": "固定权重更新绑定网络坐标",
+        "detail": "独立训练的网络可用不同坐标实现相近函数；论文中把源网络的 ΔW 原样复制到其他 ViT-Lite 上，平均增益接近零，而重跑程序能按目标网络重新测量并写入。"
+      },
+      {
+        "point": "旧能力的计算在干净输入上不可见",
+        "detail": "noise gate 在干净图像上几乎不激活，按干净利用率排序会被视为空闲单元；为原始网络写的 contrast 程序在已编辑网络上释放这些单元，导致已安装的噪声鲁棒性大幅下降。"
+      }
+    ],
+    "method": "WeightCode 把更新的构造与执行分开：冻结 LLM 在 Python 沙箱中检查权重、激活和任务知识 $I$，写出程序 $p$，由 $p$ 直接计算 $W'=p(W,I)$，不用梯度优化网络输出。候选程序在一组外部检查上按新条件净修复数和旧条件保持数选择，并受旧行为损失上限约束；程序可用 SVD/PCA、激活统计、闭式拟合和单元消融。保留的程序不依赖 LLM 即可重跑：在新网络上重新测量、重算写入位置与阈值；后续程序则读取已编辑网络，并把先前条件纳入检查，以避免覆盖已安装计算。",
+    "results": "在 SCAN 上仅改 257 个权重，就把未见组合的 exact match 从 0.0% 提到 99.8%；ImageNet 上四个程序净增益为 +8.84 至 +17.62 点，高于匹配条件下最佳 fine-tuning 的 +8.67 点。",
+    "limitations": "作者承认尚未验证为网络构造其不具备的新表征，实验仅限小模型与三类任务；程序依赖 LLM 会话和检查反馈，能否扩展到基础模型与更长序列仍未知。"
+  },
+  "claims": [
+    {
+      "claim": "在 SCAN 上仅改 257 个权重，就把未见组合的 exact match 从 0.0% 提到 99.8%",
+      "numbers": [
+        "257",
+        "0.0",
+        "99.8"
+      ],
+      "source_span": "Sec. 4.1",
+      "quote": "raises exact match on them from 0.0% to 99.8% by changing 257 weights"
+    },
+    {
+      "claim": "ImageNet 上四个权重程序的净增益为 +8.84 至 +17.62 点",
+      "numbers": [
+        "8.84",
+        "17.62"
+      ],
+      "source_span": "Abstract",
+      "quote": "net gains of 8.84–17.62 points"
+    },
+    {
+      "claim": "匹配条件下最佳 fine-tuning 的净增益为 +8.67 点",
+      "numbers": [
+        "8.67"
+      ],
+      "source_span": "Sec. 4.1, ImageNet comparison",
+      "quote": "against +8.67 and +3.38 for the best of eight fine-tuning methods"
+    }
+  ]
+}

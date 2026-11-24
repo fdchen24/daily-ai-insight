@@ -1,0 +1,121 @@
+{
+  "title_zh": "不动点推理模型：稳定自适应的深度循环 Transformer",
+  "affiliations": [],
+  "scores": {
+    "research_value": 78,
+    "research_value_reason": "针对循环架构的两个真实瓶颈——深度带来的信号传播与 halting 自适应——给出可复用的架构方案与停止准则，并在 sudoku、maze、ARC-AGI 与 state-tracking 上验证；但评测限于 7M 级小模型与小规模符号任务。",
+    "novelty": 74,
+    "novelty_reason": "pre-norm、残差缩放、不动点迭代与阻尼都不是新组件，贡献在于把它们组合成完整循环推理模型，用不动点残差取代 ACT 作为端到端 halting，并据此去掉 HRM/TRM 的层级结构。",
+    "technical_depth": 82,
+    "technical_depth_reason": "给出有界性定理与收敛条件、用 Jacobian 谱分析解释并修复不动点附近的振荡，配多种子比较与架构消融；但 Thm. 2 只是收敛的充分条件，ARC 上的比较受参数量混淆。"
+  },
+  "reading": {
+    "why_read": "提出 FPRM，把循环 Transformer 换成 pre-norm 加两级残差缩放以稳定深有效层训练，并以不动点残差收敛作为端到端 halting，在 7M 参数下于 Sudoku-Extreme 达到 94.2%。",
+    "task": "循环架构把 test-time compute 沿深度扩展（$z_{i+1}=f_\\theta(z_i;x)$），不依赖 CoT 的推理轨迹标注，却仍能在 sudoku、maze、ARC-AGI 这类搜索型任务上推理，是端到端训练推理模型的一条路线。问题首先出在 halting：固定或随机采样循环次数会丧失自适应性，ACT 外挂模块要对离散停止做连续松弛，作者在 HRM/TRM 上显示它并未真正按难度分配计算；而 halting 越晚、有效层越深，循环模型就退化为极深网络，信号传播与激活发散随之出现。",
+    "findings": [
+      {
+        "point": "ACT 式 halting 对离散停止做连续松弛，优化不可靠",
+        "detail": "停止与否是离散选择，ACT 用外部网络加连续松弛近似，引入额外优化目标；作者在 HRM/TRM 上观察到有效层并未随任务难度增长，自适应性落空。"
+      },
+      {
+        "point": "post-norm 在循环模型里承担的是有界性，代价是信号传播",
+        "detail": "循环要求激活有界，否则隐藏状态随迭代发散，post-norm 正好满足；但固定深度网络中 post-norm 已被证明损害信号传播，作者在 A5 上看到增加有效层并不提升可解序列长度。"
+      },
+      {
+        "point": "收缩不足时迭代绕不动点振荡而非收敛",
+        "detail": "Thm. 2 只给出 $\\alpha_2\\lambda_f<1$ 这一充分条件；实际 Jacobian 若有 $\\Re(\\lambda)<1$ 但 $|\\lambda|\\ge1$ 的特征值，迭代会在不动点附近螺旋不收敛，残差停滞而不能作 halting 信号。"
+      }
+    ],
+    "method": "把循环 Transformer 视为“很深的 Transformer”：换 pre-norm 恢复信号传播，再用两级可学习残差缩放补回有界性——层内 $z_\\ell=\\alpha_1 z_{\\ell-1}+\\beta_1 f_\\ell(\\mathrm{Norm}_{\\mathrm{pre}}(z_{\\ell-1}))$、迭代间 $z^{0}_{i+1}=\\alpha_2 z^{2L}_{i}+\\beta_2 x$，按 Thm. 1 耦合 $\\beta_1,\\beta_2$ 保证任意输入下有界，$\\alpha$ 可学习以权衡收敛与表达力。halting 改成不动点：残差 $r_i=\\|z_i-f_\\theta(z_i;x)\\|_\\infty/(\\|f_\\theta(z_i;x)\\|_\\infty+\\epsilon)$ 低于阈值即停，无需外挂模块；对绕不动点的振荡，用阻尼迭代 $g_{\\eta,\\theta}=\\eta f_\\theta+(1-\\eta)z$ 并在残差停滞时按 patience 衰减 $\\eta$。信号传播的改善使作者去掉了 HRM/TRM 的层级结构，训练采用截断 BPTT 与 deep supervision。",
+    "results": "7M 参数、无层级的单循环设定下，FPRM 在 Sudoku-Extreme 上 Pass@1 达 94.2%、Maze-Hard 87.0%、ARC-1 47.5%、ARC-2 6.2%；TRM 报告值为 74.7%、85.3%、44.6%、7.8%。作者自述 ARC-2 与公开 TRM checkpoint 持平。",
+    "limitations": "ARC-2 未超过 TRM 报告值，落后于参数量约两倍的 URM；ARC 对参数规模敏感，比较未必公平，Maze-Hard 也弱于更大的 Attractor。阻尼超参需调，Thm. 2 只是收敛的充分条件。"
+  },
+  "claims": [
+    {
+      "claim": "FPRM 的参数量为 7M",
+      "numbers": [
+        "7"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "7M"
+    },
+    {
+      "claim": "FPRM 在 Sudoku-Extreme 上 Pass@1 为 94.2%",
+      "numbers": [
+        "94.2"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "94.2%"
+    },
+    {
+      "claim": "FPRM 在 Maze-Hard 上 Pass@1 为 87.0%",
+      "numbers": [
+        "87.0"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "87.0%"
+    },
+    {
+      "claim": "FPRM 在 ARC-1 上 Pass@2 为 47.5%",
+      "numbers": [
+        "47.5"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "47.5%"
+    },
+    {
+      "claim": "FPRM 在 ARC-2 上 Pass@2 为 6.2%",
+      "numbers": [
+        "6.2"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "6.2%"
+    },
+    {
+      "claim": "TRM 报告的 Sudoku-Extreme 成绩为 74.7%",
+      "numbers": [
+        "74.7"
+      ],
+      "source_span": "Table 1, row 'TRM (Reported)'",
+      "quote": "74.7%"
+    },
+    {
+      "claim": "TRM 报告的 Maze-Hard 成绩为 85.3%",
+      "numbers": [
+        "85.3"
+      ],
+      "source_span": "Table 1, row 'TRM (Reported)'",
+      "quote": "85.3%"
+    },
+    {
+      "claim": "TRM 报告的 ARC-1 Pass@2 为 44.6%",
+      "numbers": [
+        "44.6"
+      ],
+      "source_span": "Table 1, row 'TRM (Reported)'",
+      "quote": "44.6%"
+    },
+    {
+      "claim": "TRM 报告的 ARC-2 Pass@2 为 7.8%",
+      "numbers": [
+        "7.8"
+      ],
+      "source_span": "Table 1, row 'TRM (Reported)'",
+      "quote": "7.8%"
+    },
+    {
+      "claim": "作者复现的 TRM 在 Sudoku-Extreme 上为 72.6%",
+      "numbers": [
+        "72.6"
+      ],
+      "source_span": "Table 1, row 'TRM (Our reproduction attempt)'",
+      "quote": "72.6%"
+    },
+    {
+      "claim": "URM 的参数量约为 FPRM 的两倍",
+      "numbers": [],
+      "source_span": "Sec. 3.1",
+      "quote": "has roughly twice as many parameters"
+    }
+  ]
+}

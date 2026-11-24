@@ -1,0 +1,78 @@
+{
+  "title_zh": "地理空间基础模型与气候韧性：迁移、不确定性与决策就绪度综述",
+  "affiliations": [
+    "University of California, Davis"
+  ],
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "该综述把 geospatial foundation models 的迁移主张落实到灾害决策与评测证据上，审计能回答“领域到底测了什么”。",
+    "novelty": 80,
+    "novelty_reason": "提出 decision-backward evaluation framework，按行动、信息可用时点、匹配基线与漏报、虚警、延迟重新组织评测，而非罗列模型。",
+    "technical_depth": 74,
+    "technical_depth_reason": "对 SatMAE、CROMA、DOFA 等讲到预训练目标与融合机制，并系统拆解评测设计；但未展开数学形式或跨论文定量比较。"
+  },
+  "reading": {
+    "why_read": "梳理 137 篇灾害应用与 37 条模型/基准记录，按迁移检验与决策需求分成事件、区域、传感器等维度，指出传感器留出仅 2 篇、校准概率仅 2 篇，并提出决策倒推的评测框架。",
+    "scope": "覆盖 flood、wildfire、drought、heat、cryosphere、damage 与 cascading hazards 的深度学习与 geospatial foundation models 应用，区分 Earth-observation 表征学习与大气预报；不覆盖跨论文精度汇总、PRISMA 系统综述或模型排行，37 条模型/基准记录仅作背景。",
+    "evolution": "早期以任务专用分割网络和卷积网络为主；随后 SatMAE、CROMA 把预训练转向掩码重建与雷达—光学对比对齐，DOFA、AnySat、TerraMind、Prithvi-EO 进一步处理异构传感器、模态与多时相；与之并行，Pangu-Weather、GraphCast、GenCast、NeuralGCM、Aurora 推进大气预报。评测重心也从随机划分转向事件、区域与传感器留出，但后者仍最薄弱。",
+    "approaches": [
+      {
+        "point": "掩码重建式 EO 表征学习",
+        "detail": "SatMAE 从缺失的时序与多光谱观测学习表征，CROMA 用雷达—光学双编码器、跨模态对比与融合重建；换来可复用表征，但下游增益仍取决于适配数据与评测设置。"
+      },
+      {
+        "point": "异构输入与多模态适配",
+        "detail": "DOFA 按光谱条件化处理，AnySat 接纳不同模态、分辨率与尺度，TerraMind 加入生成能力；换来传感器与模态覆盖，代价是必须分别报告缺失模态、新传感器与目标传感器适配。"
+      },
+      {
+        "point": "大气预报的并行路线",
+        "detail": "Pangu-Weather、GraphCast 做中期场预报，GenCast 给概率预报，NeuralGCM 混合动力框架，Aurora 适配多种 Earth-system 任务；换来大气技巧，但不等于影响制图，耦合需追 issue time 与 lead time。"
+      },
+      {
+        "point": "决策倒推评测协议",
+        "detail": "先定义行动、可用信息与决策时点，再复现事件/区域/传感器偏移，保留匹配的任务专用基线，报告漏报、虚警、可靠性与端到端延迟；换来可检验的迁移要求，代价是实验成本与数据追溯。"
+      }
+    ],
+    "key_differences": "核心差异在预测对象与信息约束：EO 表征学习面向地表状态制图，依赖标签定义与观测可用性；大气预报面向未来场，依赖强迫与 lead time；二者不能互相替代。EO 内部，掩码重建以无标签预训练换可迁移表征，跨模态对齐以融合机制换缺失模态下的可用性，异构条件化以输入适配换传感器覆盖；代价是更大的适配与评测负担。随机划分只证明分布内插值，事件/区域/传感器留出才对应部署偏移。",
+    "bottlenecks": "传感器留出与校准证据最稀缺：137 篇中仅 2 篇做传感器留出，10 篇基础模型微调无一如此，显式校准概率仅 2 篇；预训练与下游留出的重叠也常未披露。",
+    "future_directions": "作者主张建事件多样、传感器显式的基准，披露预训练 provenance，并按 issue time 评估校准与耦合预报；我认为成败取决于 benchmark 与业务机构是否采纳决策倒推协议。"
+  },
+  "claims": [
+    {
+      "claim": "该综述审计 137 篇全文灾害应用研究，并对照 37 条模型与基准记录。",
+      "numbers": [
+        "137",
+        "37"
+      ],
+      "source_span": "Abstract",
+      "quote": "A descriptive audit of 137 full-text hazard-application studies is interpreted alongside a separate corpus of 37 model and benchmark records."
+    },
+    {
+      "claim": "在主要检验中，采用留出事件的有 31 篇、留出区域的有 25 篇、留出传感器的仅 2 篇。",
+      "numbers": [
+        "31",
+        "25",
+        "2"
+      ],
+      "source_span": "Abstract",
+      "quote": "Ninety-eight application studies reported an out-of-distribution experiment, whereas headline evaluations included held-out events in 31 studies, regions in 25 and sensors in only two."
+    },
+    {
+      "claim": "被编码为 geospatial foundation-model 微调的十篇研究中，无一以传感器留出作为主要检验。",
+      "numbers": [
+        "10"
+      ],
+      "source_span": "Abstract",
+      "quote": "None of the ten studies coded for geospatial foundation-model fine-tuning used sensor holdout as a headline test."
+    },
+    {
+      "claim": "有 16 篇记录了不确定性相关方法，其中仅 2 篇给出显式校准的概率输出。",
+      "numbers": [
+        "16",
+        "2"
+      ],
+      "source_span": "Abstract",
+      "quote": "Uncertainty-related methods were recorded in 16 studies, including two with explicitly calibrated probabilistic output."
+    }
+  ]
+}

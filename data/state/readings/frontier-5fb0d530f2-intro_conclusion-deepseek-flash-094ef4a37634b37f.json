@@ -1,0 +1,73 @@
+{
+  "title_zh": "AI 辅助对开发者技能形成的影响：基于 Trio 学习的随机实验",
+  "affiliations": [
+    "Anthropic"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把 AI 生产力研究从任务产出转向技能形成，用随机实验检验开发者监督 AI 所需能力是否被削弱，问题对安全关键场景有直接意义。",
+    "novelty": 76,
+    "novelty_reason": "相对以产出指标或观察调查为主的工作，用随机对照和屏幕录像编码把具体 AI 使用模式与学习结果连接起来。",
+    "technical_depth": 74,
+    "technical_depth_reason": "随机分组、预注册评分标准与多轮 pilot 使设定可检验，但样本规模有限、单一库任务，且未覆盖代码写作，外推与证据强度受限。"
+  },
+  "reading": {
+    "why_read": "提出基于 Trio 新库学习任务的随机对照实验，比较 GPT-4o 编码助手对开发者生产力与技能形成的影响，发现 AI 辅助使测验得分下降 15.4% 且未带来显著提速。",
+    "task": "在岗学习新工具是开发者常见场景：AI 能提高产出，尤其帮助新手，但多数研究只看代码行数或任务完成量，且认知卸载证据多来自观察调查。若工程师依赖 AI 完成不熟悉的任务，可能失去监督 AI 生成代码所需的概念理解、代码阅读与调试能力。",
+    "findings": [
+      {
+        "point": "完全委托 AI 绕过了独立排错的学习环节",
+        "detail": "助手能直接生成完整正确代码，选择委托的参与者虽可能更快完成任务，却没有经历定位、试错和修复错误的过程，概念理解与调试能力因此更弱。"
+      },
+      {
+        "point": "与 AI 交互的时间成本抵消了平均效率收益",
+        "detail": "屏幕录像显示，部分参与者最多提出 15 个问题，或把超过 30% 的任务时间用于编写查询，导致 AI 组平均完成时间未显著缩短。"
+      },
+      {
+        "point": "交互模式决定认知投入能否保留",
+        "detail": "作者从录像中归纳出 6 种模式，其中 3 种（如请求解释、只问概念问题）得分更高；渐进依赖和直接委托则与更低的学习结果相关。"
+      }
+    ],
+    "method": "采用被试间随机对照：52 名有 Python 经验但未用过 Trio 的开发者，在限时内完成一组 Trio 异步编程任务，实验组可使用基于 GPT-4o 的代码助手，对照组不可；随后所有人完成覆盖调试、代码阅读与概念理解的测验，并全程录屏。作者通过多轮 pilot 调整任务与题目，预注册评分标准，再对录像做质性编码，归纳 AI 使用模式。",
+    "results": "论文报告，AI 组测验得分下降 15.4%（约两个等级分，Cohen’s d=0.738，p=0.010），完成时间无显著加速；完全委托 AI 的参与者效率有改善但学习受损。",
+    "limitations": "研究限于单一 Trio 库与短期任务，测验未覆盖代码写作，样本量小且为自愿参与者；生产力仅以完成时间衡量，外推到真实工程需谨慎。"
+  },
+  "claims": [
+    {
+      "claim": "AI 辅助使测验得分下降 15.4%（约两个等级分，Cohen’s d=0.738，p=0.010）",
+      "numbers": [
+        "15.4",
+        "0.738",
+        "0.010"
+      ],
+      "source_span": "Introduction, §1.1 Our Results",
+      "quote": "reduction in the evaluation score by 15.4% or two grade points (Cohen’s d = 0.738, p = 0.010)"
+    },
+    {
+      "claim": "主实验共 52 名参与者完成",
+      "numbers": [
+        "52"
+      ],
+      "source_span": "Section 4.3 Study Design",
+      "quote": "In our main study, 52 participants completed the task, 26 for each of the control and treatment groups."
+    },
+    {
+      "claim": "部分参与者最多提出 15 个问题，或把超过 30% 的任务时间用于编写查询",
+      "numbers": [
+        "15",
+        "30"
+      ],
+      "source_span": "Introduction, §1.1 Our Results",
+      "quote": "Some participants asked up to 15 questions or spent more than 30% of the total available task time on composing queries (Figure 12)."
+    },
+    {
+      "claim": "作者归纳出 6 种 AI 交互模式，其中 3 种最能保留技能发展",
+      "numbers": [
+        "6",
+        "3"
+      ],
+      "source_span": "Introduction, §1.1 Our Results",
+      "quote": "We categorize AI interaction behavior into six common patterns and find three AI interaction patterns that best preserve skill development"
+    }
+  ]
+}

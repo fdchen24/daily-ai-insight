@@ -1,0 +1,111 @@
+06:10:43 INFO  dai | === 批次 2026-11-24 开始每日流水线 ===
+06:10:43 INFO  dai | 初筛：3896 → 126 条（前沿 120，综述 6），丢弃 {'cooldown': 10, 'channel_stale': 1254, 'short_abstract': 2}
+06:10:43 INFO  dai | 经典池：53 篇可用（共 55 篇，冷却 180 天），送排序 10 篇
+06:10:43 INFO  httpx | HTTP Request: GET https://api.openalex.org/works?filter=doi%3A10.48550%2Farxiv.1810.04805%7C10.48550%2Farxiv.2005.14165%7C10.48550%2Farxiv.2010.11929%7C10.48550%2Farxiv.2006.11239%7C10.48550%2Farxiv.1512.03385%7C10.48550%2Farxiv.1406.2661%7C10.48550%2Farxiv.1312.6114%7C10.48550%2Farxiv.2201.11903%7C10.48550%2Farxiv.2112.10752%7C10.48550%2Farxiv.2103.00020&select=doi%2Ccited_by_count%2Creferenced_works_count%2Cpublication_year%2Ctype%2Cprimary_location%2Ccounts_by_year%2Cfwci%2Ccitation_normalized_percentile%2Ctopics%2Cauthorships&per-page=10 "HTTP/1.1 200 OK"
+06:10:43 INFO  dai | OpenAlex: 8 条（缓存 0，新查 10 → 命中 8，未命中 2），1 次请求
+06:10:44 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:10:56 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:11:08 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:11:20 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:11:38 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:11:59 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:12:18 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:12:35 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:12:49 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:12:57 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:13:09 INFO  dai | L1 排序完成：{'frontier': '120→40', 'survey': '6→6', 'classic': '10→8'}
+06:13:09 INFO  dai | 配额选取：{'frontier': 10, 'survey': 2, 'classic': 1}（名额 {'frontier': 10, 'survey': 2, 'classic': 1}）
+06:13:09 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2103.00020 "HTTP/1.1 200 OK"
+06:13:09 INFO  dai | 取材：2103.00020 抽出 48 页 / 129733 字符
+06:13:10 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:13:33 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2604.25850 "HTTP/1.1 200 OK"
+06:13:33 INFO  dai | 取材：2604.25850 抽出 35 页 / 129012 字符
+06:13:33 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:14:08 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.26954 "HTTP/1.1 200 OK"
+06:14:08 INFO  dai | 取材：2611.26954 抽出 11 页 / 35215 字符
+06:14:08 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:14:58 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2601.20245 "HTTP/1.1 200 OK"
+06:14:58 INFO  dai | 取材：2601.20245 抽出 31 页 / 64086 字符
+06:14:59 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:15:46 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.28202 "HTTP/1.1 200 OK"
+06:15:47 INFO  dai | 取材：2611.28202 抽出 32 页 / 105626 字符
+06:15:47 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:16:39 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2606.18206 "HTTP/1.1 200 OK"
+06:16:39 INFO  dai | 取材：2606.18206 抽出 37 页 / 114872 字符
+06:16:40 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:17:17 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.25476 "HTTP/1.1 200 OK"
+06:17:17 INFO  dai | 取材：2611.25476 抽出 26 页 / 67626 字符
+06:17:17 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:17:54 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.26516 "HTTP/1.1 200 OK"
+06:17:54 INFO  dai | 取材：2611.26516 抽出 44 页 / 163151 字符
+06:17:55 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:18:36 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2604.06132 "HTTP/1.1 200 OK"
+06:18:36 INFO  dai | 取材：2604.06132 抽出 30 页 / 104512 字符
+06:18:37 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:19:36 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2501.02945 "HTTP/1.1 200 OK"
+06:19:37 INFO  dai | 取材：2501.02945 抽出 31 页 / 46868 字符
+06:19:37 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:20:22 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2607.01204 "HTTP/1.1 200 OK"
+06:20:22 INFO  dai | 取材：2607.01204 抽出 37 页 / 111570 字符
+06:20:23 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:20:58 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.28129 "HTTP/1.1 200 OK"
+06:20:58 INFO  dai | 取材：2611.28129 抽出 17 页 / 42595 字符
+06:20:59 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:21:35 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.30198 "HTTP/1.1 200 OK"
+06:21:36 INFO  dai | 取材：2611.30198 抽出 16 页 / 59496 字符
+06:21:36 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:22:12 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:22:40 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:23:55 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:24:38 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:25:20 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:26:45 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:27:34 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:28:19 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:29:33 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:30:47 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:31:24 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:32:16 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+06:32:59 INFO  dai | L2 解读：12/13 条完成（缓存 0，失败 0，预算中止 0）
+06:32:59 INFO  httpx | HTTP Request: GET https://export.arxiv.org/api/query?id_list=2103.00020%2C2611.25476%2C2611.26516&max_results=3 "HTTP/1.1 200 OK"
+06:32:59 INFO  dai | arXiv 回查：请求 3 条，命中 3 条
+06:32:59 WARNING dai | 《Learning Transferable Visual Models From》丢弃 1/7 条 claim（14%）
+06:32:59 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2103.00020 "HTTP/1.1 200 OK"
+06:33:00 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2103.00020 "HTTP/1.1 200 OK"
+06:33:00 WARNING dai | 《Claw-Eval: Towards Trustworthy Evaluatio》丢弃 1/12 条 claim（8%）
+06:33:00 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2604.06132 "HTTP/1.1 200 OK"
+06:33:01 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2604.06132 "HTTP/1.1 200 OK"
+06:33:01 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2604.25850 "HTTP/1.1 200 OK"
+06:33:02 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2604.25850 "HTTP/1.1 200 OK"
+06:33:03 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.26954 "HTTP/1.1 200 OK"
+06:33:03 INFO  httpx | HTTP Request: HEAD https://github.com/Jingchensun/future-opsd "HTTP/1.1 200 OK"
+06:33:04 INFO  httpx | HTTP Request: HEAD https://jingchensun.github.io/future-opsd/ "HTTP/1.1 200 OK"
+06:33:05 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.26954 "HTTP/1.1 200 OK"
+06:33:05 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.28202 "HTTP/1.1 200 OK"
+06:33:06 INFO  httpx | HTTP Request: HEAD https://autopilot-harness.github.io/ "HTTP/1.1 200 OK"
+06:33:06 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.28202 "HTTP/1.1 200 OK"
+06:33:07 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2607.01204 "HTTP/1.1 200 OK"
+06:33:07 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2607.01204 "HTTP/1.1 200 OK"
+06:33:08 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.25476 "HTTP/1.1 200 OK"
+06:33:09 INFO  httpx | HTTP Request: HEAD https://github.com/Gen-Verse/WeightCode "HTTP/1.1 200 OK"
+06:33:09 INFO  httpx | HTTP Request: HEAD https://github.com/Gen-Verse/WeightCode "HTTP/1.1 200 OK"
+06:33:10 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.25476 "HTTP/1.1 200 OK"
+06:33:10 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2606.18206 "HTTP/1.1 200 OK"
+06:33:11 INFO  httpx | HTTP Request: HEAD https://github.com/nilskiKonjIzDunava/fprm "HTTP/1.1 200 OK"
+06:33:12 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2606.18206 "HTTP/1.1 200 OK"
+06:33:12 WARNING dai | 《How AI Impacts Skill Formation》丢弃 1/10 条 claim（10%）
+06:33:12 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2601.20245 "HTTP/1.1 200 OK"
+06:33:13 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2601.20245 "HTTP/1.1 200 OK"
+06:33:13 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2501.02945 "HTTP/1.1 200 OK"
+06:33:14 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2501.02945 "HTTP/1.1 200 OK"
+06:33:14 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.26516 "HTTP/1.1 200 OK"
+06:33:15 INFO  httpx | HTTP Request: HEAD https://github.com/AMAP-ML/plan4d "HTTP/1.1 200 OK"
+06:33:16 INFO  httpx | HTTP Request: HEAD https://fogradio.github.io/plan4d-project/ "HTTP/1.1 200 OK"
+06:33:16 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.26516 "HTTP/1.1 200 OK"
+06:33:17 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.30198 "HTTP/1.1 200 OK"
+06:33:17 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.30198 "HTTP/1.1 200 OK"
+06:33:17 INFO  dai | 校验：12/12 通过（丢弃 claim 3，降级 0，链接异常 0）
+06:33:17 INFO  dai | 当期写出：daily/2026/11/24.json（{'classic': 1, 'frontier': 10, 'survey': 1}）
+06:33:17 INFO  dai | 周预算账本 2026-W48 更新：{'survey': 1, 'classic': 1}
+06:33:17 INFO  dai | metrics 写出：metrics/2026-11.json status=ok 成本={'currency': 'CNY', 'amount': 2.7616, 'price_window': 'peak'}
+06:33:17 INFO  dai | === 批次 2026-11-24 完成：投放 {'classic': 1, 'frontier': 10, 'survey': 1} ===

@@ -1,0 +1,61 @@
+{
+  "title_zh": "CLIP：用自然语言监督训练可迁移的视觉模型",
+  "affiliations": [],
+  "scores": {
+    "research_value": 92,
+    "research_value_reason": "CLIP 产出的图文联合嵌入空间，至今仍是开放词表检索、零样本分类以及生成模型条件编码所常用的共享表征。",
+    "novelty": 90,
+    "novelty_reason": "把 web-scale 自然语言监督搬到视觉，图像与文本的交互只保留联合嵌入空间中的一次点积，并用 prompt 完成零样本迁移；这与当时用离散标签训练分类头、或用 joint attention 深度融合两模态的做法不同。",
+    "technical_depth": 70,
+    "technical_depth_reason": "可见材料只包含 Related Work、Conclusion 与图表说明，方法细节限于双塔点积与一张伪代码图，训练目标的具体形式与工程细节无法核实。"
+  },
+  "reading": {
+    "why_today": "提出 CLIP，用四亿图文对的对比学习把分类改写成图文检索，靠 prompt 实现零样本迁移；其共享图文表征至今是多模态模型与生成模型的默认基础。",
+    "historical_context": "2020 年前后，视觉预训练的主流做法是在 ImageNet 上做有监督分类，再训练线性分类头；标签是任意编码的离散类别，换任务就得重新训练。图文检索与 webly supervised 两条研究路线已有积累，但自动构建的图文数据集规模多在 1–1000 万对之间，过滤也更激进。",
+    "problem_then": "能否把 NLP 中 task-agnostic 的 web-scale 预训练搬到视觉：用自然语言而非离散标签作监督，让同一个模型不经微调就迁移到新数据集与新任务。",
+    "contributions": [
+      {
+        "point": "把监督信号从离散类别标签换成自然语言",
+        "detail": "类别不再是任意编码的 one-hot，而是与图像共现的整段文本；CLIP 自建四亿规模图文对，远大于此前 1–1000 万对的自动构建数据集。"
+      },
+      {
+        "point": "只做轻量交互的双塔对比目标",
+        "detail": "以图文检索为目标训练的联合嵌入空间，两模态唯一交互是一次点积，而不是像 VQA 类模型那样用 joint attention 深度融合三个预训练子系统。"
+      },
+      {
+        "point": "用 prompt 把预训练任务转成零样本分类器",
+        "detail": "把下游数据集的类别名写成自然语言句子再取文本嵌入，配合 prompt engineering 与 ensembling 提升零样本精度。"
+      }
+    ],
+    "core_idea": "CLIP 采用双塔结构：图像编码器 $f$ 与文本编码器 $g$ 分别把图像和整段文本映射到同一嵌入空间，以对比方式优化图文检索目标，让配对样本在空间中靠近。原文强调图像与文本唯一的交互，就是这个联合嵌入空间中的一次点积。零样本推理时把类别名写成句子 $t_k$，取 $\\hat{y}=\\arg\\max_k \\langle f(I), g(t_k)\\rangle$，不需要任何新分类头。",
+    "influence": "零样本迁移与 prompt ensembling 成为多模态模型的标准评测设定；图文对比目标成为多模态预训练的主流目标函数；linear probe、分布偏移鲁棒性与数据重叠检测等评测协议被后续工作沿用。",
+    "modern_reading": "今天 CLIP 更多被当作表征组件而非分类器：检索、开放词表检测与生成模型的条件编码。原文措辞谨慎：只有规模足够时零样本才与有监督模型可比；图表说明也指出，对 ImageNet 做监督适配提升 9.2% 精度却略降平均鲁棒性。本解读基于正文节选与图表说明，不含实验表格正文。"
+  },
+  "claims": [
+    {
+      "claim": "CLIP 用四亿图文对做对比学习预训练。",
+      "numbers": [
+        "四亿"
+      ],
+      "source_span": "摘要",
+      "quote": "四亿图文对的对比学习"
+    },
+    {
+      "claim": "此前的自动构建图文数据集训练样本规模在 1 到 1000 万之间。",
+      "numbers": [
+        "1",
+        "10"
+      ],
+      "source_span": "Section 8 Related Work",
+      "quote": "between 1 and 10 million training examples"
+    },
+    {
+      "claim": "对 ImageNet 做有监督适配使 ImageNet 精度提升 9.2%，但平均鲁棒性略有下降。",
+      "numbers": [
+        "9.2"
+      ],
+      "source_span": "Figure 14 caption",
+      "quote": "supervised adaptation to ImageNet increases ImageNet accuracy by 9.2%"
+    }
+  ]
+}

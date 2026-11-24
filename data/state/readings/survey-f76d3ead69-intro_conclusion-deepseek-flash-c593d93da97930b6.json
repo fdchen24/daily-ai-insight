@@ -1,0 +1,94 @@
+{
+  "title_zh": "城市状态表征（USR）：跨自车、路侧与航拍的多模态感知与基准综述",
+  "affiliations": [],
+  "scores": {
+    "research_value": 78,
+    "research_value_reason": "该综述把自车感知、V2X、航拍、轨迹与城市计算放进同一个状态定义，直接暴露出各个社区各自看不到的覆盖空白与数据集缺口。",
+    "novelty": 72,
+    "novelty_reason": "作者依据式(1)的“写入—状态—读取”结构，加上八类表示的评价表和 USR-5 五测协议，建立了一套自己的分类体系，而且不限于按年份或按任务罗列文献。",
+    "technical_depth": 68,
+    "technical_depth_reason": "lift-splat、BEV query、V2X 的延迟感知注意力、Where2comm 按置信图选择特征以及 3D 几何基础模型，该综述都讲到了机制层面，但作者明确说明，这样做是用架构与世界模型上的深度换取跨平台的广度。"
+  },
+  "reading": {
+    "why_read": "该综述梳理了从自车、路侧到航拍与出行轨迹的全平台城市状态表征，按“谁写入、状态是什么、谁读取”把八类表示与架构范式归入同一个形式化框架，并指出没有任何单一表示满足五项要求。",
+    "scope": "覆盖自车相机、激光雷达与 4D 雷达，路侧单元，无人机与卫星，GNSS 与线圈轨迹，SD/HD 地图等写入方；八类表示（BEV、3D occupancy、矢量化地图、神经场与 3DGS、场景图、路网图、语言 token、world-model latent）、架构范式、下游任务与应用，以及 26 个数据集与仿真器。作者明确说明这是结构化叙述性综述而非系统综述，并主动用架构、世界模型与基础模型上的深度换取跨平台广度。",
+    "evolution": "发展线索指向状态写入方和读取方的逐步扩展，而不是简单按年份推进：BEV 把多传感器信息压缩到自车地面栅格，成为通用表示，但也被绑定在自车坐标系上；V2X 把写入方扩展到多车与路侧，随之暴露出延迟 $\\delta_p$ 与位姿误差导致特征错位的问题；航拍与轨迹试图补上静态层与半静态层，却几乎不与传感器级感知交叉。同一时期，端到端模型把状态变成任务优化的隐式查询，降低了可解释性与复用性；DUSt3R、VGGT 等 3D 几何基础模型则第一次能把未标定图像纳入同一坐标系，指向平台无关的 $\\Phi_p$。作者据此把这些碎片化工作整合为“地理参照、分层、带不确定性”的共享状态。",
+    "approaches": [
+      {
+        "point": "BEV 与 3D occupancy：稠密空间特征",
+        "detail": "BEV 通过 lift-splat 或 BEV query 把图像投影到地面栅格，任何有定位信息的平台都能写入；代价是高度轴被压掉、范围固定在自车附近、立方内存开销大，持久性与可扩展性不足。"
+      },
+      {
+        "point": "矢量化地图与路网图：紧凑拓扑",
+        "detail": "折线与多边形表示车道和边界，带宽小、可持久、可由众包维护静态层；但它们丢失外观，路网图没有车道级几何，长期与自动驾驶感知脱节。"
+      },
+      {
+        "point": "神经场与 3DGS：可重新渲染的场景",
+        "detail": "Block-NeRF 把重建扩展到街区，3DGS 实时栅格化并分离动态与静态内容，是仿真与数字孪生的基础；不过它们多为离线逐场景拟合，STORM 这类单次前馈方法才刚开始走向在线。"
+      },
+      {
+        "point": "端到端与 VLM/VLA：任务优化的隐藏状态",
+        "detail": "UniAD、VAD 把检测、建图、occupancy 一直串联到规划，DriveVLM、EMMA 用语言 token 承载推理；这换来了全局优化与世界知识，代价是状态变得隐式、难以地理参照，并带来延迟与幻觉问题。"
+      },
+      {
+        "point": "世界模型与生成数据引擎：可预测的潜状态",
+        "detail": "视频与 occupancy 世界模型学习 $S_{t+1}\\sim f(S_t,a_t)$，MagicDrive、DriveDreamer、Cosmos 反向生成训练数据；这些模型能构造长尾场景，但潜状态很少地理参照，也缺少跨智能体共享，生成结果还缺少验证协议。"
+      }
+    ],
+    "key_differences": "三组取舍决定一切：稠密与带宽之间，在 DAIR-V2X 上共享中间特征的 63.7 AP@0.5 高于共享检测框的 53.1，但通信代价高，Where2comm 只发送高置信区域；持久与时新之间，地图与场能摊薄估计成本，但一旦变化就会过期；显式与潜式之间，显式状态可校验、可校准，潜式状态可生成、可推理。很少有一类表示能同时满足写侧的平台无关与读侧的多头共享。",
+    "bottlenecks": "第一，航拍与轨迹这两类天然的静态层写入方始终没有和传感器级感知融合，也没有数据集把路侧与航拍、轨迹配对；第二，带地理参照的逐元素不确定性（包括延迟与位姿误差）几乎无人输出，场景图与语言表示尤其缺少这种不确定性。",
+    "future_directions": "作者列出六个开放问题（迁移、不确定性、效率带宽、长尾、sim-to-real、治理），并用 USR-5 的五项测试打分；我的判断是，3D 几何基础模型最有望充当平台无关的 $\\Phi_p$，但 metric scale 与车端延迟问题尚未解决。"
+  },
+  "claims": [
+    {
+      "claim": "综述汇总了 26 个城市数据集与仿真器",
+      "numbers": [
+        "26"
+      ],
+      "source_span": "Abstract",
+      "quote": "26 urban datasets and simulators"
+    },
+    {
+      "claim": "作者为 USR 形式化提出五项要求（D1–D5）",
+      "numbers": [
+        "five"
+      ],
+      "source_span": "Section 1 / Section 2",
+      "quote": "five desiderata"
+    },
+    {
+      "claim": "该综述引述 DAIR-V2X 上共享稠密中间特征优于共享检测框，63.7 对 53.1 AP@0.5",
+      "numbers": [
+        "63.7",
+        "53.1",
+        "0.5"
+      ],
+      "source_span": "Section 4, Trade-offs",
+      "quote": "sharing dense intermediate features beats sharing boxes on DAIR-V2X (63.7 vs. 53.1 AP@0.5, Tab. 8)"
+    },
+    {
+      "claim": "USR-5 是由五项测试加一个聚合分数构成的基准协议",
+      "numbers": [
+        "five"
+      ],
+      "source_span": "Section 1, Contributions",
+      "quote": "a benchmark protocol of five tests with an aggregate score"
+    },
+    {
+      "claim": "研究议程列出六个开放问题",
+      "numbers": [
+        "six"
+      ],
+      "source_span": "Abstract",
+      "quote": "a research agenda of six open problems"
+    },
+    {
+      "claim": "综述把城市表征归为八类",
+      "numbers": [
+        "eight"
+      ],
+      "source_span": "Section 4",
+      "quote": "We group urban representations into eight families"
+    }
+  ]
+}

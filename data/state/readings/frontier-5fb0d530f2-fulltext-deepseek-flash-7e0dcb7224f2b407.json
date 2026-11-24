@@ -1,0 +1,62 @@
+{
+  "title_zh": "TiRex-2：将 TiRex 扩展到多变量数据与流式预测",
+  "affiliations": [
+    "ELLIS Unit Linz",
+    "JKU Linz",
+    "NXAI Lab",
+    "NXAI GmbH",
+    "Interdisciplinary Transformation University Austria"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把多变量 TSFM 的未来协变量利用、目标因果性与常量成本流式推理解耦并统一到一个可部署模型，问题对在线预测很关键。",
+    "novelty": 84,
+    "novelty_reason": "非对称组注意力让未来协变量可双向使用而目标保持严格因果，配合循环骨干实现常量成本流式更新，这一组合在 TSFM 中此前未见。",
+    "technical_depth": 87,
+    "technical_depth_reason": "给出目标因果性证明与泄漏反例，并在 fev-bench/GIFT-Eval、流式长度、协变量偏移和耦合机制上做多组消融，证据链较完整。"
+  },
+  "reading": {
+    "why_read": "提出 TiRex-2，用 xLSTM 循环骨干与非对称组注意力同时建模多变量、过去/未来协变量，实现常量成本流式推理，并在 GIFT-Eval 零样本上优于 Chronos-2-Synth。",
+    "task": "多变量时间序列预测要同时利用变量间依赖、历史协变量与预报期内已知的未来协变量；现有 TSFM 要么按通道独立而忽略跨变量结构，要么用 Transformer 全上下文重算，新增观测的推理成本随上下文增长，难以支持持续流式预测。",
+    "findings": [
+      {
+        "point": "Transformer 时间混合的流式更新成本随上下文增长",
+        "detail": "即使使用 KV Cache，每来一个新 patch 仍需 O(L) 计算；非因果模型还要重算全历史，无法以常数成本持续输出预测。"
+      },
+      {
+        "point": "未来协变量的双向利用会破坏目标因果性",
+        "detail": "对称变量注意力让协变量读到目标，反向时间混合可把后段目标信息回传到前段；作者用两模块泄漏反例说明，缺少非对称 mask 时单次前向即泄漏，流式预测不再良定义。"
+      },
+      {
+        "point": "现有多变量语料缺少多样的跨变量依赖",
+        "detail": "单变量语料丰富但通道独立训练学不到共享驱动、滞后因果、协整等结构， curated 多变量数据覆盖面又不足，模型难以学会使用协变量。"
+      }
+    ],
+    "method": "以 TiRex 的 patch 化 xLSTM 为骨干，每个 patch 先做尺度归一化与嵌入；时间混合器对目标/过去协变量用单向 xLSTM，对未来已知协变量用权重共享的反向 xLSTM 并线性融合；变量混合器用块对角组注意力，配合非对称 mask：目标可读协变量，协变量不可读目标，作者证明这保证目标严格因果。纯单变量输入跳过变量混合器。预训练时从单变量池在线合成多变量样本，覆盖线性混合、线性/非线性 SCM、协整、函数耦合等，并加缺失、时间扭曲、离散化等观测噪声；用 pinball loss 训练分位数输出。",
+    "results": "GIFT-Eval 零样本 MASE 0.697、CRPS 0.478，优于 Chronos-2-Synth 的 0.720/0.496；fev-bench SQL 45.5，对 Chronos-2 胜率 51.0%，但后者 skill 47.3 更高。",
+    "limitations": "流式常数成本依赖未来协变量取值固定，修订已给值需重算其表示；流式以 patch 为粒度。fev-bench 综合 skill 仍落后 Chronos-2，长上下文对比也让基线超出训练窗口。"
+  },
+  "claims": [
+    {
+      "claim": "在 GIFT-Eval 零样本设定下，TiRex-2 的 MASE 为 0.697、CRPS 为 0.478，Chronos-2-Synth 分别为 0.720 和 0.496。",
+      "numbers": [
+        "0.697",
+        "0.478",
+        "0.720",
+        "0.496"
+      ],
+      "source_span": "Table 5, rows 'TiRex-2 (zero-shot)' and 'Chronos-2-Synth'",
+      "quote": "TiRex-2 (zero-shot)\n0.697\n43.18\n0.478\n38.28\nChronos-2-Synth\n0.720\n60.47\n0.496\n59.28"
+    },
+    {
+      "claim": "fev-bench 上 TiRex-2 的 SQL skill score 为 45.5，对 Chronos-2 的成对胜率为 51.0%，而 Chronos-2 的 SQL skill 为 47.3。",
+      "numbers": [
+        "45.5",
+        "51.0",
+        "47.3"
+      ],
+      "source_span": "Table 3, rows 'Pairwise win rate, SQL' and 'Skill score, SQL'",
+      "quote": "Pairwise win rate, SQL\n51.0 (CI 41.0–60.0)\n49.0\nPairwise win rate, MASE\n44.0 (CI 34.0–54.0)\n56.0\nSkill score, SQL\n45.5\n47.3"
+    }
+  ]
+}
