@@ -59,7 +59,7 @@ jobs:
       DAI_SKIP_CITATIONS: ${{ vars.DAI_SKIP_CITATIONS }}
       OPENALEX_MAILTO: ${{ vars.OPENALEX_MAILTO }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # 数据放在孤立分支 data：成品、引用缓存、日志每天都变，混进 main
       # 的历史会让代码仓库的 clone 体积逐日膨胀。首次运行自动建分支。
@@ -68,7 +68,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash .github/scripts/data-branch.sh prepare
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -95,7 +95,7 @@ jobs:
       # 刚被限流的 export.arxiv.org 再发一轮回查。
       - name: 上传候选池
         if: steps.collect.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pool
           path: |
@@ -126,7 +126,7 @@ jobs:
       DAI_DRY_RUN: ${{ vars.DAI_DRY_RUN }}
       OPENALEX_MAILTO: ${{ vars.OPENALEX_MAILTO }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: 准备 data 分支工作区
         env:
@@ -135,12 +135,12 @@ jobs:
 
       # artifact 的根是两个上传路径的公共父目录，即 data/，照原样铺回去
       - name: 取回候选池
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pool
           path: .data-branch/data
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
