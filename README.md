@@ -113,10 +113,12 @@ npm run typecheck
 ```
 
 发布由 [pages.yml](.github/workflows/pages.yml) 做：daily 跑完、或 `web/` 有代码改动
-推到 main 时各触发一次，检出 `data` 分支取成品 JSON，构建后部署到 Pages。首次运行
-会自己把 Pages 打开（`configure-pages` 的 `enablement`）；若仓库策略不允许 Actions
-建站，手动把 `Settings` → `Pages` → `Build and deployment` 的 Source 选成
-`GitHub Actions` 再重跑一次。
+推到 main 时各触发一次，检出 `data` 分支取成品 JSON，构建后部署到 Pages。
+
+**首次使用要先在网页上开站**：仓库 `Settings` → `Pages` → `Build and deployment` →
+Source 选 `GitHub Actions`，然后 `Actions` → `pages` → `Run workflow` 补发一次。
+内置 `GITHUB_TOKEN` 没有建站权限（创建 Pages 站点要 admin），没开站时工作流会在
+`configure-pages` 一步失败。
 
 ## 配置：Secrets 与 Variables
 
