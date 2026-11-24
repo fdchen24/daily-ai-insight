@@ -37,13 +37,14 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# 构建与部署分两个 job，照官方模板来。同一个 job 里 upload 完接着 deploy 会
+# 稳定失败：实测 artifact 在 06:45:19.889 finalize，deploy-pages 在 06:45:20.40
+# 调 ListArtifacts 就报 "Found 0 artifact(s)"——artifact 服务还没索引到。
+# 拆成两个 job，中间隔了一次 job 启动（几十秒），这段传播延迟就被盖掉了。
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
 
@@ -83,12 +84,23 @@ jobs:
       # 直接失败。建站是一次性操作，交给人点一下更省事。
       - uses: actions/configure-pages@v6
 
-      # 三个 action 的大版本必须配套：deploy-pages v4 读不了新 artifact 后端
-      # 存的包，upload 步骤明明成功，deploy 还是报"找不到 github-pages artifact"
-      # （实测 run #3/#4），只有同步升到 v5/v6 这一代才对得上。
+      # upload / deploy 保持同一代（v5）：两者靠 artifact 名 github-pages 对接，
+      # 跨代混用时后端存取格式可能对不上。注意单纯升版本治不了上面那个竞态，
+      # 实测 v3→v5 后报错一字不差，真正起作用的是拆 job。
       - uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v5
