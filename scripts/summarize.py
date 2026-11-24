@@ -21,7 +21,10 @@ import json
 from datetime import date
 from typing import Any
 
-from .common import DATA_DIR, HttpClient, load_config, load_prompt, log, write_json
+from .common import (
+    DATA_DIR, HttpClient, load_config, load_prompt, log, prompt_fingerprint,
+    write_json,
+)
 from .llm import LLM, BudgetExceeded, LLMError
 from .material import Material, build_material
 from .rank import composite_score
@@ -195,6 +198,11 @@ def _write_back(item: dict, data: dict, material: Material) -> None:
     item["title_zh"] = data.get("title_zh")
     item["reading"] = data.get("reading") or {}
     item["claims"] = data.get("claims") or []
+    # 单位取自模型抄回的论文首页作者块。OpenAlex 不收录当天公告的预印本，
+    # `signals.institutions` 对前沿频道几乎永远是空的，首页抄一份是唯一能覆盖
+    # 新论文的来源。注意顶层 `affiliations` 也是 select.py 多样性约束读的键，
+    # 但选取在阶段五已经结束，这里写入不会反过来影响当批选谁。
+    item["affiliations"] = _clean_affiliations(data.get("affiliations"))
     item["evidence_level"] = material.level
     if material.note:
         item["material_note"] = material.note
@@ -204,17 +212,37 @@ def _write_back(item: dict, data: dict, material: Material) -> None:
     item["_material"] = material.text
 
 
+def _clean_affiliations(raw: Any) -> list[str]:
+    """机构名只做机械清洗：压空白、去重、限长限量，判不准的直接丢。
+
+    不改写也不补全——这个字段在详情页紧贴作者显示，读者会当事实看。带邮箱或
+    URL、长过 50 字的多半是把整行地址抄了下来，丢掉比显示半行地址好。
+    """
+    out: list[str] = []
+    for value in raw if isinstance(raw, list) else []:
+        if not isinstance(value, str):
+            continue
+        name = " ".join(value.split()).strip(" ,.;·")
+        if not name or len(name) > 50 or "@" in name or "http" in name:
+            continue
+        if name not in out:
+            out.append(name)
+    return out[:5]
+
+
 # ------------------------------------------------------------ 缓存
 
 
 def _cache_key(item: dict, template: str, level: str, model: str) -> str:
-    """缓存键含模型名：换模型后旧解读不该被当成新模型的输出复用。
+    """缓存键含模型名与 prompt 内容哈希：换模型或改 prompt 后旧解读都该失效。
 
     评分与文风都随模型变，而 metrics 里的 `model_used` 又要如实反映这条解读
     是谁生成的，所以模型名必须进键，不能只按 content_hash + 模板 + 取材层级。
+    prompt 同理：只记模板名的话，调完 prompt 重跑会静默复用上一版的输出。
     """
     digest = item.get("content_hash") or item.get("id") or "unknown"
-    return f"{template}-{level}-{model}-{str(digest).replace('/', '--')}"
+    fp = prompt_fingerprint(template)
+    return f"{template}-{fp}-{level}-{model}-{str(digest).replace('/', '--')}"
 
 
 def _read_cache(item: dict, template: str, level: str, model: str) -> dict | None:

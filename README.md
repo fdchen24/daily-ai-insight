@@ -1,6 +1,7 @@
 # Daily AI Insight
 
 [![daily](https://github.com/fdchen24/daily-ai-insight/actions/workflows/daily.yml/badge.svg)](https://github.com/fdchen24/daily-ai-insight/actions/workflows/daily.yml)
+[![pages](https://github.com/fdchen24/daily-ai-insight/actions/workflows/pages.yml/badge.svg)](https://github.com/fdchen24/daily-ai-insight/actions/workflows/pages.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -8,7 +9,7 @@
 **按质量筛选而不是按时间或热度排序**，生成带数值溯源的结构化中文解读，静态发布到
 GitHub Pages。全程跑在 GitHub Actions 上，不需要服务器，也不需要数据库。
 
-设计文档见 [DESIGN.md](DESIGN.md)。
+**站点**：<https://fdchen24.github.io/daily-ai-insight/> · 设计文档见 [DESIGN.md](DESIGN.md)。
 
 ## 和"每日 arXiv 推送"的区别
 
@@ -18,7 +19,7 @@ GitHub Pages。全程跑在 GitHub Actions 上，不需要服务器，也不需�
 | 怎么排 | 时间倒序 / HF 点赞数 | 规则初筛 → L1 批内相对排序（便宜模型）→ 配额与主题多样性重排 |
 | 读多少 | 摘要 | 分层取材：摘要 0.5K / 引言结论 5–8K / 全文 20–30K token，并记录 `evidence_level` |
 | 可信度 | 直接采信模型输出 | 机械校验：数值必须能在模型实际看到的材料里反查到，链接探活，元数据与 arXiv 原始记录核对 |
-| 出什么 | 一段摘要翻译 | 七字段解读（为何值得读 / 动机 / 创新 / 方法 / 结果 / 局限 / 启发）+ `claims` 溯源表 |
+| 出什么 | 一段摘要翻译 | 六段解读（TL;DR / 任务与问题 / 问题根因 / 方法设计 / 实验结果 / 局限），作者单位照论文首页抄录，数值另登记 `claims` 溯源表 |
 
 三类内容与配额：**前沿 10 篇/日、综述 5 篇/周、经典 5 篇/周**（周配额在成功投放后才记账，
 被校验丢弃的条目不占名额）。
@@ -76,6 +77,46 @@ cp .env.example .env                      # 填 DEEPSEEK_API_KEY，该文件已�
 
 产物默认写入 `./data`（已 gitignore）。设 `DAI_DATA_DIR` 可改写入位置，CI 用它指向
 `data` 分支的工作区。
+
+## 前端与发布
+
+React 19 + Vite + Tailwind 4 + vite-plugin-pwa，没有后端：页面直接 fetch
+`data/daily/latest.json`、`data/daily/<年>/<月>/<日>.json` 与 `data/archive/index-<年>.json`，
+归档索引按年分片正是为了让首页不下载全部历史。
+
+| 页面 | 内容 |
+|---|---|
+| 今日 `/` | 当期条目卡片，按综合得分排序 |
+| 发现 `/discover` | 按推荐类型与主题筛选最近若干期 |
+| 归档 `/archive` | 按年索引翻历史批次 |
+| 收藏 `/saved` | 收藏与已读台账，可导出/导入 JSON 备份 |
+| 详情 `/p/<批次日>/<条目 id>` | TL;DR、作者与单位、引用数、六段解读、链接与校验结论 |
+
+四个前端侧的实现决定：
+
+- **公式用 KaTeX 渲染**，prompt 要求解读里的符号一律写成 `$...$`；SW 把 19 个
+  KaTeX woff2（共 256 KiB）一起预缓存，离线时公式不会退化成纯文本。
+- **已读分自动与手动两条路**。详情页停留满 8 秒或滚过半页自动记一次，标题下的
+  按钮可以手动补记或撤回——进页面瞬间就记会让"未读"失去意义，只给按钮则没人点。
+- **收藏连标题一起存快照**。只存 id 的话，当期 JSON 被 SW 淘汰后收藏页就只剩一串
+  id。收藏、已读与阅读进度都在本机 IndexedDB，换设备靠导出备份：iOS 对未安装到
+  主屏的站点，7 天无访问就会清掉 script-writable storage。
+- **静态资源 CacheFirst，数据 JSON NetworkFirst**（保留近 40 个文件，够覆盖最近
+  7 期离线阅读）。预缓存的 glob 刻意不含 json，否则当期内容被 SW 接管，用户刷新
+  也看不到新一期。
+
+```bash
+cd web && npm install
+npm run dev        # http://localhost:5173/daily-ai-insight/，data/ 由中间件直读仓库目录
+npm run build      # tsc --noEmit + vite build + 拷 daily/ 与 archive/ 进 dist/data/
+npm run typecheck
+```
+
+发布由 [pages.yml](.github/workflows/pages.yml) 做：daily 跑完、或 `web/` 有代码改动
+推到 main 时各触发一次，检出 `data` 分支取成品 JSON，构建后部署到 Pages。首次运行
+会自己把 Pages 打开（`configure-pages` 的 `enablement`）；若仓库策略不允许 Actions
+建站，手动把 `Settings` → `Pages` → `Build and deployment` 的 Source 选成
+`GitHub Actions` 再重跑一次。
 
 ## 配置：Secrets 与 Variables
 
@@ -150,6 +191,12 @@ scripts/
   llm.py          # DeepSeek 客户端、token 账本、预算硬闸门
   common.py       # 配置加载、HTTP 客户端、路径与时间工具
 data/             # 运行产物（gitignore）：raw/ candidates/ daily/ archive/ state/ metrics/
+web/
+  src/
+    pages/        # 今日 / 发现 / 归档 / 收藏 / 详情
+    components/   # 条目卡片、解读分段、KaTeX 渲染、公用小件
+    lib/          # 数据读取、各模板字段表、IndexedDB 本机状态、主题
+  scripts/        # postbuild：404 回退 + 把 daily/ 与 archive/ 拷进 dist
 ```
 
 ## 成本与可观测
@@ -169,8 +216,8 @@ data/             # 运行产物（gitignore）：raw/ candidates/ daily/ archiv
 
 - [x] 阶段一 采集与候选池
 - [x] 阶段二 筛选、排序、解读、校验、落盘
-- [ ] 阶段三 前端与 GitHub Pages（需先装 Node.js）
-- [ ] 阶段四 PWA 与移动端
+- [x] 阶段三 前端与 GitHub Pages
+- [ ] 阶段四 PWA 与移动端（manifest、SW、离线与安装已接入，真机验收未做）
 - [ ] 阶段五 稳定性与成本调优
 
 验收清单见 [DESIGN.md](DESIGN.md) 第十一节。

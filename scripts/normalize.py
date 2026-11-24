@@ -79,7 +79,8 @@ def normalize(
             continue
         for field in ("citation_count", "influential_citation_count",
                       "reference_count", "venue", "work_type", "fwci",
-                      "citation_percentile", "citations_by_year"):
+                      "citation_percentile", "citations_by_year",
+                      "institutions"):
             if signals.get(field) is not None:
                 target["signals"][field] = signals[field]
         target["s2_tldr"] = signals.get("tldr")

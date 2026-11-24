@@ -9,9 +9,11 @@
    DESIGN 十一"重跑为覆盖而非追加"在配额上的对应要求。
 2. **周内均摊而不是先到先得**。剩余名额除以本周剩余工作日向上取整，
    避免周一两篇、周五无内容；`weekly_daily_cap` 是上限而非目标。
-3. **机构约束暂不生效**。当前候选没有 affiliation 字段（arXiv OAI 与
-   OpenAlex 的选字段里都没有机构），代码按字段存在才启用，并在 notes 里
-   如实记录"未启用"，不假装约束已生效。
+3. **机构约束暂不生效**。机构名有两个来源：OpenAlex 消歧后的 `signals.institutions`，
+   以及 L2 解读从论文首页抄回的顶层 `affiliations`（详情页优先用后者）。前者在
+   预印本上错得不少（实测 InstructGPT 被标成 Alignment Research Center），后者
+   要到阶段六才产出、选取时还不存在。两条都不够当配额依据，所以代码按字段存在
+   才启用，并在 notes 里如实记录"未启用"，不假装约束已生效。
 """
 
 from __future__ import annotations
@@ -172,7 +174,13 @@ def _score(item: dict) -> float:
 
 
 def _affiliations(item: dict) -> list[str]:
-    """机构字段当前为空，返回空列表即等于不启用该约束。"""
+    """读顶层 `affiliations`。阶段六的 L2 解读才写这个键，阶段五读到的恒为空，
+    于是该约束等于不启用。
+
+    有意不读 `signals.institutions`：那份数据只够展示，不够当配额依据（见模块
+    开头第 3 条）。要启用就先把机构名清洗成可靠的机构 ID 并挪到选取之前，
+    再改这里。
+    """
     raw = item.get("affiliations") or []
     return [str(a).strip().lower() for a in raw if str(a).strip()]
 

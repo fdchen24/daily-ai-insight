@@ -162,7 +162,7 @@ papers:
     authors: ["OpenAI", "Josh Achiam", "Steven Adler"]
     published_at: "2023-03-15"
     year: 2023
-    topics: ["LLM 与推理", "AI 安全与评估"]
+    topics: ["LLM 与推理"]
     note: "不公开架构细节但系统披露能力与风险评估，是技术报告这一体裁的范本。"
   - arxiv_id: "1409.3215"
     title: "Sequence to Sequence Learning with Neural Networks"
@@ -358,14 +358,14 @@ papers:
     authors: ["Jason Wei", "Yi Tay", "Rishi Bommasani"]
     published_at: "2022-06-15"
     year: 2022
-    topics: ["LLM 与推理", "AI 安全与评估"]
+    topics: ["LLM 与推理"]
     note: "记录能力随规模的不连续跃变，也引出了度量方式是否制造涌现的后续争论。"
   - arxiv_id: "1706.03741"
     title: "Deep reinforcement learning from human preferences"
     authors: ["Paul Christiano", "Jan Leike", "Tom B. Brown"]
     published_at: "2017-06-12"
     year: 2017
-    topics: ["强化学习与后训练", "AI 安全与评估"]
+    topics: ["强化学习与后训练"]
     note: "用成对偏好训练奖励模型再优化策略，RLHF 的原始论文。"
   - arxiv_id: "2305.18290"
     title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model"

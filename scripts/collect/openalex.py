@@ -31,6 +31,11 @@ from ..common import (
 )
 
 _DOI_PREFIX = "10.48550/arxiv."
+# 缓存条目的结构版本。加字段（如 institutions）后旧条目缺的值靠 TTL 补要等
+# 到 30 天后，老论文尤其慢；版本号一改即全部按过期处理，重查一次补齐。
+# 空值在落盘时会被剔掉，所以不能靠"某个键在不在"判断，只能显式记版本。
+_CACHE_VERSION = 2
+_META_KEYS = ("fetched_at", "v")
 
 
 def collect(arxiv_ids: Iterable[str], *, now: datetime | None = None) -> dict[str, Any]:
@@ -50,7 +55,8 @@ def collect(arxiv_ids: Iterable[str], *, now: datetime | None = None) -> dict[st
     for arxiv_id in ids:
         entry = cache.get(arxiv_id)
         if entry and not _expired(entry, arxiv_id, now, cfg):
-            signals[arxiv_id] = {k: v for k, v in entry.items() if k != "fetched_at"}
+            signals[arxiv_id] = {k: v for k, v in entry.items()
+                                 if k not in _META_KEYS}
         else:
             stale.append(arxiv_id)
 
@@ -170,9 +176,40 @@ def _parse_work(work: dict) -> dict[str, Any]:
                               for row in counts if row.get("year")},
         "oa_topics": [t.get("display_name") for t in (work.get("topics") or [])[:2]
                       if t.get("display_name")],
+        "institutions": _institutions(work.get("authorships") or []),
     }
     # 缓存按条目逐行落盘，空值占的体积不小，一律去掉
     return {k: v for k, v in parsed.items() if v not in (None, {}, [])}
+
+
+def _institutions(authorships: list[dict]) -> list[str]:
+    """按作者顺序取去重后的单位名，最多 5 个。
+
+    优先用 OpenAlex 消歧后的 `institutions[].display_name`；预印本常常没消歧
+    成功，这时退回 `raw_affiliation_strings`——但那是 PDF 首页抽出来的原文，
+    会带进 "Duke University Project Page : https://..." 这类噪声，所以只收
+    短且不含链接邮箱的片段，宁可留空也不往页面上写脏数据。
+    """
+    names: list[str] = []
+    for authorship in authorships:
+        picked = [inst.get("display_name")
+                  for inst in (authorship.get("institutions") or [])]
+        if not any(picked):
+            picked = [_clean_affiliation(raw)
+                      for raw in (authorship.get("raw_affiliation_strings") or [])[:1]]
+        for name in picked:
+            if name and name not in names:
+                names.append(name)
+        if len(names) >= 5:
+            break
+    return names[:5]
+
+
+def _clean_affiliation(raw: str | None) -> str | None:
+    text = " ".join((raw or "").split()).strip(" ,.;·")
+    if not text or len(text) > 50 or "http" in text or "@" in text:
+        return None
+    return text
 
 
 # ------------------------------------------------------------ 缓存
@@ -210,13 +247,16 @@ def _save_cache(fetched: dict[str, dict], shards: dict[str, dict],
     touched: set[str] = set()
     for arxiv_id, signals in fetched.items():
         month = _paper_month(arxiv_id)
-        shards.setdefault(month, {})[arxiv_id] = {**signals, "fetched_at": stamp}
+        shards.setdefault(month, {})[arxiv_id] = {**signals, "fetched_at": stamp,
+                                                  "v": _CACHE_VERSION}
         touched.add(month)
     for month in touched:
         write_json(citations_path(month), shards[month], indent=0)
 
 
 def _expired(entry: dict, arxiv_id: str, now: datetime, cfg: dict) -> bool:
+    if entry.get("v") != _CACHE_VERSION:
+        return True
     fetched_at = parse_dt(entry.get("fetched_at"))
     if fetched_at is None:
         return True

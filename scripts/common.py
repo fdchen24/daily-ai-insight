@@ -63,6 +63,16 @@ def load_prompt(name: str) -> str:
     return _prompt_cache[name]
 
 
+def prompt_fingerprint(name: str) -> str:
+    """prompt 内容的短哈希，用于进缓存键。
+
+    缓存键只按模板名算的话，改完 prompt 重跑会原样复用旧解读——人以为在
+    看新 prompt 的效果，实际读的是上一版的输出。把内容摘要进键，改 prompt
+    即自然失效，不改则照旧命中。
+    """
+    return hashlib.sha256(load_prompt(name).encode("utf-8")).hexdigest()[:10]
+
+
 # ---------------------------------------------------------------- 时间
 
 

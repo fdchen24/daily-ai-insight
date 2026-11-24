@@ -136,14 +136,17 @@ validate:
   # 连续多少个 ASCII 单词视为未翻译残留
   untranslated_ascii_words: 8
   link_timeout_seconds: 10
-  # 各字段字数上下限（中文字符数）
+  # 各字段字数上下限（中文字符数）。键按字段名匹配，哪套模板有这个字段就查哪套。
+  # why_read / why_today 是列表页唯一显示的一句，收到 110 字以内才扫得动；
+  # 正文各段 2026-11-24 统一收紧一轮（results / limitations 收到原来的 1/4，
+  # 其余约一半）——原来的上限写满就是一屏字，手机上没人读完
   lengths:
-    why_read: [60, 200]
-    motivation: [80, 400]
-    method: [80, 500]
-    results: [60, 400]
-    limitations: [40, 300]
-    insights: [40, 300]
+    why_read: [40, 110]
+    why_today: [40, 110]
+    task: [40, 200]
+    method: [50, 250]
+    results: [30, 100]
+    limitations: [25, 80]
 
 # 单价按官方价目表填（https://api-docs.deepseek.com/zh-cn/quick_start/pricing/，
 # 2026-11-23 核对）。DeepSeek 分时计价：空闲时段恰好是高峰的一半，北京时间

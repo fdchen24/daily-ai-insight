@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+/* 深色模式改由 `.dark` 类驱动，而不是 Tailwind v4 默认的 prefers-color-scheme：
+   页面要支持"跟随系统 / 亮 / 暗"三态切换，只有类名能表达用户的显式选择。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 语义色板。深浅两套只在这里分叉，组件一律写 `text-body`/`bg-surface`，
+   不再满篇 `dark:` ——第一版正文用 slate-400/500 这类浅灰，深色底下读起来发灰
+   发虚，改配色时要全文件改一遍才改得干净。
+   正文对背景的对比度按 WCGA AA 以上取：#e8edf4 对 #0b0f17 约 15:1，
+   次要文字 #9fb0c9 对 #0b0f17 约 8:1。 */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+
+  --color-page: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-raised: #eef2f7;
+  --color-line: #d8e0ea;
+  --color-body: #111827;
+  --color-muted: #4b5a71;
+  --color-faint: #78869c;
+  --color-accent: #0b63b8;
+  --color-accent-soft: #e3f0fd;
+}
+
+.dark {
+  --color-page: #0b0f17;
+  --color-surface: #131a25;
+  --color-raised: #1b2431;
+  --color-line: #273243;
+  --color-body: #e8edf4;
+  --color-muted: #9fb0c9;
+  --color-faint: #7d8da6;
+  --color-accent: #6fc3ff;
+  --color-accent-soft: #10263a;
+}
+
+html {
+  /* 正文 16px / 行高 1.75（DESIGN 7.4）：中文长文行距给足才不糊成一片 */
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-page font-sans text-[16px] leading-[1.8] text-body antialiased;
+}
+
+/* 底部导航占位：iPhone 的小横条区域要额外让出 env(safe-area-inset-bottom) */
+.pb-safe {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* KaTeX 默认字号比正文大一圈，中英混排时会把行距撑开 */
+.katex {
+  font-size: 1.04em;
+}
+
+/* 独立成行的公式在窄屏上会横向溢出，给它自己的滚动条而不是撑破页面 */
+.math-block {
+  @apply my-3 overflow-x-auto rounded-md bg-raised px-3 py-2;
+}
+
+::selection {
+  @apply bg-accent-soft text-body;
+}

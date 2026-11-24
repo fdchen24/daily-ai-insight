@@ -58,15 +58,6 @@ topics:
           "pretraining", "scaling law", "optimizer"]
     boost: 0.9
 
-  - name: "AI 安全与评估"
-    any: ["safety", "alignment", "jailbreak", "red team", "hallucination",
-          "interpretability", "watermark", "privacy", "bias", "fairness",
-          "adversarial", "calibration", "guardrail", "harmful"]
-    # 这几个词几乎每篇论文的摘要里都有，只在标题里出现才算这个主题
-    title_any: ["benchmark", "evaluation", "evaluating", "robustness",
-                "uncertainty", "audit"]
-    boost: 0.9
-
 # 综述识别规则（供阶段二分池使用）
 survey_patterns:
   title_any: ["survey", "a review", "review of", "overview of",

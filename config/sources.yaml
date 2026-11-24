@@ -66,9 +66,11 @@ openalex:
   cache_ttl_recent_days: 7
   cache_ttl_old_days: 30
   recent_months: 2
+  # authorships 只为取作者单位（详情页要显示机构）；它是响应里最大的字段，
+  # 但 50 篇一请求的体量仍远低于超时阈值，比单独再查一次划算
   select: [doi, cited_by_count, referenced_works_count, publication_year, type,
            primary_location, counts_by_year, fwci,
-           citation_normalized_percentile, topics]
+           citation_normalized_percentile, topics, authorships]
 
 semanticscholar:
   # 降级为可选增强：只在配了 S2_API_KEY 时启用，且只为最终入选条目补

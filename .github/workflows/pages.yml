@@ -1,0 +1,93 @@
+# 发布前端到 GitHub Pages（阶段三）。
+#
+# 三个触发点，对应"内容变了"与"代码变了"两类更新：
+#   - workflow_run：daily 跑完就发布一次。数据在孤立分支 data 上，推它不会
+#     触发 push 事件，所以只能挂在 daily 的完成事件上。
+#   - push main（限 web/ 与本文件）：改前端代码后立即重新发布。
+#   - workflow_dispatch：手动补发，比如改完 Pages 设置想立刻看效果。
+#
+# 独立 workflow 而不是 daily.yml 里加一个 job：Pages 需要 pages/id-token 权限，
+# 而 daily 的两个 job 只该有 contents: write。权限按 job 授予，混在一个文件里
+# 也能做到，但采集失败时 needs 会连带跳过发布——代码改动的发布不该依赖采集。
+#
+# 首次运行会自己把 Pages 打开（configure-pages 的 enablement）。若仓库策略不允许
+# Actions 建站，手动改：Settings → Pages → Build and deployment → Source 选
+# "GitHub Actions"。
+
+name: pages
+
+on:
+  workflow_run:
+    workflows: [daily]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时刻只发布一条；新的发布可以取消排队中的旧发布，内容以最新一次为准
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 成品 JSON 在 data 分支，检出到 .data-branch/（与本地开发同一个布局）
+      - name: 检出 data 分支
+        uses: actions/checkout@v4
+        with:
+          ref: data
+          path: .data-branch
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 确认有当期数据
+        run: |
+          test -f .data-branch/data/daily/latest.json || {
+            echo "::error::data 分支上没有 daily/latest.json，先让 daily workflow 成功跑一次"
+            exit 1
+          }
+
+      - run: npm ci
+        working-directory: web
+
+      # build 里的 postbuild 会按 DAI_DATA_DIR 只拷 daily/ 与 archive/，
+      # 候选池与 raw（单批次 8MB、可重算）不进 Pages 产物
+      - name: 构建
+        working-directory: web
+        env:
+          DAI_DATA_DIR: ${{ github.workspace }}/.data-branch/data
+        run: npm run build
+
+      # enablement: true 让首次运行自己把 Pages 打开（Source = GitHub Actions），
+      # 省掉进设置页点一次。组织仓库若禁止 Actions 建站，这一步会报错，
+      # 那时手动改 Settings → Pages → Source 即可
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
