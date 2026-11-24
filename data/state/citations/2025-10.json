@@ -12,7 +12,13 @@
 "Adversarial Robustness in Machine Learning",
 "Topic Modeling"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Carnegie Mellon University",
+"Oracle Cloud Infrastructure",
+"University of Pennsylvania"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.00810": {
 "citation_count": 3,
@@ -27,7 +33,13 @@
 "Natural Language Processing Techniques",
 "Topic Modeling"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Linköping University",
+"University of the Faroe Islands",
+"University of Iceland"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.04392": {
 "citation_count": 3,
@@ -42,7 +54,12 @@
 "Topic Modeling",
 "Information Retrieval and Search Behavior"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Maryland, College Park",
+"Capital One (United States)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.06470": {
 "citation_count": 0,
@@ -54,7 +71,13 @@
 "Inertial Sensor and Navigation",
 "Robotics and Sensor-Based Localization"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Research Assistant , Aerospace Research Center",
+"Turkish Aerospace Industries (Turkey)",
+"Istanbul Technical University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.02848": {
 "citation_count": 0,
@@ -66,7 +89,11 @@
 "Speech Recognition and Synthesis",
 "Speech and Audio Processing"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"FPT University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.09655": {
 "citation_count": 5,
@@ -83,7 +110,15 @@
 "Advanced Steganography and Watermarking Techniques",
 "Physical Unclonable Functions (PUFs) and Hardware Security"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"École Polytechnique",
+"PETSCRAFT: Concevoir des technologies d'amélioration de la vie privée explicables et efficaces",
+"École Nationale Supérieure de Techniques Avancées",
+"École Nationale Supérieure de Techniques Avancées Paris",
+"Universidad Carlos III de Madrid"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2510.06637": {
 "citation_count": 2,
@@ -98,6 +133,63 @@
 "Model Reduction and Neural Networks",
 "Meteorological Phenomena and Simulations"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of California, Irvine"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2510.07626": {
+"citation_count": 6,
+"reference_count": 59,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5,
+"2025": 1
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"IBM (United States)",
+"Michigan State University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2510.07986": {
+"citation_count": 2,
+"reference_count": 0,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robotic Mechanisms and Dynamics"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2510.04189": {
+"citation_count": 0,
+"reference_count": 22,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"Indian Institute of Science Bangalore"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

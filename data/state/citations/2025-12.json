@@ -12,7 +12,14 @@
 "Reinforcement Learning in Robotics",
 "Advanced Causal Inference Techniques"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Washington",
+"Netflix Research",
+"Cornell University",
+"Cornell Tech"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2512.06330": {
 "citation_count": 1,
@@ -27,7 +34,11 @@
 "Advanced Image Fusion Techniques",
 "Satellite Image Processing and Photogrammetry"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Electronic Science and Technology of China"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2512.08274": {
 "citation_count": 0,
@@ -39,6 +50,123 @@
 "Advanced Graph Neural Networks",
 "Graph Theory and Algorithms"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"The University of Texas at Arlington"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.18060": {
+"citation_count": 2,
+"reference_count": 59,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 1.43,
+"citation_percentile": 0.865,
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Advanced Image and Video Retrieval Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.24635": {
+"citation_count": 7,
+"reference_count": 66,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"Software Engineering Research"
+],
+"institutions": [
+"YAN LEI",
+"Chongqing University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.04238": {
+"citation_count": 5,
+"reference_count": 57,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"German Cancer Research Center",
+"Heidelberg University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.15948": {
+"citation_count": 2,
+"reference_count": 65,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Embodied and Extended Cognition",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"Harvard University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.06218": {
+"citation_count": 2,
+"reference_count": 32,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"University of Alberta",
+"Alberta Machine Intelligence Institute"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2512.14190": {
+"citation_count": 0,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Markov Chains and Monte Carlo Methods"
+],
+"institutions": [
+"University College London"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

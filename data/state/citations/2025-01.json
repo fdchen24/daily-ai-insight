@@ -13,7 +13,14 @@
 "Advanced Causal Inference Techniques",
 "Reinforcement Learning in Robotics"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Washington",
+"Netflix (United States)",
+"Cornell University",
+"Cornell Tech"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2501.03306": {
 "citation_count": 1,
@@ -28,6 +35,90 @@
 "Privacy-Preserving Technologies in Data",
 "Adversarial Robustness in Machine Learning"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Kennesaw State University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2501.02945": {
+"citation_count": 148,
+"reference_count": 19,
+"venue": "Transactions on machine learning research",
+"year": 2026,
+"work_type": "article",
+"fwci": 144.76,
+"citation_percentile": 1.0,
+"citations_by_year": {
+"2026": 110,
+"2025": 37
+},
+"oa_topics": [
+"Time Series Analysis and Forecasting",
+"Forecasting Techniques and Applications"
+],
+"institutions": [
+"University of Freiburg",
+"ELLIS Institute Tübingen"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2501.10533": {
+"citation_count": 42,
+"reference_count": 47,
+"venue": "International Conference on Machine Learning",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 23.46,
+"citation_percentile": 0.997,
+"citations_by_year": {
+"2026": 26,
+"2025": 16
+},
+"oa_topics": [
+"Statistical Methods and Inference",
+"Machine Learning and Algorithms"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2501.14851": {
+"citation_count": 32,
+"reference_count": 32,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 24,
+"2025": 8
+},
+"oa_topics": [
+"Topic Modeling",
+"Logic, Reasoning, and Knowledge"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2501.09493": {
+"citation_count": 17,
+"reference_count": 88,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 7
+},
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Information Retrieval and Search Behavior"
+],
+"institutions": [
+"Hong Kong Polytechnic University",
+"Huawei Technologies (China)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

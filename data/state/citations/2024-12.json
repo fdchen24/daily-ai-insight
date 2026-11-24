@@ -13,6 +13,51 @@
 "Gaussian Processes and Bayesian Inference",
 "Control Systems and Identification"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Machine Learning Research , Morgan",
+"University of California, Los Angeles"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2412.04209": {
+"citation_count": 19,
+"reference_count": 51,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 9
+},
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2412.16555": {
+"citation_count": 13,
+"reference_count": 55,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 3
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Security and Verification in Computing"
+],
+"institutions": [
+"Henan University",
+"Chinese Academy of Sciences",
+"Institute of Information Engineering",
+"University of Chinese Academy of Sciences"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

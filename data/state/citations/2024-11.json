@@ -13,6 +13,68 @@
 "Machine Learning and Data Classification",
 "Imbalanced Data Classification Techniques"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Universidad Pablo de Olavide"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2411.15418": {
+"citation_count": 12,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9,
+"2025": 3
+},
+"oa_topics": [
+"Computational Drug Discovery Methods",
+"Protein Degradation and Inhibitors"
+],
+"institutions": [
+"University of Pittsburgh",
+"Carnegie Mellon University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2411.17136": {
+"citation_count": 1,
+"reference_count": 44,
+"venue": "RePEc: Research Papers in Economics",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Financial Risk and Volatility Modeling",
+"Stock Market Forecasting Methods"
+],
+"institutions": [
+"The University of Sydney",
+"University of Salerno",
+"Beijing Institute of Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2411.01251": {
+"citation_count": 0,
+"reference_count": 16,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"oa_topics": [
+"Retinal Imaging and Analysis",
+"Retinal Diseases and Treatments"
+],
+"institutions": [
+"Vellore Institute of Technology University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

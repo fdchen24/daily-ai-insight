@@ -1,0 +1,43 @@
+{
+"2408.13630": {
+"citation_count": 11,
+"reference_count": 39,
+"venue": "RePEc: Research Papers in Economics",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 4
+},
+"oa_topics": [
+"Game Theory and Voting Systems",
+"Internet Traffic Analysis and Secure E-voting"
+],
+"institutions": [
+"Tulane University",
+"IBM (United States)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2408.14443": {
+"citation_count": 8,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 2
+},
+"oa_topics": [
+"Logic, Reasoning, and Knowledge",
+"semigroups and automata theory"
+],
+"institutions": [
+"The University of Texas Health Science Center at Houston"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

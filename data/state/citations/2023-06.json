@@ -1,0 +1,21 @@
+{
+"2306.10782": {
+"citation_count": 1,
+"reference_count": 22,
+"venue": "arXiv (Cornell University)",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2021": 1
+},
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Advanced Image and Video Retrieval Techniques"
+],
+"institutions": [
+"University of Fukui"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

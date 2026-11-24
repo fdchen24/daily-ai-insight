@@ -9,6 +9,51 @@
 "Evacuation and Crowd Dynamics",
 "Opinion Dynamics and Social Influence"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Connecticut",
+"Technical University of Košice"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2508.02069": {
+"citation_count": 8,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Time Series Analysis and Forecasting",
+"Traffic Prediction and Management Techniques"
+],
+"institutions": [
+"Fudan University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2508.01701": {
+"citation_count": 6,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5,
+"2025": 1
+},
+"oa_topics": [
+"Context-Aware Activity Recognition Systems",
+"Privacy-Preserving Technologies in Data"
+],
+"institutions": [
+"University of Engineering & Management",
+"Indian Statistical Institute"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

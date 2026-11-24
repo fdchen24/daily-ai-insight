@@ -1,0 +1,22 @@
+{
+"2308.01213": {
+"citation_count": 9,
+"reference_count": 47,
+"venue": "arXiv (Cornell University)",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4,
+"2025": 3
+},
+"oa_topics": [
+"Neural Networks and Applications",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Technical University of Munich"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

@@ -12,7 +12,13 @@
 "Generative Adversarial Networks and Image Synthesis",
 "Multimodal Machine Learning Applications"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of North Carolina at Chapel Hill",
+"FieldAI",
+"Nanyang Technological University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2511.00086": {
 "citation_count": 6,
@@ -27,7 +33,14 @@
 "Topic Modeling",
 "Natural Language Processing Techniques"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Pennsylvania State University",
+"University of Pittsburgh",
+"Amazon (United States)",
+"Microsoft (United States)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2511.14262": {
 "citation_count": 4,
@@ -42,7 +55,12 @@
 "Reinforcement Learning in Robotics",
 "AI-based Problem Solving and Planning"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"The University of Osaka",
+"Hokkaido University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2511.19706": {
 "citation_count": 1,
@@ -57,6 +75,237 @@
 "Image Retrieval and Classification Techniques",
 "Mathematical Analysis and Transform Methods"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of California System",
+"University of California, Santa Barbara"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.05706": {
+"citation_count": 9,
+"reference_count": 44,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8,
+"2025": 1
+},
+"oa_topics": [
+"Artificial Intelligence in Education",
+"Edcuational Technology Systems"
+],
+"institutions": [
+"Tufts University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.03985": {
+"citation_count": 4,
+"reference_count": 19,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 1
+},
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Evolutionary Algorithms and Applications"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign",
+"Meta Ranking AI Research"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.21105": {
+"citation_count": 4,
+"reference_count": 39,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"University of California San Diego",
+"Blue River Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.09695": {
+"citation_count": 4,
+"reference_count": 9,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Teleoperation and Haptic Systems",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.07406": {
+"citation_count": 3,
+"reference_count": 59,
+"venue": "PubMed Central",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Gene Regulatory Network Analysis",
+"Stochastic processes and statistical mechanics"
+],
+"institutions": [
+"University of Pennsylvania",
+"Duke-NUS Medical School"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.14112": {
+"citation_count": 3,
+"reference_count": 3,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Machine Learning in Healthcare",
+"Medical Coding and Health Information"
+],
+"institutions": [
+"Northwestern University",
+"Dartmouth University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.00073": {
+"citation_count": 2,
+"reference_count": 38,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Remote-Sensing Image Classification",
+"Remote Sensing and Land Use"
+],
+"institutions": [
+"University of Graz",
+"Joanneum Research"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.01593": {
+"citation_count": 2,
+"reference_count": 64,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Peking University",
+"Alibaba Group (China)",
+"Zhejiang University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.23041": {
+"citation_count": 1,
+"reference_count": 113,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Digital Communication and Language",
+"Linguistic research and analysis"
+],
+"institutions": [
+"Utrecht University",
+"Vrije Universiteit Brussel"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.10296": {
+"citation_count": 0,
+"reference_count": 43,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Fault Detection and Control Systems",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"University of Tübingen",
+"Max Planck Institute for Intelligent Systems"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.14784": {
+"citation_count": 0,
+"reference_count": 44,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Clustering Algorithms Research",
+"Bayesian Methods and Mixture Models"
+],
+"institutions": [
+"Indian Statistical Institute",
+"The University of Texas at Austin",
+"University of Michigan"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2511.18841": {
+"citation_count": 0,
+"reference_count": 20,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

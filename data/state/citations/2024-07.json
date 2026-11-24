@@ -1,0 +1,48 @@
+{
+"2407.14058": {
+"citation_count": 9,
+"reference_count": 74,
+"venue": "International Conference on Machine Learning",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 1.34,
+"citation_percentile": 0.865,
+"citations_by_year": {
+"2026": 4,
+"2025": 4
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Bayesian Modeling and Causal Inference"
+],
+"institutions": [
+"Chinese Academy of Sciences",
+"Institute of Software",
+"University of Chinese Academy of Sciences",
+"Tsinghua University",
+"Hong Kong University of Science and Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2407.17772": {
+"citation_count": 2,
+"reference_count": 15,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2024": 1
+},
+"oa_topics": [
+"Emotion and Mood Recognition",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Hong Kong University of Science and Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

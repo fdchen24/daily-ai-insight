@@ -238,5 +238,115 @@
     "notes": [
       "survey 仅选出 0/1 篇：候选不足或受多样性约束，减量投放不降门槛"
     ]
+  },
+  "2026-11-24": {
+    "arxiv_announce_date": "2026-11-24",
+    "generated_at": "2026-11-24T06:10:19.986393+00:00",
+    "stage": "collect",
+    "collect_status": "ok",
+    "sources": {
+      "arxiv": {
+        "ok": true,
+        "count": 2887,
+        "stats": {
+          "fetched": 4171,
+          "deleted": 0,
+          "kept": 2887,
+          "requests": 6,
+          "days": [
+            "2026-11-24",
+            "2026-11-23"
+          ],
+          "skipped_weekends": [
+            "2026-11-22"
+          ],
+          "by_day": {
+            "2026-11-24": 2006,
+            "2026-11-23": 881
+          },
+          "by_set": {
+            "cs": 2871,
+            "stat": 16
+          },
+          "empty_days": []
+        }
+      },
+      "huggingface": {
+        "ok": true,
+        "count": 41,
+        "stats": {
+          "by_date": {
+            "2026-11-24": 15,
+            "2026-11-23": 26,
+            "2026-11-22": 0,
+            "2026-11-21": 0
+          },
+          "host": "https://huggingface.co",
+          "requests": 5
+        }
+      },
+      "github": {
+        "ok": true,
+        "count": 995,
+        "stats": {
+          "trending": 27,
+          "baseline": 2557,
+          "authenticated": true,
+          "requests": 71,
+          "detail_failures": 0,
+          "kept": 995
+        }
+      },
+      "openalex": {
+        "ok": true,
+        "count": 960,
+        "stats": {
+          "requested": 2903,
+          "from_cache": 0,
+          "queried": 2903,
+          "requests": 59,
+          "resolved": 960,
+          "unindexed": 1943,
+          "failed_batches": 0,
+          "batches": 59,
+          "hit_rate": 0.331
+        }
+      },
+      "semanticscholar": {
+        "ok": true,
+        "count": 0,
+        "stats": {
+          "skipped": "no_api_key"
+        }
+      }
+    },
+    "normalize": {
+      "arxiv": 2887,
+      "hf_merged": 25,
+      "hf_new": 16,
+      "repo_merged": 1,
+      "repo_standalone": 994,
+      "citations_attached": 960,
+      "channels": {
+        "revision": 746,
+        "stale": 1255,
+        "catchup": 39,
+        "primary": 1857
+      },
+      "topic_sources": {
+        "rule": 2874,
+        "pending_llm": 1023
+      },
+      "total": 3897
+    },
+    "dedup": {
+      "input": 3897,
+      "by_doi": 0,
+      "by_title": 0,
+      "by_project": 1,
+      "output": 3896,
+      "review_pairs": 2
+    },
+    "duration_seconds": 292.7
   }
 }

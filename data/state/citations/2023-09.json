@@ -13,6 +13,50 @@
 "Ethics and Social Impacts of AI",
 "Topic Modeling"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Humboldt-Universität zu Berlin"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2309.04268": {
+"citation_count": 17,
+"reference_count": 66,
+"venue": "arXiv (Cornell University)",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8,
+"2025": 3
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Tsinghua University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2309.16858": {
+"citation_count": 7,
+"reference_count": 15,
+"venue": "arXiv (Cornell University)",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4,
+"2025": 2
+},
+"oa_topics": [
+"Machine Learning and Algorithms",
+"Stochastic Gradient Optimization Techniques"
+],
+"institutions": [
+"Arizona State University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

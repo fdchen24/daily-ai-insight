@@ -15,7 +15,13 @@
 "Multimodal Machine Learning Applications",
 "Generative Adversarial Networks and Image Synthesis"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of California, Berkeley",
+"University of Washington",
+"Duke University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2509.12031": {
 "citation_count": 4,
@@ -30,7 +36,15 @@
 "Markov Chains and Monte Carlo Methods",
 "Geometric Analysis and Curvature Flows"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"National Technical University of Athens",
+"Athena Research and Innovation Center In Information Communication & Knowledge Technologies",
+"Institut polytechnique de Grenoble",
+"Centre National de la Recherche Scientifique",
+"Institut national de recherche en sciences et technologies du numérique"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2509.02433": {
 "citation_count": 1,
@@ -45,7 +59,13 @@
 "Stochastic Gradient Optimization Techniques",
 "Adversarial Robustness in Machine Learning"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Minnesota",
+"University of Minnesota System",
+"ETH Zurich"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2509.04588": {
 "citation_count": 0,
@@ -57,6 +77,127 @@
 "Explainable Artificial Intelligence (XAI)",
 "Software Testing and Debugging Techniques"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"The University of Texas at Austin"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.02820": {
+"citation_count": 14,
+"reference_count": 33,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 11,
+"2025": 3
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"Tübingen AI Center",
+"University of Tübingen",
+"École Polytechnique Fédérale de Lausanne"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.00303": {
+"citation_count": 9,
+"reference_count": 56,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7,
+"2025": 2
+},
+"oa_topics": [
+"Advanced Database Systems and Queries",
+"Data Management and Algorithms"
+],
+"institutions": [
+"University of Chicago",
+"University of California, Los Angeles",
+"University of California, Santa Barbara"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.16002": {
+"citation_count": 2,
+"reference_count": 48,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum Information and Cryptography"
+],
+"institutions": [
+"Keio University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.02983": {
+"citation_count": 2,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Underwater Vehicles and Communication Systems",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.12458": {
+"citation_count": 1,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"3D Surveying and Cultural Heritage",
+"Advanced Vision and Imaging"
+],
+"institutions": [
+"i2CAT"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2509.22815": {
+"citation_count": 1,
+"reference_count": 38,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Robotic Locomotion and Control",
+"Advanced Control Systems Optimization"
+],
+"institutions": [
+"Virginia Tech"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

@@ -13,7 +13,12 @@
 "Bayesian Modeling and Causal Inference",
 "Explainable Artificial Intelligence (XAI)"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Max Planck Society",
+"Max Planck Institute for Intelligent Systems"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2502.21099": {
 "citation_count": 4,
@@ -28,6 +33,84 @@
 "Stochastic Gradient Optimization Techniques",
 "Optimization and Variational Analysis"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Shenzhen University of Advanced Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2502.17843": {
+"citation_count": 11,
+"reference_count": 15,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4,
+"2025": 7
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Autonomous Vehicle Technology and Safety"
+],
+"institutions": [
+"University of Dhaka"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2502.07281": {
+"citation_count": 9,
+"reference_count": 38,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Machine Learning and Data Classification"
+],
+"institutions": [
+"Genentech",
+"New York University",
+"Stanford University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2502.00611": {
+"citation_count": 2,
+"reference_count": 6,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2025": 1
+},
+"oa_topics": [
+"Software Engineering Research",
+"Scientific Computing and Data Management"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2502.05725": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Markov Chains and Monte Carlo Methods",
+"Gaussian Processes and Bayesian Inference"
+],
+"institutions": [
+"The University of Texas at Austin"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

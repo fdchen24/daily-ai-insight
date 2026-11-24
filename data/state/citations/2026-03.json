@@ -12,7 +12,12 @@
 "Stochastic Gradient Optimization Techniques",
 "Neural Networks and Applications"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"McGill University",
+"University of Southern California"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.16849": {
 "citation_count": 3,
@@ -27,7 +32,8 @@
 "Model Reduction and Neural Networks",
 "Advanced Graph Neural Networks"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.20521": {
 "citation_count": 3,
@@ -42,7 +48,8 @@
 "Reinforcement Learning in Robotics",
 "Adaptive Dynamic Programming Control"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.13429": {
 "citation_count": 1,
@@ -57,7 +64,11 @@
 "Industrial Vision Systems and Defect Detection",
 "Advanced Neural Network Applications"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Maharaja Agrasen University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.18771": {
 "citation_count": 1,
@@ -72,7 +83,11 @@
 "Social Robot Interaction and HRI",
 "Human Motion and Animation"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Liverpool"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.03405": {
 "citation_count": 0,
@@ -84,7 +99,11 @@
 "Gaussian Processes and Bayesian Inference",
 "Machine Learning and Data Classification"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of South Florida"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.09427": {
 "citation_count": 0,
@@ -96,7 +115,8 @@
 "Reinforcement Learning in Robotics",
 "Simulation Techniques and Applications"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.15919": {
 "citation_count": 0,
@@ -108,7 +128,11 @@
 "Explainable Artificial Intelligence (XAI)",
 "Advanced Neural Network Applications"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"The University of Texas at Austin"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.23864": {
 "citation_count": 8,
@@ -123,7 +147,12 @@
 "Multimodal Machine Learning Applications",
 "Robot Manipulation and Learning"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Hong Kong",
+"Shanghai Jiao Tong University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.27910": {
 "citation_count": 4,
@@ -138,7 +167,8 @@
 "Topic Modeling",
 "Speech and dialogue systems"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.25063": {
 "citation_count": 3,
@@ -153,7 +183,8 @@
 "Topological and Geometric Data Analysis",
 "Scientific Computing and Data Management"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.20526": {
 "citation_count": 2,
@@ -168,7 +199,8 @@
 "Reinforcement Learning in Robotics",
 "Advanced Bandit Algorithms Research"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2603.29507": {
 "citation_count": 0,
@@ -180,6 +212,434 @@
 "Image Enhancement Techniques",
 "Advanced Image Processing Techniques"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Maharaja Agrasen University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.11214": {
+"citation_count": 23,
+"reference_count": 10,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 23
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Information and Cyber Security"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.05438": {
+"citation_count": 11,
+"reference_count": 53,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 11
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"institutions": [
+"Pohang University of Science and Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.16141": {
+"citation_count": 9,
+"reference_count": 20,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"UAV Applications and Optimization"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign",
+"Boeing (United States)",
+"Boeing (Spain)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.14451": {
+"citation_count": 7,
+"reference_count": 89,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum many-body systems"
+],
+"institutions": [
+"Forschungszentrum Jülich",
+"University of Cologne",
+"Jülich Supercomputing Centre",
+"FH Aachen"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.00978": {
+"citation_count": 5,
+"reference_count": 57,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.10230": {
+"citation_count": 5,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Advanced Optimization Algorithms Research",
+"Stochastic Gradient Optimization Techniques"
+],
+"institutions": [
+"University of California, Berkeley",
+"Georgia Institute of Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.13919": {
+"citation_count": 3,
+"reference_count": 22,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Beijing University of Posts and Telecommunications",
+"Meituan (China)",
+"Sanya University",
+"Chinese Academy of Sciences",
+"Institute of Automation"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.00041": {
+"citation_count": 1,
+"reference_count": 41,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Bayesian Modeling and Causal Inference",
+"Advanced Causal Inference Techniques"
+],
+"institutions": [
+"Queen Mary University of London"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.07955": {
+"citation_count": 1,
+"reference_count": 9,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Geometric and Algebraic Topology",
+"semigroups and automata theory"
+],
+"institutions": [
+"Neapolis University Pafos"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.08379": {
+"citation_count": 1,
+"reference_count": 25,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.10199": {
+"citation_count": 1,
+"reference_count": 27,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"Georgia Institute of Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.02531": {
+"citation_count": 0,
+"reference_count": 48,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"Gwangju Institute of Science and Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.06512": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Smart Agriculture and AI",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.08856": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Human-Automation Interaction and Safety"
+],
+"institutions": [
+"University of Vienna",
+"Centre for Cognitive Science &",
+"Technische Universität Darmstadt"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.10701": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and Audio Processing"
+],
+"institutions": [
+"Xiamen University",
+"Chinese University of Hong Kong, Shenzhen",
+"Nanjing University",
+"Chinese University of Hong Kong"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.12514": {
+"citation_count": 0,
+"reference_count": 14,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Imaging and Analysis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Friedrich-Alexander-Universität Erlangen-Nürnberg"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.14830": {
+"citation_count": 0,
+"reference_count": 41,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"institutions": [
+"RIKEN Center for Brain Science",
+"RIKEN"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.18326": {
+"citation_count": 0,
+"reference_count": 24,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"New Jersey Institute of Technology",
+"The Ohio State University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.27176": {
+"citation_count": 2,
+"reference_count": 63,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"Seoul National University",
+"Samsung Changwon Hospital",
+"Samsung Medical Center",
+"Nvidia (United States)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.24705": {
+"citation_count": 1,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Economic and Environmental Valuation",
+"Decision-Making and Behavioral Economics"
+],
+"institutions": [
+"Johns Hopkins University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.26134": {
+"citation_count": 1,
+"reference_count": 52,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Research",
+"Peking University",
+"Wuhan University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.19482": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"University of British Columbia",
+"Daegu Gyeongbuk Institute of Science and Technology",
+"Vector Institute"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2603.21846": {
+"citation_count": 0,
+"reference_count": 36,
+"venue": "arXiv (Cornell University)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Computational Drug Discovery Methods"
+],
+"institutions": [
+"University of Lisbon"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

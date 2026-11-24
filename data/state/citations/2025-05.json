@@ -1,0 +1,105 @@
+{
+"2505.22807": {
+"citation_count": 1,
+"reference_count": 35,
+"venue": "International Conference on Artificial Intelligence and Statistics",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.55,
+"citation_percentile": 0.708,
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Stanford University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2505.24086": {
+"citation_count": 8,
+"reference_count": 46,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 2
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Centre National de la Recherche Scientifique",
+"Université Paris Sciences et Lettres"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2505.21956": {
+"citation_count": 5,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4,
+"2025": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Emory University",
+"University of Michigan"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2505.17019": {
+"citation_count": 4,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Shanghai Artificial Intelligence Laboratory",
+"Huazhong University of Science and Technology",
+"Chinese University of Hong Kong"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2505.06975": {
+"citation_count": 0,
+"reference_count": 33,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"City University of Hong Kong",
+"Harbin Institute of Technology",
+"Tianjin University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

@@ -1,0 +1,43 @@
+{
+"2406.13144": {
+"citation_count": 53,
+"reference_count": 29,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 39,
+"2025": 14
+},
+"oa_topics": [
+"Speech and dialogue systems",
+"Topic Modeling"
+],
+"institutions": [
+"Seoul National University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2406.14745": {
+"citation_count": 22,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 11,
+"2025": 10
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Freie Universität Berlin",
+"Fraunhofer Institute for Open Communication Systems"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

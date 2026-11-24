@@ -14,5 +14,25 @@
 "Natural Language Processing Techniques"
 ],
 "fetched_at": "2026-11-23T13:49:30.492776+00:00"
+},
+"2203.06158": {
+"citation_count": 3,
+"reference_count": 35,
+"venue": "arXiv (Cornell University)",
+"year": 2022,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2023": 1
+},
+"oa_topics": [
+"Cloud Computing and Resource Management",
+"Software System Performance and Reliability"
+],
+"institutions": [
+"Meta (United States)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

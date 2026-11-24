@@ -13,7 +13,8 @@
 "Software Engineering Research",
 "Authorship Attribution and Profiling"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2409.11960": {
 "citation_count": 16,
@@ -29,7 +30,13 @@
 "Hand Gesture Recognition Systems",
 "Human Pose and Action Recognition"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Harbin Engineering University",
+"Northwest Institute of Mechanical and Electrical Engineering",
+"Kyungil University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 },
 "2409.03962": {
 "citation_count": 6,
@@ -45,6 +52,10 @@
 "Advanced Causal Inference Techniques",
 "Bayesian Modeling and Causal Inference"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"Emory University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

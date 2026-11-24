@@ -1,0 +1,37 @@
+{
+"2507.18518": {
+"citation_count": 7,
+"reference_count": 28,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Cryptography and Data Security"
+],
+"institutions": [
+"Nankai University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2507.13888": {
+"citation_count": 2,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Formal Methods in Verification",
+"Advanced Control Systems Optimization"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}

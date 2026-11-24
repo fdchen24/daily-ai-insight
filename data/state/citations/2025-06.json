@@ -12,6 +12,108 @@
 "Topological and Geometric Data Analysis",
 "3D Shape Modeling and Analysis"
 ],
-"fetched_at": "2026-11-23T13:49:17.145186+00:00"
+"institutions": [
+"University of Houston"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2506.15397": {
+"citation_count": 2,
+"reference_count": 35,
+"venue": "International Conference on Machine Learning",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 0.95,
+"citation_percentile": 0.759,
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Complex Network Analysis Techniques",
+"Mathematical and Theoretical Epidemiology and Ecology Models"
+],
+"institutions": [
+"École Polytechnique Fédérale de Lausanne"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2506.00783": {
+"citation_count": 11,
+"reference_count": 37,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9,
+"2025": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Shanghai Artificial Intelligence Laboratory",
+"Zhejiang University",
+"University of Science and Technology of China",
+"Fudan University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2506.15560": {
+"citation_count": 2,
+"reference_count": 26,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2025": 1
+},
+"oa_topics": [
+"Advanced Vision and Imaging",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2506.04713": {
+"citation_count": 2,
+"reference_count": 64,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2025": 1
+},
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"University of Macau",
+"Texas A&M University"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2506.14303": {
+"citation_count": 0,
+"reference_count": 58,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Surgical Simulation and Training"
+],
+"institutions": [
+"The University of Tokyo"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
 }
 }

@@ -1,0 +1,46 @@
+{
+"2503.09754": {
+"citation_count": 5,
+"reference_count": 56,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 2
+},
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Advanced Vision and Imaging"
+],
+"institutions": [
+"Georgia Tech Research Institute",
+"Georgia Institute of Technology"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+},
+"2503.20258": {
+"citation_count": 1,
+"reference_count": 55,
+"venue": "arXiv (Cornell University)",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2025": 1
+},
+"oa_topics": [
+"Ultrasound in Clinical Applications",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Chinese Academy of Sciences",
+"Institute of Automation",
+"University of Chinese Academy of Sciences",
+"Alibaba Group (Cayman Islands)",
+"Alibaba DAMO Academy (China)"
+],
+"fetched_at": "2026-11-24T06:09:44.491112+00:00",
+"v": 2
+}
+}
