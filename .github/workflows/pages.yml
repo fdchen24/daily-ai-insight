@@ -45,16 +45,16 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # 成品 JSON 在 data 分支，检出到 .data-branch/（与本地开发同一个布局）
       - name: 检出 data 分支
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: data
           path: .data-branch
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
