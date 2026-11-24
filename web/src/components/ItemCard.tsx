@@ -46,8 +46,9 @@ export function ItemCard({ item, date, favorite, read }:
       </div>
 
       {tldr && (
-        // line-clamp 要落在块级元素上，徽标作为行内内容跟着一起被裁
-        <p className="mt-2.5 line-clamp-3 text-[15px] leading-[1.75] text-body">
+        // TL;DR 不裁行。实测当期 82–145 字（中位 106），手机上三行只够放一半，
+        // 卡片扫一遍得点进去才知道讲什么，列表就白列了。卡片因此高一些是值得的。
+        <p className="mt-2.5 text-[15px] leading-[1.75] text-body">
           <span className="mr-1.5 rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold tracking-wide text-accent">
             TL;DR
           </span>
