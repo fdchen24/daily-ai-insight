@@ -168,5 +168,22 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2512.05965": {
+"citation_count": 35,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 34,
+"2025": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

@@ -735,5 +735,25 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2602.13279": {
+"citation_count": 2,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Misinformation and Its Impacts",
+"Complex Network Analysis Techniques"
+],
+"institutions": [
+"Hong Kong Polytechnic University",
+"Shanghai Jiao Tong University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

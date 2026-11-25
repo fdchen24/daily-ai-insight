@@ -2370,5 +2370,164 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2610.17117": {
+"citation_count": 1,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Topic Modeling"
+],
+"institutions": [
+"Case Western Reserve University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.05066": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Huawei Technologies (China)",
+"Hong Kong Polytechnic University",
+"City University of Hong Kong"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.10181": {
+"citation_count": 0,
+"reference_count": 40,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"3D Shape Modeling and Analysis"
+],
+"institutions": [
+"Massachusetts Institute of Technology",
+"Gwangju Institute of Science and Technology"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.09838": {
+"citation_count": 0,
+"reference_count": 17,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Topic Modeling"
+],
+"institutions": [
+"Hebrew University of Jerusalem"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.17324": {
+"citation_count": 0,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Creativity in Education and Neuroscience",
+"Ethics and Social Impacts of AI"
+],
+"institutions": [
+"Georgetown University",
+"Washington and Lee University",
+"University of Pennsylvania",
+"University of San Francisco",
+"University of Connecticut"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.26676": {
+"citation_count": 0,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Advanced Multi-Objective Optimization Algorithms"
+],
+"institutions": [
+"Cornell University",
+"Columbia University",
+"New York University",
+"Shanghai University of Finance and Economics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.31678": {
+"citation_count": 0,
+"reference_count": 7,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.37503": {
+"citation_count": 0,
+"reference_count": 42,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Face recognition and analysis"
+],
+"institutions": [
+"Constructor University",
+"Sumsub , Berlin , Germany"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2610.39557": {
+"citation_count": 0,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Nanyang Technological University",
+"National University of Singapore",
+"Chinese University of Hong Kong",
+"Chinese University of Hong Kong, Shenzhen",
+"University of Science and Technology of China"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

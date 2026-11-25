@@ -1533,5 +1533,64 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2605.22883": {
+"citation_count": 5,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Green IT and Sustainability",
+"Energy Efficiency in Computing"
+],
+"institutions": [
+"Independent Researcher , USA",
+"Texas A&M University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2605.26850": {
+"citation_count": 3,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Image and Signal Denoising Methods"
+],
+"institutions": [
+"University of Helsinki",
+"University of Cambridge",
+"Carnegie Mellon University",
+"University of Edinburgh"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2605.10680": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"Centre Inria de l'Université de Rennes",
+"Université de Rennes"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

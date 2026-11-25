@@ -490,5 +490,113 @@
     "pipeline_duration_seconds": 1354.7,
     "status": "ok",
     "notes": []
+  },
+  "2026-11-25": {
+    "arxiv_announce_date": "2026-11-25",
+    "generated_at": "2026-11-25T01:02:51.511346+00:00",
+    "stage": "collect",
+    "collect_status": "ok",
+    "sources": {
+      "arxiv": {
+        "ok": true,
+        "count": 3028,
+        "stats": {
+          "fetched": 4375,
+          "deleted": 0,
+          "kept": 3028,
+          "requests": 8,
+          "days": [
+            "2026-11-25",
+            "2026-11-24",
+            "2026-11-23"
+          ],
+          "skipped_weekends": [],
+          "by_day": {
+            "2026-11-25": 0,
+            "2026-11-24": 2148,
+            "2026-11-23": 880
+          },
+          "by_set": {
+            "cs": 3011,
+            "stat": 17
+          },
+          "empty_days": [
+            "2026-11-25"
+          ]
+        }
+      },
+      "huggingface": {
+        "ok": false,
+        "count": 0,
+        "stats": {
+          "by_date": {},
+          "host": null,
+          "requests": 2
+        },
+        "error": "所有 HF host 均不可达: https://huggingface.co HTTP 400; https://hf-mirror.com HTTP 400"
+      },
+      "github": {
+        "ok": true,
+        "count": 1000,
+        "stats": {
+          "trending": 27,
+          "baseline": 2556,
+          "authenticated": true,
+          "requests": 71,
+          "detail_failures": 0,
+          "kept": 1000
+        }
+      },
+      "openalex": {
+        "ok": true,
+        "count": 1504,
+        "stats": {
+          "requested": 3028,
+          "from_cache": 944,
+          "queried": 2084,
+          "requests": 42,
+          "resolved": 560,
+          "unindexed": 1524,
+          "failed_batches": 0,
+          "batches": 42,
+          "hit_rate": 0.269
+        }
+      },
+      "semanticscholar": {
+        "ok": true,
+        "count": 0,
+        "stats": {
+          "skipped": "no_api_key"
+        }
+      }
+    },
+    "normalize": {
+      "arxiv": 3028,
+      "hf_merged": 0,
+      "hf_new": 0,
+      "repo_merged": 1,
+      "repo_standalone": 999,
+      "citations_attached": 1504,
+      "channels": {
+        "revision": 779,
+        "stale": 1296,
+        "catchup": 35,
+        "primary": 1917
+      },
+      "topic_sources": {
+        "rule": 2991,
+        "pending_llm": 1036
+      },
+      "total": 4027
+    },
+    "dedup": {
+      "input": 4027,
+      "by_doi": 0,
+      "by_title": 0,
+      "by_project": 1,
+      "output": 4026,
+      "review_pairs": 2
+    },
+    "duration_seconds": 282.6
   }
 }

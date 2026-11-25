@@ -4709,5 +4709,6907 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2611.09854": {
+"citation_count": 0,
+"reference_count": 53,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote Sensing and LiDAR Applications",
+"Satellite Image Processing and Photogrammetry"
+],
+"institutions": [
+"Hitotsubashi University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.09680": {
+"citation_count": 0,
+"reference_count": 32,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"institutions": [
+"Linkup , Paris"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.13548": {
+"citation_count": 0,
+"reference_count": 22,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Neural Networks and Applications"
+],
+"institutions": [
+"University of Chicago"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.20402": {
+"citation_count": 0,
+"reference_count": 30,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Advanced Control Systems Optimization"
+],
+"institutions": [
+"Carnegie Mellon University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.24602": {
+"citation_count": 0,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Sparse and Compressive Sensing Techniques",
+"Image and Signal Denoising Methods"
+],
+"institutions": [
+"Yale University",
+"Carnegie Mellon University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.24423": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"Independent Researcher , Toronto , Canada"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.23702": {
+"citation_count": 0,
+"reference_count": 97,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Recommender Systems and Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26216": {
+"citation_count": 0,
+"reference_count": 63,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Authorship Attribution and Profiling",
+"Topic Modeling"
+],
+"institutions": [
+"University of Maryland, College Park",
+"Simon Fraser University",
+"Pangram Labs",
+"University of British Columbia",
+"Google DeepMind (United Kingdom)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26671": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "HAL",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"institutions": [
+"Institut Élie Cartan de Lorraine",
+"PASTA: Processus Aléatoires Spatio-Temporels et Applications",
+"Université de Haute-Alsace"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26806": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Machine Learning in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26663": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Team Dynamics and Performance",
+"Human-Automation Interaction and Safety"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26711": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Software Testing and Debugging Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26759": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Music Technology and Sound Studies",
+"Art, Technology, and Culture"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26810": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Social Robot Interaction and HRI",
+"Autism Spectrum Disorder Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26744": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26783": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26754": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence Applications",
+"Logic, Reasoning, and Knowledge"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26706": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26717": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26803": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26770": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Algorithms",
+"Game Theory and Voting Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26637": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26764": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26709": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Big Data and Business Intelligence"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26715": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote Sensing and LiDAR Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26818": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26779": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Surveillance and Tracking Methods",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26807": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Artificial Intelligence in Games"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26747": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy, Security, and Data Protection",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26758": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Image Segmentation Techniques",
+"Medical Imaging and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26745": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26797": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26765": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Physical and Chemical Molecular Interactions",
+"Protein Structure and Dynamics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26752": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26775": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26773": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Face recognition and analysis",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26794": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI in cancer detection",
+"Artificial Intelligence in Healthcare and Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26726": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image Retrieval and Classification Techniques",
+"Advanced Image and Video Retrieval Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26734": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Image Segmentation Techniques",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26756": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26809": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26656": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Complexity and Algorithms in Graphs",
+"Optimization and Search Problems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26736": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Game Theory and Applications",
+"Advanced Bandit Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26676": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Simulation Techniques and Applications",
+"Robotics and Automated Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26703": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Cell Image Analysis Techniques",
+"Advanced Fluorescence Microscopy Techniques"
+],
+"institutions": [
+"Human Technopole",
+"Indian Institute of Technology Hyderabad"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26763": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26782": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning in Materials Science",
+"Scientific Computing and Data Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26805": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26776": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Hate Speech and Cyberbullying Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26652": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic processes and financial applications",
+"Risk and Portfolio Optimization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26712": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Face recognition and analysis",
+"Biometric Identification and Security"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26787": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26702": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26722": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech and dialogue systems",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26730": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26900": {
+"citation_count": 0,
+"reference_count": 49,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Mental Health via Writing",
+"Anxiety, Depression, Psychometrics, Treatment, Cognitive Processes"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26868": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Industrial Vision Systems and Defect Detection",
+"Non-Destructive Testing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26942": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Engineering Research",
+"Software Engineering Techniques and Practices"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26902": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26853": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26824": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Network Security and Intrusion Detection",
+"Network Packet Processing and Optimization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26875": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Cloud Computing and Resource Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26867": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ultrasound in Clinical Applications",
+"Artificial Intelligence in Healthcare and Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26897": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26920": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26940": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Safety Systems Engineering in Autonomy"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26855": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26825": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26835": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26856": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Time Series Analysis and Forecasting"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26837": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Phonetics and Phonology Research",
+"Language Development and Disorders"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26919": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26914": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Machine Learning in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26931": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Bayesian Methods and Mixture Models"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26933": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26935": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26909": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Sports Analytics and Performance"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26842": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26863": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26874": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26938": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Metaheuristic Optimization Algorithms Research",
+"Evolutionary Algorithms and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26907": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Artificial Intelligence in Healthcare and Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26912": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Engineering Research",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26870": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26847": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Traffic Prediction and Management Techniques",
+"Air Quality Monitoring and Forecasting"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26937": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"3D Surveying and Cultural Heritage"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26910": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Games",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26906": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Logic, programming, and type systems",
+"Mathematics, Computing, and Information Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26841": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26832": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26858": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Robotic Path Planning Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26833": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26917": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26936": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26903": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Digital Media Forensic Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26904": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26849": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"Gait Recognition and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26921": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Expert finding and Q&A systems",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26913": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Functional Brain Connectivity Studies",
+"Artificial Intelligence in Healthcare and Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26883": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26916": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Hand Gesture Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26929": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Machine Learning in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26865": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Surgical Simulation and Training"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27050": {
+"citation_count": 0,
+"reference_count": 51,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Medical Image Segmentation Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26992": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Teleoperation and Haptic Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27046": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26980": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26999": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Financial Distress and Bankruptcy Prediction",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27047": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27044": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Traffic Prediction and Management Techniques",
+"Advanced Graph Neural Networks"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26957": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multi-Agent Systems and Negotiation",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26988": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Law, logistics, and international trade",
+"Artificial Intelligence in Law"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27015": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Computational Drug Discovery Methods",
+"Machine Learning in Materials Science"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27029": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Muscle activation and electromyography studies"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27018": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Complexity and Algorithms in Graphs",
+"Advanced Combinatorial Mathematics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26958": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Music and Audio Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27012": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26966": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Access Control and Trust",
+"Software System Performance and Reliability"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26949": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Visual perception and processing mechanisms",
+"Multisensory perception and integration"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26976": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Parallel Computing and Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27007": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Clinical practice guidelines implementation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27042": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26945": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Random Matrices and Applications",
+"Matrix Theory and Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27016": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Security and Verification in Computing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26978": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Formal Methods in Verification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26968": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Auditing, Earnings Management, Governance"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26972": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Human Pose and Action Recognition"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26996": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27017": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote-Sensing Image Classification",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"Kic'i"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27013": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Optimal Power Flow Distribution",
+"Electric Power System Optimization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26987": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Digital Media Forensic Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27024": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26950": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Sensor Technology and Measurement Systems",
+"Advanced Sensor and Energy Harvesting Materials"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27032": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27011": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26994": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Logic, Reasoning, and Knowledge"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26975": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Hate Speech and Cyberbullying Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26971": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26969": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26986": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topological and Geometric Data Analysis",
+"Polynomial and algebraic computation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26998": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26981": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26983": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Access Control and Trust"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27028": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning in Healthcare",
+"Artificial Intelligence in Healthcare and Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27043": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Graph Theory and Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27048": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adaptive Control of Nonlinear Systems",
+"Iterative Learning Control Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27030": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Computer Graphics and Visualization Techniques",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27009": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Housing Market and Economics",
+"Urban Planning and Valuation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26965": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Hate Speech and Cyberbullying Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27003": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26963": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.26954": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Human Pose and Action Recognition"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27061": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Locomotion and Control",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27133": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27058": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Protein Structure and Dynamics",
+"Computational Drug Discovery Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27109": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27119": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Cloud Computing and Resource Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27090": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Distributed systems and fault tolerance",
+"Software System Performance and Reliability"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27121": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Aerospace Engineering and Control Systems",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27095": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Access Control and Trust"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27092": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27067": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Scheduling and Optimization Algorithms",
+"Advanced Bandit Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27094": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"Ethics and Social Impacts of AI"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27131": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27124": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27114": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Advanced Clustering Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27127": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Advanced Manufacturing and Logistics Optimization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27063": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Fusion Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27128": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Anomaly Detection Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27100": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27083": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27125": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27060": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"3D Surveying and Cultural Heritage"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27129": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Reservoir Computing",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27056": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27116": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Evolutionary Algorithms and Applications",
+"Artificial Intelligence Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27065": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Time Series Analysis and Forecasting",
+"Context-Aware Activity Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27104": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Statistical Methods in Clinical Trials",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27068": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27089": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27077": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Advanced Optimization Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27059": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27093": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Fusion Techniques",
+"Image Enhancement Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27084": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Hate Speech and Cyberbullying Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27117": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Advanced Clustering Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27087": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27057": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced MRI Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27132": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Landslides and related hazards",
+"Model Reduction and Neural Networks"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27110": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Evolutionary Algorithms and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27073": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Electric Power System Optimization",
+"Wind Energy Research and Development"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27079": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Particle physics theoretical and experimental studies",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27075": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Statistical Methods and Bayesian Inference",
+"Gaussian Processes and Bayesian Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27107": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Engineering Research",
+"Software Engineering Techniques and Practices"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27070": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27102": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI in cancer detection",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27053": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27080": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Digital Media Forensic Detection",
+"Misinformation and Its Impacts"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27101": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Surgical Simulation and Training",
+"Hand Gesture Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27097": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Image Enhancement Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27106": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Scientific Computing and Data Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27074": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Image and Signal Denoising Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27064": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27148": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "Transactions on machine learning research",
+"year": 2026,
+"work_type": "article",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27186": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Advanced Causal Inference Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27209": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Advanced Image Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27175": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Cryptography and Data Security",
+"Cryptographic Implementations and Security"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27217": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27214": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and Audio Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27144": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"Soft Robotics and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27138": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27189": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Artificial Intelligence Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27191": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Forecasting Techniques and Applications",
+"Time Series Analysis and Forecasting"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27136": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Surveillance and Tracking Methods",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27156": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Misinformation and Its Impacts",
+"Spam and Phishing Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27183": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Colorectal Cancer Screening and Detection",
+"Medical Image Segmentation Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27180": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Information and Cyber Security",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27218": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Optimization and Variational Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27198": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Sentiment Analysis and Opinion Mining",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27201": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27143": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Single-cell and spatial transcriptomics",
+"Gene expression and cancer classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27155": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27219": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27161": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Digital Media Forensic Detection",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27154": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Engineering Research",
+"Software Engineering Techniques and Practices"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27149": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Model Reduction and Neural Networks"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27211": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Authorship Attribution and Profiling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27181": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27167": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27173": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27139": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27141": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Graph Theory and Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27215": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Digital Media Forensic Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27159": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Intelligent Tutoring Systems and Adaptive Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27158": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced SAR Imaging Techniques",
+"Remote-Sensing Image Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27170": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27164": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27166": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Spatial Cognition and Navigation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27142": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27203": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Mathematics, Computing, and Information Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27162": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Protein Structure and Dynamics",
+"Computational Drug Discovery Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27187": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27196": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Embedded Systems Design Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27192": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Financial Reporting and XBRL",
+"Data Quality and Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27137": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Misinformation and Its Impacts",
+"Spam and Phishing Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27135": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"Hand Gesture Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27208": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Mathematics, Computing, and Information Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27193": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27216": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27179": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27182": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27171": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27206": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Non-Invasive Vital Sign Monitoring",
+"ECG Monitoring and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27253": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "International Conference on Machine Learning",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Digital Media Forensic Detection",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27286": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Forecasting Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27285": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Processing Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27322": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Neural dynamics and brain function"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27268": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Hate Speech and Cyberbullying Detection",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27327": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Social Robot Interaction and HRI",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27301": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Biomedical Text Mining and Ontologies"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27288": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27329": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27266": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27252": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27316": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Image Processing and 3D Reconstruction"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27282": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27339": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27224": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27241": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote-Sensing Image Classification",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27258": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27290": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27305": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27330": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27281": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"institutions": [
+"Southwest Petroleum University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27308": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27289": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Muscle activation and electromyography studies",
+"Hand Gesture Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27264": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27263": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Robotic Path Planning Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27226": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27293": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Interactive and Immersive Displays"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27229": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27269": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Fusion Techniques",
+"Image Enhancement Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27306": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27273": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Computational and Text Analysis Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27261": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Geometric Analysis and Curvature Flows",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27260": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Cybernetics and Technology in Society"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27326": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27255": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"IoT and Edge/Fog Computing",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27222": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27317": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27302": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Mathematics, Computing, and Information Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27272": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Adaptive Dynamic Programming Control"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27233": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27338": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27294": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Evolutionary Algorithms and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27283": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Cutaneous Melanoma Detection and Management",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27227": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27336": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Games",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27223": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Locomotion and Control",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27299": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Muscle activation and electromyography studies",
+"Hand Gesture Recognition Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27313": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Research Data Management Practices",
+"Scientific Computing and Data Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27243": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27447": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Safety Systems Engineering in Autonomy"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27390": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27353": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27401": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27445": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27376": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27404": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27398": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Surveillance and Tracking Methods",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27340": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Gaze Tracking and Assistive Technology"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27344": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27426": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Security and Verification in Computing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27453": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Color Science and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27350": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27444": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27421": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27443": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27377": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27423": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"Image Processing Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27410": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27381": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Video Analysis and Summarization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27355": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Data Visualization and Analytics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27418": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27373": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27349": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27362": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Target Tracking and Data Fusion in Sensor Networks",
+"Gaussian Processes and Bayesian Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27389": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27360": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27397": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Motion and Animation",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27368": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27348": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27388": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27383": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Surveillance and Tracking Methods",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27424": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Ethics and Social Impacts of AI"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27372": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27379": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27375": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27434": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27436": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27352": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Automated Road and Building Extraction",
+"Geographic Information Systems Studies"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27425": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Digital Media Forensic Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27412": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Optical measurement and interference techniques",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27369": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27411": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27365": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27341": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27435": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Traffic control and management",
+"Traffic Prediction and Management Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27415": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Hand Gesture Recognition Systems",
+"Human Pose and Action Recognition"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27446": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27427": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Machine Learning in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27511": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "International Conference on Machine Learning",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Machine Learning and Data Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27504": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27545": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Game Theory and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27483": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Simulation Techniques and Applications",
+"Digital Transformation in Industry"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27512": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image and Video Quality Assessment",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27459": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27541": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Color Science and Applications",
+"Remote-Sensing Image Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27499": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27547": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Image Enhancement Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27495": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Ethics and Social Impacts of AI"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27521": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27514": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27496": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Clustering Algorithms Research",
+"Advanced Optimization Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27529": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27515": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27462": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Digitalization, Law, and Regulation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27513": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27572": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Optimization and Search Problems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27487": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27477": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27486": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum many-body systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27559": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Microwave Engineering and Waveguides",
+"Radio Frequency Integrated Circuit Design"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27509": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"Robotics and Sensor-Based Localization"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27552": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Motion and Animation",
+"Robotic Locomotion and Control"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27544": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Psychotherapy Techniques and Applications",
+"Digital Mental Health Interventions"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27554": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27543": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27540": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Distributed Control Multi-Agent Systems",
+"Robotic Path Planning Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27536": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27465": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Music and Audio Processing"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27516": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27490": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image and Video Retrieval Techniques",
+"Image Retrieval and Classification Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27489": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Logic, Reasoning, and Knowledge",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27469": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"AI in cancer detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27506": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27494": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27500": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27556": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence Applications",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27517": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27570": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27463": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Logic, Reasoning, and Knowledge",
+"Advanced Algebra and Logic"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27468": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Distributed Control Multi-Agent Systems",
+"Multi-Agent Systems and Negotiation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27542": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Handwritten Text Recognition Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27467": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27491": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27501": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Image Fusion Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27550": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27560": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Wireless Network Optimization",
+"Software-Defined Networks and 5G"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27492": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27667": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Autonomous Vehicle Technology and Safety"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27633": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Inertial Sensor and Navigation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27712": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27700": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Algorithms",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27718": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27609": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Machine Learning and Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27721": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Sentiment Analysis and Opinion Mining",
+"Emotion and Mood Recognition"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27666": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27715": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Software Testing and Debugging Techniques",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27639": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27582": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Matrix Theory and Algorithms"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27631": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Logic, programming, and type systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27595": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Distributed Control Multi-Agent Systems",
+"Control and Dynamics of Mobile Robots"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27601": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Speech and dialogue systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27578": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27710": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27648": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Human Motion and Animation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27621": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Data Visualization and Analytics",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27622": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27720": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Human Motion and Animation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27661": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Misinformation and Its Impacts",
+"Spam and Phishing Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27624": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Remote-Sensing Image Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27620": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27645": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27714": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Statistical Methods in Clinical Trials"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27652": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27674": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Remote-Sensing Image Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27603": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Motion and Animation",
+"3D Shape Modeling and Analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27587": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum Information and Cryptography"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27618": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27686": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Privacy-Preserving Technologies in Data"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27576": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Cloud Computing and Resource Management",
+"Smart Grid Energy Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27646": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27638": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27630": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Image Segmentation Techniques",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27689": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27722": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Multi-Agent Systems and Negotiation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27641": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Climate variability and models",
+"Meteorological Phenomena and Simulations"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27653": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Geometric Analysis and Curvature Flows"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27719": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27607": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27610": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27713": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Meta-analysis and systematic reviews",
+"Computational and Text Analysis Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27656": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27585": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Infrared Thermography in Medicine",
+"Artificial Intelligence in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27673": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27605": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Meteorological Phenomena and Simulations",
+"Data Stream Mining Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27817": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Underwater Vehicles and Communication Systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27831": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27759": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27741": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Artificial Intelligence in Games"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27754": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Statistical Methods and Inference",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27810": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Voice and Speech Disorders"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27860": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Security and Verification in Computing",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27725": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Process Optimization and Integration",
+"Machine Learning in Materials Science"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27788": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27794": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Gaussian Processes and Bayesian Inference"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27746": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Team Dynamics and Performance",
+"Information Systems Theories and Implementation"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27845": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Teleoperation and Haptic Systems",
+"Robot Manipulation and Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27858": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Maritime Navigation and Safety",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27738": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27734": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Semantic Web and Ontologies",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27821": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Chromodynamics and Particle Interactions",
+"Markov Chains and Monte Carlo Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27796": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Advanced Electron Microscopy Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27792": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ultrasound Imaging and Elastography",
+"Medical Image Segmentation Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27797": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27750": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Logic, Reasoning, and Knowledge"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27862": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Emotion and Mood Recognition",
+"Face recognition and analysis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27807": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Sentiment Analysis and Opinion Mining",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27780": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27784": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech Recognition and Synthesis",
+"Digital Media Forensic Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27778": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Artificial Intelligence Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27854": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Retinal Imaging and Analysis",
+"Medical Image Segmentation Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27839": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multi-Agent Systems and Negotiation",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27726": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech and Audio Processing",
+"Speech Recognition and Synthesis"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27823": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27808": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Machine Learning and Data Classification"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27826": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Image and Signal Denoising Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27811": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27855": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Visual Attention and Saliency Detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27756": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27751": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Algorithms",
+"Advanced Bandit Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27753": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Medical Image Segmentation Techniques",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27806": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27799": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Artificial Intelligence in Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27865": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Artificial Intelligence in Games"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27822": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image Enhancement Techniques",
+"Color Science and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27764": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27783": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Epilepsy research and treatment"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27804": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27815": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum many-body systems"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27728": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Infrastructure Maintenance and Monitoring",
+"Autonomous Vehicle Technology and Safety"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27782": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27895": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Software Engineering Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27959": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Metaheuristic Optimization Algorithms Research"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27876": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"AI in cancer detection"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27870": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Artificial Intelligence in Games"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27951": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27931": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Analysis and Summarization",
+"Information Retrieval and Search Behavior"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27962": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27889": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27917": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Cardiac Imaging and Diagnostics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27901": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27894": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Advanced Causal Inference Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27946": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning and Algorithms",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27875": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27913": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Medical Image Segmentation Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27900": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Machine Learning in Healthcare"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27915": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27983": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Statistical Methods and Inference",
+"Advanced Statistical Methods and Models"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27905": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Hate Speech and Cyberbullying Detection",
+"Misinformation and Its Impacts"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27899": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Recommender Systems and Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27911": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27970": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Attention Deficit Hyperactivity Disorder",
+"EEG and Brain-Computer Interfaces"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27891": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27953": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27973": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27921": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27924": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Protein Structure and Dynamics",
+"Computational Drug Discovery Methods"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27967": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27978": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Stock Market Forecasting Methods",
+"Forecasting Techniques and Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27919": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27868": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Learning Styles and Cognitive Differences",
+"Artificial Intelligence in Education"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27910": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Data Quality and Management"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27963": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27932": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Vehicle Dynamics and Control Systems",
+"Autonomous Vehicle Technology and Safety"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27939": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2611.27881": {
+"citation_count": 0,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"AI in cancer detection",
+"Radiomics and Machine Learning in Medical Imaging"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

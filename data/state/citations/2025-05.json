@@ -101,5 +101,25 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2505.21331": {
+"citation_count": 4,
+"reference_count": 92,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2024": 1
+},
+"oa_topics": [
+"Advanced Queuing Theory Analysis",
+"Optimization and Search Problems"
+],
+"institutions": [
+"Massachusetts Institute of Technology"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

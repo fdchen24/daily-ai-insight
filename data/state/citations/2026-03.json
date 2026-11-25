@@ -641,5 +641,61 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2603.19233": {
+"citation_count": 28,
+"reference_count": 76,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 28
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Robot Manipulation and Learning"
+],
+"institutions": [
+"Case Western Reserve University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2603.11045": {
+"citation_count": 2,
+"reference_count": 58,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Numerical methods in inverse problems"
+],
+"institutions": [
+"Princeton University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2603.04614": {
+"citation_count": 0,
+"reference_count": 37,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Robot Manipulation and Learning"
+],
+"institutions": [
+"Karlsruhe Institute of Technology",
+"Shenzhen University",
+"Hunan University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

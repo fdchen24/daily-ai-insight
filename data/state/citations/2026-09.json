@@ -1637,5 +1637,95 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2609.26911": {
+"citation_count": 2,
+"reference_count": 14,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Software Testing and Debugging Techniques"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2609.10264": {
+"citation_count": 1,
+"reference_count": 64,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Cryptography and Data Security",
+"Privacy-Preserving Technologies in Data"
+],
+"institutions": [
+"Yale University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2609.25645": {
+"citation_count": 1,
+"reference_count": 13,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Cornell University",
+"Columbia University",
+"New York University",
+"Shanghai University of Finance and Economics"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2609.23385": {
+"citation_count": 0,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Particle Detector Development and Performance",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Stanford University",
+"SLAC National Accelerator Laboratory"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2609.34047": {
+"citation_count": 0,
+"reference_count": 20,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Image and Video Retrieval Techniques"
+],
+"institutions": [
+"Harvard University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

@@ -199,5 +199,21 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2509.16839": {
+"citation_count": 3,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Multi-Agent Systems and Negotiation",
+"Multimodal Machine Learning Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

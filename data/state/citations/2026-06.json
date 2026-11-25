@@ -1251,5 +1251,125 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2606.21406": {
+"citation_count": 7,
+"reference_count": 66,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"institutions": [
+"ETH Zurich",
+"Technical University of Munich"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2606.06479": {
+"citation_count": 6,
+"reference_count": 114,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Neural Networks and Applications",
+"Topic Modeling"
+],
+"institutions": [
+"MIT Gradient"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2606.29085": {
+"citation_count": 2,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Cultural Heritage Materials Analysis",
+"Image Processing and 3D Reconstruction"
+],
+"institutions": [
+"Vesuvius Challenge , San Francisco , CA , USA",
+"University of Kentucky",
+"University of Naples Federico II",
+"University of Glasgow",
+"European Synchrotron Radiation Facility"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2606.30026": {
+"citation_count": 1,
+"reference_count": 54,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Nanyang Technological University",
+"University of Hong Kong",
+"Johns Hopkins University",
+"University of North Carolina at Chapel Hill"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2606.04987": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Speech and dialogue systems",
+"Multi-Agent Systems and Negotiation"
+],
+"institutions": [
+"University of Cambridge",
+"University of Sheffield"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2606.30613": {
+"citation_count": 4,
+"reference_count": 32,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"AI-based Problem Solving and Planning"
+],
+"institutions": [
+"Case Western Reserve University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }

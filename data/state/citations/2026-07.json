@@ -480,5 +480,39 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2607.18454": {
+"citation_count": 1,
+"reference_count": 34,
+"venue": "Transactions on machine learning research",
+"year": 2026,
+"work_type": "article",
+"fwci": 0.99,
+"citation_percentile": 0.771,
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"institutions": [
+"Johns Hopkins University"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
+},
+"2607.26075": {
+"citation_count": 0,
+"reference_count": 17,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Handwritten Text Recognition Techniques",
+"Robotic Process Automation Applications"
+],
+"fetched_at": "2026-11-25T01:02:25.495130+00:00",
+"v": 2
 }
 }
