@@ -1371,5 +1371,255 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2606.25039": {
+"citation_count": 8,
+"reference_count": 51,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Model Reduction and Neural Networks",
+"Control Systems and Identification"
+],
+"institutions": [
+"Virginia Tech"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.03330": {
+"citation_count": 7,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Physical Unclonable Functions (PUFs) and Hardware Security"
+],
+"institutions": [
+"Centre National de la Recherche Scientifique",
+"Institut de Recherche en Informatique et Systèmes Aléatoires",
+"Pôle d’Expertise de la Régulation Numérique",
+"Laboratoire d'Analyse et d'Architecture des Systèmes"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.08340": {
+"citation_count": 7,
+"reference_count": 59,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Multi-Agent Systems and Negotiation"
+],
+"institutions": [
+"University of Edinburgh",
+"University of Oxford",
+"University College London"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.28016": {
+"citation_count": 6,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Sun Yat-sen University",
+"Tencent (China)",
+"Tsinghua University",
+"Peking University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.06781": {
+"citation_count": 4,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Computational and Text Analysis Methods",
+"Topic Modeling"
+],
+"institutions": [
+"The University of Texas at Dallas",
+"Illinois Institute of Technology"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.17410": {
+"citation_count": 2,
+"reference_count": 37,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Visual Attention and Saliency Detection"
+],
+"institutions": [
+"Princeton University",
+"University of Southern California",
+"Université de Montréal"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.21562": {
+"citation_count": 2,
+"reference_count": 59,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Naver (South Korea)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.11708": {
+"citation_count": 1,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Robotics and Sensor-Based Localization",
+"Robotic Path Planning Algorithms"
+],
+"institutions": [
+"Zhejiang University",
+"Differential Robotics (Hangzhou) Technology Co., Ltd. (China)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.24231": {
+"citation_count": 1,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"University of Hong Kong",
+"Changan Automobile"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.29888": {
+"citation_count": 1,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Yonsei University",
+"Seoul National University",
+"Oracle (United States)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.04133": {
+"citation_count": 0,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image and Video Retrieval Techniques",
+"Image Retrieval and Classification Techniques"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.06380": {
+"citation_count": 0,
+"reference_count": 69,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Philosophy and Theoretical Science",
+"Psychiatry, Mental Health, Neuroscience"
+],
+"institutions": [
+"The University of Osaka"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2606.27174": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Pharmacovigilance and Adverse Drug Reactions",
+"Machine Learning in Healthcare"
+],
+"institutions": [
+"Ankara University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

@@ -459,5 +459,168 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2601.12169": {
+"citation_count": 3,
+"reference_count": 71,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Robotic Locomotion and Control",
+"Advanced Control Systems Optimization"
+],
+"institutions": [
+"Duke University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.02656": {
+"citation_count": 2,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Advanced Clustering Algorithms Research",
+"Bayesian Methods and Mixture Models"
+],
+"institutions": [
+"Duke University",
+"University of Pennsylvania"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.22046": {
+"citation_count": 2,
+"reference_count": 54,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Advanced Vision and Imaging"
+],
+"institutions": [
+"Shanghai Artificial Intelligence Laboratory",
+"Zhejiang University",
+"Shanghai Jiao Tong University",
+"Northwestern Polytechnical University",
+"University of Science and Technology of China"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.01037": {
+"citation_count": 1,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Speech and dialogue systems",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.13913": {
+"citation_count": 1,
+"reference_count": 15,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Human Pose and Action Recognition",
+"Face recognition and analysis"
+],
+"institutions": [
+"Linköping University",
+"Independent Researcher"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.17829": {
+"citation_count": 1,
+"reference_count": 1,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Speech and dialogue systems",
+"Topic Modeling"
+],
+"institutions": [
+"Technion – Israel Institute of Technology",
+"TII , Haifa , Israel"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.16333": {
+"citation_count": 0,
+"reference_count": 54,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Video Analysis and Summarization"
+],
+"institutions": [
+"University of Amsterdam"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.21917": {
+"citation_count": 0,
+"reference_count": 33,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Complexity and Algorithms in Graphs",
+"Advanced Optimization Algorithms Research"
+],
+"institutions": [
+"Princeton University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2601.21362": {
+"citation_count": 0,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"IoT and Edge/Fog Computing",
+"Advanced Neural Network Applications"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

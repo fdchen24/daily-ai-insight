@@ -1,0 +1,22 @@
+{
+"2305.16056": {
+"citation_count": 3,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2024": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"Indian Institute of Science Bangalore"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+}
+}

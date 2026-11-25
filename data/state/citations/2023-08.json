@@ -18,5 +18,27 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2308.14304": {
+"citation_count": 33,
+"reference_count": 92,
+"venue": "International Conference on Artificial Intelligence and Statistics",
+"year": 2024,
+"work_type": "conference-paper",
+"fwci": 5.73,
+"citation_percentile": 0.976,
+"citations_by_year": {
+"2026": 3,
+"2025": 19
+},
+"oa_topics": [
+"Matrix Theory and Algorithms",
+"Stochastic Gradient Optimization Techniques"
+],
+"institutions": [
+"Boston University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

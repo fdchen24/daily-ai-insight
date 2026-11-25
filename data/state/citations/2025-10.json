@@ -191,5 +191,65 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2510.05197": {
+"citation_count": 23,
+"reference_count": 58,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 23
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"institutions": [
+"Stanford University",
+"École Polytechnique Fédérale de Lausanne",
+"University of Toronto"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2510.01233": {
+"citation_count": 2,
+"reference_count": 12,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Digital Humanities and Scholarship",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Rajiv Gandhi University of Knowledge Technologies"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2510.13036": {
+"citation_count": 1,
+"reference_count": 52,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Advanced Bandit Algorithms Research"
+],
+"institutions": [
+"Stanford University",
+"University of Edinburgh"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

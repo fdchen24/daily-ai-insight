@@ -215,5 +215,106 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2509.20899": {
+"citation_count": 8,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Clausthal University of Technology",
+"Ramblr.ai Research"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2509.10796": {
+"citation_count": 6,
+"reference_count": 104,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Control and Dynamics of Mobile Robots"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2509.23608": {
+"citation_count": 3,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Image Enhancement Techniques",
+"Advanced Image Processing Techniques"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2509.08171": {
+"citation_count": 1,
+"reference_count": 14,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Quantum Information and Cryptography",
+"Diamond and Carbon-based Materials Research"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2509.00179": {
+"citation_count": 0,
+"reference_count": 20,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Game Theory and Applications",
+"Advanced Bandit Algorithms Research"
+],
+"institutions": [
+"Tel Aviv University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2509.01587": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"National Research Council",
+"Scuola Normale Superiore"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

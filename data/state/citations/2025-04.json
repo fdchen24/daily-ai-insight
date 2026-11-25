@@ -19,5 +19,28 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2504.16137": {
+"citation_count": 67,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 50,
+"2025": 17
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"Universidade Federal do ABC",
+"Center for AI Safety",
+"MIT Media Lab",
+"Massachusetts Institute of Technology"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

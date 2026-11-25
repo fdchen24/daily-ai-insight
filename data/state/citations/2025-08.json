@@ -55,5 +55,104 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2508.13735": {
+"citation_count": 7,
+"reference_count": 40,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5,
+"2025": 2
+},
+"oa_topics": [
+"Machine Learning in Healthcare",
+"EEG and Brain-Computer Interfaces"
+],
+"institutions": [
+"Northeastern University",
+"Nanyang Technological University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2508.02604": {
+"citation_count": 3,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Dynamics and Control of Mechanical Systems"
+],
+"institutions": [
+"University of Cambridge",
+"The University of Tokyo"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2508.11284": {
+"citation_count": 2,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Face recognition and analysis"
+],
+"institutions": [
+"Nankai University",
+"Tencent (China)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2508.13530": {
+"citation_count": 2,
+"reference_count": 29,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2025": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Korea Advanced Institute of Science and Technology"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2508.14482": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"Technical University of Munich",
+"Imperial College London"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

@@ -307,5 +307,80 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2511.04659": {
+"citation_count": 6,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5,
+"2025": 1
+},
+"oa_topics": [
+"Meteorological Phenomena and Simulations",
+"Precipitation Measurement and Analysis"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2511.01064": {
+"citation_count": 6,
+"reference_count": 51,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Markov Chains and Monte Carlo Methods"
+],
+"institutions": [
+"University of British Columbia",
+"Flatiron Institute"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2511.08581": {
+"citation_count": 0,
+"reference_count": 40,
+"venue": "Lirias (KU Leuven)",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Logic, Reasoning, and Knowledge",
+"AI-based Problem Solving and Planning"
+],
+"institutions": [
+"KU Leuven",
+"University of Siena",
+"Örebro University",
+"Scuola Normale Superiore"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2511.18303": {
+"citation_count": 0,
+"reference_count": 68,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning in Materials Science",
+"Artificial Intelligence Applications"
+],
+"institutions": [
+"Argonne National Laboratory",
+"University of Chicago"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

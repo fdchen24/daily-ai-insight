@@ -185,5 +185,159 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2512.03627": {
+"citation_count": 60,
+"reference_count": 60,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 57,
+"2025": 3
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.18792": {
+"citation_count": 24,
+"reference_count": 124,
+"venue": "HAL",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 24
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Software Testing and Debugging Techniques"
+],
+"institutions": [
+"Institut polytechnique de Grenoble",
+"Centre National de la Recherche Scientifique",
+"Laboratoire d'Informatique de Grenoble",
+"Université Grenoble Alpes",
+"Icahn School of Medicine at Mount Sinai"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.05439": {
+"citation_count": 7,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 1
+},
+"oa_topics": [
+"Formal Methods in Verification",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.24271": {
+"citation_count": 6,
+"reference_count": 68,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Alibaba Group (China)",
+"Tsinghua University",
+"Beihang University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.22597": {
+"citation_count": 2,
+"reference_count": 68,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Computational Drug Discovery Methods",
+"Advanced Chemical Physics Studies"
+],
+"institutions": [
+"Shanghai Jiao Tong University",
+"Tsinghua Shenzhen International Graduate School",
+"Tsinghua University",
+"National University of Singapore"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.05134": {
+"citation_count": 1,
+"reference_count": 51,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Peking University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.12898": {
+"citation_count": 0,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"institutions": [
+"Samsung (South Korea)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2512.14925": {
+"citation_count": 0,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Sakarya Uygulamalı Bilimler Üniversitesi"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

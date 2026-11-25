@@ -115,5 +115,126 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2506.08359": {
+"citation_count": 4,
+"reference_count": 43,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 1.96,
+"citation_percentile": 0.887,
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"institutions": [
+"Hong Kong Polytechnic University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2506.05905": {
+"citation_count": 8,
+"reference_count": 61,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 2
+},
+"oa_topics": [
+"Markov Chains and Monte Carlo Methods",
+"Geometric Analysis and Curvature Flows"
+],
+"institutions": [
+"University of Turin",
+"Collegio Carlo Alberto",
+"UNSW Sydney"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2506.16853": {
+"citation_count": 4,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Korea Advanced Institute of Science and Technology"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2506.23524": {
+"citation_count": 4,
+"reference_count": 55,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 1
+},
+"oa_topics": [
+"Sentiment Analysis and Opinion Mining",
+"Topic Modeling"
+],
+"institutions": [
+"National Economics University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2506.04022": {
+"citation_count": 3,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Advanced Multi-Objective Optimization Algorithms"
+],
+"institutions": [
+"University of Edinburgh"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2506.10895": {
+"citation_count": 1,
+"reference_count": 60,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2025": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"Singapore University of Technology and Design"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

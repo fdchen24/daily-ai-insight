@@ -1186,5 +1186,439 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2608.00473": {
+"citation_count": 0,
+"reference_count": 14,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Tsinghua Shenzhen International Graduate School",
+"Tsinghua University",
+"University College London"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.07855": {
+"citation_count": 5,
+"reference_count": 61,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Xiamen University",
+"Tencent (China)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.03921": {
+"citation_count": 3,
+"reference_count": 38,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topic Modeling",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.05497": {
+"citation_count": 3,
+"reference_count": 0,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"institutions": [
+"Universität Innsbruck"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.04507": {
+"citation_count": 1,
+"reference_count": 42,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Evolutionary Game Theory and Cooperation",
+"Evolutionary Algorithms and Applications"
+],
+"institutions": [
+"RIKEN",
+"Tohoku University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.03699": {
+"citation_count": 1,
+"reference_count": 16,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Distributed systems and fault tolerance"
+],
+"institutions": [
+"Xiamen University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.13924": {
+"citation_count": 1,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"Beihang University",
+"Beijing Institute of Technology",
+"Chinese Academy of Sciences",
+"Institute of Automation",
+"Beijing University of Posts and Telecommunications"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.15075": {
+"citation_count": 1,
+"reference_count": 29,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Wuhan University",
+"Xidian University",
+"National Tsing Hua University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.17434": {
+"citation_count": 1,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.22849": {
+"citation_count": 1,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"RNA and protein synthesis mechanisms",
+"Machine Learning in Bioinformatics"
+],
+"institutions": [
+"Chinese Academy of Sciences",
+"Center for Excellence in Molecular Cell Science",
+"University of Chinese Academy of Sciences"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.25005": {
+"citation_count": 1,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"University of California, Los Angeles"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.29434": {
+"citation_count": 1,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Robot Manipulation and Learning"
+],
+"institutions": [
+"AIT Austrian Institute of Technology GmbH"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.00702": {
+"citation_count": 0,
+"reference_count": 32,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image Enhancement Techniques",
+"Advanced Image Processing Techniques"
+],
+"institutions": [
+"Anhui University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.02468": {
+"citation_count": 0,
+"reference_count": 28,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Remote-Sensing Image Classification",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"FPT University",
+"University of Liverpool",
+"Institut de Recherche en Informatique et Systèmes Aléatoires"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.08336": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Ariel University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.09287": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"University of Electronic Science and Technology of China"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.09907": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"University of Trento",
+"Fondazione Bruno Kessler",
+"University of Bergamo"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.11537": {
+"citation_count": 0,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"RWTH Aachen University",
+"Delft University of Technology",
+"Chang'an University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.13200": {
+"citation_count": 0,
+"reference_count": 53,
+"venue": "Enlighten: Publications (University of Glasgow)",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 0.0,
+"citation_percentile": 0.0,
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"institutions": [
+"University of Glasgow"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.17067": {
+"citation_count": 0,
+"reference_count": 27,
+"venue": "King Abdullah University of Science and Technology Repository (King Abdullah University of Science and Technology)",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"King Abdullah University of Science and Technology",
+"Qualcomm (United States)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.21924": {
+"citation_count": 0,
+"reference_count": 20,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Intellectual Property and Patents",
+"Law, AI, and Intellectual Property"
+],
+"institutions": [
+"University of Hyogo",
+"RIKEN",
+"RIKEN Center for Computational Science"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.24104": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Data Mining Algorithms and Applications"
+],
+"institutions": [
+"University of California, Irvine"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.26949": {
+"citation_count": 0,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"University of Edinburgh"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2608.30971": {
+"citation_count": 0,
+"reference_count": 12,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Cybernetics and Technology in Society",
+"Literary and Philosophical Studies"
+],
+"institutions": [
+"Commissariat à l'Énergie Atomique et aux Énergies Alternatives"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

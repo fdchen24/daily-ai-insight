@@ -514,5 +514,236 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2607.26643": {
+"citation_count": 8,
+"reference_count": 36,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"AI-based Problem Solving and Planning"
+],
+"institutions": [
+"Zhejiang University",
+"Alibaba Group (China)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.29401": {
+"citation_count": 6,
+"reference_count": 57,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"AI-based Problem Solving and Planning"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.01383": {
+"citation_count": 3,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Digital Media Forensic Detection"
+],
+"institutions": [
+"University of California, Los Angeles",
+"University of Southern California",
+"DeerLab LLC",
+"Carnegie Mellon University",
+"Clemson University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.04574": {
+"citation_count": 3,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"Stanford University",
+"New York University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.09039": {
+"citation_count": 3,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Protein Structure and Dynamics",
+"Computational Drug Discovery Methods"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.01200": {
+"citation_count": 2,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Robotic Path Planning Algorithms",
+"Formal Methods in Verification"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.26352": {
+"citation_count": 2,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Network Traffic and Congestion Control",
+"Software-Defined Networks and 5G"
+],
+"institutions": [
+"University of California, Santa Cruz",
+"University of California , Santa",
+"Indian Institute of Technology Delhi",
+"Northwestern University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.00185": {
+"citation_count": 1,
+"reference_count": 11,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Digital Humanities and Scholarship",
+"Image Processing and 3D Reconstruction"
+],
+"institutions": [
+"Peruvian University of Applied Sciences"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.10196": {
+"citation_count": 1,
+"reference_count": 15,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Spectroscopy Techniques in Biomedical and Chemical Research",
+"Spectroscopy and Chemometric Analyses"
+],
+"institutions": [
+"National Institute of Research and Development for Biological Sciences",
+"University of Turku",
+"University of Bucharest",
+"Romanian Academy"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.13682": {
+"citation_count": 1,
+"reference_count": 10,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Medical Imaging Techniques and Applications",
+"Advanced X-ray and CT Imaging"
+],
+"institutions": [
+"Central South University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.27073": {
+"citation_count": 1,
+"reference_count": 16,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Optimization and Search Problems"
+],
+"institutions": [
+"Purdue University West Lafayette"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2607.21281": {
+"citation_count": 0,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Automated Road and Building Extraction"
+],
+"institutions": [
+"Zhejiang University of Science and Technology"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

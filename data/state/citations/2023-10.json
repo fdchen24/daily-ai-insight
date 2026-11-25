@@ -1,0 +1,47 @@
+{
+"2310.14168": {
+"citation_count": 10,
+"reference_count": 11,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5,
+"2025": 2
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Advanced Optimization Algorithms Research"
+],
+"institutions": [
+"Pohang University of Science and Technology",
+"Brown University",
+"North Carolina State University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2310.16189": {
+"citation_count": 3,
+"reference_count": 47,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2025": 3
+},
+"oa_topics": [
+"Robotic Mechanisms and Dynamics",
+"Robot Manipulation and Learning"
+],
+"institutions": [
+"University of Waterloo",
+"University of Naples Federico II",
+"Princeton University",
+"Aquatic Labs , Cambridge , MA 02139 , USA",
+"University of Modena and Reggio Emilia"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+}
+}

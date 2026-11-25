@@ -493,18 +493,18 @@
   },
   "2026-11-25": {
     "arxiv_announce_date": "2026-11-25",
-    "generated_at": "2026-11-25T01:18:10.316382+00:00",
-    "stage": "daily",
+    "generated_at": "2026-11-25T20:05:29.302682+00:00",
+    "stage": "collect",
     "collect_status": "ok",
     "sources": {
       "arxiv": {
         "ok": true,
-        "count": 3028,
+        "count": 4210,
         "stats": {
-          "fetched": 4375,
+          "fetched": 5932,
           "deleted": 0,
-          "kept": 3028,
-          "requests": 8,
+          "kept": 4210,
+          "requests": 9,
           "days": [
             "2026-11-25",
             "2026-11-24",
@@ -512,54 +512,56 @@
           ],
           "skipped_weekends": [],
           "by_day": {
-            "2026-11-25": 0,
-            "2026-11-24": 2148,
-            "2026-11-23": 880
+            "2026-11-25": 1262,
+            "2026-11-24": 2082,
+            "2026-11-23": 866
           },
           "by_set": {
-            "cs": 3011,
-            "stat": 17
+            "cs": 4194,
+            "stat": 16
           },
-          "empty_days": [
-            "2026-11-25"
-          ]
+          "empty_days": []
         }
       },
       "huggingface": {
-        "ok": false,
-        "count": 0,
+        "ok": true,
+        "count": 126,
         "stats": {
-          "by_date": {},
-          "host": null,
-          "requests": 2
-        },
-        "error": "所有 HF host 均不可达: https://huggingface.co HTTP 400; https://hf-mirror.com HTTP 400"
+          "by_date": {
+            "2026-11-25": 50,
+            "2026-11-24": 50,
+            "2026-11-23": 26,
+            "2026-11-22": 0
+          },
+          "host": "https://huggingface.co",
+          "requests": 5
+        }
       },
       "github": {
         "ok": true,
-        "count": 1000,
+        "count": 1003,
         "stats": {
-          "trending": 27,
-          "baseline": 2556,
+          "trending": 28,
+          "baseline": 2572,
           "authenticated": true,
-          "requests": 71,
+          "requests": 72,
           "detail_failures": 0,
-          "kept": 1000
+          "kept": 1003
         }
       },
       "openalex": {
         "ok": true,
-        "count": 1504,
+        "count": 3156,
         "stats": {
-          "requested": 3028,
-          "from_cache": 944,
-          "queried": 2084,
-          "requests": 42,
-          "resolved": 560,
-          "unindexed": 1524,
+          "requested": 4236,
+          "from_cache": 1519,
+          "queried": 2717,
+          "requests": 55,
+          "resolved": 1637,
+          "unindexed": 1080,
           "failed_batches": 0,
-          "batches": 42,
-          "hit_rate": 0.269
+          "batches": 55,
+          "hit_rate": 0.603
         }
       },
       "semanticscholar": {
@@ -571,33 +573,33 @@
       }
     },
     "normalize": {
-      "arxiv": 3028,
-      "hf_merged": 0,
-      "hf_new": 0,
+      "arxiv": 4210,
+      "hf_merged": 100,
+      "hf_new": 26,
       "repo_merged": 1,
-      "repo_standalone": 999,
-      "citations_attached": 1504,
+      "repo_standalone": 1002,
+      "citations_attached": 3155,
       "channels": {
-        "revision": 779,
-        "stale": 1296,
-        "catchup": 35,
-        "primary": 1917
+        "revision": 1076,
+        "stale": 1435,
+        "catchup": 60,
+        "primary": 2667
       },
       "topic_sources": {
-        "rule": 2991,
-        "pending_llm": 1036
+        "rule": 3907,
+        "pending_llm": 1331
       },
-      "total": 4027
+      "total": 5238
     },
     "dedup": {
-      "input": 4027,
+      "input": 5238,
       "by_doi": 0,
-      "by_title": 0,
+      "by_title": 1,
       "by_project": 1,
-      "output": 4026,
+      "output": 5236,
       "review_pairs": 2
     },
-    "duration_seconds": 282.6,
+    "duration_seconds": 314.1,
     "llm": {
       "deepseek-flash": {
         "calls": 22,

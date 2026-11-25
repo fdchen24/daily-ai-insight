@@ -596,5 +596,189 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2604.10500": {
+"citation_count": 4,
+"reference_count": 64,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Beijing Institute of Technology",
+"Alibaba Group (China)",
+"City University of Hong Kong",
+"Chinese Academy of Sciences",
+"Institute of Automation"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.07338": {
+"citation_count": 1,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"University of Manchester",
+"Wuhan University",
+"Getty Conservation Institute"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.16678": {
+"citation_count": 2,
+"reference_count": 58,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 1.29,
+"citation_percentile": 0.86,
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.23321": {
+"citation_count": 18,
+"reference_count": 42,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 18
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Eastern Institute of Technology, Ningbo",
+"Shanghai Jiao Tong University",
+"University of Waterloo",
+"National University of Singapore",
+"University of California, Santa Barbara"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.13991": {
+"citation_count": 3,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"institutions": [
+"Mohamed bin Zayed University of Artificial Intelligence"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.25855": {
+"citation_count": 3,
+"reference_count": 41,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Technische Universität Darmstadt",
+"Hessian Center for Artificial Intelligence"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.14048": {
+"citation_count": 1,
+"reference_count": 12,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Vision and Imaging",
+"3D Shape Modeling and Analysis"
+],
+"institutions": [
+"Hong Kong Polytechnic University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.17110": {
+"citation_count": 1,
+"reference_count": 49,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"COVID-19 diagnosis using AI"
+],
+"institutions": [
+"Universitätsklinikum Aachen"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2604.26578": {
+"citation_count": 1,
+"reference_count": 9,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Software Engineering Research",
+"Logic, programming, and type systems"
+],
+"institutions": [
+"National University of Ireland, Maynooth"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

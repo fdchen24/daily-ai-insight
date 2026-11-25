@@ -1,0 +1,24 @@
+{
+"2303.05978": {
+"citation_count": 8,
+"reference_count": 68,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Geometric Analysis and Curvature Flows",
+"Topological and Geometric Data Analysis"
+],
+"institutions": [
+"Nebius AI † Amsterdam , Netherlands",
+"Applied AI Institute * Moscow , Russia",
+"Applied AI Institute ‡ Moscow , Russia"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+}
+}

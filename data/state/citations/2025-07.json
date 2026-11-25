@@ -33,5 +33,54 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2507.15658": {
+"citation_count": 3,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Optimization and Search Problems",
+"Complexity and Algorithms in Graphs"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2507.16624": {
+"citation_count": 8,
+"reference_count": 77,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7,
+"2025": 1
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Visual Attention and Saliency Detection"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2507.19423": {
+"citation_count": 0,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Complex Network Analysis Techniques",
+"Statistical Methods and Inference"
+],
+"institutions": [
+"University of Central Florida"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

@@ -755,5 +755,271 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2602.04952": {
+"citation_count": 13,
+"reference_count": 87,
+"venue": "Conference on Learning Theory",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 36.81,
+"citation_percentile": 0.997,
+"citations_by_year": {
+"2026": 13
+},
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Quantum Information and Cryptography"
+],
+"institutions": [
+"California Institute of Technology",
+"Harvard University",
+"University of Waterloo",
+"Perimeter Institute"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.04770": {
+"citation_count": 178,
+"reference_count": 66,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 176,
+"2025": 2
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Adversarial Robustness in Machine Learning"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.23648": {
+"citation_count": 31,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 30,
+"2025": 1
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.01664": {
+"citation_count": 19,
+"reference_count": 42,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 19
+},
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Scientific Computing and Data Management"
+],
+"institutions": [
+"Chinese University of Hong Kong, Shenzhen",
+"National University of Singapore",
+"Nanyang Technological University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.12579": {
+"citation_count": 13,
+"reference_count": 36,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 12,
+"2025": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Topic Modeling"
+],
+"institutions": [
+"RIKEN",
+"RIKEN Center for Advanced Intelligence Project",
+"The University of Tokyo"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.04361": {
+"citation_count": 8,
+"reference_count": 62,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Beijing Academy of Artificial Intelligence",
+"Chinese Academy of Sciences",
+"Nanjing University of Science and Technology",
+"Institute of Automation",
+"University of Chinese Academy of Sciences"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.09850": {
+"citation_count": 8,
+"reference_count": 59,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 8
+},
+"oa_topics": [
+"Industrial Vision Systems and Defect Detection",
+"Anomaly Detection Techniques and Applications"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.16977": {
+"citation_count": 5,
+"reference_count": 52,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.14913": {
+"citation_count": 3,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Purdue University West Lafayette"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.14701": {
+"citation_count": 2,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Stochastic Gradient Optimization Techniques",
+"Neural Networks and Applications"
+],
+"institutions": [
+"Département d'Informatique",
+"Institut national de recherche en sciences et technologies du numérique",
+"Centre de Mathématiques Appliquées de l'École polytechnique",
+"MLIA"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.01951": {
+"citation_count": 1,
+"reference_count": 41,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"AI in cancer detection",
+"Radiomics and Machine Learning in Medical Imaging"
+],
+"institutions": [
+"University of Edinburgh",
+"University of St Andrews"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.08524": {
+"citation_count": 1,
+"reference_count": 61,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Handwritten Text Recognition Techniques"
+],
+"institutions": [
+"Huazhong University of Science and Technology",
+"Xiaomi (China)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.11776": {
+"citation_count": 0,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Imbalanced Data Classification Techniques",
+"Cloud Computing and Resource Management"
+],
+"institutions": [
+"Feedzai Portugal"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2602.17415": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Teleoperation and Haptic Systems"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

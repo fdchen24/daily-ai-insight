@@ -1,0 +1,25 @@
+{
+"2410.15539": {
+"citation_count": 7,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 4
+},
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"institutions": [
+"PAAIR Institute",
+"Ashesi University",
+"Rochester Institute of Technology",
+"George Mason University"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+}
+}

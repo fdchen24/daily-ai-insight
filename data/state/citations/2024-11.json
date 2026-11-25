@@ -76,5 +76,61 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2411.02594": {
+"citation_count": 8,
+"reference_count": 88,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 5
+},
+"oa_topics": [
+"Artificial Intelligence in Healthcare and Education",
+"Ethics and Social Impacts of AI"
+],
+"institutions": [
+"Georgia Institute of Technology",
+"Purdue University West Lafayette"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2411.14062": {
+"citation_count": 6,
+"reference_count": 64,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
+},
+"2411.11254": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"Chinese Academy of Sciences",
+"Institute of Computing Technology",
+"University of Chinese Academy of Sciences"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }

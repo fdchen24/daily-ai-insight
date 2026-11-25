@@ -121,5 +121,27 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2505.23667": {
+"citation_count": 9,
+"reference_count": 59,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Topic Modeling",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"University of Illinois Urbana-Champaign",
+"Nankai University",
+"Tsinghua University",
+"Microsoft (United States)"
+],
+"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"v": 2
 }
 }
