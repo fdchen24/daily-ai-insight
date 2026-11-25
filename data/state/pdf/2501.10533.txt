@@ -1,0 +1,5162 @@
+A Unified Comparative Study with Generalized Conformity Scores for
+Multi-Output Conformal Regression
+Victor Dheur 1 Matteo Fontana 2 Yorick Estievenart 1 Naomi Desobry 1 Souhaib Ben Taieb 1 3
+Abstract
+Conformal prediction provides a powerful frame-
+work for constructing distribution-free prediction
+regions with finite-sample coverage guarantees.
+While extensively studied in univariate settings,
+its extension to multi-output problems presents
+additional challenges, including complex output
+dependencies and high computational costs, and
+remains relatively underexplored. In this work,
+we present a unified comparative study of nine
+conformal methods with different multivariate
+base models for constructing multivariate predic-
+tion regions within the same framework. This
+study highlights their key properties while also ex-
+ploring the connections between them. Addition-
+ally, we introduce two novel classes of conformity
+scores for multi-output regression that generalize
+their univariate counterparts. These scores ensure
+asymptotic conditional coverage while maintain-
+ing exact finite-sample marginal coverage. One
+class is compatible with any generative model, of-
+fering broad applicability, while the other is com-
+putationally efficient, leveraging the properties of
+invertible generative models. Finally, we conduct
+a comprehensive empirical evaluation across 13
+tabular datasets, comparing all the multi-output
+conformal methods explored in this work. To en-
+sure a fair and consistent comparison, all methods
+are implemented within a unified code base1.
+1. Introduction
+Quantifying uncertainty in model predictions is crucial in
+many real-world applications, often involving prediction
+problems with multiple output variables and complex statis-
+1Department of Computer Science, University of Mons, Mons,
+Belgium 2Department of Computer Science, Royal Holloway, Uni-
+versity of London, Egham, United Kingdom 3Department of Statis-
+tics and Data Science, Mohamed bin Zayed University of Artificial
+Intelligence, Abu Dhabi, United Arab Emirates. Correspondence
+to: Victor Dheur <victor.dheur@umons.ac.be>.
+1https://github.com/Vekteur/
+multi-output-conformal-regression
+2
+0
+2
+Y1
+3
+2
+1
+0
+1
+2
+3
+Y2
+PCP
+C-PCP
+DR-CP
+C-HDR
+M-CP
+L-CP
+Figure 1: Examples of bivariate prediction regions with an
+80% coverage level for a toy example.
+tical dependencies. For example, in medical diagnostics, the
+progression of a disease can be studied by analysing mul-
+tiple health indicators that exhibit nonlinear dependencies,
+such as blood pressure and cholesterol levels of a patient
+(Rajkomar et al., 2018). Although modern probabilistic AI
+models can model complex relationships between variables,
+they may produce unreliable or overly confident predictions
+(Nalisnick et al., 2018).
+Conformal prediction (CP) offers a robust framework for
+improving model reliability by generating distribution-free
+prediction regions with a finite-sample coverage guaran-
+tee (Vovk et al., 1999). Although substantial research has
+focused on univariate prediction problems (Romano et al.,
+2019; Sesia and Romano, 2021; Rossellini et al., 2024),
+multivariate settings have received less attention. Among
+existing work, Zhou et al. (2024) achieves marginal cover-
+age by combining univariate prediction regions, but fails to
+capture dependencies between variables. Other methods,
+such as density-based approaches (Izbicki et al., 2022) or
+sample-based techniques (Wang et al., 2023b; Plassier et al.,
+2025), suffer from high computational costs. An alterna-
+tive method (Sadinle et al., 2019) optimises the size of the
+region, but does not achieve asymptotic conditional cover-
+age. For a toy bivariate example, Figure 1 illustrates the
+diversity of prediction regions obtained using a selection of
+conformal methods considered in this paper.
+1
+arXiv:2501.10533v3  [stat.ML]  22 Nov 2026
+Multi-Output Conformal Regression
+Our first contribution is a unified comparative study of nine
+conformal methods with different multivariate base models
+for constructing multivariate prediction regions within the
+same framework. This study highlights their key properties
+while also exploring the connections between them. We ex-
+amine different conformity scores with different multivariate
+base predictors, discussing prediction regions derived from
+the marginal distributions of individual output variables,
+their joint PDF, or sampling procedures (e.g., generative
+models).
+Our second contribution introduces two novel classes of
+conformity scores for multi-output regression that gener-
+alize their univariate counterparts. These scores ensure
+asymptotic conditional coverage while maintaining exact
+finite-sample marginal coverage.
+The first, CDF-based scores, leverage the cumulative distri-
+bution function (CDF) of any conformity score to achieve
+asymptotic conditional coverage. This approach general-
+izes the univariate HPD-split score, based on univariate
+highest-density region from Izbicki et al., 2020, to multivari-
+ate prediction regions derived from any conformity score.
+Additionally, we propose a specific instance of CDF-based
+scores that builds on PCP from Wang et al., 2023b. This
+method avoids the estimation of a predictive density, instead
+relying solely on samples from any generative model.
+The second, latent-based scores is inspired by Feldman et
+al., 2023 and can be interpreted as an extension of distri-
+butional conformal prediction (Chernozhukov et al., 2021)
+to multivariate outputs. Compared to Feldman et al., 2023,
+it does not require directional quantile regression, and the
+conformalization is performed directly in the latent space,
+eliminating the need to construct a grid. This enhances both
+computational efficiency and scalability.
+Finally, as our third contribution, we conduct a large-scale
+empirical study comparing the different multi-output con-
+formal methods across 13 tabular datasets with multivariate
+outputs, evaluating several performance metrics. We con-
+sider a variety of multivariate regression models, namely
+Multivariate Quantile Function Forecaster (Kan et al., 2022),
+Distributional Random Forests (Cevid et al., 2022), and a
+multivariate Gaussian Mixture Model parameterized by a
+hypernetwork (Ha et al., 2022; Bishop, 1994).
+2. Background
+Consider a multivariate regression problem where the objec-
+tive is to predict a d-dimensional response vector y ∈Y =
+Rd based on a feature vector x ∈X ⊆Rp. We assume
+there exists a true joint distribution FXY over X × Y, and
+we have access to a dataset D = {(X(j), Y (j))}n
+j=1 where
+(X(j), Y (j))
+i.i.d.
+∼FXY . Given a feature vector x, we denote
+the conditional distribution of Y given X = x as FY |X=x,
+and the associated probability density function (PDF) as
+fY |X=x.
+Using the dataset D, for any x ∈X, CP allows us to trans-
+form base predictors, denoted ˆh, into calibrated, distribution-
+free prediction regions ˆR(x) ⊆Y for the true output y with
+finite-sample coverage guarantees.
+2.1. Split-conformal prediction
+Split-conformal prediction (SCP, Papadopoulos et al., 2002)
+is a computationally efficient variant of conformal predic-
+tion that divides the dataset D into two disjoint subsets: a
+training set Dtrain and a calibration set Dcal. A model is
+first trained on Dtrain to obtain a base predictor ˆh. Based
+on ˆh, a conformity score (function) s : X × Y →R is
+defined, where lower scores indicate a better fit between the
+feature vector x and the response y. The calibration scores
+S = {s(x, y)}(x,y)∈Dcal ∪{+∞} are then computed, from
+which the (1 −α) empirical quantile is calculated as:
+ˆq = Quantile
+
+S;
+kα
+|Dcal| + 1
+
+,
+(1)
+where kα = ⌈(|Dcal| + 1)(1 −α)⌉. This quantile serves as
+the threshold for constructing prediction regions. For an
+input x, the (random) prediction region is given by:
+ˆR(x) = {y ∈Y : s(x, y) ≤ˆq}.
+(2)
+If the random pair (X, Y ) is exchangeable with Dcal, SCP
+guarantees marginal coverage:
+PX,Y,Dcal(Y ∈ˆR(X)) = P(s(X, Y ) ≤ˆq) ≥1 −α,
+(3)
+where the probability is taken over (X, Y ) and Dcal. As-
+suming no ties in scores, the marginal coverage is exactly
+kα
+|Dcal|+1, yielding P(Y ∈ˆR(X)) ≤1 −α +
+1
+|Dcal|+1.
+Ideally, the prediction region should achieve conditional
+coverage at the level 1 −α, i.e.:
+P(Y ∈ˆR(X) | X) ≥1 −α.
+(4)
+holds almost surely. This is a stronger requirement than
+marginal coverage in (3). However, as Barber et al. (2021)
+demonstrate, achieving conditional coverage is generally
+impossible without making additional assumptions about
+the underlying data-generating process.
+2.2. Multi-output conformal methods
+Many conformal prediction methods have been proposed in
+the literature and implemented within the SCP framework
+for various base predictors and conformity scores, with a
+specific focus on univariate prediction problems. In this sec-
+tion, we survey several conformal methods for constructing
+2
+Multi-Output Conformal Regression
+multivariate prediction regions, using different multivari-
+ate base predictors and corresponding conformity scores.
+Specifically, we discuss density-based, and sample-based
+methods, which are based on their joint PDF, or a sampling
+procedure (e.g., a generative model), respectively. In the
+following, we describe the conformity scores s for differ-
+ent methods. The methods M-CP and CopulaCPTS, which
+produce hyperrectangular regions, are detailed in Section B.
+Once a conformity score is defined, the corresponding pre-
+diction region ˆR can be computed using (2). We detail this
+relationship for each method in Section C. Furthermore, in
+Section 5, we analyze the properties and relationships be-
+tween these methods and provide illustrative examples of
+the resulting prediction regions.
+DR-CP.
+Given a predictive density ˆfY |X=x, a natural con-
+formity score is the negative density:
+sDR-CP(x, y) = −ˆf(y | x).
+(5)
+The corresponding prediction region is a density superlevel
+set, ˆRDR-CP(x) = {y ∈Y : ˆf(y | x) ≥−ˆq}. Sadinle
+et al. (2019) use this conformity score in the context of
+classification.
+C-HDR.
+Izbicki et al., 2022 proposed the HPD-split
+method, which defines a conformity score based on the
+Highest Predictive Density (HPD):
+HPD ˆ
+f(y | x) =
+Z
+{y′| ˆ
+f(y′|x)≥ˆ
+f(y|x)}
+ˆf(y′ | x) dy′
+(6)
+= P
+
+ˆf( ˆY | x) ≥ˆf(y | x) | X = x
+
+, (7)
+where ˆY ∼ˆfY |X=x. The corresponding prediction region
+is a highest density region (HDR, Hyndman, 1996) with
+respect to ˆf at level ˆq:
+ˆRC-HDR(x) = {y ∈Y : ˆf(y | x) ≥tˆq},
+(8)
+where tˆq = sup{t : P( ˆf( ˆY | x) ≥t | X = x) ≥ˆq}.
+Compared to DR-CP, where the threshold −ˆq is independent
+of x, C-HDR allows the threshold tˆq to vary with x. To
+compute the HPD in (6), Izbicki et al., 2022 use numerical
+integration, whereas in our experiments, we approximate
+(7) using Monte Carlo sampling, as described in (13).
+In the context of classification, Adaptive Prediction Sets
+(Romano et al., 2020) follows a similar principle by con-
+structing a “highest mass region”, which corresponds to a
+superlevel set of the probability mass function with proba-
+bility content at least ˆq.
+PCP.
+Let ˜Y (1), ˜Y (2), . . . , ˜Y (L) denote a sample with L
+points from the (estimated) conditional distribution ˆFY |X=x.
+Probabilistic Conformal Prediction (PCP, Wang et al.,
+2023b) defines a conformity score as the closest distance to
+y:
+sPCP(x, y) = min
+l∈[L]∥y −˜Y (l)∥2,
+(9)
+where ˜Y (l) ∼ˆFY |X=x,
+l ∈[L].
+(10)
+The corresponding region is a union of L balls centered at
+each sampled point ˜Y (l), i.e. ˆRPCP(x) = S
+l∈[L]{y ∈Y :
+∥y −˜Y (l)∥2 ≤ˆq}.
+HD-PCP.
+When a predictive density is available alongside
+a sample of L points, Wang et al., 2023b proposed an ex-
+tension to PCP, called HD-PCP. This method uses the same
+conformity score as in (9), but only retains the ⌊(1 −α)L⌋
+samples with the highest density, ensuring that the predic-
+tion region is concentrated on high-density points.
+ST-DQR.
+Motivated by the limitation that existing mul-
+tivariate quantile regression methods do not allow the con-
+struction of regions with arbitrary shapes, Feldman et al.,
+2023 proposed to construct convex regions in a latent space
+Z using directional quantile regression (Paindaveine and
+Šiman, 2011). These regions are then mapped to the out-
+put space Y using a conditional variational autoencoder
+(CVAE), allowing a non-linear mapping between the two
+spaces. Specifically, they apply a conformalization step by
+creating a grid of points within the region in Z, map the
+points to the output space Y, and construct d-balls around
+the mapped samples, similarly to PCP.
+3. Generalized Conformity Scores for
+Multi-Output Regression
+In this section, we introduce two new classes of confor-
+mity scores: CDF-based and latent-based scores. These
+scores generalize existing conformity scores for univariate
+regression to accommodate any conformity score for multi-
+variate outputs. The former generalizes HPD-split (Izbicki
+et al., 2020) to any conformity score, allowing to apply
+this method to multivariate outputs. We further propose a
+specific instance that builds on PCP (Wang et al., 2023b).
+The latter is inspired by Feldman et al., 2023 and can be
+interpreted as an extension of distributional conformal pre-
+diction (Chernozhukov et al., 2021) for multivariate outputs.
+Section 5 will present a comparative study of the conformity
+scores introduced in Section 2.2 alongside those introduced
+in this section.
+3.1. CDF-based conformity scores
+Consider a conformity score sW , and define the random
+variable W = sW (X, Y ) for a random pair (X, Y ). For
+an observation (x, y), we introduce a new conformity score
+3
+Multi-Output Conformal Regression
+based on the conditional CDF of W given X = x, evaluated
+at sW (x, y). Specifically, the score is given by
+sCDF(x, y) = P(sW (X, Y ) ≤sW (x, y) | X = x)
+(11)
+= FW |X=x(sW (x, y)).
+(12)
+This new conformity score measures the rank of sW (x, y)
+relative to the conditional distribution of W given X = x.
+This method applies to any conformity score sW and gen-
+eralizes the (oracle) HPD-split introduced in Izbicki et al.,
+2020 in the context of univariate regression. Specifically,
+when sW (x, y) = sDR-CP(x, y) is used in (12), we recover
+the C-HDR method. Additionally, by the probability integral
+transform, sCDF(X, Y ) | X = x ∼U(0, 1) for x ∈X,
+meaning that the conformity score’s distribution is indepen-
+dent of x. This property ensures that conditional coverage
+is achieved as |Dcal| →∞(see Section E.2, Lemma 2). A
+similar observation was made by Izbicki et al., 2020 for
+C-HDR.
+However, in practice, since the distribution of Y | X =
+x is unknown, we approximate sCDF using Monte Carlo
+sampling:
+sECDF(x, y) = 1
+K
+X
+k∈[K]
+I
+
+sW (x, ˆY (k)) ≤sW (x, y)
+
+,
+where ˆY (k) ∼ˆFY |X=x, k ∈[K].
+(13)
+Dheur et al., 2024 considered a particular case of this empir-
+ical CDF-based approach with the sDR-CP score for a bivari-
+ate prediction problem involving temporal point processes,
+where the HDR is estimated via Monte Carlo sampling.
+C-PCP.
+We introduce a special case of our new score,
+called C-PCP (CDF-based Probabilistic Conformal Predic-
+tion), by setting sW (x, y) = sPCP(x, y) in (13), which
+gives:
+sC-PCP(x, y) =
+1
+K
+X
+k∈[K]
+I
+
+min
+l∈[L] ∥ˆY (k) −˜Y (l)∥≤min
+l∈[L] ∥y −˜Y (l)∥
+
+.
+Compared to the methods in Izbicki et al., 2020 and Dheur
+et al., 2024, this score has the advantage of not requiring
+the estimation of a predictive density, relying instead on
+samples from the conditional distribution. Consequently,
+this score can be applied with any generative model that
+does not have an explicit density, while still retaining the
+desirable properties of our CDF-based score.
+Interestingly, C-PCP shares similarities with the recently
+proposed CP2-PCP method by Plassier et al., 2025. For a
+given x ∈X, both methods adapt the radius of the balls
+based on a second sample from the conditional distribution
+composed of K points, requiring a total of L + K samples.
+A detailed discussion can be found in Section I.
+3.2. Latent-based conformity scores
+Inspired by Feldman et al. (2023), we propose a latent-based
+conformity score with key distinctions. First, our method
+does not require the use of directional quantile regression.
+Additionally, the conformalization step is performed in the
+latent space, eliminating the need to construct a grid, which
+improves both computational efficiency and scalability.
+Our base predictor is a conditional invertible generative
+model ˆQ : Z × X →Y, which maps a latent random
+variable Z ∈Z (e.g., drawn from a standard multivariate
+normal distribution) to the output space Y, conditional on
+X ∈X (e.g., using normalizing flows). The model is both
+conditional and invertible, meaning that
+ˆQ( ˆQ−1(y; x); x) = y, ∀x ∈X, y ∈Y.
+We propose the following conformity score, called L-CP
+(Latent-based Conformal Prediction), defined as:
+sL-CP(x, y) = dZ( ˆQ−1(y; x)),
+(14)
+where dZ : Z →R is a conformity function in the latent
+space Z, independent of x. In our experiments, we use
+Z ∼N(0, Id) and dZ(z) = ∥z∥.
+The corresponding prediction region is obtained by mapping
+a region in the latent space, RZ(ˆq) = {z ∈Z : dZ(z) ≤ˆq},
+to a region in the output space, ˆRL-CP(x) = { ˆQ(z; x) : z ∈
+RZ(ˆq)}.
+L-CP generalizes Distributional Conformal Prediction
+(Chernozhukov et al., 2021), which is a special case when
+Y is univariate (d = 1), Z ∼U(0, 1), dZ(z) = |z −1
+2|, and
+ˆQ(·; x) is the quantile function of Y given x.
+Concurrent work by Fang et al., 2025 introduces CONTRA
+, sharing the same algorithm as our latent-based methods.
+While related, the papers diverge in their primary focus.
+Fang et al., 2025 emphasizes the smaller prediction regions
+achieved by CONTRA, whereas our work concentrates on
+the computational complexity and conditional coverage
+guarantees of the latent-based methods while obtaining re-
+gion sizes that are small but not smaller than density-based
+methods.
+4. Related Work
+Conformal Prediction (CP), introduced by Vovk et al., 1999,
+forms the foundation of our work by providing prediction
+regions with finite-sample coverage guarantees. CP meth-
+ods are well established for regression with univariate out-
+puts (Papadopoulos et al., 2008; Lei and Wasserman, 2014;
+Romano et al., 2019; Sesia and Romano, 2021) and classi-
+fication (Romano et al., 2020; Angelopoulos et al., 2020).
+In the multi-output regression setting, we need to capture
+4
+Multi-Output Conformal Regression
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+Oracle
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+M-CP
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+CopulaCPTS
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+DR-CP
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+C-HDR
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+PCP
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+HD-PCP
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+STDQR
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+C-PCP
+1 0
+1
+X
+2
+0
+2
+Y1
+2
+0
+2
+Y2
+L-CP
+ 
+Figure 2: Prediction regions for a bivariate unimodal dataset, conditional on a unidimensional input. The black, green, and
+yellow contours represent regions with nominal coverage levels of 20%, 40%, and 80%, respectively.
+dependencies between output dimensions, represent more
+complex prediction regions and handle a larger computa-
+tional demand.
+To address multivariate prediction challenges, optimal trans-
+port methods such as cyclically monotone mappings (Car-
+lier et al., 2016) define multivariate quantile regions with
+desirable properties such as existence and uniqueness of
+mappings. Hallin and Šiman (2017), Hallin et al. (2021),
+and Barrio et al. (2024) have proposed extensions of these
+approaches. Neural network-based techniques leverage nor-
+malizing flows (Kan et al., 2022; Huang et al., 2020) or
+variational autoencoders (Feldman et al., 2023) to learn
+flexible quantile regions.
+Additionally, highest density
+regions (HDRs) (Hyndman, 1996) handle multimodality
+and have been applied in various contexts (Camehl et al.,
+2024; Izbicki et al., 2022; Dheur et al., 2024). Recently,
+Wang et al., 2023b proposed constructing prediction regions
+as hyperballs centered on generated samples, with exten-
+sions by Plassier et al., 2025 improving conditional validity.
+Other methods use copulas (Messoudi et al., 2021a; Sun
+and Yu, 2024b) to model the dependency between vari-
+ables.Section A provides a more detailed discussion on
+related work.
+5. Comparison of Multi-Output Conformal
+Methods
+In this section, we present a unified comparison of the con-
+formity scores introduced in Section 2.2 and the generalized
+scores proposed in Section 3.1.
+5.1. Illustrative examples
+We provide illustrative examples of bivariate prediction re-
+gions for different conformal methods on simulated data,
+covering both unimodal (Figure 2) and bimodal distributions
+(Figure 10 in Section D.2). The data-generating processes
+are given in Section D.2. Additionally, we present bivariate
+prediction regions for a real-world application, predicting a
+taxi passenger’s drop-off location based on the passenger’s
+information (Figures 8 and 9 in Section D.1).
+In both Figures 2 and 10, the black, green, and yellow con-
+tours represent prediction regions with nominal coverage
+levels of 20%, 40%, and 80%, respectively. The top-left
+panel illustrates the density level sets of the oracle distri-
+bution FY |X. The remaining panels display the prediction
+regions generated by various conformal methods, all utiliz-
+ing the MQF2 base predictor, as explained in Section F.2.
+We observe the following for the unimodal case in Figure 2.
+M-CP and CopulaCPTS capture heteroscedasticity but pro-
+duce rectangular prediction regions, which do not align with
+the circular level sets of the oracle conditional distribution,
+resulting in a lack of sharpness. DR-CP fails to maintain
+conditional coverage, and for X = 1, the absence of black
+and green contours indicates that the predictive density does
+not reach the threshold −ˆq defined in (5) for coverage levels
+of 0.2 and 0.4. C-HDR generates prediction regions that
+closely resemble the oracle level sets. PCP generates highly
+discontinuous regions, especially at lower coverage levels,
+where the regions appear as balls centered on individual
+samples. In contrast, HD-PCP and STDQR yield smoother,
+more continuous regions but require the estimation of a pre-
+dictive PDF or the identification of a map from the latent
+space to the output space, respectively.
+For our methods, unlike PCP, C-PCP adjusts the radius of the
+prediction regions to improve conditional coverage. This
+is evident in the example, where the radius of the balls
+for X = −1 is smaller than for X = 1, as indicated by
+the tighter regions around the samples. L-CP generates
+5
+Multi-Output Conformal Regression
+Table 1: Properties of different multivariate conformal methods. (*) M-CP achieves ACC under certain assumptions
+(Section E.2.3). (**) STDQR and L-CP require a conditional invertible generative model ˆQ : Z × X →Y. (†) CopulaCPTS
+has a pre-training cost of O(C).
+Method
+Type of region
+Asymptotic
+conditional
+coverage
+Computational
+complexity
+Predictive
+density
+not required
+Sampling
+procedure
+not required
+M-CP
+Hyperrectangle
+✗(*)
+O(dM)
+✓
+✓
+CopulaCPTS
+Hyperrectangle
+✗
+O(dM)†
+✓
+✓
+DR-CP
+Density superlevel set
+✗
+O(D)
+✗
+✓
+C-HDR
+Density superlevel set
+K →∞
+O(K(D + S))
+✗
+✗
+PCP
+Union of d-balls
+✗
+O(LS)
+✓
+✗
+HD-PCP
+Union of d-balls
+✗
+O(L(D + S))
+✗
+✗
+STDQR
+Union of d-balls
+✗
+O(LS)
+✓(**)
+✗
+C-PCP
+Union of d-balls
+K →∞
+O((K + L)S)
+✓
+✗
+L-CP
+Quantile region
+✓
+O(Q)
+✓(**)
+✗
+prediction regions that closely align with the oracle level
+sets, demonstrating good conditional coverage.
+For the bimodal distribution in Figure 10 (Section D.2),
+the prediction regions generated by M-CP and L-CP are
+connected, failing to capture the bimodal nature of the dis-
+tribution. For the real-world application, Figures 8 and 9
+(Section D.1) illustrate predictions under low and high uncer-
+tainty, respectively. Our methods, L-CP and C-PCP, along-
+side M-CP and C-HDR, demonstrate the best adaptability to
+outputs with varying levels of uncertainty.
+5.2. Properties
+In this section, we compare conformal methods based on
+several key properties. In the following, we use
+d.= to denote
+equality in distribution and
+a.s.
+= to denote almost sure equality.
+Marginal coverage. All the conformal methods presented
+achieve the classical finite-sample marginal coverage. But,
+as noted by Wang et al., 2023b (Theorem 1), the marginal
+coverage of methods such as C-HDR, PCP, HD-PCP, and
+C-PCP also depends on the randomness of the generated
+samples. In Section E.1, we demonstrate that the marginal
+coverage, conditional on the calibration dataset Dcal and the
+samples drawn from it, follows a beta distribution, using
+standard arguments. CopulaCPTS is the only method that
+does not enter into the standard split-conformal algorithm
+and who does not satisfy the above property.
+Asymptotic conditional coverage (ACC). We examine
+the asymptotic conditional coverage property, which cor-
+responds to conditional coverage as defined in (4) under
+the assumptions that |Dcal| →∞and the base predictor
+corresponds to the oracle distribution FY |X.
+While the assumption of oracle base predictor is strong, it
+is crucial to demonstrate that the conformal procedure pre-
+serves the performance of the base model. Specifically,
+given x ∈X, for M-CP and CopulaCPTS, we assume
+ˆli(x) = QYi|X=x(αl) and ˆui(x) = QYi|X=x(αu) with
+i = 1, . . . , d; for DR-CP, C-HDR, and HD-PCP, ˆfY |X=x =
+fY |X=x; for L-CP, ˆQ(Z; x)
+d.= Y |X = x; and for PCP and
+C-PCP, ˆFY |X=x = FY |X=x.
+Our empirical results (Section 6) demonstrate that meth-
+ods achieving ACC under these assumptions also exhibit
+superior approximate conditional coverage across diverse
+datasets and base predictors. L-CP is the only method that
+achieves ACC without additional assumptions. C-HDR and
+C-PCP achieve ACC with K →∞. Finally, M-CP achieves
+ACC under specific assumptions. Assuming that Y1, . . . , Yd
+are conditionally independent given X, M-CP achieves ACC
+if αu −αl =
+d√1 −α. Furthermore, under the unrealistic
+assumption that Y1 | X
+a.s.
+= . . .
+a.s.
+= Yd | X, M-CP achieves
+ACC if αu −αl = 1−α. The true dependence typically lies
+between these two extremes. We provide detailed proofs of
+these statements in Section E.2.
+As discussed in Section 5.1, DR-CP fails to achieve ACC.
+Likewise, PCP, HD-PCP and STDQR do not achieve ACC,
+as they are constrained to producing regions with upper
+bounded volume for any x ∈X. Assuming each ball has a
+volume of V , PCP generates regions with a total volume of at
+most LV . For a given instance x ∈X with high uncertainty,
+it may be impossible to capture sufficient probability mass
+to achieve conditional coverage.
+Region size. Among the methods that achieve ACC, C-HDR
+is expected to perform best, as it converges to the highest
+density regions, which correspond to the smallest volume re-
+gions (Hyndman, 1996). Prediction regions from C-PCP are
+expected to have a larger volume since they are constrained
+to a union of L d-balls. Similarly, prediction regions from
+L-CP are less flexible than those from C-HDR, as they are
+6
+Multi-Output Conformal Regression
+connected when the region RZ(λ) in the latent space is
+connected for all λ ∈R and ˆQ is continuous. This con-
+straint may be desirable when more interpretable regions
+are preferred (Sesia and Romano, 2021).
+Among the remaining methods, DR-CP minimizes the mean
+region size E[| ˆR(X)|] under the oracle PDF as |Dcal| →∞,
+as shown in Theorem 1 by Sadinle et al., 2019. In con-
+trast, M-CP and CopulaCPTS are expected to yield larger
+prediction regions, as they do not explicitly account for
+dependencies between outputs. While PCP, HD-PCP, and
+C-PCP can capture multimodality, they are susceptible to
+the randomness of the sampling procedure, as evidenced by
+the shape of the regions in Figure 2. Furthermore, since they
+rely on a finite union of L d-balls, they are subject to the
+curse of dimensionality in high-dimensional spaces, where
+data sparsity necessitates larger balls to maintain marginal
+coverage.
+A potential weakness of the mean region size is that it can be
+disproportionately skewed by inputs with high uncertainty.
+To mitigate this sensitivity, we also report the median region
+size as a more robust alternative.
+Computational complexity. Table 1 reports the compu-
+tational complexity of each conformity score. For M-CP
+and CopulaCPTS, let M represent the compute time of
+the univariate conformity score for a single dimension and
+C the optimization time for CopulaCPTS. Let D, S, and
+Q denote the time required for density evaluation, sam-
+pling, and calculating the inverse of the quantile function
+ˆQ−1, respectively. In many cases, M and C are relatively
+low, while D, S, and Q are comparable.
+C-HDR, PCP,
+HD-PCP, STDQR and C-PCP are significantly slower than
+M-CP, L-CP, and DR-CP since they need to generate a large
+number of samples to compute the conformity score (we
+used K = L = 100 in our experiments).
+Base predictor. Some conformal methods stand out be-
+cause they do not need to evaluate the predictive density ˆf
+or generate samples. M-CP and CopulaCPTS only require
+a univariate model for each dimension, without needing a
+model for the joint distribution of Y . DR-CP does not require
+sampling from the model, which is beneficial when using
+normalizing flows that are slower to invert (e.g., Masked
+Autoregressive Flows (MAF, Papamakarios, Pavlakou, et
+al., 2017) or Convex Potential Flows (Huang et al., 2020)).
+PCP and C-PCP do not require evaluating the predictive
+density ˆf, making them compatible with any generative
+model, including diffusion models and GANs. L-CP and
+STDQR do not require predictive density evaluation but re-
+quire the model to be invertible. We summarize the different
+properties in Table 1.
+5.3. Connection between sample-based and
+density-based methods
+Interestingly, the sample-based methods (PCP, HD-PCP,
+C-PCP) can be viewed as special cases of density-based
+methods (DR-CP, C-HDR). Let us assume a common pre-
+dictive PDF ˆf is used for the base predictor of these
+conformal methods.
+While PCP and C-PCP do not re-
+quire a PDF, we assume that ˆfY |X=x and ˆFY |X=x cor-
+respond to the same distribution. Let ˜Y (l) ∼ˆFY |X=x
+for l ∈[L], and fS(·; ˜Y (l)) be a PDF with spherical level
+sets, centered at ˜Y (l), such as a standard multivariate Gaus-
+sian N(·; ˜Y (l), Id). For x ∈X, we define a new PDF
+ˆfmax(y | x) = maxl∈[L] fS(y; ˜Y (l))/C, where C is a nor-
+malizing constant ensuring that ˆfmax(· | x) integrates to
+1. The following proposition establishes the relationship
+between these methods.
+Proposition 1. PCP is equivalent to DR-CP with ˆf = ˆfmax.
+Similarly, HD-PCP is equivalent to DR-CP with ˆf = ˆfmax
+where only ⌊(1 −α)L⌋samples with the highest density
+among { ˜Y (l)}l∈[L] are kept. Finally, C-PCP is equivalent to
+C-HDR with ˆf = ˆfmax.
+We provide a proof in Section E.3.
+Although these
+sample-based methods are special cases of density-based ap-
+proaches, the key advantage of PCP and C-PCP is that they
+rely solely on a sampling procedure, without requiring a
+predictive density ˆf as base predictor. Figure 3 summarizes
+the connections between the main conformal methods.
+An interesting practical takeaway is that DR-CP and C-HDR
+are linked in the same way as PCP and C-PCP. Since DR-CP
+under the oracle has the smallest expected region size while
+C-HDR empirically has a smaller median region size, similar
+observations are expected for PCP and C-PCP. This is veri-
+fied empirically: PCP has a smaller mean region size across
+all base predictors, while C-PCP has a smaller median re-
+gion size.
+6. A Large-Scale Study of Multi-Output
+Conformal Methods
+In this section, we present a large-scale study of multi-output
+conformal methods using 13 tabular datasets from previous
+studies (Tsoumakas et al., 2011; Feldman et al., 2023; Wang
+C-HDR
+Figure 3: Connections between different methods.
+7
+Multi-Output Conformal Regression
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+10
+1
+100
+CEC-X (x100)
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+10
+1
+100
+101
+CEC-Z (x100)
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.5
+0.6
+0.7
+0.8
+0.9
+WSC
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+STDQR
+C-PCP
+L-CP
+Figure 4: Conditional coverage metrics across datasets sorted by size. CEC-X and CEC-Z should be minimized while WSC
+should approach 1 −α.
+et al., 2023b; Barrio et al., 2024; Camehl et al., 2024). To
+ensure sufficient data for training, calibration, and testing,
+we include only datasets with at least 2,000 instances. The
+selected datasets contain between 7,207 and 50,000 data
+points, with the number of input features p ranging from 1
+to 279 and the number of output variables d ranging from 2
+to 16.
+We consider three base predictors: the Multivariate Quantile
+Function Forecaster (MQF2), a normalizing flow (Kan et al.,
+2022), Distributional Random Forests (Cevid et al., 2022),
+and a multivariate Gaussian mixture model (Bishop, 1994).
+We present results for MQF2 in the main text, while similar
+results for the other models are provided in Section G. We
+compare the methods using several metrics, including con-
+ditional coverage (WSC, CEC-X, and CEC-V), marginal
+coverage (MC), region size, and computational time. A
+detailed description of the experimental setup is provided in
+Section F.
+Conditional coverage.
+Figure 4 presents the results for
+all datasets, ordered by increasing dataset size. On most
+datasets, C-PCP, L-CP, and C-HDR obtain the best condi-
+tional coverage. In contrast, HD-PCP, STDQR, PCP, and
+DR-CP are the least conditionally calibrated. Finally, M-CP
+and CopulaCPTS attain intermediate conditional coverage,
+with M-CP performing slightly better. These results align
+with our analysis in Section 5.2, where we showed that
+C-PCP, L-CP, and C-HDR achieve ACC, while HD-PCP,
+STDQR, PCP, and DR-CP do not, and M-CP achieves it only
+under specific conditions. Finally, Figure 12 shows that all
+1
+2
+3
+4
+5
+6
+7
+8
+9
+PCP
+STDQR
+CopulaCPTS
+M-CP
+HD-PCP
+L-CP
+C-PCP
+DR-CP
+C-HDR
+Rank of Median Region Size
+Figure 5: CD diagrams with the base predictor MQF2 based
+on 10 runs per dataset and method.
+methods achieve marginal coverage, as expected.
+Region size.
+Figure 5 presents a critical difference (CD)
+diagram (Demšar, 2006) comparing the median region size
+of all methods across datasets. Higher-ranked methods
+(further right) perform better. Thick horizontal lines indicate
+models with no statistically significant difference at the 0.05
+level (see Section F.5 for details).
+Among the methods that achieve ACC, C-HDR yields the
+smallest median region size, as expected, since its regions
+converge to the highest density regions (Izbicki et al., 2022).
+C-PCP and L-CP produce slightly larger regions, though
+the difference is not significant for these datasets. Among
+the remaining methods, DR-CP yields the smallest median
+region. In contrast, M-CP and CopulaCPTS generate larger
+regions, which is expected given their less flexible hyper-
+rectangular shape. PCP tends to obtain the largest region
+sizes as it includes samples from low-density areas, whereas
+STQDR and HD-PCP mitigate this by removing samples from
+low-density areas, resulting in more compact regions. Fi-
+nally, Figure 13 in Section G provides results for the mean
+region size, where DR-CP consistently performs best, under
+the oracle setting, it minimizes the expected region size, as
+explained in Section 5.2.
+Computation time.
+Figure 6 shows the total computation
+time for each method. M-CP and CopulaCPTS have the
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcoﬁ
+taxi
+100
+102
+104
+Time (s)
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+STDQR
+C-PCP
+L-CP
+Figure 6: Total time in seconds for calibration and test.
+8
+Multi-Output Conformal Regression
+shortest computation times, as they do not require learning
+a complex model for the output joint distribution. L-CP and
+DR-CP follow, benefiting from the absence of per-instance
+sampling. In contrast, sampling-based methods typically
+require 100 to 200 times more computation time.
+Application to image dataset. Finally, we extend our com-
+parison to a regression problem where the output is an image,
+which has a higher dimensionality than the previously con-
+sidered tabular datasets. Specifically, we use the CIFAR-10
+dataset (Krizhevsky et al., 2014), consisting of 32×32 RGB
+images, each labeled with one of 10 possible classes. We
+train the base predictor Glow (Kingma and Dhariwal, 2018),
+conditioned on the image label, where the output space
+is Y = [0, 1]3×32×32 (d = 3072) and the input space is
+X = {0, . . . , 9} (p = 1). The results, detailed in Section J,
+lead to similar conclusions regarding conditional coverage,
+region size, and computational time.
+7. Conclusion
+We studied the problem of constructing conformal predic-
+tion regions for multi-output regression, which remains rel-
+atively underexplored compared to the univariate case. We
+presented a unified comparative study of several conformal
+methods along with their associated conformity scores, high-
+lighting their properties and interconnections. In addition,
+we introduced two new classes of conformity scores: CDF-
+based scores, including a variant compatible with generative
+models, and latent-based scores, which exploit invertible
+generative models for improved computational efficiency.
+Both classes generalize existing conformity scores from the
+univariate setting.
+The choice of conformity score directly influences the ge-
+ometry and flexibility of the resulting prediction regions. In
+the univariate setting, the most flexible regions are typically
+unions of intervals. In contrast, the multivariate case allows
+for a wider variety of geometries, ranging from hyperrectan-
+gles and ellipsoids to highly flexible, nonconvex regions that
+can be disconnected and capture distributional bimodality.
+A simple and computationally efficient approach is to con-
+struct separate univariate prediction regions for each output
+dimension and apply a correction for joint coverage. How-
+ever, these methods do not capture dependencies between
+output dimensions and typically result in rigid, (unions of)
+hyperrectangular regions with limited flexibility. In con-
+trast, more flexible methods account for correlations and
+dependencies across outputs by incorporating the covariance
+structure, modeling the joint density, or leveraging gener-
+ative models. These approaches produce more expressive
+prediction regions but are generally more computationally
+demanding.
+While conformal prediction (CP) always guarantees
+marginal coverage, conformity scores whose thresholds do
+not vary instance-wise fail to achieve the desirable property
+of asymptotic conditional coverage (ACC). In contrast, our
+proposed scores enable ACC but require estimating the con-
+ditional distribution of the conformity score—an inherently
+challenging task in low-data regimes. Similarly, CP methods
+based on generative models introduce additional sampling
+variability. Finally, our large-scale empirical study system-
+atically compares these conformal methods across multiple
+multi-output regression datasets, using various evaluation
+metrics, including conditional coverage and prediction re-
+gion volume.
+Future work will focus on replacing region prediction with
+a recalibrated multivariate distribution, equipped with an
+explicit density function and conformal coverage guaran-
+tees. We also plan to extend our approach to more complex
+outputs, including semi-structured and unstructured data
+(e.g., images, text, and graphs), and to further investigate
+the theoretical connection between multivariate calibration
+and conformal prediction.
+9
+Multi-Output Conformal Regression
+Impact statement
+This work contributes to the development of statistically
+reliable and interpretable machine learning algorithms. En-
+hancing trust and transparency in predictive modeling helps
+designing more practical and accessible models for real-
+world applications.
+References
+[1]
+Brandon Amos, Lei Xu, and J Zico Kolter. “In-
+put Convex Neural Networks”. Proceedings of the
+34th International Conference on Machine Learning.
+Vol. 70. Proceedings of Machine Learning Research.
+PMLR, 2017, pp. 146–155.
+[2]
+Anastasios N Angelopoulos and Stephen Bates. “Con-
+formal prediction: A gentle introduction”. Founda-
+tions and Trends® in Machine Learning 16 (4 2023),
+pp. 494–591.
+[3]
+Anastasios N Angelopoulos et al. “Uncertainty Sets
+for Image Classifiers using Conformal Prediction”.
+International Conference on Learning Representa-
+tions. 2020.
+[4]
+Rina Foygel Barber et al. “The limits of distribution-
+free conditional predictive inference”. Information
+and Inference: A Journal of the IMA 10 (2 2021),
+pp. 455–482.
+[5]
+Eustasio del Barrio, Alberto González Sanz, and
+Marc Hallin. “Nonparametric multiple-output center-
+outward quantile regression”. Journal of the Ameri-
+can Statistical Association (2024), pp. 1–43.
+[6]
+Alessio Benavoli, Giorgio Corani, and Francesca
+Mangili. “Should We Really Use Post-Hoc Tests
+Based on Mean-Ranks?” Journal of machine learn-
+ing research: JMLR 17 (5 2016), pp. 1–10.
+[7]
+Christopher M Bishop. Mixture density networks.
+Tech. rep. Birmingham, 1994.
+[8]
+Annika Camehl, Dennis Fok, and Kathrin Gruber.
+“On superlevel sets of conditional densities and multi-
+variate quantile regression”. Journal of Econometrics
+(105807 2024), p. 105807.
+[9]
+Guillaume Carlier, Victor Chernozhukov, and Alfred
+Galichon. “Vector quantile regression: An optimal
+transport approach”. Annals of statistics 44 (3 2016),
+pp. 1165–1192.
+[10]
+Maxime Cauchois, Suyash Gupta, and John C Duchi.
+“Knowing what you know: valid and validated con-
+fidence sets in multiclass and multilabel prediction”.
+Journal of machine learning research: JMLR 22 (1
+2021), pp. 3681–3722.
+[11]
+Domagoj Cevid et al. “Distributional Random
+Forests: Heterogeneity Adjustment and Multivariate
+Distributional Regression”. Journal of machine learn-
+ing research: JMLR 23 (333 2022), pp. 1–79.
+[12]
+Victor Chernozhukov, Kaspar Wüthrich, and Yinchu
+Zhu. “Distributional conformal prediction”. Proceed-
+ings of the National Academy of Sciences of the
+United States of America 118 (48 2021).
+[13]
+Janez Demšar. “Statistical Comparisons of Classi-
+fiers over Multiple Data Sets”. Journal of machine
+learning research: JMLR 7 (2006), pp. 1–30.
+[14]
+Victor Dheur et al. “Distribution-Free Conformal
+Joint Prediction Regions for Neural Marked Tempo-
+ral Point Processes”. Machine Learning 113 (2024),
+pp. 7055–7102. arXiv: 2401.04612 [cs.LG].
+[15]
+Jacopo Diquigiovanni, Matteo Fontana, and Simone
+Vantini. “A Conformal approach for functional data
+prediction”. Book of short papers SIS 2021, Pisa,
+21-25 Giugno 2021. 2021, pp. 907–910.
+[16]
+Jacopo Diquigiovanni, Matteo Fontana, and Simone
+Vantini. Distribution-Free Prediction Bands for Mul-
+tivariate Functional Time Series: an Application
+to the Italian Gas Market. arXiv:2107.00527 [stat].
+2024.
+[17]
+Jacopo Diquigiovanni, Matteo Fontana, and Simone
+Vantini. “The importance of being a band: Finite-
+sample exact distribution-free prediction sets for func-
+tional data”. arXiv [stat.ME] (2021). arXiv: 2102.
+06746 [stat.ME].
+[18]
+Eshant English et al. “JANET: Joint Adaptive
+predictioN-region Estimation for time-series”. arXiv
+[stat.ML] (2024). arXiv: 2407.06390 [stat.ML].
+[19]
+Zhenhan Fang, Aixin Tan, and Jian Huang. “CON-
+TRA: Conformal prediction region via normalizing
+flow transformation”. The Thirteenth International
+Conference on Learning Representations. 2025.
+[20]
+Shai Feldman, Stephen Bates, and Yaniv Romano.
+“Calibrated Multiple-Output Quantile Regression
+with Representation Learning”. Journal of machine
+learning research: JMLR 24 (24 2023), pp. 1–48.
+[21]
+Milton Friedman. “A Comparison of Alternative
+Tests of Significance for the Problem of m Rank-
+ings”. The Annals of Mathematical Statistics 11 (1
+1940), pp. 86–92.
+[22]
+Léo Grinsztajn, Edouard Oyallon, and G Varoquaux.
+“Why do tree-based models still outperform deep
+learning on typical tabular data?” Neural Information
+Processing Systems 35 (2022), pp. 507–520.
+[23]
+David Ha, Andrew M Dai, and Quoc V Le. “Hyper-
+Networks”. International Conference on Learning
+Representations. 2022.
+[24]
+Marc Hallin and Miroslav Šiman. “Multiple-output
+quantile regression”. Handbook of quantile regres-
+sion (2017), pp. 185–207.
+10
+Multi-Output Conformal Regression
+[25]
+Marc Hallin et al. “Distribution and quantile func-
+tions, ranks and signs in dimension d: A measure
+transportation approach”. The Annals of Statistics 49
+(2 2021), pp. 1139–1165.
+[26]
+Sture Holm. “A Simple Sequentially Rejective Multi-
+ple Test Procedure”. Scandinavian journal of statis-
+tics, theory and applications 6 (2 1979), pp. 65–70.
+[27]
+Eliahu Horwitz and Yedid Hoshen. “Conffusion:
+Confidence Intervals for Diffusion Models”. arXiv
+[cs.CV] (2022). arXiv: 2211.09795 [cs.CV].
+[28]
+Chin-Wei Huang et al. “Convex Potential Flows: Uni-
+versal Probability Distributions with Optimal Trans-
+port and Convex Optimization” (2020).
+[29]
+Rob J Hyndman. “Computing and Graphing Highest
+Density Regions”. The American statistician 50 (2
+1996), pp. 120–126.
+[30]
+Rafael Izbicki, Gilson Shimizu, and Rafael Stern.
+“Flexible distribution-free conditional predictive
+bands using density estimators”. Proceedings of the
+Twenty Third International Conference on Artificial
+Intelligence and Statistics. Vol. 108. Proceedings of
+Machine Learning Research. PMLR, 2020, pp. 3068–
+3077.
+[31]
+Rafael Izbicki, Gilson Shimizu, and Rafael B Stern.
+“CD-split and HPD-split: Efficient Conformal Re-
+gions in High Dimensions”. Journal of machine
+learning research: JMLR 23 (87 2022), pp. 1–32.
+[32]
+Chancellor Johnstone and Eugene Ndiaye. “Exact
+and approximate conformal inference for multi-
+output regression”. arXiv [stat.ML] (2022). arXiv:
+2210.17405 [stat.ML].
+[33]
+Kelvin Kan et al. “Multivariate Quantile Function
+Forecaster”. Proceedings of The 25th International
+Conference on Artificial Intelligence and Statistics.
+Vol. 151. Proceedings of Machine Learning Research.
+PMLR, 2022, pp. 10603–10621.
+[34]
+Diederik P Kingma and Prafulla Dhariwal. “Glow:
+Generative flow with invertible 1x1 convolu-
+tions”. Neural Information Processing Systems
+abs/1807.03039 (2018).
+[35]
+Alex Krizhevsky, Vinod Nair, Geoffrey Hinton, et
+al. “The CIFAR-10 dataset”. online: http://www. cs.
+toronto. edu/kriz/cifar. html 55 (5 2014), p. 2.
+[36]
+Jing Lei and Larry Wasserman. “Distribution-free
+prediction bands for non-parametric regression”.
+Journal of the Royal Statistical Society. Series B, Sta-
+tistical methodology 76 (1 2014), pp. 71–96.
+[37]
+Soundouss Messoudi, Sébastien Destercke, and Syl-
+vain Rousseau. “Copula-based conformal prediction
+for multi-target regression”. Pattern Recognition 120
+(2021), p. 108101.
+[38]
+Soundouss Messoudi, Sébastien Destercke, and Syl-
+vain Rousseau. “Copula-based conformal prediction
+for multi-target regression”. Pattern Recognition 120
+(2021), p. 108101.
+[39]
+Soundouss Messoudi, Sébastien Destercke, and Syl-
+vain Rousseau. “Ellipsoidal conformal inference for
+Multi-Target Regression”. Conformal and Probabilis-
+tic Prediction with Applications. Conformal and Prob-
+abilistic Prediction with Applications. PMLR, 2022,
+pp. 294–306.
+[40]
+Eric Nalisnick et al. “Do Deep Generative Models
+Know What They Don’t Know?” International Con-
+ference on Learning Representations. 2018.
+[41]
+Davy Paindaveine and Miroslav Šiman. “On direc-
+tional multiple-output quantile regression”. Journal
+of multivariate analysis 102 (2 2011), pp. 193–212.
+[42]
+Harris
+Papadopoulos,
+Alex
+Gammerman,
+and
+Volodya Vovk. “Normalized nonconformity measures
+for regression Conformal Prediction”. Proceedings
+of the 26th IASTED International Conference on Arti-
+ficial Intelligence and Applications (Innsbruck, Aus-
+tria). AIA ’08. USA: ACTA Press, 2008, pp. 64–69.
+[43]
+Harris Papadopoulos et al. “Inductive Confidence Ma-
+chines for Regression”. Machine Learning: ECML
+2002. Springer Berlin Heidelberg, 2002, pp. 345–
+356.
+[44]
+George Papamakarios, Theo Pavlakou, et al. “Masked
+autoregressive flow for density estimation”. Advances
+in neural information processing systems (2017).
+[45]
+Ji Won Park, Robert Tibshirani, and Kyunghyun
+Cho.
+Semiparametric
+conformal
+prediction.
+arXiv:2411.02114. 2024.
+[46]
+Vincent Plassier et al. “Probabilistic Conformal Pre-
+diction with Approximate Conditional Validity”. The
+Thirteenth International Conference on Learning
+Representations. 2025.
+[47]
+Alvin Rajkomar et al. “Scalable and accurate deep
+learning with electronic health records”. npj digital
+medicine 1 (1 2018), p. 18.
+[48]
+Yaniv Romano, Evan Patterson, and Emmanuel Can-
+des. “Conformalized quantile regression”. Advances
+in neural information processing systems (2019).
+[49]
+Yaniv Romano, Matteo Sesia, and E Candès. “Clas-
+sification with valid and adaptive coverage”. Neural
+Information Processing Systems 33 (2020), pp. 3581–
+3591.
+[50]
+Raphael Rossellini, R Barber, and R Willett. “In-
+tegrating uncertainty awareness into conformalized
+Quantile Regression”. International Conference on
+Artificial Intelligence and Statistics 238 (2024),
+pp. 1540–1548.
+11
+Multi-Output Conformal Regression
+[51]
+Mauricio Sadinle, Jing Lei, and Larry Wasserman.
+“Least ambiguous set-valued classifiers with bounded
+error levels”. Journal of the American Statistical As-
+sociation 114 (525 2019), pp. 223–234.
+[52]
+Matteo Sesia and Yaniv Romano. “Conformal pre-
+diction using conditional histograms”. Advances in
+neural information processing systems (2021).
+[53]
+Kamile Stankeviciute, Ahmed M Alaa, and Mihaela
+van der Schaar. “Conformal Time-series Forecasting”.
+Advances in neural information processing systems
+34 (2021).
+[54]
+Vincent Stimper, Bernhard Schölkopf, and Jose
+Miguel Hernandez-Lobato. “Resampling Base Dis-
+tributions of Normalizing Flows”. International Con-
+ference on Artificial Intelligence and Statistics. In-
+ternational Conference on Artificial Intelligence and
+Statistics. PMLR, 2022, pp. 4915–4936.
+[55]
+Sophia Sun and Rose Yu. Copula Conformal Pre-
+diction for Multi-step Time Series Forecasting.
+arXiv:2212.03281 [cs, stat]. 2024.
+[56]
+Sophia Huiwen Sun and Rose Yu. “Copula Confor-
+mal prediction for multi-step time series prediction”.
+The Twelfth International Conference on Learning
+Representations. 2024.
+[57]
+Jacopo Teneggi et al. “How to Trust Your Diffusion
+Model: A Convex Optimization Approach to Confor-
+mal Risk Control” (2023).
+[58]
+Alexander Timans et al. “Max-Rank: Efficient Mul-
+tiple Testing for Conformal Prediction”. 258 (2025),
+pp. 3898–3906.
+[59]
+Grigorios Tsoumakas et al. “MULAN: A Java Li-
+brary for Multi-Label Learning”. Journal of machine
+learning research: JMLR 12 (71 2011), pp. 2411–
+2414.
+[60]
+Vladimir Vovk, Alexander Gammerman, and Craig
+Saunders. “Machine-Learning Applications of Al-
+gorithmic Randomness”. Proceedings of the Six-
+teenth International Conference on Machine Learn-
+ing. ICML ’99. San Francisco, CA, USA: Morgan
+Kaufmann Publishers Inc., 1999, pp. 444–453.
+[61]
+Jun Wang et al. Conformal Temporal Logic Planning
+using Large Language Models: Knowing When to Do
+What and When to Ask for Help. arXiv:2309.10092
+[cs]. 2023.
+[62]
+Zhendong Wang et al. “Probabilistic Conformal Pre-
+diction Using Conditional Random Samples”. Inter-
+national Conference on Artificial Intelligence and
+Statistics. International Conference on Artificial Intel-
+ligence and Statistics. PMLR, 2023, pp. 8814–8836.
+[63]
+Frank Wilcoxon. “Individual Comparisons by Rank-
+ing Methods”. Biometrics Bulletin 1 (6 1945), pp. 80–
+83.
+[64]
+Xiaofan Zhou et al. “Conformal prediction: A data
+perspective”. ACM computing surveys (2025).
+[65]
+Yanfei Zhou, Lars Lindemann, and Matteo Sesia.
+“Conformalized adaptive forecasting of heteroge-
+neous trajectories”. Proceedings of the 41st Inter-
+national Conference on Machine Learning. ICML’24.
+Vienna, Austria: JMLR.org, 2024.
+12
+Multi-Output Conformal Regression
+A. Related Work
+Our research builds on a broad body of literature that spans several closely related themes. This supplementary section
+provides a concise overview of these topics.
+In the realm of multivariate functional data, Diquigiovanni et al., 2021a introduced conformal predictors that create
+adaptive, finite-sample valid prediction bands, with extensions into time series applications, particularly in energy markets
+(Diquigiovanni et al., 2024). In image processing, recent applications (Horwitz and Hoshen, 2022; Teneggi et al., 2023)
+apply CP in a pixel-wise manner, resulting in hyperrectangular regions that may not capture pixel dependencies effectively.
+For multi-step-ahead or multi-horizon forecasting, predictions can be made across multiple outputs simultaneously rather
+than sequentially, aligning with a multi-output forecasting framework. Stankeviciute et al., 2021 explored multi-horizon
+time series forecasting using recurrent neural networks (RNNs), incorporating univariate conformal techniques with nominal
+coverage adjustments via Bonferroni correction. Similarly, English et al., 2024 adapted the Amplitude-Modulated L-inf
+norm method from Diquigiovanni et al., 2021b for multi-output, multi-step forecasting.
+In multi-target regression, Messoudi et al., 2021b applied copula functions in deep neural networks to provide multivariate
+predictions with guaranteed coverage. Their findings suggest that simple parametric copulas can work for certain datasets,
+but more complex copulas may be required for well-calibrated predictions, which introduces challenges, as complex copulas
+typically require significant calibration data. Building on this, Sun and Yu, 2024b proposed a copula-based method for
+multi-step time series forecasting, optimizing the calibration and efficiency of confidence intervals. However, this method
+requires two calibration phases and is primarily feasible with large calibration datasets. Moreover, its validity relies on
+the empirical copula, limiting applicability to other learnable copula classes. One very recent advancement on the subject,
+following ideas expressed by Messoudi et al., 2021b in their conclusions, is Park et al., 2024, where the dependence structure
+between marginal distributions is recovered via the use of vine copulas.
+Another set of methodologies that tackle multi-output problems are based on multiplicity-correction approaches for multiple
+testing. Timans et al., 2025 improves over Bonferroni correction using permutation tests, and obtain a tighter and globally
+valid prediction. Methods based on multiplicity correction such as controlling the Family-Wise Error Rate (FWER) are
+valuable for providing error control guarantees across multiple outputs. In contrast, the methods we survey and propose aim
+for potentially tighter prediction regions by directly modeling the multivariate structure.
+In the context of conformal prediction, the flexibility in configuring the prediction region is a degree of freedom for the
+modeler. To overcome the limitations of traditional hyper-rectangular prediction regions, Messoudi et al., 2022 introduced
+ellipsoidal uncertainty sets that enable instance-specific adaptation of confidence regions. Johnstone and Ndiaye, 2022
+advanced multi-output regression by developing efficient techniques for approximating conformal prediction sets without
+retraining the model, although their approach relies heavily on the predictive model being a linear function of Y . Sun and
+Yu, 2024b constructed ellipsoidal prediction regions for time series, capable of modeling dependencies between outputs,
+though this method does not handle multimodality. Our work closely connects with the multivariate conformal prediction
+literature, where multi-horizon prediction is viewed as a prediction across multiple outputs.
+Overall, as this study demonstrates, the flexibility of conformal prediction allows for coherent handling of diverse data types.
+Multi-output problems represent one facet of a broader taxonomy, as explored by Zhou et al., 2025, who discuss further
+developments in multi-output conformal prediction.
+B. Additional multi-output conformal methods
+In this section, we describe the prediction regions ˆR for M-CP and CopulaCPTS, which both produce hyperrectangular
+regions.
+M-CP.
+Zhou et al., 2024 applied a univariate conformal method to each output i ∈[d] of the multivariate response.
+Specifically, given a conformity score si for the i-th dimension, joint coverage across all dimensions can be achieved using
+the following conformity score:
+sM-CP(x, y) = max
+i∈[d] si(x, yi).
+(15)
+A similar score has been considered by Diquigiovanni et al. (2021b) in the context of functional regression.
+In this work, we use Conformalized Quantile Regression (CQR, Romano et al., 2019) for each output i ∈[d], where the
+13
+Multi-Output Conformal Regression
+conformity score is given by:
+si(x, yi) = max{ˆli(x) −yi, yi −ˆui(x)},
+(16)
+with ˆli(x) and ˆui(x) representing the lower and upper conditional quantiles of Yi|X = x at levels αl and αu, respectively. In
+our experiments, we consider equal-tailed prediction intervals, where αl = α
+2 , αu = 1 −α
+2 , and α denotes the miscoverage
+level. The corresponding prediction region ˆRM-CP(x) =×
+d
+i=1[ˆli(x) −ˆq, ˆui(x) + ˆq] is a hyperrectangle.
+CopulaCPTS.
+CopulaCPTS (Sun and Yu, 2024a) is originally designed for time-series but the calibration procedure is
+valid for any multi-dimensional variable. It models the joint probability of uncertainty for each output with a copula. The
+calibration set is divided into two subsets Dcal−1 and Dcal−2. Dcal−1 serves for the estimation of a CDF on the conformity
+score of each output and Dcal−2 allows to calibrate the copula. CopulaCPTS can combine any univariate or multivariate
+conformity scores. In this paper, we use the CQR score si (16) for each dimension i ∈[d].
+Denote ˆFi the empirical CDF of the conformity scores {si(x, yi)}(x,y)∈Dcal−1 for i ∈[d], and ˆF −1
+i
+the corresponding
+empirical quantile function. In practice, to minimize region sizes while achieving marginal validity, CopulaCPTS computes
+the optimal s∗
+1, . . . , s∗
+d that minimize the following loss using stochastic gradient descent:
+L(ˆs1, . . . , ˆsd) =
+1
+|Dcal−2|
+X
+(x,y)∈Dcal−2
+d
+Y
+i=1
+1
+h
+ˆFi(si(x, yi)) < ˆF −1
+i
+(ˆsi)
+i
+−(1 −α).
+(17)
+Then, the prediction region is defined as:
+ˆRCopulaCPTS(x) = {y ∈Y : ∀i ∈[d], si(x, yi) < s∗
+i }
+(18)
+Sun and Yu, 2024a proved that this prediction set achieves marginal coverage. However, since CopulaCPTS does not follow
+the SCP algorithm, it does not achieve properties on the marginal coverage from Section E.1.
+C. Relationship between conformity scores and regions
+Section 2.2 and Section 3 in the main text presented several multi-output conformal methods through their conformity score
+s. As explained in Section 2.1, their corresponding prediction region ˆR can be computed as follows:
+ˆR(x) = {y ∈Y : s(x, y) ≤ˆq}.
+In this section, we explicitly derive the prediction region associated with these methods.
+M-CP.
+Following Zhou et al., 2024, the prediction region ˆRM-CP can be derived from sM-CP as follows:
+sM-CP(x, y) ≤ˆq ⇐⇒max
+i∈[d] si(x, yi) ≤ˆq
+(19)
+⇐⇒∀i ∈[d], si(x, yi) ≤ˆq
+(20)
+⇐⇒∀i ∈[d], max{ˆli(x) −yi, yi −ˆui(x)} ≤ˆq
+(21)
+⇐⇒∀i ∈[d], ˆli(x) −yi ≤ˆq ∧yi −ˆui(x) ≤ˆq
+(22)
+⇐⇒∀i ∈[d], ˆli(x) −ˆq ≤yi ∧yi ≤ˆui(x) + ˆq
+(23)
+⇐⇒∀i ∈[d], yi ∈[ˆli(x) −ˆq, ˆui(x) + ˆq]
+(24)
+⇐⇒y ∈
+d×
+i=1
+[ˆli(x) −ˆq, ˆui(x) + ˆq]
+(25)
+⇐⇒y ∈ˆRM-CP(x).
+(26)
+DR-CP
+The equivalence is straightforward.
+14
+Multi-Output Conformal Regression
+C-HDR.
+Given ˆY ∼ˆfY |X=x and U = ˆf( ˆY | X = x), for any y ∈Y, we can write
+sC-HDR(x, y)
+(27)
+= HPD ˆ
+f(y | x)
+(28)
+= P( ˆf( ˆY | x) ≥ˆf(y | x) | X = x)
+(29)
+= P(U ≥ˆf(y | x) | X = x)
+(30)
+= 1 −P(U ≤ˆf(y | x) | X = x)
+(31)
+= 1 −FU|X=x( ˆf(y | x)),
+(32)
+where FU|X=x is the conditional CDF of U given X = x.
+Recall that the prediction region for C-HDR is given by
+ˆRC-HDR(x) = {y ∈Y : ˆf(y | x) ≥tˆq},
+where tˆq = sup{t : P( ˆf( ˆY | x) ≥t | X = x) ≥ˆq}.
+(33)
+The threshold tˆq in (33) can be equivalently written as follows:
+tˆq = sup{t : P( ˆf( ˆY | x) ≥t | X = x) ≥ˆq}
+(34)
+= sup{t : P(U ≥t | X = x) ≥ˆq}
+(35)
+= sup{t : 1 −P(U ≤t | X = x) ≥ˆq}
+(36)
+= sup{t : 1 −ˆq ≥FU|X=x(t)}
+(37)
+= F −1
+U|X=x(1 −ˆq),
+(38)
+where we use the definition of the upper quantile function in the last step.
+Using (27), (33), and (38), we can write
+sC-HDR(x, y) ≤ˆq ⇐⇒HPD ˆ
+f(y | x) ≤ˆq
+(39)
+⇐⇒1 −FU|X=x( ˆf(y | x)) ≤ˆq
+(40)
+⇐⇒FU|X=x( ˆf(y | x)) ≥1 −ˆq
+(41)
+⇐⇒ˆf(y | x) ≥F −1
+U|X=x(1 −ˆq)
+(42)
+⇐⇒ˆf(y | x) ≥tˆq
+(43)
+⇐⇒y ∈ˆRC-HDR(x).
+(44)
+PCP.
+Let B(µ, r) represent a ball with center µ and radius r. Following Wang et al., 2023b, we show that, for any x ∈X,
+ˆRPCP(x) corresponds to a union of balls:
+sPCP(x, y) ≤ˆq ⇐⇒min
+l∈[L]∥y −˜Y (l)∥2 ≤ˆq
+(45)
+⇐⇒∃l ∈[L], ∥y −˜Y (l)∥2 ≤ˆq
+(46)
+⇐⇒∃l ∈[L], y ∈B(˜Y (l), ˆq)
+(47)
+⇐⇒y ∈
+[
+l∈[L]
+B( ˜Y (l), ˆq)
+(48)
+⇐⇒y ∈ˆRPCP(x),
+(49)
+where ˜Y (l) ∼ˆFY |X=x, l ∈[L].
+HD-PCP.
+For HD-PCP, the reasoning is similar to PCP with the difference that only the ⌊(1 −α)L⌋samples with the
+highest density are kept.
+15
+Multi-Output Conformal Regression
+CDF-based conformity scores.
+We note that the region ˆRCDF(x) has a similar form to ˆRW (x) = {y ∈Y : sW (x, y) ≤ˆq},
+except that the threshold on sW (x, y) is different and depends on x. In fact, we can write
+ˆRCDF(x) = {y ∈Y : sCDF(x, y) ≤ˆq}
+(50)
+= {y ∈Y : FW |X=x(sW (x, y)) ≤ˆq}
+(51)
+= {y ∈Y : sW (x, y) ≤F −1
+W |X=x(ˆq)}.
+(52)
+In the special case where sW = sPCP, since PCP always generates predictions as a union of balls, we can conclude that
+C-PCP will do the same.
+Latent-based conformity scores.
+Since ˆQ(·; x) is bijective, for every y ∈Y, there exists a unique z ∈Z such that
+y = ˆQ(z; x). Therefore, the condition dZ( ˆQ−1(y; x)) ≤ˆq is equivalent to dZ(z) ≤ˆq, where z = ˆQ−1(y; x). This gives
+the prediction region:
+ˆRL-CP(x) = {y ∈Y : dZ( ˆQ−1(y; x)) ≤ˆq}
+(53)
+= { ˆQ(z; x) : z ∈Z and dZ(z) ≤ˆq}.
+(54)
+D. Additional illustrative examples
+D.1. A real-world application
+Following Wang et al., 2023a, we apply the multi-output conformal methods to the taxi dataset, where the goal is to predict
+the drop-off location of a New York taxi passenger based on the passenger’s information.
+Figures 7(a) and 8(a) displays five randomly selected samples from the dataset, showing the pick-up (red pin) and drop-off
+(blue pin) locations of taxi passengers. The remaining panels show a specific input-output pair (x, y) and the corresponding
+prediction regions generated by the conformal methods discussed in this paper. The coverage level 1 −α for these regions is
+set to 0.8, with MQF2 as the base predictor, as introduced in Section F.2.
+Figure 7 corresponds to the same data and predictions regions as Figure 8 except that it is zoomed for better comparison
+with Figure 9. Each region is labeled with its size, calculated using the estimator from Section F.4, displayed in the bottom
+left corner. Notably, C-PCP generates regions similar in shape to PCP but with an input-adaptive radius, resulting in smaller
+region sizes (8.2 compared to 8.67) in this case. Additionally, HD-PCP produces more clustered regions, while PCP and
+C-PCP show more dispersed regions.
+16
+Multi-Output Conformal Regression
+(a) Sample Data
+(b) M-CP
+(c) CopulaCPTS
+(d) DR-CP
+(e) C-HDR
+(f) PCP
+(g) HD-PCP
+(h) STDQR
+(i) C-PCP
+(j) L-CP
+Figure 7: Conformal methods applied on the NYC Taxi dataset for an input with low uncertainty.
+(a) Sample Data
+(b) M-CP
+(c) CopulaCPTS
+(d) DR-CP
+(e) C-HDR
+(f) PCP
+(g) HD-PCP
+(h) STDQR
+(i) C-PCP
+(j) L-CP
+Figure 8: Conformal methods applied on the NYC Taxi dataset for an input with low uncertainty.
+Figure 9 presents the same example for an input-output pair where the input is associated with higher uncertainty, resulting
+in larger region sizes. As in the first figure, the shapes of the regions (e.g., unions of hyperrectangles, quantile regions, etc.)
+remain consistent but expand to cover a larger area. Conformal methods with the best region sizes differ between the two
+figures, with C-HDR producing the smallest region in the first figure and DR-CP in the second. In this case, C-PCP selects a
+larger radius than PCP, resulting in larger regions than PCP. The observation that PCP and C-PCP produce more dispersed
+regions, while HD-PCP generates more clustered regions, also holds true for this higher uncertainty case.
+17
+Multi-Output Conformal Regression
+(a) Sample Data
+(b) M-CP
+(c) CopulaCPTS
+(d) DR-CP
+(e) C-HDR
+(f) PCP
+(g) HD-PCP
+(h) STDQR
+(i) C-PCP
+(j) L-CP
+Figure 9: Conformal methods applied on the NYC Taxi dataset for an input with high uncertainty.
+D.2. Toy examples
+We define two data-generating processes to evaluate the models compared to a known distribution: a unimodal heteroscedastic
+distribution and a bimodal heteroscedastic distribution. The input variable X ∈R is unidimensional (p = 1) and the output
+variable Y ∈R2 is bidimensional (d = 2). The variables X and Y are scaled linearly such that the mean and variances on
+each dimension are 0 and 1. The figures are inspired by Barrio et al., 2024.
+Unimodal heteroscedastic process.
+The first process is illustrated in Figure 2 in the main text. The data generating
+process is as follows:
+X ∼U(0, 1),
+(55)
+Y | X = x ∼1
+k
+k
+X
+j=1
+N
+ (1.3 −x)µ(j), σ2I2
+
+,
+(56)
+(57)
+where k = 200, σ = 0.2, I2 is the 2 × 2 identity, and, for j = 1, . . . , k,
+µ(j)
+1
+= cos αj
+(58)
+µ(j)
+2
+= (0.5 −sin αj)
+(59)
+αj = (j −1) π
+k −1
+(60)
+Detailed metrics for this dataset, supporting Section 5.1, are provided in Table 2.
+18
+Multi-Output Conformal Regression
+MC
+Median Size
+CEC-X
+CEC-Z
+WSC
+Test time
+Method
+(×100)
+(×100)
+M-CP
+0.8050.0039
+8.470.14
+0.1100.023
+0.08120.018
+0.8030.011
+0.03360.022
+CopulaCPTS
+0.8150.011
+8.780.25
+0.1910.049
+0.1630.047
+0.8140.015
+1.040.021
+DR-CP
+0.8080.0042
+7.030.071
+0.6130.045
+0.5600.042
+0.7100.016
+0.02090.00047
+C-HDR
+0.8100.0038
+6.800.059
+0.06370.016
+0.08250.012
+0.7980.0070
+3.520.085
+PCP
+0.8050.0039
+9.160.089
+0.6680.052
+0.5870.046
+0.7130.0080
+1.690.021
+HD-PCP
+0.8040.0037
+7.440.056
+0.2870.031
+0.2560.034
+0.7580.013
+3.380.043
+STDQR
+0.8060.0027
+7.870.070
+0.3430.025
+0.3050.027
+0.7460.011
+1.770.022
+C-PCP
+0.8080.0049
+9.140.12
+0.04640.013
+0.04840.013
+0.8220.0085
+3.440.056
+L-CP
+0.8030.0039
+8.240.11
+0.05440.0073
+0.06540.012
+0.8110.011
+0.02170.00052
+Table 2: Detailed metrics for the unimodal heteroscedastic process from Figure 2.
+Bimodal heteroscedastic process.
+Figure 10, similar to Figure 2 but with a bimodal distribution for the output, is
+introduced in Section 5.1.
+The data generating process is as follows:
+X ∼U(0.5, 2),
+(61)
+Y | X = x ∼0.5 · N(4, xId) + 0.5 · N(−4, Id/x).
+(62)
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+Oracle
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+M-CP
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+CopulaCPTS
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+DR-CP
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+C-HDR
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+PCP
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+HD-PCP
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+STDQR
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+C-PCP
+1 0
+1
+X
+0
+2
+Y1
+2
+0
+2
+Y2
+L-CP
+ 
+Figure 10: Examples of prediction regions on a bivariate bimodal dataset, conditional on a unidimensional input.
+E. Proofs
+E.1. Distribution of the marginal coverage conditional on calibration data
+In contrast to M-CP, L-CP, and DR-CP, the methods C-HDR, PCP, HD-PCP, and C-PCP rely on a non-deterministic conformity
+score. For each calibration and test point, C-HDR, PCP, HD-PCP, and C-PCP require sampling K, L, L, and L + K points,
+respectively.
+Let Dcal = {(X(j), Y (j))}j∈[|Dcal|] represent the calibration dataset and (X, Y ) be the test instance.
+Let Scal =
+{S(j)
+cal }j∈[|Dcal|] represent samples from the calibration dataset where S(j)
+cal is generated based on input X(j) and Stest
+the samples generated based on input X. Despite the added sampling uncertainty, these methods still provide a marginal
+coverage guarantee:
+PX,Y,Stest,Dcal,Scal(Y ∈ˆR(X)) ≥1 −α.
+(63)
+19
+Multi-Output Conformal Regression
+Compared to (3), the probability is additionally on Scal and Stest. This result, specifically for PCP and HD-PCP, was
+demonstrated by Wang et al., 2023b.
+In Lemma 1, we further show that the marginal coverage conditional on the calibration dataset Dcal and the samples Scal
+follows a beta distribution, using standard arguments. Assuming no ties among the scores, this lemma applies to any
+conformity score s.
+Lemma 1. Assuming no ties among the scores and i.i.d. inputs, outputs and samples, the distribution of the coverage,
+conditional on the calibration dataset and its samples, is given by:
+P(Y ∈ˆR(X) | Dcal, Scal) ∼Beta(kα, |Dcal| + 1 −kα),
+(64)
+where kα = ⌈(1 −α)(|Dcal| + 1)⌉. Moreover, P(Y ∈ˆR(X)) =
+kα
+|Dcal|+1 ≥1 −α.
+Proof. For the methods C-HDR, PCP, HD-PCP, and C-PCP, the conformity score s is non-deterministic due to sampling
+uncertainty. To clarify, we define a deterministic conformity score ¯s : X × Y × S, where S represents the space of samples
+for a given method.
+For j = 1, . . . , |Dcal|, let Sj = ¯s(X(j), Y (j), S(j)
+cal ) denote the conformity score on the calibration dataset, and let
+S = ¯s(X, Y, Stest) represent the conformity score for the test instance.
+Since ¯s is deterministic and the tuples
+(X(1), Y (1), S(1)
+cal ), . . . , (X(|Dcal|), Y (|Dcal|), S(|Dcal|)
+cal
+), (X, Y, Stest) are i.i.d. random variables, S1, . . . , S|Dcal|, S are also
+i.i.d. random variables.
+Since S1, . . . , S|Dcal|, S are indentically distributed, they share the same CDF. Using the probability integral transform,
+FS(S) ∼U(0, 1). Thus, FS(S1), . . . , FS(S|Dcal|) correspond to uniform variates U1, . . . , U|Dcal|. Since there are no ties
+among the scores, FS is strictly increasing, and FS(S(j)) = U(j) for j = 1, . . . , |Dcal|, where S(j) and U(j) are the j-th
+order statistics. Hence:
+P(Y ∈ˆR(X) | Dcal, Scal) = P(S ≤S(kα) | S1, . . . , S|Dcal|)
+(65)
+= FS(S(kα))
+(66)
+= U(kα)
+(67)
+∼Beta(kα, |Dcal| + 1 −kα).
+(68)
+The final step results from the distribution of uniform order statistics. Taking the expectation of the Beta distribution gives:
+P(Y ∈ˆR(X)) = E[P(Y ∈ˆR(X) | Dcal, Scal)] =
+kα
+|Dcal| + 1 ≥1 −α.
+(69)
+E.2. Proofs of asymptotic conditional coverage
+E.2.1. L-CP
+Proposition 2. Assuming |Dcal| →∞and ˆQ(Z; X)
+d.= Y |X, L-CP achieves conditional coverage.
+Proof. We first show that the conditional coverage of L-CP is equal to the CDF of the random variable dZ(Z) in ˆq, i.e.,
+20
+Multi-Output Conformal Regression
+FdZ(Z)(ˆq). Given x ∈X, we have:
+P(Y ∈ˆRL-CP(X) | X = x)
+(70)
+=P(Y ∈{ ˆQ(z; x) : z ∈RZ(ˆq)} | X = x)
+(71)
+=P( ˆQ−1(Y ; X) ∈RZ(ˆq) | X = x)
+(Invertibility of ˆQ(·; X))
+(72)
+=P(Z ∈RZ(ˆq))
+( ˆQ(Z; X)
+d.= Y |X)
+(73)
+=P(dZ(Z) ≤ˆq)
+(74)
+=FdZ(Z)(ˆq).
+(75)
+Marginalizing over X, we obtain that the marginal coverage is also equal to FdZ(Z)(ˆq):
+P(Y ∈ˆRL-CP(X))
+(76)
+=EX
+h
+P(Y ∈ˆRL-CP(X) | X)
+i
+(77)
+=EX
+
+FdZ(Z)(ˆq)
+
+(78)
+=FdZ(Z)(ˆq)
+(79)
+In the limit of |Dcal| →∞, thanks to the Glivenko-Cantelli theorem, P(Y ∈ˆRL-CP(X)) = 1 −α and the quantile ˆq obtained
+by SCP is thus F −1
+dZ(Z)(1 −α).
+Finally, we obtain that the conditional coverage is equal to 1 −α:
+P(Y ∈ˆRL-CP(X) | X = x)
+(80)
+=FdZ(Z)(F −1
+dZ(Z)(1 −α))
+(81)
+=1 −α.
+(82)
+E.2.2. C-HDR AND C-PCP
+Lemma 2. Assuming |Dcal| →∞, any conformal method with conformity score sCDF (12) achieves conditional coverage,
+independently from the conformity score sW of the base method. With the additional assumption that K →∞and ˆf = f,
+sECDF (13) achieves conditional coverage.
+Proof. Let W = sW (X, Y ) and consider x ∈X and y ∈Y. By the probability integral transform, sCDF(x, Y ) =
+FW |X=x(W | X = x) ∼U(0, 1).
+Marginalizing over X, we obtain:
+P(Y ∈ˆRCDF(X)) = P(sCDF(X, Y ) ≤ˆq)
+(83)
+= EX[P(sCDF(X, Y ) ≤ˆq | X)]
+(84)
+= EX[P(U ≤ˆq)]
+(85)
+= EX[ˆq]
+(86)
+= ˆq,
+(87)
+where U ∼U(0, 1). In the limit of |Dcal| →∞, thanks to the Glivenko-Cantelli theorem, P(Y ∈ˆRCDF(X)) = 1 −α and
+the quantile ˆq obtained by SCP is thus 1 −α.
+Finally, we note that:
+P(Y ∈ˆRCDF(X) | X = x) = P(sCDF(X, Y ) ≤ˆq | X = x)
+(88)
+= P(U ≤1 −α)
+(89)
+= 1 −α.
+(90)
+21
+Multi-Output Conformal Regression
+Assuming ˆf = f, observe that, for any x ∈X and y ∈Y, sECDF(x, y) →sCDF(x, y) as K →∞by the law of large
+numbers. Thus, under these conditions, any conformal method with conformity score sECDF achieves conditional coverage.
+Proposition 3. Assuming |Dcal| →∞and K →∞, both C-HDR and C-PCP with the oracle base predictor ˆf = f achieve
+conditional coverage.
+Proof. The proof is direct by Lemma 2 with sW (x, y) = sDR-CP(x, y) for C-HDR and sW (x, y) = sPCP(x, y) for C-
+PCP.
+E.2.3. M-CP
+Consider M-CP with exact quantile estimates ˆli(x) = QYi(αl | x) and ˆui(x) = QYi(αu | x) where QYi(α | x) is the
+quantile function of Yi conditional to X = x evaluated in α. This section introduces two propositions where M-CP requests
+two different nominal coverage levels αu −αl, namely
+d√1 −α and 1 −α. The propositions show that M-CP can achieve
+conditional coverage under two contrasting scenarios: independence or total dependence between the dimensions of the
+output.
+Proposition 4. Assuming Y1, . . . , Yd are conditionally independent given X, M-CP achieves conditional coverage if
+αu −αl =
+d√1 −α.
+Proof. For any x ∈X and i ∈[d], we first establish that the
+d√1 −αth quantile of the distribution of si(X, Yi) given X = x
+equals 0:
+P(si(X, Yi) ≤0 | X = x) = P(max{li(X) −Y, Y −ui(X)} ≤0 | X = x)
+(91)
+= P(li(X) ≤Y ∧Y ≤ui(X) | X = x)
+(92)
+= 1 −P(li(X) > Y ∨Y > ui(X) | X = x)
+(93)
+= 1 −P(li(X) > Y | X = x) −P(Y > ui(X) | X = x)
+(94)
+= 1 −αl −(1 −αu)
+(95)
+= αu −αl
+(96)
+=
+d√
+1 −α.
+(97)
+Using (97), we show that the 1 −αth quantile of the distribution of s(X, Y ) given X = x is 0:
+P(sM-CP(X, Y ) ≤0 | X = x) = P(si(X, Yi) ≤0, ∀i ∈[d] | X = x)
+(98)
+= P(s1(X, Y1) ≤0 ∧· · · ∧sd(X, Yd) ≤0 | X = x)
+(99)
+= P(s1(X, Y1) ≤0 | X = x) . . . P(sd(X, Yd) ≤0 | X = x)
+(100)
+=
+d√
+1 −α
+d
+(101)
+= 1 −α,
+(102)
+where (100) is obtained by conditional independence of Y1, . . . , Yd given X. Marginalizing over X, we obtain that the
+1 −αth quantile of s(X, Y ) is 0:
+P(sM-CP(X, Y ) ≤0) = EX[P(sM-CP(X, Y ) ≤0 | X)]
+(103)
+= EX[1 −α]
+(104)
+= 1 −α.
+(105)
+In the limit of |Dcal| →∞, thanks to the Glivenko-Cantelli theorem, P(Y ∈ˆRM-CP(X)) = 1−α and the quantile ˆq obtained
+by SCP is thus 0.
+Finally, using (102) and ˆq = 0, we obtain that M-CP achieves conditional coverage:
+P(Y ∈ˆRM-CP(X) | X = x) = P(sM-CP(X, Y ) ≤ˆq | X = x) = 1 −α.
+(106)
+22
+Multi-Output Conformal Regression
+Proposition 5. Assuming Y1|X
+a.s.
+= . . .
+a.s.
+= Yd|X, M-CP achieves conditional coverage if αu −αl = 1 −α.
+Proof. Let x ∈X. Using (96), we first show that the 1 −αth conditional quantile of the distribution of si(X, Yi), for any
+i ∈[d], is 0:
+P(si(X, Yi) ≤0 | X = x) = αu −αl
+(107)
+= 1 −α.
+(108)
+Using (108), we show that the 1 −αth quantile of the distribution of s(X, Y ) given X is 0:
+P(s(X, Y ) ≤0 | X = x) = P(si(X, Yi) ≤0, ∀i ∈[d] | X = x)
+(109)
+= P(s1(X, Y1) ≤0 ∧· · · ∧sd(X, Yd) ≤0 | X = x)
+(110)
+= P(s1(X, Y1) ≤0 | X = x)
+(111)
+= 1 −α,
+(112)
+where (111) is due to Y1|X
+a.s.
+= . . .
+a.s.
+= Yd|X, which implies that, conditional to X = x, l1(X) = · · · = ld(X) and
+u1(X) = · · · = ud(X) and thus s1(X, Y1) = · · · = sd(X, Yd). Using (105), we obtain that ˆq = 0, Finally, using (112), we
+obtain that M-CP achieves conditional coverage:
+P(Y ∈ˆR(X) | X = x) = P(s(X, Y ) ≤0 | X = x) = 1 −α.
+(113)
+E.3. Connection between sample-based and density-based methods
+This section proves the connections between sample-based and density-based methods as introduced in Section 5.3. We start
+by restating a known lemma of conformal prediction.
+Lemma 3. Consider a conformal prediction method with conformity score s. If g : R →R is a strictly increasing function,
+then the method with conformity score g ◦s will produce the same prediction regions.
+Proof. For any x ∈X, consider the prediction region created with s as in Section 2.1:
+ˆR(x) =
+
+y ∈Y : s(x, y) ≤Quantile
+ {si}i∈[|Dcal|] ∪{∞}; kα
+	
+.
+(114)
+Since g is strictly increasing,
+ˆR(x) =
+
+y ∈Y : g(s(x, y)) ≤g
+ Quantile
+ {si}i∈[|Dcal|] ∪{∞}; kα
+	
+(115)
+=
+
+y ∈Y : g(s(x, y)) ≤Quantile
+ {g(si)}i∈[|Dcal|] ∪{∞}; kα
+	
+.
+(116)
+Since (116) corresponds to the prediction region with conformity score g ◦s, this shows that the two methods create the
+same regions.
+Proposition 1. PCP is equivalent to DR-CP with ˆf = ˆfmax. Similarly, HD-PCP is equivalent to DR-CP with ˆf = ˆfmax where
+only ⌊(1 −α)L⌋samples with the highest density among { ˜Y (l)}l∈[L] are kept. Finally, C-PCP is equivalent to C-HDR with
+ˆf = ˆfmax.
+Proof. In the following proof, we note a ↑b to signify that there exists a strictly increasing function g such that a = g(b).
+Consider DR-CP with ˆf = ˆfmax. We have:
+sDR-CP(x, y) = −ˆfmax(y | x)
+(117)
+↑−max
+l∈[L] fS(y; ˜Y (l))
+
+ˆfmax(y | x) = max
+l∈[L] fS(y; ˜Y (l))/C
+
+(118)
+= min
+l∈[L] −fS(y; ˜Y (l))
+(119)
+↑min
+l∈[L]∥y −˜Y (l)∥2
+ fS(y; ˜Y (l)) has spherical level sets centered at ˜Y (l)
+(120)
+= sPCP(x, y).
+(121)
+23
+Multi-Output Conformal Regression
+We obtain the equivalence between the two methods by Lemma 3. The proof for HD-PCP follows the same arguments.
+We now consider C-HDR with ˆf = ˆfmax. We have:
+sC-HDR(x, y) = 1
+K
+X
+k∈[K]
+1( ˆfmax( ˆY (k) | x) ≥ˆfmax(y | x))
+where ˆY (k) ∼ˆfY |X=x, k ∈[K].
+(122)
+Developing the inequality for k ∈[K], we obtain:
+ˆfmax( ˆY (k) | x) ≥ˆfmax(y | x)
+(123)
+⇐⇒max
+l∈[L] fS( ˆY (k); ˆY (l)) ≥max
+l∈[L] fS(y; ˆY (l))
+
+ˆfmax(y | x) = max
+l∈[L] fS(y; ˜Y (l))/C
+
+(124)
+⇐⇒min
+l∈[L] −fS( ˆY (k); ˆY (l)) ≤min
+l∈[L] −fS(y; ˆY (l))
+(125)
+⇐⇒min
+l∈[L]∥ˆY (k) −˜Y (l)∥2 ≤min
+l∈[L]∥y −˜Y (l)∥2.
+ fS(y; ˜Y (l)) has spherical level sets centered at ˜Y (l)
+(126)
+(127)
+Noting that (122) with (127) corresponds to the conformity score of C-PCP, we obtain the equivalence.
+F. Experimental setup
+This section describes our experimental setup in more details. Computations were performed based on 2 workstations, one
+with with 2 A6000 GPUs and 64 CPU threads, and one with 2 A5000 GPUs and 64 CPU threads, running for 48 hours.
+F.1. Datasets
+We consider a total of 13 datasets that have been used in previous studies. Since our focus is on multivariate prediction
+regions, we select only datasets with an output that is at least two-dimensional. Specifically, we include 6 datasets from
+Feldman et al., 2023, 4 datasets from Tsoumakas et al., 2011 (MULAN benchmark), 1 dataset from Wang et al., 2023b, 1
+datasets from Barrio et al., 2024, and 1 dataset from Camehl et al., 2024.
+Each dataset is split into training, validation, calibration, and test sets with 2048 points reserved for calibration. The
+remaining data is split into 55% for training, 15% for validation and 30% for testing. The preprocessing follows the setup
+described in Grinsztajn et al., 2022. Table 3 provides the detailed characteristics of each dataset.
+Table 3: Characteristics of each dataset considered in this study.
+Nb instances
+Nb features p
+Nb targets d
+Source
+Dataset
+Camehl
+households
+7207
+4
+4
+Mulan
+scm20d
+8966
+60
+16
+rf1
+9005
+64
+8
+rf2
+9005
+64
+8
+scm1d
+9803
+279
+16
+Feldman
+meps_21
+15656
+137
+2
+meps_19
+15785
+137
+2
+meps_20
+17541
+137
+2
+house
+21613
+14
+2
+bio
+45730
+8
+2
+blog_data
+50000
+55
+2
+Del Barrio
+calcofi
+50000
+1
+2
+Wang
+taxi
+50000
+4
+2
+F.2. Base predictors
+We consider multiple base predictors and focus on MQF2 for our main experiments (Section 6).
+24
+Multi-Output Conformal Regression
+MQF2.
+The Multivariate Quantile Function Forecaster (MQF2, Kan et al., 2022) is a normalizing flow that is directly
+compatible with most of the methods presented since it is invertible, has an explicit PDF, and can be sampled from. M-CP,
+CopulaCPTS and STDQR require small adaptations from the original methods, as discussed below. The quantile function ˆQ
+and distribution function ˆQ−1 of MQF2 exhibit cyclical monotonicity, meaning they are the gradient of a convex function
+(Hallin et al., 2021).
+The main idea behind MQF2 is to interpret Convex Potential Flows (Huang et al., 2020) as multivariate (vector) quantile
+functions, in the sense that the representation property (128) and cyclical monotonicity property (129) are satisfied (Carlier
+et al., 2016):
+Y = ˆQ(Z; x)
+∀x ∈X where Z ∼U(0, 1)d,
+(128)
+
+ˆQ(z1; x) −ˆQ(z2; x)
+T
+(z1 −z2) ≥0
+∀x ∈X, z1, z2 ∈Z.
+(129)
+When d = 1, this reduces to the classical univariate quantile function. In practice, we follow Kan et al., 2022 and use a
+quantile vector that follows a normal distribution Z ∼N(0, I), allowing better training.
+The underlying model of MQF2 is a partially input-convex neural network (PINN, Amos et al., 2017) with two hidden
+layers, each containing 30 units. Increasing the number of parameters did not significantly improve performance, which is
+partly due to the efficiency of Convex Potential Flows compared to other normalizing flows (Huang et al., 2020). While
+hyperparameter tuning for each dataset could enhance performance, it is not the primary focus of this paper.
+MQF2 is trained using maximum likelihood estimation with early stopping, with a patience of 15 epochs, where validation
+loss is measured every two epochs.
+Distributional Random Forests.
+Distributional Random Forest (Cevid et al., 2022) is a model built upon the Random
+Forest algorithm, which adaptively identifies the relevant training data points for any given test point. More specifically,
+given a test point x ∈X, Distributional Random Forest outputs a weight w(x(i) | x) for each training point x(i) with
+x(i) ∈Dtrain. This approach enables accurate estimation of any quantity of interest conditional on x ∈X. In our experiments,
+we estimate the conditional distribution Y |X as a Gaussian mixture, with each component centered on a training point and
+weighted by the Distributional Random Forest.
+The PDF at y ∈Y given x ∈X is expressed as:
+ˆf(y | x) =
+|Dtrain|
+X
+i=1
+w(x(i) | x) · N(y | y(i), σId),
+where σ is tuned by minimizing the NLL on a grid search. For the Distributional Random Forest, the minimum node size is
+set to 15, the forest consists of 2000 trees, and the splitting criterion is the maximum mean discrepancy (MMD).
+Since this method does not operate in a latent space, we do not consider L-CP in combination with this base predictor. CD
+diagrams for this predictor are presented in Section G.2.
+Multivariate Gaussian Mixture Model parameterized by a hypernetwork.
+As another base predictor, we consider a
+multivariate Gaussian Mixture Model parameterized by a hypernetwork. The hypernetwork is a multilayer perceptron (MLP)
+that outputs the parameters of a mixture of M multivariate Gaussian distributions. Given x ∈X, for each mixture component
+m ∈[M], the hypernetwork outputs the logit zm(x) (for the categorical distribution over the mixture components), the mean
+µm(x) (component location), and the lower triangular Cholesky factor Lm(x) (representing the scale of the covariance
+matrix).
+The mixture weights πm(x) are obtained by applying the softmax function to the logits zm(x), ensuring they sum to 1. The
+covariance matrices Σm(x) for each component are constructed by taking the product Lm(x)Lm(x)⊤, guaranteeing that
+they are positive semi-definite.
+The PDF evaluated in y ∈Y conditional to x ∈X is given by:
+ˆf(y | x) =
+M
+X
+m=1
+πm(x) · N(y | µm(x), Σm(x)).
+25
+Multi-Output Conformal Regression
+The model is trained using maximum likelihood estimation with M = 10.
+Similarly to Distributional Random Forests, this method does not operate in a latent space, and thus we do not consider
+L-CP. CD diagrams for this predictor are presented in Section G.3.
+F.3. Adaptation of conformal methods into a common framework.
+To ensure a fair comparison among conformal methods, we apply the calibration step using the same base predictors. Only
+M-CP, CopulaCPTS, and STDQR require slight modifications from their original formulations.
+For M-CP and CopulaCPTS, direct estimation of marginal distributions for each output Yi, i ∈[d] is infeasible with MQF2.
+Instead, we estimate the lower and upper quantiles by first sampling { ˆY (l)}l∈[L] from ˆfY |X=x given x ∈X, and then
+computing the empirical quantiles ˆY (⌊L α
+2 ⌋)
+i
+and ˆY (⌊L(1−α
+2 )⌋)
+i
+. Sampling time is not accounted in time computations
+for these methods. While a more computationally efficient base predictor could be used, this approach ensures a direct
+comparison with other conformal methods by maintaining consistency in the base predictor.
+For STDQR, we modify the original method by replacing the conditional variational autoencoder (CVAE) with a normalizing
+flow. Following recommendations for future work from Feldman et al., 2023, we exploit the property that the output is
+normally distributed in the latent space and replace the base predictor by a normalizing flow. This adaptation leverages
+the assumption that the output is normally distributed in the latent space, allowing for an exact inverse transformation and
+eliminating a potential source of noise. To construct a region RZ with coverage 1 −α in the latent space, we select the 1 −α
+proportion of samples closest to the origin, ensuring correct coverage without the need for directional quantile regression.
+The calibration procedure remains unchanged.
+F.4. Metrics
+Marginal coverage.
+Marginal coverage is measured using
+MC =
+1
+|Dtest|
+X
+(x,y)∈Dtest
+1(y ∈ˆR(x)).
+Region size.
+We report the mean region size
+Mean Size =
+1
+|Dtest|
+X
+(x,y)∈Dtest
+| ˆR(x)|.
+To avoid large regions disproportionately affecting the result, we also report the median of the region sizes
+Median Size = Quantile({| ˆR(x)|}(x,y)∈Dtest; 0.5)
+Computing the size of the region is challenging in high dimensions. Hence, we propose an unbiased estimator of the region
+size using importance sampling:
+| ˆR(x)| =
+Z
+Y
+1(y ∈ˆR(x))dy = E ˆY ∼ˆ
+f(x)
+"
+1( ˆY ∈ˆR(x))
+ˆf( ˆY | x)
+#
+≈1
+K
+K
+X
+k=1
+1( ˆY (k) ∈ˆR(x))
+ˆf( ˆY (k) | x)
+,
+(130)
+where ˆY (k) ∼ˆfY |X=x, k ∈[K]. This estimator is compatible with all base predictors in Section F.2 since it is both possible
+to sample from their predictive distribution and evaluate the PDF. In Section F.7, we discuss the efficiency of this estimator.
+Conditional coverage.
+To ensure a robust evaluation of conditional coverage, we consider three different conditional
+coverage metrics, detailed in Section F.6. The Worst Slab Coverage (WSC, Cauchois et al., 2021) groups inputs into "slabs"
+and evaluates the worst obtained coverage. The coverage error conditional to X (CEC-X) partitions the input space X and
+evaluates coverage on each subset. The coverage error conditional to V = ˆf( ˆY | X), where ˆY ∼ˆfY |X, (CEC-V, Izbicki
+et al., 2022; Dheur et al., 2024), creates a partition based on the distribution of V , which is more robust to high-dimensional
+inputs.
+26
+Multi-Output Conformal Regression
+Computing time.
+We report the total time required for calibration and testing the marginal coverage. Specifically, this
+requires evaluating conformity scores on Dcal followed by evaluating conformity scores on Dtest.
+F.5. Multi-Model, Multi-Dataset Comparison
+In order to determine whether there are significant differences in model performance, we first apply the Friedman test
+(Friedman, 1940). Following the recommendations of Benavoli et al. (2016), we then conduct a pairwise post-hoc analysis
+using the Wilcoxon signed-rank test (Wilcoxon, 1945), coupled with Holm’s alpha correction (Holm, 1979) to adjust for
+multiple comparisons.
+The results are visualized using critical difference (CD) diagrams (Demšar, 2006). In these diagrams, models are ranked,
+with a lower rank (positioned further to the right) indicating better performance. A thick horizontal line connects models
+whose performances are not statistically different at the 0.05 significance level.
+For MC and WSC, the CD diagrams report |MC −(1 −α)| and |WSC −(1 −α)|, both of which should be minimized.
+F.6. Metrics of Conditional Coverage
+Worst Slab Coverage.
+Introduced in Cauchois et al., 2021, the Worst Slab Coverage (WSC) metric quantifies the minimal
+coverage over all possible slabs in Rd, where each slab contains at least a fraction δ of the total mass, with 0 < δ ≤1. For a
+given vector v ∈Rd, the WSC associated with v, denoted as WSCv, is defined by:
+WSCv = inf
+a<b
+n
+ˆPDtest
+
+yi ∈ˆR(xi) | a ≤v⊺xi ≤b
+
+s.t. ˆPDtest(a ≤v⊺xi ≤b) ≥δ
+o
+,
+(131)
+where a, b ∈R. This metric assesses conditional coverage by focusing on inputs xi that lie within a slab defined by v, using
+the inner product v⊺xi to measure similarity.
+To estimate the worst-case slab, we follow the method from Cauchois et al., 2021, uniformly sampling 1,000 vectors vj
+from the unit sphere Sd−1 and calculating:
+WSC =
+min
+vj∈Sd−1 WSCvj.
+(132)
+To mitigate overfitting on the test dataset, we partition the test set into two subsets, Dtest = D(1)
+test ∪D(2)
+test, as in Romano et al.,
+2020; Sesia and Romano, 2021. We identify the worst combination of a, b, and v on D(1)
+test by minimizing the WSC metric
+with δ = 0.2, and then evaluate conditional coverage on the separate subset D(2)
+test.
+CEC-X.
+CEC-X approximates conditional coverage by partitioning the input space X ∈X ⊆Rp. We apply the k-
+means++ clustering algorithm on the inputs X(i) in the validation dataset Dval, creating a partition A = A1 ∪· · · ∪AJ over
+X. The Coverage Error Conditional to X is defined as:
+CEC-X =
+1
+|Dtest|
+|Dtest|
+X
+i=1
+J
+X
+j=1
+
+ˆPDtest
+
+y(i) ∈ˆR(x(i))
+    x(i) ∈Aj
+
+−(1 −α)
+2
+.
+(133)
+CEC-V.
+CEC-V is similar to CEC-X, but the conditioning is on the distribution of log V = log ˆf( ˆY | X), where
+ˆY ∼ˆfY |X. Unlike CEC-X, CEC-V is more robust to high-dimensional inputs. This approach originates from the CD-split+
+method (Izbicki et al., 2022) and has been adapted to multivariate outputs in Dheur et al., 2024.
+In practice, given an input x, a new feature vx is created. First, samples vi from V | X = x are generated by sampling
+y1, . . . , ym ∼ˆfY |X=x and evaluating vi = ˆf(yi | x). The resulting vector vx = (v(1), . . . , v(m)) consists of the order
+statistics v(i) from v1, . . . , vm.
+27
+Multi-Output Conformal Regression
+0
+20
+40
+60
+80
+100
+K
+0.4
+0.6
+0.8
+1.0
+1.2
+1.4
+log ˆV
+d = 1
+0
+20
+40
+60
+80
+100
+K
+12.5
+13.0
+13.5
+14.0
+14.5
+15.0
+15.5
+d = 10
+0
+20
+40
+60
+80
+100
+K
+140
+142
+144
+146
+d = 100
+0
+20
+40
+60
+80
+100
+K
+1420.0
+1422.5
+1425.0
+1427.5
+1430.0
+1432.5
+1435.0
+d = 1000
+100
+101
+102
+103
+104
+d
+100
+101
+102
+103
+104
+K = 100
+log V
+log ˆV
+Figure 11: Panels 1 to 4: Trajectories of the log volume estimator with increasing K compared to the true log volume
+(dashed line) for different output dimensions d. Panel 5: Log volume estimator with K = 100 compared to the true log
+volume (dashed line).
+The k-means++ clustering algorithm is applied on the vectors log vX(i) in the validation dataset Dval, and a partition
+AV = A1 ∪· · · ∪AJ over Rm is obtained. The Coverage Error Conditional to the distribution of V is then computed
+according to (133), using the partition AV .
+Dheur et al., 2024 notes that the distance function corresponding to this partitioning approach is the 2-Wasserstein distance
+with respect to the distribution of V .
+F.7. Estimator for the region size
+In this section, we discuss the efficiency of the region size estimator introduced in Section F.4. This estimator is based on a
+density estimator ˆfY |X=x and a sample ˆY (k), k ∈[K], drawn i.i.d. from the conditional distribution Y | X = x for any
+x ∈X. Specifically, the estimator is given by:
+ˆV (x) = 1
+K
+K
+X
+k=1
+1( ˆY (k) ∈ˆR(x))
+ˆf( ˆY (k) | x)
+.
+While the estimator is unbiased, i.e., E[ ˆV (x)] = | ˆR(x)|, we want to study its variance. Let I = 1( ˆY ∈ˆR(x)) represent the
+indicator that a sample ˆY lies within the prediction region ˆR(x), and let ρ = P( ˆY ∈ˆR(x)) denote the coverage probability
+obtained from the samples based on our density estimator. Using the law of total variance, we obtain the following expression
+for the variance of ˆV (x):
+V
+h
+ˆV (x)
+i
+= 1
+K V
+"
+I
+ˆf( ˆY | x)
+#
+= 1
+K
+ 
+E
+"
+V
+"
+I
+ˆf( ˆY | x)
+      I
+##
++ V
+"
+E
+"
+I
+ˆf( ˆY | x)
+      I
+##!
+= 1
+K
+
+ρV
+"
+1
+ˆf( ˆY | x)
+#
++ ρ(1 −ρ)E
+"
+1
+ˆf( ˆY | x)
+#2
+.
+Assuming that the density estimate corresponds to the true density, i.e.
+ˆfY |X=x = fY |x(· | x) and that ˆR achieves
+conditional coverage, then ρ = 1 −α, and we obtain:
+V
+h
+ˆV (x)
+i
+= 1
+K
+ 
+(1 −α)V
+
+1
+fY |x(Y | x)
+
++ α(1 −α)E
+
+1
+fY |x(Y | x)
+2!
+.
+This indicates that the variance of our estimator only depends on the variance and expectation of the random variable
+1
+f(Y |x).
+In this case, the variance does not directly depend on the output dimension d.
+Figure 11 shows how the estimator behaves in a scenario with a specific density estimator and prediction region with varying
+output dimension d and an 80% coverage level. Since there is no dependence on X, we abbreviate the notation as follows:
+28
+Multi-Output Conformal Regression
+ˆR = ˆR(x), ˆf(y) = ˆf(y | x), and ˆV = ˆV (x) for any x ∈X. The density estimator is a standard normal distribution
+ˆf(y) = N(y; 0, Id) and the prediction region is a ball ˆR =
+n
+y ∈Y : ∥y∥2 ≤F −1
+χ2
+d (1 −α)
+o
+, where χ2
+d is the chi-squared
+distribution with d degrees of freedom and F −1
+χ2
+d is its quantile function. It can be shown that P ˆY ∼ˆ
+f(·)( ˆY ∈ˆR) = 1 −α. In
+this case, the volume V of ˆR can be computed exactly.
+Each of the first four panels in Figure 11 shows five trajectories for log ˆV as K increases from 1 to 100. The true volume,
+log V , of the prediction region is indicated by a dashed line. We observe that the estimator converges within a reasonable
+range of the true volume for varying output dimensions d. The last panel illustrates the value of log ˆV as a function of d,
+with log V again marked by a dashed line. From this, we observe that the estimator remains close to the true volume across
+different output dimensions d.
+G. Additional results
+This section presents additional results for MQF2 (Section G.1), Distributional Random Forests (Section G.2) and the
+Multivariate Gaussian Mixture Model (Section G.3). The experimental setup is described in Section F.
+G.1. MQF²
+Figure 12 presents the marginal coverage and median region size across datasets of increasing size for MQF2. In Panel 1,
+all methods except CopulaCPTS attain precise marginal coverage. This is expected since these methods follow the SCP
+algorithm (Section 2.1) and their marginal coverage conditional on the calibration dataset and samples from the calibration
+dataset follows a Beta distribution whose parameters only depend on the size of the calibration dataset (Section E.1). While
+CopulaCPTS attains marginal coverage, the larger variance in its marginal coverage arises because it does not follow the
+SCP algorithm.
+In Panel 2, the median region size is normalized between 0 and 1 for each dataset in order to facilitate comparison. We
+observe that C-HDR often obtains the smallest median region size. The performance of the other methods can vary highly
+across datasets for the median region size and is better visualized in a CD diagram (see Figure 13).
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.70
+0.75
+0.80
+0.85
+0.90
+Marginal coverage
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.00
+0.25
+0.50
+0.75
+1.00
+Median Region Size
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+STDQR
+C-PCP
+L-CP
+Figure 12: Marginal coverage and median region size with the base predictor MQF2 across datasets sorted by size.
+Figure 13 presents critical difference diagrams for three conditional coverage metrics (CEC-X, CEC-Z and WSC), the
+mean region size and median region size, the total calibration and test time. Results are consistent with the results from the
+main text.
+29
+Multi-Output Conformal Regression
+Dataset
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+STDQR
+C-PCP
+L-CP
+households
+14.20.48
+12.30.87
+13.20.29
+10.60.33
+20.50.38
+15.60.39
+17.80.41
+15.50.74
+18.60.80
+scm20d
+67.68.5
+1.12e+022.1e+01
+2.33e+022.2e+01
+42.07.9
+1.05e+021.1e+01
+94.49.4
+99.41.0e+01
+26.03.1
+72.01.0e+01
+rf2
+0.005470.0027
+0.005550.0033
+0.002150.0010
+0.0006900.00032
+0.007000.0036
+0.006170.0030
+0.006240.0031
+0.002620.0012
+0.001040.00048
+rf1
+0.005470.0027
+0.005550.0033
+0.002150.0010
+0.0006900.00032
+0.007000.0036
+0.006170.0030
+0.006240.0031
+0.002620.0012
+0.001040.00048
+scm1d
+0.5280.046
+0.3230.050
+0.8670.078
+0.2390.026
+0.6980.065
+0.6840.062
+0.6710.069
+0.2160.024
+0.1970.020
+meps_21
+0.1850.013
+0.1710.014
+0.2270.013
+0.1320.024
+0.3590.021
+0.2460.015
+0.2830.015
+0.2200.021
+0.2440.052
+meps_19
+0.2140.022
+0.5950.42
+0.1750.011
+0.1190.019
+0.3960.059
+0.2660.033
+0.3070.043
+0.2380.026
+0.2320.043
+meps_20
+0.3710.061
+0.3620.059
+0.2230.020
+0.1140.012
+0.5350.050
+0.4360.066
+0.4720.052
+0.3410.039
+0.2800.028
+house
+1.170.023
+1.220.043
+0.6640.021
+0.6510.016
+0.8820.023
+0.6800.018
+0.7990.023
+0.8580.018
+1.190.017
+bio
+0.3030.0066
+0.2960.0092
+0.2570.0067
+0.2180.0053
+0.3430.0076
+0.2590.0065
+0.2690.0067
+0.3020.0074
+0.2670.0061
+blog_data
+0.1700.039
+0.09480.015
+0.03740.0056
+0.01550.0031
+0.1410.023
+0.1250.023
+0.1630.036
+0.1060.021
+0.06760.017
+calcofi
+2.130.024
+2.380.12
+1.670.022
+1.990.026
+2.330.029
+1.890.029
+1.970.021
+2.810.042
+2.700.024
+taxi
+4.260.068
+4.720.11
+2.620.029
+2.620.033
+4.030.040
+3.180.030
+3.630.058
+4.020.064
+4.940.12
+Table 4: Median region size with the base predictor MQF2.
+Dataset
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+STDQR
+C-PCP
+L-CP
+households
+36.90.86
+35.11.4
+15.70.63
+40.11.2
+33.82.1
+30.12.1
+28.82.1
+62.62.5
+50.61.4
+scm20d
+7.03e+062.5e+06
+3.82e+071.6e+07
+6.40e+031.9e+03
+5.30e+092.1e+09
+1.61e+045.1e+03
+1.56e+045.1e+03
+1.59e+045.1e+03
+1.37e+091.0e+09
+2.20e+109.1e+09
+rf1
+1.86e+021.0e+02
+1.83e+029.6e+01
+15.19.9
+3.50e+021.7e+02
+1.29e+028.1e+01
+1.09e+026.7e+01
+4.05e+052.1e+05
+9.85e+024.8e+02
+4.01e+021.9e+02
+rf2
+1.86e+021.0e+02
+1.83e+029.6e+01
+15.19.9
+3.51e+021.7e+02
+1.29e+028.1e+01
+1.09e+026.7e+01
+4.05e+052.1e+05
+9.87e+024.8e+02
+4.02e+021.9e+02
+scm1d
+2.37e+055.7e+04
+1.81e+055.1e+04
+78.41.6e+01
+2.73e+085.3e+07
+57.31.8e+01
+43.01.1e+01
+43.61.1e+01
+1.48e+084.9e+07
+1.52e+082.6e+07
+meps_21
+1.210.045
+1.170.046
+0.3150.020
+1.440.14
+0.6170.029
+0.5580.026
+0.5530.025
+2.070.10
+1.960.34
+meps_19
+1.140.027
+1.110.031
+0.2930.018
+1.290.056
+0.5810.027
+0.5590.021
+0.5370.021
+1.960.072
+1.520.053
+meps_20
+1.200.045
+1.170.038
+0.3090.014
+1.300.047
+0.6060.020
+0.5620.020
+0.5460.018
+2.010.11
+1.590.064
+house
+1.830.027
+1.810.038
+0.8870.033
+1.090.033
+1.230.034
+0.9640.030
+1.140.030
+1.440.040
+1.710.013
+bio
+1.400.39
+1.420.39
+0.2690.010
+0.4860.037
+0.3960.014
+0.2970.0090
+0.3110.010
+1.410.31
+2.570.77
+calcofi
+2.040.023
+2.220.071
+1.420.018
+1.950.040
+2.220.031
+1.700.022
+1.780.026
+2.830.036
+2.340.044
+blog_data
+0.3900.017
+0.3900.016
+0.08520.0050
+0.3750.018
+0.1730.0097
+0.1630.0078
+0.1880.0067
+0.6130.028
+0.5200.027
+taxi
+5.680.084
+6.350.16
+2.670.047
+3.210.049
+4.550.090
+3.540.075
+3.990.071
+5.360.090
+6.510.12
+Table 5: Mean region size with the base predictor MQF2.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+PCP
+DR-CP
+STDQR
+HD-PCP
+CopulaCPTS
+M-CP
+C-HDR
+L-CP
+C-PCP
+Rank of CEC-X (x100)
+1
+2
+3
+4
+5
+6
+7
+8
+9
+PCP
+DR-CP
+STDQR
+HD-PCP
+CopulaCPTS
+M-CP
+C-HDR
+C-PCP
+L-CP
+Rank of CEC-Z (x100)
+1
+2
+3
+4
+5
+6
+7
+8
+9
+PCP
+DR-CP
+STDQR
+HD-PCP
+M-CP
+CopulaCPTS
+L-CP
+C-HDR
+C-PCP
+Rank of WSC
+1
+2
+3
+4
+5
+6
+7
+8
+9
+C-PCP
+CopulaCPTS
+M-CP
+C-HDR
+L-CP
+PCP
+STDQR
+HD-PCP
+DR-CP
+Rank of Mean Region Size
+1
+2
+3
+4
+5
+6
+7
+8
+9
+PCP
+STDQR
+CopulaCPTS
+M-CP
+HD-PCP
+L-CP
+C-PCP
+DR-CP
+C-HDR
+Rank of Median Region Size
+Figure 13: CD diagrams with the base predictor MQF2 with 10 runs per dataset and method.
+G.2. Distributional Random Forests
+Figure 14 presents additional results for the base predictor Distributional Random Forests. Since this model does not rely on
+a latent space, results for STDQR and L-CP are not included.
+In terms of conditional coverage, the results align with those of MQF2, with C-PCP and C-HDR outperforming DR-CP, PCP,
+and HD-PCP. Notably, M-CP achieves competitive conditional coverage, suggesting it pairs well with DRF-KDE. Similar to
+MQF2, all methods except for CopulaCPTS attain precise marginal coverage.
+The median region size is normalized to a [0,1] range for each dataset to facilitate comparison. We observe that C-HDR
+generally achieves the smallest median region size, followed by DR-CP. The test time is the lowest for M-CP and CopulaCPTS
+30
+Multi-Output Conformal Regression
+while C-PCP and C-HDR obtain the highest computation times.
+10
+1
+100
+CEC-X (x100)
+10
+1
+100
+CEC-Z (x100)
+0.5
+0.6
+0.7
+0.8
+0.9
+WSC
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.70
+0.75
+0.80
+0.85
+0.90
+Marginal coverage
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Median Region Size
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+10
+1
+100
+101
+102
+Time (s)
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+C-PCP
+Figure 14: Conditional coverage metrics with the base predictor Distributional Random Forests across datasets sorted by
+size.
+Figure 15 shows CD diagrams obtained with Distributional Random Forests as the base predictor. The results are consistent
+with Figure 14.
+1
+2
+3
+4
+5
+6
+7
+DR-CP
+PCP
+HD-PCP
+CopulaCPTS
+C-HDR
+C-PCP
+M-CP
+Rank of CEC-X (x100)
+1
+2
+3
+4
+5
+6
+7
+DR-CP
+PCP
+HD-PCP
+C-HDR
+CopulaCPTS
+M-CP
+C-PCP
+Rank of CEC-Z (x100)
+1
+2
+3
+4
+5
+6
+7
+DR-CP
+PCP
+HD-PCP
+C-HDR
+CopulaCPTS
+C-PCP
+M-CP
+Rank of WSC
+1
+2
+3
+4
+5
+6
+7
+CopulaCPTS
+M-CP
+C-PCP
+PCP
+HD-PCP
+C-HDR
+DR-CP
+Rank of Mean Region Size
+1
+2
+3
+4
+5
+6
+7
+PCP
+C-PCP
+HD-PCP
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+Rank of Median Region Size
+1
+2
+3
+4
+5
+6
+7
+C-HDR
+C-PCP
+HD-PCP
+PCP
+DR-CP
+CopulaCPTS
+M-CP
+Rank of Time (s)
+Figure 15: CD diagrams with the base predictor Distributional Random Forests based on 10 runs per dataset and method.
+G.3. Multivariate Gaussian Mixture Model
+Figure 16 presents additional results for the base predictor Multivariate Gaussian Mixture Model. Similarly to Distributional
+Random Forests, this model does not rely on a latent space and thus results for STDQR and L-CP are not included.
+The conditional coverage also aligns with MQF2, C-PCP and C-HDR outperforming DR-CP, PCP, and HD-PCP. M-CP and
+CopulaCPTS achieving intermediate conditional coverage. As expected, marginal coverage is precise for all methods except
+CopulaCPTS.
+C-HDR often obtains the smallest median region size, while DR-CP consistently attains the best mean region size.
+31
+Multi-Output Conformal Regression
+10
+1
+100
+CEC-X (x100)
+10
+2
+10
+1
+100
+CEC-Z (x100)
+0.5
+0.6
+0.7
+0.8
+0.9
+WSC
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.70
+0.75
+0.80
+0.85
+0.90
+Marginal coverage
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Median Region Size
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+10
+1
+Time (s)
+M-CP
+CopulaCPTS
+DR-CP
+C-HDR
+PCP
+HD-PCP
+C-PCP
+Figure 16: Conditional coverage metrics with the multivariate Gaussian mixture model base predictor across datasets sorted
+by size.
+CD diagrams in Figure 17 are consistent with Figure 16.
+1
+2
+3
+4
+5
+6
+7
+PCP
+DR-CP
+HD-PCP
+CopulaCPTS
+M-CP
+C-HDR
+C-PCP
+Rank of CEC-X (x100)
+1
+2
+3
+4
+5
+6
+7
+PCP
+DR-CP
+HD-PCP
+CopulaCPTS
+M-CP
+C-HDR
+C-PCP
+Rank of CEC-Z (x100)
+1
+2
+3
+4
+5
+6
+7
+PCP
+DR-CP
+HD-PCP
+M-CP
+CopulaCPTS
+C-HDR
+C-PCP
+Rank of WSC
+1
+2
+3
+4
+5
+6
+7
+C-PCP
+CopulaCPTS
+M-CP
+C-HDR
+PCP
+HD-PCP
+DR-CP
+Rank of Mean Region Size
+1
+2
+3
+4
+5
+6
+7
+PCP
+CopulaCPTS
+M-CP
+C-PCP
+HD-PCP
+DR-CP
+C-HDR
+Rank of Median Region Size
+1
+2
+3
+4
+5
+6
+7
+C-PCP
+C-HDR
+HD-PCP
+CopulaCPTS
+DR-CP
+PCP
+M-CP
+Rank of Time (s)
+Figure 17: CD diagrams based on Multivariate Gaussian Mixture Model parameterized by a hypernetwork with M = 10
+and 10 runs per dataset and method.
+G.4. Impact of the number of samples K
+Figures 18 and 19 illustrate how conditional coverage, marginal coverage and region size change as a function ofK on
+all datasets. For a better comparison among datasets, the metrics CEC-X, CEC-Z, the median region size and the mean
+region size are normalized between 0 and 1, with results averaged over 10 runs. Furthermore, the red line indicates a linear
+regression fit, allowing to see the trend.
+Conditional coverage metrics decreasing with K indicate that conditional coverage tends to improve with an increasing
+number of samples. This is expected since an increasing number of Monte-Carlo samples allows a better estimation of the
+CDF of the scores in (13). Marginal validity is obtained with any K. However, small sizes of K will lead to more duplicated
+conformity scores and thus a possibility of overcoverage. Median region sizes and mean region sizes also tend to decrease
+with K as the CDF approximation improves.
+32
+Multi-Output Conformal Regression
+10
+30
+100
+300
+K
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative CEC-X (x100)
+10
+30
+100
+300
+K
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative CEC-Z (x100)
+10
+30
+100
+300
+K
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+WSC
+10
+30
+100
+300
+K
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Marginal coverage
+10
+30
+100
+300
+K
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative Median Region Size
+10
+30
+100
+300
+K
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative Mean Region Size
+households
+scm20d
+rf1
+rf2
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+calcofi
+blog_data
+taxi
+Figure 18: Evolution of conditional coverage, marginal coverage and region sizes of C-PCP as a function of the number of
+samples K using the base predictor MQF2. The metrics CEC-X, and CEC-Z should be minimized, while the marginal
+coverage and WSC should approach 1 −α (indicated by the dashed black line). The red line, obtained by linear regression,
+indicates the general trend.
+10
+30
+100
+300
+K
+0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative CEC-X (x100)
+10
+30
+100
+300
+K
+0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative CEC-Z (x100)
+10
+30
+100
+300
+K
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+WSC
+10
+30
+100
+300
+K
+0.4
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Marginal coverage
+10
+30
+100
+300
+K
+0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative Median Region Size
+10
+30
+100
+300
+K
+0.2
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Relative Mean Region Size
+households
+scm20d
+rf1
+rf2
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+calcofi
+blog_data
+taxi
+Figure 19: Reproduction of Figure 18 for C-HDR.
+H. Comparison with Bonferroni correction
+To better understand the prediction regions produced by FWER control methods, we provide a qualitative and quantitative
+comparison with Bonferroni correction. We consider Bonferroni correction applied to the scores of CQR (see (16)), similarly
+to M-CP. Figure 20 provides an illustrative example, and Table 6 provides results on this same dataset. This shows that
+Bonferroni is computationally fast but produces larger regions due to the rectangular shape.
+33
+Multi-Output Conformal Regression
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+Oracle
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+Bonferroni
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+M-CP
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+DR-CP
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+C-HDR
+1
+0
+1
+X
+3
+2 1 0 1 2 3
+Y1
+2
+0
+2
+Y2
+L-CP
+ 
+Figure 20: Prediction regions for a bivariate unimodal dataset, conditional on a unidimensional input. The black, green, and
+yellow contours represent regions with nominal coverage levels of 20%, 40%, and 80%, respectively. The figure is similar to
+Figure 2 in the main text, with Bonferroni added as a comparison. Both Bonferroni and M-CP are based on Conformal
+Quantile Regression (CQR) applied separately for each dimension.
+Table 6: Detailed metrics for the unimodal heteroscedastic process from Figure 20, with 1 −α fixed to 0.8.
+MC
+Median Size
+CEC-X
+CEC-Z
+WSC
+Test time
+Method
+(×100)
+(×100)
+Bonferroni
+0.8130.0036
+9.070.15
+0.02410.012
+0.02490.0098
+0.8150.0063
+0.003395.9e-05
+M-CP
+0.8010.0037
+8.620.074
+0.02400.0031
+0.01570.0031
+0.7960.012
+0.09590.058
+DR-CP
+0.7960.0019
+6.830.042
+0.4320.019
+0.4030.015
+0.6970.0093
+0.05570.00075
+C-HDR
+0.8090.0025
+6.970.039
+0.01290.0059
+0.01550.0037
+0.8150.0030
+14.20.11
+L-CP
+0.7980.0024
+8.060.035
+0.005860.00095
+0.005490.0014
+0.7940.0039
+0.05840.0012
+I. Comparison between C-PCP and CP²-PCP
+In this section, we compare our proposed method, C-PCP, with the CP2-PCP method recently proposed by Plassier et al.,
+2025. More generally, we also compare the methods from the CP2 framework of Plassier et al., 2025 with our class of
+CDF-based conformity scores (Section 3.1 in the main text). In Section I.1, we present the more general CP2 framework
+using our own notation for clarity, with CP2-PCP as a particular case of CP2. In Section I.2, we discuss the asymptotic
+properties of CP2 and show the asymptotic equivalence with CDF-based methods. In Section I.3, we discuss the relationship
+between CDF-based and CP2-based methods.
+I.1. The CP² framework
+Let us define a family of non-decreasing nested regions {R(x; t)}t∈R such that T
+t∈R R(x; t) = ∅and S
+t∈R R(x; t) = Y,
+and T
+t′<t R(x; t′) = R(x; t). Without loss of generality, these nested regions are expressed in terms of a conformity score
+sW (x, y) ∈R as follows:
+R(x; t) = {y ∈Y : sW (x, y) ≤t},
+(134)
+where sW (x, y) is continuous in y.
+As the next step, we introduce a family of transformation functions fτ(λ) : R →R parameterized by τ ∈R. It is assumed
+34
+Multi-Output Conformal Regression
+that for any τ, the function λ 7→fτ(λ) is increasing and bijective. Let φ ∈R be a constant (e.g., φ = 1). We also define the
+function gφ(τ) = fτ(φ) and assume that τ 7→gφ(τ) is increasing and bijective.
+As a first step towards defining CP2, we construct a prediction region assuming knowledge of the conditional distribution
+FY |X. For a given input x ∈X, the prediction region is defined as:
+¯RCP2(x) = R(x; fτx(φ)),
+(135)
+where
+τx = inf {τ : P (Y ∈R(X; fτ(φ)) | X = x) ≥1 −α}
+(136)
+implies that ¯RCP2(x) guarantees conditional coverage given x. Furthermore, using (134) and defining the random variable
+W = sW (X, Y ), we can equivalently express (136) as
+τx = inf {τ : P (sW (X, Y ) ≤fτ(φ) | X = x) ≥1 −α}
+(137)
+= inf
+
+τ : P
+ g−1
+φ (sW (X, Y )) ≤τ | X = x
+
+≥1 −α
+	
+(138)
+= Qg−1
+φ (W )|X=x(1 −α)
+(139)
+= g−1
+φ (QW |X=x(1 −α)),
+(140)
+where we used that gφ is increasing and bijective, with g−1
+φ (fτ(φ)) = τ. In other words, τx is the 1−α quantile of g−1
+φ (W).
+However, in practice, τx cannot be computed directly because the true conditional distribution FY |x is unknown. Instead, it
+can be estimated using a sample ˆY (k), k ∈[K], drawn from the estimated conditional distribution ˆFY |X=x. If ˆQW |X=x(1 −
+α) is the 1 −α quantile of the empirical distribution 1
+K
+P
+k∈[K] δsW (x, ˆY (k)), we can compute
+ˆτx = g−1
+φ ( ˆQW |X=x(1 −α)).
+(141)
+It should be noted that this estimated prediction region loses the exact conditional and marginal coverage properties due to
+the reliance on the estimated conditional distribution. The following shows how conformal prediction can restore some
+coverage properties.
+From (134), using (135), we can write
+¯RCP2(x) = {y ∈Y : sW (x, y) ≤fτx(φ)}
+(142)
+=
+
+y ∈Y : f −1
+τx (sW (x, y)) ≤φ
+	
+,
+(143)
+where we used the invertibility of fτ for any τ ∈R.
+Based on (143), Plassier et al., 2025 defined the following conformity score:
+sCP2(x, y) = f −1
+ˆτx (sW (x, y)),
+(144)
+for which the corresponding prediction region ˆRCP2 is given by
+ˆRCP2(x) = {y ∈Y : sCP2(x, y) ≤ˆq},
+(145)
+where we used (2) from the main text.
+As an example, taking fτ(λ) = τλ and φ = 1, the conformity score becomes:
+sCP2(x, y) = sW (x, y)/ˆτx,
+(146)
+where ˆτx is defined in (141). Finally, we obtain CP2-PCP simply by replacing sW with sPCP in (146).
+35
+Multi-Output Conformal Regression
+I.2. Asymptotic properties
+I.2.1. ASYMPTOTIC EQUIVALENCE OF PREDICTION REGIONS
+In the following, we prove that the prediction regions generated by CP2 (for any fτ and φ) and CDF-based methods are
+identical in the oracle setting, asymptotically, as |Dcal| →∞. Specifically, for any x ∈X, both methods select the same
+threshold t1−α = QW (1 −α | X = x) for the prediction region R(x; t1−α), which ensures a coverage level of 1 −α.
+Proposition 6. Provided that the assumptions in Section I.1 hold, for any x ∈X, the prediction regions ¯RCP2(x) (for any
+choice of fτ and φ) and ˆRCDF(x) are equivalent.
+Proof. Using the fact that g−1
+φ (fτ(φ)) = τ for any τ ∈R and that gφ is increasing and bijective, we can write:
+¯RCP2(x) = {y ∈Y : sW (x, y) ≤fτx(φ)}
+(147)
+= {y ∈Y : g−1
+φ (sW (x, y)) ≤τx}
+(148)
+= {y ∈Y : g−1
+φ (sW (x, y)) ≤g−1
+φ (QW |X=x(1 −α))}
+(149)
+= {y ∈Y : sW (x, y) ≤QW |X=x(1 −α)}.
+(150)
+Let ¯RCDF(x) denote the prediction region obtained using the conformity score sCDF as |Dcal| →∞. As shown in Section 3.1,
+sCDF(X, Y ) ∼U(0, 1), which implies ˆq = 1 −α. Therefore:
+¯RCDF(x) = {y ∈Y : sCDF(x, y) ≤1 −α}
+(151)
+= {y ∈Y : FW |X=x(sW (x, y)) ≤1 −α}
+(152)
+= {y ∈Y : sW (x, y) ≤QW |X=x(1 −α)}.
+(153)
+This shows that ¯RCP2(x) = ¯RCDF(x) and that the threshold t1−α = QW |X=x(1 −α) is identical for both methods.
+I.2.2. ASYMPTOTIC CONDITIONAL COVERAGE
+Proposition 7. Provided that the assumptions in Section 5.2 of the main text hold, specifically that ˆFY |X=x = FY |x for all
+x ∈X, and |Dcal| →∞, CP2 achieves ACC as K →∞.
+Proof. Under these assumptions, we have ˆQW |X=x = QW |X=x, which implies ˆτx = τx for all x ∈X. Hence, the
+prediction region for CP2 is given by:
+¯RCP2(x) = {y ∈Y : sCP2(x, y) ≤φ}.
+Since this prediction region provides conditional coverage, it also ensures marginal coverage:
+P(Y ∈¯RCP2(X)) = P(sCP2(X, Y ) ≤φ)
+(154)
+= EX [P(sCP2(X, Y ) ≤φ | X)]
+(155)
+= EX [1 −α]
+(156)
+= 1 −α.
+(157)
+Since ˆq is the 1 −α quantile of sCP2(X, Y ), and as |Dcal| →∞, we have ˆq = φ by definition. Therefore, since ¯RCP2(x)
+achieves conditional coverage (see (136)), the region ˆRCP2(x) also achieves ACC:
+P(Y ∈ˆRCP2(X) | X = x) = P(sCP2(X, Y ) ≤ˆq | X = x)
+(158)
+= P(sCP2(X, Y ) ≤φ | X = x)
+(159)
+≥1 −α.
+(160)
+36
+Multi-Output Conformal Regression
+I.3. Relationship between CDF-based and CP²-based methods
+A natural question is whether there exists {fτ}τ∈R and φ ∈R (with the assumptions introduced in Section I.1) such
+that CDF-based and CP2-based methods produce the same regions. In the simple case where the distribution of the base
+conformity score is in a location family, Proposition 8 shows that the two methods are equivalent for a simple choice of fτ
+and ϕ. However, the proof is not easily generalizable to a location-scale family. Further development of existing classes of
+conformal methods with ACC and their intersections is a promising avenue for future research. Interestingly, we discuss
+below that answering this question would also draw links between established univariate conformal methods.
+Analogy to univariate conformal prediction.
+To further clarify the distinction between CDF- and CP²-based methods, we
+can draw an analogy to the established univariate methods Dist-split (DS, Izbicki et al., 2020) and Conformalized Quantile
+Regression (CQR, Romano et al., 2019). Since CDF- and CP²-based methods calibrate one quantile intead of an interval, we
+only consider the right-tail version of DS and CQR:
+• sECDF is analogous to DS but operates in the space of conformity instead of the output space Y. DS uses the estimated
+conditional CDF of the output variable, sDS(x, y) = ˆFY |X=x(y), transforming y based on its rank.
+• sCP² with difference adjustment is analogous to CQR, and also operates in the space of conformity instead of the output
+space Y. Note that CP2 with difference adjustment can be simplified to sCP²(x, y) = sW (x, y)−ˆQW |x(1−α). Similarly,
+CQR uses a score based on the difference from a single estimated conditional quantile, sCQR(x, y) = y −ˆQY |x(1 −α).
+Both CDF-based and CP2-based methods rely on a sample { ˆY (k)}K
+k=1 where ˆY (k) ∼ˆFY |X=x. The difference lies in the
+way they transform sW (x, y) to obtain ACC. Recall that the conformity scores sECDF and sCP2 are given by
+sECDF(x, y) = 1
+K
+X
+k∈[K]
+I
+
+sW (x, ˆY (k)) ≤sW (x, y)
+
+= ˆFW |X=x(sW (x, y)),
+(161)
+sCP2(x, y) = f −1
+ˆτx (sW (x, y)) where ˆτx = g−1
+φ ( ˆQW |X=x(1 −α)).
+(162)
+It is known that two conformal methods produce equal regions if and only if their conformity scores are equal after applying
+a strictly increasing function ϕ : R →R, i.e.:
+sECDF(x, y) = ϕ(sCP2(x, y))
+∀x ∈X, y ∈Y.
+(163)
+Given x ∈X, when K is finite, the conformity score sECDF(x, ·) is discontinuous and is thus necessarily different from
+the conformity score sCP2(x, ·), which is continuous. A more interesting setting is the case where K →∞and sECDF(x, ·)
+becomes continuous. We define the random variable ˆW = sW (X, ˆY ), with ˆY ∼ˆFY |X. Let F ˆ
+W |x and Q ˆ
+W |x denote the
+conditional CDF and QF of ˆW given X = x. The conformity scores are defined as follows:
+¯sECDF(x, y) = F ˆ
+W |x(sW (x, y)),
+(164)
+¯sCP2(x, y) = f −1
+ˆτx (sW (x, y)) where ˆτx = g−1
+φ (Q ˆ
+W |x(1 −α)).
+(165)
+Thus, we require that
+f −1
+τx (sW (x, y)) = ϕ(F ˆ
+W |x(sW (x, y)))
+∀x ∈X, y ∈Y
+(166)
+or equivalently
+f −1
+τx (w) = ϕ(F ˆ
+W |x(w))
+∀x ∈X, w ∈R.
+(167)
+In Proposition 8, we show that, in the particular case where the conditional distributions {F ˆ
+W |x}x∈X belong to a location
+family, there exists a simple choice of {fτ}τ∈R, φ ∈R and strictly increasing ϕ : R →R such that the two methods are
+equivalent.
+Proposition 8. Consider a scenario where all conditional distributions {F ˆ
+W |x}x∈X belong to a location family, i.e.,
+F ˆ
+W |x = F(w −ˆµx) and Q ˆ
+W |x(α) = F −1(α) + ˆµx,
+(168)
+for some continuous and strictly increasing base CDF F and location parameter ˆµx. The conformity scores ¯sECDF and ¯sCP2
+lead to the same prediction regions.
+37
+Multi-Output Conformal Regression
+Proof. We will show that there is a family of transformations {fτ}τ∈R, φ ∈R and strictly increasing ϕ : R →R with the
+assumptions above such that, for any x ∈X and w ∈R,
+f −1
+τx (w) = ϕ(F ˆ
+W |x(w | X = x))
+(169)
+Define the transformation function fτ as:
+fτ(λ) = F −1(λ) + τ,
+(170)
+where τ > 0, and define φ = 1 −α and ϕ(λ) = λ.
+The inverse transformations are:
+f −1
+τ
+(λ) = F(λ −τ),
+(171)
+and
+g−1
+φ (w) = w −F −1(φ).
+(172)
+Now, for x ∈X, compute
+ˆτx = F −1(1 −α) + ˆµx −F −1(φ) = ˆµx.
+(173)
+Finally, we obtain the required equality
+f −1
+ˆτx (w) = F(w −ˆτx) = F(w −ˆµx) = F ˆ
+W |x(w).
+(174)
+I.4. Empirical comparison
+We perform a direct empirical comparison between CDF-based methods (C-PCP, C-HDR) and the corresponding CP2
+methods (CP2-PCP, CP2-HPD using both linear (-L) and difference (-D) adjustments from Plassier et al., 2025). Figure 21
+shows that:
+• C-PCP performs comparably to CP²-PCP-L (best CP² variant for PCP).
+• C-HDR performs comparably to CP²-HPD-D (best CP² variant for HPD).
+• Other CP² variants (CP²-PCP-D, CP²-HPD-L) are generally outperformed by their CDF-based version.
+38
+Multi-Output Conformal Regression
+0.76
+0.78
+0.80
+0.82
+0.84
+Marginal coverage
+10
+2
+10
+1
+100
+CEC-X (x100)
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+10
+2
+10
+1
+100
+CEC-Z (x100)
+households
+scm20d
+rf2
+rf1
+scm1d
+meps_21
+meps_19
+meps_20
+house
+bio
+blog_data
+calcofi
+taxi
+0.5
+0.6
+0.7
+0.8
+0.9
+WSC
+C-PCP
+CP²-PCP-D
+CP²-PCP-L
+C-HDR
+CP²-HPD-D
+CP²-HPD-L
+Figure 21: Comparison of CDF-base d methods and CP2-based methods.
+The worsened conditional coverage of CP2-PCP-D is an interesting observation that was not observed in the smaller scale
+study of Plassier et al., 2025. In the case of CP2-HPD-L, the poor conditional coverage is due to an incompatibility of the
+linear adjustment function with the (log-scaled) conformity score sDR-CP(x, y) = −log ˆf(y|x), which can present negative
+values and thus a decreasing (instead of increasing) adjustment function fτ(λ) = τλ.
+This shows that our simpler sECDF formulation achieves the same practical benefits as sCP2 without the sensibility of choosing
+an adjustment function fτ.
+J. Results on an image dataset
+To better understand the behavior of prediction regions in high-dimensional spaces, we apply conformal methods to the
+CIFAR-10 dataset (Krizhevsky et al., 2014), which consists of 32x32 RGB images, each labeled with one of 10 possible
+classes. We train a generative model conditioned on the image label, where Y = [0, 1]3×32×32 (d = 3072) represents the
+image space, and X = {0, . . . , 9} (p = 1) represents the labels. The training, calibration, and test datasets contain 50,000,
+1,500, and 1,500 images, respectively. As noted in Angelopoulos and Bates, 2023, this calibration dataset size is sufficient to
+ensure good marginal coverage.
+Our generative model is a conditional Glow model (Kingma and Dhariwal, 2018) based on the implementation from Stimper
+et al., 2022 using a 3-level multi-scale architecture with 32 blocks per level. Like MQF2 (Section F.2), this generative model
+is a normalizing flow and directly compatible with all methods presented, except M-CP. For a direct comparison with M-CP,
+we compute quantiles based on samples from the generative model as in Section F.2.
+The latent space of the conditional Glow model, due to its multi-scale architecture, consists of three subspaces: Z = Z1 ×
+Z2 × Z3, where Z1 = R48×4×4, Z2 = R12×8×8, and Z3 = R6×16×16. As the distance function dZ in the latent space, we
+use the maximum norm across the three spaces to penalize high norms in any of them: dZ(z) = max{∥z1∥2, ∥z2∥2, ∥z3∥2},
+where z = z1 × z2 × z3.
+Table 7 presents the metrics introduced in Section F.4. All methods achieve marginal coverage despite the high dimensionality
+of Y, which is expected as the marginal coverage distribution conditional on the calibration dataset is independent of d
+39
+Multi-Output Conformal Regression
+(Section E.1). The median of the logarithm of the region size is the smallest for C-HDR and DR-CP, which matches results
+on tabular datasets. The mean region size is not reported because it becomes infinity with machine precision. Instead, we
+report the mean of the logarithm of the region size, with similar conclusions to the median region size.
+Regarding conditional coverage, as in other experiments, L-CP, C-HDR, C-PCP, and M-CP exhibit the smallest CEC-X and
+CEC-Z values, indicating superior conditional coverage. The WSC metric supports similar conclusions, with DR-CP and PCP
+being the least calibrated.
+Table 7: Results obtained with a conditional Glow model on CIFAR-10 with 1 −α = 0.9.
+MC
+Median Log Size
+Mean Log Size
+CEC-X
+CEC-Z
+WSC
+Time (s)
+Dataset
+Method
+(×100)
+(×100)
+cifar10
+M-CP
+0.9000.0035
+-7.10e+035.7
+-7.05e+031.3e+01
+0.1110.028
+0.2010.033
+0.8550.012
+0.4650.16
+DR-CP
+0.9030.0042
+-8.30e+031.4e+01
+-8.33e+031.4e+01
+0.1520.030
+0.3250.033
+0.8610.0064
+47.01.7e+01
+C-HDR
+0.9020.0041
+-8.33e+031.9e+01
+-8.40e+031.9e+01
+0.05330.010
+0.06290.020
+0.9030.0030
+4538.7e+01
+PCP
+0.8990.0038
+-7.11e+034.5
+-7.06e+031.3e+01
+0.3420.070
+0.1950.030
+0.8250.0098
+2033.5e+01
+HD-PCP
+0.8990.0038
+-7.12e+034.8
+-7.06e+031.2e+01
+0.3590.075
+0.1980.030
+0.8190.0098
+4066.9e+01
+STDQR
+0.8980.0046
+-7.11e+034.6
+-7.06e+031.2e+01
+0.3570.071
+0.2050.033
+0.8280.015
+2043.5e+01
+C-PCP
+0.9000.0036
+-7.08e+034.9
+-7.04e+031.1e+01
+0.1180.021
+0.08770.023
+0.8800.0067
+4086.9e+01
+L-CP
+0.9000.0033
+-7.19e+037.0
+-7.15e+031.1e+01
+0.06680.0086
+0.1900.027
+0.8770.011
+47.41.8e+01
+K. Full results
+Tables 8 and 9 show the full results obtained with the setup described in Section 6. Each metric is the mean over 10
+independent runs. The standard error of the mean is indicated as an index. For each dataset and metric, bold values indicate
+results statistically similar to the best performer (α = 0.05) according to a Z-test.
+40
+Multi-Output Conformal Regression
+Table 8: Full results obtained with the setup described in Section 6 (Part 1).
+MC
+Median Size
+CEC-X
+CEC-Z
+WSC
+Test time
+Dataset
+Method
+(×100)
+(×100)
+households
+M-CP
+0.8010.0051
+14.20.48
+0.3400.068
+0.3640.032
+0.7790.010
+5.690.49
+CopulaCPTS
+0.7820.0094
+12.30.87
+0.5240.057
+0.6510.058
+0.7450.016
+8.860.77
+DR-CP
+0.8020.0046
+13.20.29
+0.9870.10
+1.880.14
+0.6560.018
+0.2250.0092
+C-HDR
+0.8070.0054
+10.60.33
+0.2090.039
+0.1490.020
+0.7950.010
+6.120.50
+PCP
+0.7980.0048
+20.50.38
+1.070.085
+2.350.15
+0.6320.015
+5.480.46
+HD-PCP
+0.8000.0043
+15.60.39
+0.7760.091
+1.380.10
+0.7070.014
+5.760.47
+STDQR
+0.8040.0050
+17.80.41
+0.9180.073
+1.970.098
+0.6770.019
+8.450.79
+C-PCP
+0.8030.0066
+15.50.74
+0.1790.045
+0.1200.026
+0.8000.0061
+11.20.95
+L-CP
+0.8000.0034
+18.60.80
+0.2040.040
+0.1180.018
+0.7880.014
+0.1010.0043
+scm20d
+M-CP
+0.8000.0039
+67.68.5
+0.06820.011
+0.9140.061
+0.7770.0090
+8.080.17
+CopulaCPTS
+0.8330.0086
+1.12e+022.1e+01
+0.2210.063
+0.8780.043
+0.8020.012
+10.90.21
+DR-CP
+0.7990.0048
+2.33e+022.2e+01
+0.4290.044
+2.720.16
+0.6910.018
+0.5600.025
+C-HDR
+0.8060.0055
+42.07.9
+0.1590.024
+0.1020.017
+0.7960.0065
+9.420.18
+PCP
+0.7980.0051
+1.05e+021.1e+01
+0.5810.045
+5.280.23
+0.6210.016
+6.270.39
+HD-PCP
+0.7990.0049
+94.49.4
+0.5040.047
+4.780.23
+0.6710.011
+7.110.42
+STDQR
+0.8010.0047
+99.41.0e+01
+0.5400.052
+4.860.17
+0.6200.016
+8.150.29
+C-PCP
+0.8090.0038
+26.03.1
+0.1050.020
+0.08960.014
+0.7890.0066
+14.30.44
+L-CP
+0.7960.0035
+72.01.0e+01
+0.1660.033
+0.08730.018
+0.7860.0063
+0.09870.0059
+rf2
+M-CP
+0.7970.0046
+0.005470.0027
+0.2020.030
+0.9680.15
+0.6670.018
+20.72.4
+CopulaCPTS
+0.7850.010
+0.005550.0033
+0.2990.045
+1.180.17
+0.6350.019
+29.64.0
+DR-CP
+0.7990.0028
+0.002150.0010
+0.9490.21
+5.420.70
+0.5490.038
+0.3440.015
+C-HDR
+0.8010.0033
+0.0006900.00032
+0.1110.036
+0.2300.047
+0.7320.018
+21.52.4
+PCP
+0.8010.0022
+0.007000.0036
+0.8630.20
+5.950.48
+0.5380.030
+17.82.4
+HD-PCP
+0.8000.0024
+0.006170.0030
+0.7760.19
+5.580.49
+0.5630.029
+18.32.4
+STDQR
+0.8000.0032
+0.006240.0031
+0.7880.19
+5.670.50
+0.5660.025
+25.74.1
+C-PCP
+0.8020.0051
+0.002620.0012
+0.09250.016
+0.1690.027
+0.7320.017
+38.64.8
+L-CP
+0.8000.0026
+0.001040.00048
+0.1070.032
+0.2360.042
+0.7300.0093
+0.09600.0053
+rf1
+M-CP
+0.7970.0046
+0.005470.0027
+0.2020.030
+0.9680.15
+0.6670.018
+20.92.5
+CopulaCPTS
+0.7850.010
+0.005550.0033
+0.2990.045
+1.180.17
+0.6350.019
+29.84.1
+DR-CP
+0.7990.0028
+0.002150.0010
+0.9490.21
+5.420.70
+0.5490.038
+0.3350.016
+C-HDR
+0.8010.0033
+0.0006900.00032
+0.1110.036
+0.2300.047
+0.7320.018
+21.72.5
+PCP
+0.8010.0022
+0.007000.0036
+0.8630.20
+5.950.48
+0.5380.030
+17.92.4
+HD-PCP
+0.8000.0024
+0.006170.0030
+0.7760.19
+5.580.49
+0.5630.029
+18.42.4
+STDQR
+0.8000.0032
+0.006240.0031
+0.7880.19
+5.670.50
+0.5660.025
+25.74.1
+C-PCP
+0.8020.0051
+0.002620.0012
+0.09250.016
+0.1690.027
+0.7320.017
+38.84.9
+L-CP
+0.8000.0026
+0.001040.00048
+0.1070.032
+0.2360.042
+0.7300.0093
+0.09760.0057
+scm1d
+M-CP
+0.7960.0027
+0.5280.046
+1.020.060
+2.420.094
+0.6360.017
+85.62.4e+01
+CopulaCPTS
+0.7320.011
+0.3230.050
+1.720.20
+3.490.27
+0.5820.017
+87.82.4e+01
+DR-CP
+0.7930.0036
+0.8670.078
+1.500.087
+5.170.20
+0.5590.0097
+0.5840.025
+C-HDR
+0.8120.0046
+0.2390.026
+0.4520.062
+0.1140.015
+0.7610.010
+87.02.4e+01
+PCP
+0.7950.0054
+0.6980.065
+1.770.12
+8.110.23
+0.5160.013
+5.530.34
+HD-PCP
+0.7950.0053
+0.6840.062
+1.750.11
+7.960.22
+0.5300.017
+6.410.38
+STDQR
+0.7950.0064
+0.6710.069
+1.780.13
+8.070.23
+0.5020.017
+6.870.23
+C-PCP
+0.8030.0053
+0.2160.024
+0.4560.066
+0.1540.028
+0.7510.0044
+91.12.4e+01
+L-CP
+0.7990.0045
+0.1970.020
+0.4630.059
+0.1080.017
+0.7310.014
+0.1020.0056
+meps_21
+M-CP
+0.8000.0051
+0.1850.013
+0.9260.096
+0.7750.099
+0.7010.010
+1.35e+021.7e+01
+CopulaCPTS
+0.7780.0064
+0.1710.014
+0.9570.13
+0.6930.099
+0.6840.011
+1.61e+021.9e+01
+DR-CP
+0.8030.0023
+0.2270.013
+3.750.16
+4.380.52
+0.5310.012
+0.2280.011
+C-HDR
+0.8070.0046
+0.1320.024
+0.4370.045
+0.2600.041
+0.7450.013
+1.35e+021.7e+01
+PCP
+0.8010.0031
+0.3590.021
+3.170.13
+3.750.44
+0.5500.0078
+78.48.3
+HD-PCP
+0.8020.0024
+0.2460.015
+2.090.15
+2.180.28
+0.6010.010
+78.78.3
+STDQR
+0.8020.0022
+0.2830.015
+2.600.12
+2.970.36
+0.5820.011
+96.09.9
+C-PCP
+0.8050.0026
+0.2200.021
+0.1650.044
+0.08510.025
+0.7750.0065
+2.13e+022.3e+01
+L-CP
+0.8010.0034
+0.2440.052
+0.7700.13
+0.4220.11
+0.6850.026
+0.1250.0073
+meps_19
+M-CP
+0.8030.0027
+0.2140.022
+0.7020.049
+0.6220.086
+0.7090.0095
+1.44e+022.3e+01
+CopulaCPTS
+0.8040.022
+0.5950.42
+1.130.26
+0.9260.29
+0.7210.030
+1.77e+022.8e+01
+DR-CP
+0.7950.0028
+0.1750.011
+3.910.18
+3.980.73
+0.5010.013
+0.2240.011
+C-HDR
+0.8070.0039
+0.1190.019
+0.3800.036
+0.2450.039
+0.7530.013
+1.44e+022.3e+01
+PCP
+0.7940.0033
+0.3960.059
+2.950.23
+3.510.53
+0.5420.013
+99.91.7e+01
+HD-PCP
+0.7960.0032
+0.2660.033
+1.980.14
+2.050.35
+0.5830.0090
+1.00e+021.7e+01
+STDQR
+0.7910.0032
+0.3070.043
+2.630.23
+2.950.49
+0.5570.014
+1.17e+021.8e+01
+C-PCP
+0.8100.0021
+0.2380.026
+0.1280.016
+0.07570.024
+0.7970.0088
+2.44e+023.9e+01
+L-CP
+0.8030.0033
+0.2320.043
+0.6790.13
+0.4150.13
+0.7020.022
+0.1230.0069
+41
+Multi-Output Conformal Regression
+Table 9: Full results obtained with the setup described in Section 6 (Part 2).
+MC
+Median Size
+CEC-X
+CEC-Z
+WSC
+Test time
+Dataset
+Method
+(×100)
+(×100)
+meps_20
+M-CP
+0.8060.0042
+0.3710.061
+0.8680.10
+0.4550.12
+0.7020.014
+1.93e+022.1e+01
+CopulaCPTS
+0.7940.0091
+0.3620.059
+0.9630.12
+0.4970.12
+0.6920.016
+2.30e+022.4e+01
+DR-CP
+0.8050.0036
+0.2230.020
+3.520.11
+2.790.76
+0.5300.0098
+0.2270.010
+C-HDR
+0.8050.0044
+0.1140.012
+0.4390.10
+0.1220.036
+0.7450.010
+1.94e+022.1e+01
+PCP
+0.8010.0036
+0.5350.050
+2.830.091
+2.420.67
+0.5440.0088
+1.20e+021.4e+01
+HD-PCP
+0.8040.0039
+0.4360.066
+1.890.13
+1.340.37
+0.6220.012
+1.20e+021.4e+01
+STDQR
+0.8030.0048
+0.4720.052
+2.450.15
+1.840.50
+0.5750.016
+1.40e+021.6e+01
+C-PCP
+0.8060.0041
+0.3410.039
+0.1860.061
+0.04840.010
+0.7920.013
+3.13e+023.1e+01
+L-CP
+0.7990.0033
+0.2800.028
+0.6620.073
+0.2590.081
+0.7030.014
+0.1270.0062
+house
+M-CP
+0.8010.0023
+1.170.023
+0.2540.023
+0.1900.019
+0.7300.0098
+56.03.8e+01
+CopulaCPTS
+0.8120.0082
+1.220.043
+0.3160.035
+0.2760.027
+0.7500.012
+60.73.8e+01
+DR-CP
+0.8010.0041
+0.6640.021
+0.8950.045
+1.200.073
+0.6270.011
+0.2830.011
+C-HDR
+0.8070.0039
+0.6510.016
+0.3880.026
+0.1140.013
+0.7090.010
+56.63.8e+01
+PCP
+0.8010.0026
+0.8820.023
+0.7530.030
+1.140.038
+0.6430.0076
+17.60.98
+HD-PCP
+0.8030.0034
+0.6800.018
+0.6940.033
+0.7890.035
+0.6490.0089
+18.00.99
+STDQR
+0.8010.0042
+0.7990.023
+0.6700.022
+0.7880.038
+0.6490.0077
+19.50.88
+C-PCP
+0.8090.0030
+0.8580.018
+0.2750.026
+0.08310.011
+0.7290.0091
+73.73.8e+01
+L-CP
+0.8020.0035
+1.190.017
+0.1740.020
+0.05420.0079
+0.7560.0090
+0.1460.0067
+bio
+M-CP
+0.8090.0021
+0.3030.0066
+0.1370.0093
+0.2530.013
+0.7640.0055
+1.27e+026.0
+CopulaCPTS
+0.8000.0045
+0.2960.0092
+0.1370.0083
+0.2600.015
+0.7510.0068
+1.45e+027.1
+DR-CP
+0.8050.0020
+0.2570.0067
+0.5070.028
+1.140.034
+0.6460.0066
+0.5110.020
+C-HDR
+0.8080.0015
+0.2180.0053
+0.03720.0073
+0.03600.0056
+0.7940.0054
+1.29e+026.0
+PCP
+0.8020.0021
+0.3430.0076
+0.5670.029
+1.320.023
+0.6280.0052
+1.27e+026.1
+HD-PCP
+0.8040.0016
+0.2590.0065
+0.3520.020
+0.8030.020
+0.6730.0043
+1.27e+026.1
+STDQR
+0.8030.0024
+0.2690.0067
+0.3890.019
+0.9120.036
+0.6670.0058
+86.66.5
+C-PCP
+0.8100.0029
+0.3020.0074
+0.03690.0063
+0.04040.0069
+0.7980.0052
+2.54e+021.2e+01
+L-CP
+0.8050.00093
+0.2670.0061
+0.02030.0045
+0.01980.0021
+0.7890.0039
+0.2510.013
+blog_data
+M-CP
+0.8020.0049
+0.1700.039
+0.2920.051
+0.1530.072
+0.7360.012
+5.06e+037.0e+02
+CopulaCPTS
+0.8130.0078
+0.09480.015
+0.3130.050
+0.2310.063
+0.7420.010
+5.13e+037.1e+02
+DR-CP
+0.8080.0014
+0.03740.0056
+1.060.098
+1.500.43
+0.6440.0059
+0.5150.026
+C-HDR
+0.8090.0030
+0.01550.0031
+0.2370.068
+0.06110.019
+0.7510.013
+5.06e+037.0e+02
+PCP
+0.8010.0033
+0.1410.023
+0.9380.081
+1.520.36
+0.6430.0052
+5.74e+027.9e+01
+HD-PCP
+0.8030.0038
+0.1250.023
+0.7940.075
+0.9450.22
+0.6600.0080
+5.75e+027.9e+01
+STDQR
+0.8100.0072
+0.1630.036
+0.8050.074
+0.8810.18
+0.6780.012
+5.84e+028.0e+01
+C-PCP
+0.8040.0045
+0.1060.021
+0.1630.049
+0.1130.056
+0.7640.012
+5.63e+037.3e+02
+L-CP
+0.8010.0023
+0.06760.017
+0.3270.088
+0.06240.023
+0.7220.012
+0.2580.012
+calcofi
+M-CP
+0.8030.0023
+2.130.024
+0.4330.015
+0.4460.016
+0.7340.0069
+26.41.1
+CopulaCPTS
+0.8150.0075
+2.380.12
+0.4800.048
+0.4920.048
+0.7460.0096
+29.61.2
+DR-CP
+0.8050.0027
+1.670.022
+1.440.040
+1.560.039
+0.6540.0061
+0.5290.023
+C-HDR
+0.8050.0018
+1.990.026
+0.02940.012
+0.01870.0037
+0.7940.0053
+27.71.2
+PCP
+0.8020.0026
+2.330.029
+1.640.042
+1.790.041
+0.6380.0034
+26.51.2
+HD-PCP
+0.8020.0033
+1.890.029
+0.9800.033
+1.050.030
+0.6830.0050
+27.31.2
+STDQR
+0.7990.0034
+1.970.021
+1.130.031
+1.230.033
+0.6760.0080
+26.40.99
+C-PCP
+0.8090.0030
+2.810.042
+0.03320.0093
+0.02530.0048
+0.8060.0050
+52.92.3
+L-CP
+0.8000.0020
+2.700.024
+0.03320.019
+0.01790.0040
+0.7920.0035
+0.2640.012
+taxi
+M-CP
+0.8020.0032
+4.260.068
+0.05850.0034
+0.04210.0058
+0.7840.0052
+60.68.6
+CopulaCPTS
+0.8220.0040
+4.720.11
+0.1140.018
+0.09890.019
+0.7990.0050
+68.49.7
+DR-CP
+0.8050.0024
+2.620.029
+0.3830.016
+0.4510.024
+0.7070.0048
+0.5390.031
+C-HDR
+0.8090.0030
+2.620.033
+0.03880.0049
+0.04410.0053
+0.7930.0040
+61.98.6
+PCP
+0.8040.0016
+4.030.040
+0.3410.022
+0.3990.025
+0.7150.0042
+60.28.5
+HD-PCP
+0.8050.0018
+3.180.030
+0.1940.012
+0.2190.012
+0.7500.0055
+61.18.5
+STDQR
+0.8050.0035
+3.630.058
+0.2030.011
+0.2240.013
+0.7480.0080
+32.41.1
+C-PCP
+0.8070.0026
+4.020.064
+0.03070.0053
+0.03380.0048
+0.8020.0050
+1.21e+021.7e+01
+L-CP
+0.8050.0033
+4.940.12
+0.02640.0030
+0.01960.0035
+0.7960.0046
+0.2430.012
+42

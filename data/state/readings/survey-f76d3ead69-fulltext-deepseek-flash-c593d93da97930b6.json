@@ -1,0 +1,81 @@
+{
+  "title_zh": "城市状态表示：面向自主移动的多模态感知、架构、数据集与基准综述",
+  "affiliations": [
+    "University of Central Florida"
+  ],
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "把 ego、V2X、航拍、轨迹与语言纳入同一可写可读状态，并用平台覆盖图暴露跨社区数据缺口，回应了领域碎片化问题。",
+    "novelty": 78,
+    "novelty_reason": "提出分层 georeferenced state 与一组 desiderata，把表示按“谁写入/谁读取”重排，并给出共享性评分协议，超出文献罗列。",
+    "technical_depth": 72,
+    "technical_depth_reason": "对融合阶段、跨平台同步误差、几何基础模型和世界模型的机制有对比，但多数表示家族只到代表工作层面，记分卡是 rubric 判断而非实测。"
+  },
+  "reading": {
+    "why_read": "以“城市状态表示”为统一视角，把多平台感知、表示家族、架构与数据集串成一条链，并指出真正缺口在跨平台联合数据与共享性度量。",
+    "scope": "覆盖城市移动相关的感知与表示工作：ego、路侧、V2X、无人机/卫星、GNSS 轨迹与地图先验；表示家族、融合与端到端/VLM/世界模型架构、下游任务、数据集与评测，并汇总 26 个数据集与仿真器。作者明言这是概念透镜而非新方法，对架构、世界模型和城市计算只作入门性覆盖。",
+    "evolution": "领域从单车 BEV/occupancy 感知，走向多车 V2X 特征共享与路侧协同；神经场/3DGS 把场景重建变成可复用的持久层，VLM/VLA 与世界模型则把状态推向语言推理和动作条件预测。综述用“谁写入、谁读取”重排这条脉络：先定义分层状态，再比较编码器与融合算子，最后落到闭环评测。",
+    "approaches": [
+      {
+        "point": "BEV/occupancy：共享的中层几何状态",
+        "detail": "把多传感器与多车特征投影到地图锚定网格，便于协作融合；代价是稠密特征带宽高、高度轴和范围受限，跨行程持久性弱。"
+      },
+      {
+        "point": "Vectorized maps / road graphs：紧凑持久层",
+        "detail": "折线与路网图带宽低、可跨行程复用，适合静态/半静态层；但丢失外观与车道级几何，难直接接感知。"
+      },
+      {
+        "point": "Neural fields / 3DGS：可重渲染的持久场景",
+        "detail": "用 NeRF/3DGS 重建街景，支撑仿真与数字孪生；多需逐场景离线拟合，不确定性标定弱。"
+      },
+      {
+        "point": "Language tokens / VLM-VLA：可解释的语义读口",
+        "detail": "把场景压成语言/token，开放词汇与问答强；但度量精度、延迟与 grounding 是代价。"
+      },
+      {
+        "point": "World-model latents：动作条件预测状态",
+        "detail": "学习 $S_{t+1}\\sim f(S_t,a_t)$ 预测视频或 occupancy，适合仿真与规划；通常未地理锚定，也不跨智能体共享。"
+      }
+    ],
+    "key_differences": "核心分歧是状态写在哪一层、用什么粒度共享：BEV/occupancy 密度高、跨平台可融但吃带宽，矢量化/路网图省带宽却丢外观；神经场/3DGS 持久但偏离线，语言/世界模型潜变量可推理可生成却难地理锚定与审计。协作融合在 DAIR-V2X 上把 AP@0.5 从 50.0 提到 63.7，但带宽与延迟未同步报告；另一条轴是显式可校验与隐式任务优化的取舍。",
+    "bottlenecks": "最要紧的是联合多平台数据缺失：现有数据以 ego 为主（21/26），没有数据集把路侧与航拍或全网轨迹同场景配对；其次是跨城市/跨传感器迁移与端到端标定不确定性。",
+    "future_directions": "作者议程：联合数据集、通用写入编码器、城市级持久状态、端到端不确定性与可信生成评测。我的判断：先补联合数据与不确定性传播；USR-5 仍是展望，仅写入测试可填。"
+  },
+  "claims": [
+    {
+      "claim": "综述汇总了 26 个城市数据集与仿真器。",
+      "numbers": [
+        "26"
+      ],
+      "source_span": "Abstract",
+      "quote": "compile 26 urban datasets and simulators across ego, cooperative (V2X), aerial, trajectory, and language settings"
+    },
+    {
+      "claim": "现有数据以 ego 为主：26 个数据集中有 21 个包含 ego 平台。",
+      "numbers": [
+        "21",
+        "26"
+      ],
+      "source_span": "Section 8",
+      "quote": "Ego data dominate (21 of 26)."
+    },
+    {
+      "claim": "在 DAIR-V2X 上，协作检测把 AP@0.5 从 50.0 提到 63.7。",
+      "numbers": [
+        "63.7",
+        "0.5",
+        "50.0"
+      ],
+      "source_span": "Section 9",
+      "quote": "cooperative detection on DAIR-V2X reaches 63.7 AP@0.5 versus 50.0 without collaboration"
+    },
+    {
+      "claim": "USR-5 仍是展望而非已验证基准，目前仅写入测试能由已发表结果填充。",
+      "numbers": [
+        "5"
+      ],
+      "source_span": "Section 9",
+      "quote": "USR-5 is an outlook, not a validated benchmark: no system has been scored on all five tests and only T1 can be filled from published numbers"
+    }
+  ]
+}

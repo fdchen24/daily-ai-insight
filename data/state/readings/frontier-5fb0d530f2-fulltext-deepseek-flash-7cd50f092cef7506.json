@@ -1,0 +1,73 @@
+{
+  "title_zh": "Cognitive Supersensing：面向多模态大语言模型的潜在视觉推理训练范式",
+  "affiliations": [
+    "University of Illinois Urbana-Champaign",
+    "PediaMed AI"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 MLLM 从感知推向认知视觉推理，给出五维基准与可训练的 latent supervision，并覆盖 OOD 与通用能力，问题重要且结果有跟进价值。",
+    "novelty": 77,
+    "novelty_reason": "LVIP 以推理前缀为条件预测答案选项表征，并把该一致性写进 GFlowNet/SubTB 奖励，较 ROSS 的输入重建和通用 latent scratchpad 有实质差异，但整体仍是辅助 embedding 监督与 RL 的组合。",
+    "technical_depth": 81,
+    "technical_depth_reason": "同骨干同数据微调基线、逐模块消融、bootstrap/McNemar 和 noise injection/latent patching/linear probing 构成较完整证据链；但 LVIP 目标本身是正确答案选项 embedding，所谓排除 shortcut 的结论仍可争议，闭源基线异常低也削弱外部效度。"
+  },
+  "reading": {
+    "why_read": "提出 Cognitive Supersensing 训练范式：LVIP 头随文本推理前缀预测答案选项的 latent visual imagery，再用答案证据与 latent grounding 的 GFlowNet 式 RL 优化 rationale；配套 CogSense-Bench，8B 模型平均 73.8。",
+    "task": "多模态大模型能识别图中有什么，却难以在脑内保持、变换和模拟抽象视觉状态；现有做法把中间计算外化成文本 CoT，旋转、动力模拟、矩阵规则等被压成离散 token，造成表示瓶颈。现有 VQA 基准又多测语义识别，缺认知维度的系统诊断。",
+    "findings": [
+      {
+        "point": "文本 CoT 是 visuospatial 计算的窄接口",
+        "detail": "旋转、连续动力学、矩阵规则本质是几何变换或结构化视觉关系，强行压成线性 token 会丢失空间信息，使多步推理变脆。"
+      },
+      {
+        "point": "现有 latent 视觉监督未对准答案方向",
+        "detail": "输入重建或通用 visual scratchpad 只要求保留输入信息，无法约束中间 latent 逐步收敛到支持答案的视觉状态；LVIP 因此把预测条件在推理前缀上并锚定答案选项表征。"
+      },
+      {
+        "point": "现有 VQA 基准测不出认知缺口",
+        "detail": "以语义识别和描述为主的评测无法定位抽象规则、心理模拟等能力短板；作者按五维重评后发现 SoTA 即使加 CoT 仍在各维度全面偏低。"
+      }
+    ],
+    "method": "先构建 CogSense-Bench 及配套训练集；Stage I 用 GPT-5 生成 CoT 并按答案一致性过滤。Stage II 在 LLM 主干上接两层 MLP 的 LVIP 头，对选项图像 token 隐状态做 average pooling，预测正确答案选项的视觉 embedding，以 MSE 与文本交叉熵联合训练，使 latent 随推理前缀演化。Stage III 用 GFlowNet/SubTB 做多样性 RL，奖励为冻结 scorer 的答案证据加 LVIP 一致性，推理时采样多条 rationale 按长度归一化证据选答案。",
+    "results": "作者报告在 CogSense-Bench 上平均 73.8，较最强同规模微调基线高 4.7，较 GPT-5.2 高 33.5；OOD EMMA 的 Chemistry/Mathematics 分别提升 6.2/8.8，通用基准与 base 基本持平。",
+    "limitations": "LVIP 以正确选项图的 embedding 为监督，更像答案导向的辅助表征学习而非中间视觉模拟；且依赖多选图，开放式 VQA 难套用。基准由现有数据重组，闭源基线偏低，外部效度待验。"
+  },
+  "claims": [
+    {
+      "claim": "CogSense-8B 在 CogSense-Bench 上平均 73.8，较最强同规模微调基线高 4.7。",
+      "numbers": [
+        "73.8",
+        "4.7"
+      ],
+      "source_span": "Table 1, row 'CogSense-8B (Ours)'",
+      "quote": "73.8↑4.7"
+    },
+    {
+      "claim": "CogSense-8B 的平均准确率较 GPT-5.2 高 33.5。",
+      "numbers": [
+        "33.5"
+      ],
+      "source_span": "Introduction",
+      "quote": "surpassing GPT-5.2 by +33.5"
+    },
+    {
+      "claim": "在 EMMA Chemistry 子集上，CogSense-8B 达到 45.4，较 backbone 提升 6.2。",
+      "numbers": [
+        "45.4",
+        "6.2"
+      ],
+      "source_span": "Table 5, row 'CogSense-8B (Ours)'",
+      "quote": "45.4↑6.2"
+    },
+    {
+      "claim": "在 EMMA Mathematics 子集上，CogSense-8B 达到 34.8，较 backbone 提升 8.8。",
+      "numbers": [
+        "34.8",
+        "8.8"
+      ],
+      "source_span": "Table 5, row 'CogSense-8B (Ours)'",
+      "quote": "34.8↑8.8"
+    }
+  ]
+}

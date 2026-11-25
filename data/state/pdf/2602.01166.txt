@@ -1,0 +1,1110 @@
+Latent Reasoning VLA: Latent Thinking and Prediction for
+Vision-Language-Action Models
+Shuanghao Bai * 1 2 Jing Lyu * 2 3 4 Wanqi Zhou 1 Zhe Li 2 Dakai Wang 1 Lei Xing 1 Xiaoguang Zhao 3
+Pengwei Wang 2 Zhongyuan Wang 2 Cheng Chi 2 Badong Chen 1 Shanghang Zhang 2 5
+ Project Page
+§ Code
+Abstract
+Vision-Language-Action (VLA) models benefit
+from chain-of-thought (CoT) reasoning, but ex-
+isting approaches incur high inference overhead
+and rely on discrete reasoning representations that
+mismatch continuous perception and control. We
+propose Latent Reasoning VLA (LaRA-VLA), a
+unified VLA framework that internalizes multi-
+modal CoT reasoning into continuous latent rep-
+resentations for embodied action. LaRA-VLA
+performs unified reasoning and prediction in la-
+tent space, eliminating explicit CoT generation
+at inference time and enabling efficient, action-
+oriented control. To realize latent embodied rea-
+soning, we introduce a curriculum-based training
+paradigm that progressively transitions from ex-
+plicit textual and visual CoT supervision to la-
+tent reasoning, and finally adapts latent reason-
+ing dynamics to condition action generation. We
+construct two structured CoT datasets and evalu-
+ate LaRA-VLA on both simulation benchmarks
+and long-horizon real-robot manipulation tasks.
+Experimental results show that LaRA-VLA con-
+sistently outperforms state-of-the-art VLA meth-
+ods while reducing inference latency by up to
+90% compared to explicit CoT-based approaches,
+demonstrating latent reasoning as an effective and
+efficient paradigm for real-time embodied control.
+1Institute of Artificial Intelligence and Robotics, Xi’an Jiao-
+tong University.
+2Beijing Academy of Artificial Intelligence.
+3Institute of Automation, University of Chinese Academy of
+Sciences.
+4School of Artificial Intelligence, University of
+Chinese Academy of Sciences.
+5Peking University.
+Corre-
+spondence to: Cheng Chi <chicheng@baai.ac.cn>, Badong
+Chen <chenbd@mail.xjtu.edu.cn>, Shanghang Zhang <shang-
+hang@pku.edu.cn>.
+Preprint. November 24, 2026.
+VLM
+Textual CoT 
+Latent
+Visual Goal 
+Latent
+align
+AE
+>>>
+Action
+Noise
+(c) LaRA-VLA (Ours)
+Vision
+Language
+VLM
+Vision
+Language
+Textual CoT Tokens
+Action Generation
+detokenize
+(a) Textual CoT-based VLA
+AE
+AR
+…
+VLM
+Visual Goal Tokens
+detokenize or align
+(b) Visual CoT-based VLA
+Vision
+Language
+AE
+AR
+…
+Figure 1. Comparison of CoT formulations in VLA models. (a)
+Textual CoT-based VLA explicitly generates discrete reasoning
+tokens and decodes them into actions through autoregressive (AR)
+policies or action experts (AE). (b) Most visual CoT-based VLA
+represents reasoning as discrete visual goal tokens before action
+generation. (c) Our model internalizes textual and visual reasoning
+into continuous latents. Visual goal latents align with perceptual
+features, encode future-oriented task information, and provide
+implicit supervision for textual CoT latents.
+1. Introduction
+Vision-Language-Action (VLA) models have emerged as
+a promising direction for scalable, general-purpose robotic
+manipulation (Kim et al., 2025b; Bai et al., 2025b), as they
+aim to end-to-end map rich multimodal observations and
+language instructions to continuous control commands. To
+improve VLA performance, a variety of training and in-
+ference strategies have been proposed (Bai et al., 2025c;
+Sridhar et al., 2025; Lin et al., 2025b). Among these ap-
+proaches, incorporating Chain-of-Thought (CoT) reasoning
+1
+arXiv:2602.01166v3  [cs.RO]  22 Nov 2026
+Latent Reasoning VLA
+has proven particularly effective (Chen et al., 2025c). CoT
+is commonly framed as a teaching signal that encourages
+structured intermediate reasoning, thereby improving inter-
+pretability and generalization in long-horizon robotic tasks.
+Existing CoT approaches for VLA models can be broadly
+categorized by modality, as shown in Figure 1. Text-based
+CoT methods represent intermediate reasoning explicitly
+in natural language, covering task decomposition and high-
+level planning, and may additionally verbalize information
+derived from visual observations (Zawalski et al., 2025; Sun
+et al., 2025b; Fan et al., 2025; Tan et al., 2026). Visual
+CoT methods instead express reasoning through visual re-
+construction or prediction, typically by modeling future ob-
+servations or intermediate visual states (Zhao et al., 2025a;
+Zhang et al., 2025b). A third line of work combines tex-
+tual and visual CoT, leveraging multi-modal intermediate
+representations for reasoning (Zhang et al., 2025a).
+Despite their effectiveness, existing CoT-based methods
+face two fundamental challenges. First, text-based CoT of-
+ten requires extensive textual reasoning during inference,
+leading to substantial computational overhead. Long rea-
+soning traces dramatically increase token length, resulting
+in excessive KV-cache usage, high memory consumption,
+and increased latency. In practice, such models may operate
+at control frequencies below 5 Hz, or even around 1 Hz (Za-
+walski et al., 2025), which is unacceptable for real-time
+robotic control. Second, most CoT formulations rely on
+discrete representations: textual CoT is constrained to lan-
+guage tokens (Zawalski et al., 2025; Lin et al., 2025a), while
+visual CoT is typically aligned with discrete visual tokens
+produced by VQ-based tokenizers (Zhao et al., 2025a). We
+argue that CoT is effective not because it is expressed in nat-
+ural language, but because it exposes structured intermediate
+reasoning. In embodied settings, where both perception and
+action evolve in continuous spaces, constraining reasoning
+to discrete tokens introduces a representational mismatch
+between reasoning and control.
+To address these challenges, we propose Latent Reason-
+ing VLA (LaRA-VLA), a unified latent-reasoning VLA
+framework that performs reasoning and prediction entirely
+in latent space for robotic action. A comparison between
+LaRA-VLA and existing CoT-based VLA methods is sum-
+marized in Table 1. Inspired by latent chain-of-thought
+reasoning methods (Hao et al., 2024; Pham & Ngo, 2025;
+Huang et al., 2025), we adapt latent reasoning to embodied
+VLA models, enabling structured reasoning to be internal-
+ized into continuous latent representations. Different from
+Fast-ThinkAct (Huang et al., 2025), which mainly distills
+textual CoT into latent representations while retaining vi-
+sually grounded reasoning as discrete traces, LaRA-VLA
+internalizes both textual and future-oriented visual CoT into
+continuous latents. The visual goal latents further serve as
+implicit multimodal supervision for textual latent reason-
+ing, making the learned latent dynamics directly useful for
+action generation.
+Our training paradigm follows a three-stage progression that
+transitions from explicit multi-modal reasoning to latent em-
+bodied reasoning. Training begins with unified textual and
+visual CoT supervision, where textual reasoning steps and
+future visual predictions are explicitly aligned with their cor-
+responding annotations. We then adopt a curriculum-based
+strategy that models embodied reasoning as a sequence of
+continuous latent states, gradually internalizing reasoning
+structure by replacing explicit textual CoT with a compact
+set of latent representations and relying on visual prediction
+objectives as implicit supervision. Once textual CoT is fully
+absorbed into latent reasoning, the model is further adapted
+to action generation, enabling latent reasoning dynamics to
+directly condition continuous control outputs. Throughout
+training, visual latents used for supervision are encoded by
+the same visual encoder as the input observations, and an
+exponential moving average (EMA) encoder is employed as
+a target network to stabilize latent representation learning
+and prevent representation collapse.
+Overall, our approach extends latent CoT reasoning from
+language-only settings to embodied VLA models, enabling
+efficient, action-oriented reasoning without explicit CoT
+generation at inference time. By coupling latent reasoning
+dynamics directly with action generation, LaRA-VLA allo-
+cates computation to compact latent “thought steps” rather
+than verbose textual reasoning, substantially reducing token
+expansion and inference latency. This makes the approach
+well-suited for real-time robotic control. Moreover, repre-
+senting reasoning as continuous latent dynamics avoids the
+representational mismatch introduced by discrete language
+or visual tokens. To support this paradigm, we construct an
+automated CoT annotation pipeline that provides structured
+supervision, including subtask decomposition, movement
+reasoning, and target object localization, and curate latent
+reasoning datasets across both simulated and real-world en-
+vironments, including LIBERO-LaRA, Bridge-LaRA, and
+real-robot demonstrations. Our contributions are threefold:
+• We introduce a latent-reasoning paradigm for Vision–
+Language–Action models, in which chain-of-thought
+reasoning is internalized into continuous latent rep-
+resentations across textual and visual modalities, en-
+abling inference-efficient reasoning that aligns with
+continuous perception and control.
+• We propose LaRA-VLA, a unified VLA model that re-
+alizes this paradigm through a curriculum-based train-
+ing strategy, progressively transitioning from explicit
+multi-modal CoT supervision to latent embodied rea-
+soning, guided by predictive visual latent objectives
+and stabilized with EMA-based visual encoders.
+2
+Latent Reasoning VLA
+Table 1. A taxonomy of VLA models based on the representation forms of chain-of-thought CoT and actions. Specifically, we categorize
+models by whether their textual CoT is represented as explicit discrete tokens or continuous latent states, whether their visual CoT aligns
+with raw pixels, discrete visual tokens, or encoded continuous visual latents, and whether the action output is represented as discrete
+tokens or continuous values.
+Method
+Venue
+Text CoT
+Visual CoT
+Action
+Presence
+Form
+Presence
+Align Form
+Form
+VLAs with Text CoT
+ECoT (Zawalski et al., 2025)
+CoRL 2024
+✓
+Discrete Token
+×
+–
+Discrete
+GraspVLA (Deng et al., 2025)
+CoRL 2025
+✓
+Discrete Token
+×
+–
+Continuous
+π0.5 (Intelligence et al., 2025)
+CoRL 2025
+✓
+Discrete Token
+×
+–
+Continuous
+ThinkAct (Huang et al., 2025)
+NeurIPS 2025
+✓
+Discrete Token
+×
+–
+Continuous
+Fast-ThinkAct (Huang et al., 2026)
+CVPR 2026
+✓
+Discrete Token &
+Continuous Latent
+×
+–
+Continuous
+VLAs with Visual CoT
+CoT-VLA (Zhao et al., 2025a)
+CVPR 2025
+×
+–
+✓
+Discrete Visual Tokens
+Discrete
+DreamVLA (Zhang et al., 2025b)
+NeurIPS 2025
+×
+–
+✓
+Discrete Visual Tokens
+Continuous
+UD-VLA (Chen et al., 2025b)
+ICLR 2026
+×
+–
+✓
+Discrete Visual Tokens
+Discrete
+VITA (Ma et al., 2025)
+arXiv 2025
+×
+–
+✓
+Discrete Visual Tokens
+Discrete
+VLAs with Both Text and Visual CoT
+UP-VLA (Zhang et al., 2025a)
+ICML 2025
+✓
+Discrete Token
+✓
+Discrete Visual Tokens
+Discrete
+LaRA-VLA (Ours)
+–
+✓
+Continuous Latent
+✓
+Continuous Latent
+Continuous
+• We construct two structured chain-of-thought datasets,
+LIBERO-LaRA and Bridge-LaRA, featuring multi-
+modal reasoning annotations for embodied manipu-
+lation, and conduct extensive evaluations in both simu-
+lation and long-horizon real-robot tasks to demonstrate
+the effectiveness and robustness of LaRA-VLA.
+2. Related Work
+2.1. Vision Language Action Models
+VLA models extend large multimodal language models to
+robotic control, with extensive efforts devoted to architec-
+tural advances (Black et al., 2024; Intelligence et al., 2025;
+Kim et al., 2025a; Cui et al., 2025) as well as training-
+and inference-time optimizations (Sridhar et al., 2025; Lin
+et al., 2025b; Bai et al., 2026) since the introduction of RT-
+2 (Zitkovich et al., 2023). Among these directions, CoT
+reasoning at training time has proven particularly effective.
+As summarized in Table 1, existing CoT-based VLA meth-
+ods can be broadly categorized into textual CoT and visual
+CoT. Textual CoT methods generate explicit textual reason-
+ing traces to refine task instructions or extract motion- and
+object-relevant information from visual observations (Za-
+walski et al., 2025; Sun et al., 2025b; Huang et al., 2025). Vi-
+sual CoT methods, in contrast, reconstruct or predict visual
+observations conditioned on multimodal inputs, typically re-
+lying on discrete visual tokens produced by VQ-VAE-based
+representations (Zhao et al., 2025a; Zhang et al., 2025b; Lv
+et al., 2025). Despite their effectiveness, both paradigms
+rely on discrete tokenized reasoning. Textual CoT incurs
+long autoregressive generation chains with high inference
+cost, while both textual and visual CoT exhibit a mismatch
+with the inherently continuous perception and action spaces
+in robotics. To address these limitations, we introduce la-
+tent reasoning, in which textual CoT is replaced by com-
+pact continuous latent variables learned via curriculum-style
+training, and visual CoT is aligned with continuous visual
+representations from the perception backbone.
+A closely related work is Fast-ThinkAct (Huang et al., 2025),
+which reduces the inference cost of VLA CoT reasoning by
+distilling explicit reasoning traces into latent representations.
+However, it mainly latentizes textual CoT, while visually
+grounded reasoning remains in a discrete trace-based form.
+In contrast, LaRA-VLA progressively internalizes both tex-
+tual CoT and future-oriented visual CoT into continuous
+latent representations, where visual goal latents provide im-
+plicit supervision for textual latent reasoning and directly
+support action generation.
+2.2. Latent Reasoning in LLMs and VLMs
+Explicit CoT can improve reasoning performance but often
+incurs verbose intermediate outputs, high inference latency,
+and a reliance on discrete tokens. These drawbacks have
+motivated implicit or continuous reasoning in latent space,
+which preserves multi-step computation without explicit
+reasoning traces (Xu et al., 2025; Ruan et al., 2025). In
+language models, latent reasoning is typically instantiated
+through hidden states or continuous variables that function
+as implicit thought. For instance, Coconut (Hao et al., 2024)
+shows that latent reasoning supports richer internal search
+while achieving a more favorable accuracy–efficiency trade-
+off than explicit CoT. SIM-CoT (Wei et al., 2025) identi-
+fies optimization instability when scaling implicit reason-
+3
+Latent Reasoning VLA
+ing tokens and introduces supervised stabilization, while
+CoDi (Shen et al., 2025) distills explicit CoT into continuous
+latent representations via self-distillation. Latent reasoning
+has also been extended to vision–language models, where
+multimodal latents serve as internal reasoning states rather
+than explicit symbolic traces (Sun et al., 2025a; Pham &
+Ngo, 2025). To adapt latent reasoning to VLA, we adopt a
+staged training strategy that initializes structured reasoning
+with explicit CoT and progressively transfers it into latent
+space. Unlike prior methods that rely solely on answer
+supervision, we jointly ground latent reasoning in visual
+representations and action signals, enabling control-relevant
+reasoning that supports stable policy learning and efficient
+action generation without explicit CoT at inference time.
+3. Method
+In this section, we present the complete pipeline of our La-
+tent Reasoning VLA (LaRA-VLA) framework. We first
+describe the construction of structured CoT datasets in
+Section 3.1. We then introduce the model architecture of
+LaRA-VLA and detail its training procedures in Sections 3.2
+and 3.3, respectively.
+3.1. Data Collection
+Effective robotic manipulation requires the joint modeling
+of long-horizon subtask structure, spatial grounding of tar-
+get objects, and motion-level reasoning for action execution.
+However, existing data collection pipelines typically cap-
+ture these components in isolation, leading to redundant or
+incomplete supervision (e.g., exhaustive object-level bound-
+ing boxes in ECoT (Zawalski et al., 2025) or missing target
+localization in Emma-x (Sun et al., 2025b)). To address
+these limitations, we develop a fully automated annotation
+pipeline following an anchor-first, generate-later paradigm
+driven by semantic and temporal anchors. Semantic an-
+chors are extracted using Qwen3-VL (Bai et al., 2025a)
+from the initial frame and task instruction to identify the
+manipulated object, while temporal anchors are obtained
+by segmenting robot trajectories into atomic manipulation
+stages based on gripper state changes. Conditioned on these
+anchors, Qwen3-VL generates concise subtask descriptions,
+and open-vocabulary grounding with GroundingDINO (Liu
+et al., 2024) and SAM3 (Carion et al., 2025) produces tem-
+porally consistent target object bounding boxes. Motion rea-
+soning is derived from end-effector trajectories by comput-
+ing goal-directed and local motions, which are discretized
+into directional descriptors and incorporated into the CoT
+annotations. Details are provided in Figure 10 and Ap-
+pendix B.
+Based on this pipeline, we construct two benchmark datasets
+on simulated environments, LIBERO (Liu et al., 2023) and
+SimplerEnv (Li et al., 2025), resulting in LIBERO-LaRA
+and Bridge-LaRA, and further apply the same framework
+to a long-horizon real-world robotic manipulation dataset
+collected on physical hardware.
+3.2. Model Architecture
+We adopt Qwen3-VL (Bai et al., 2025a) as the backbone
+VLM to leverage its strong built-in reasoning capability,
+and directly inherit its image encoder to ensure consistent
+visual representations throughout training. To predict visual
+goal information, we introduce a dedicated <img next>
+token to represent predicted visual latents, which enables
+explicit supervision and alignment during early-stage latent
+reasoning learning. For action prediction in Stages I and
+II, we follow an autoregressive action token design simi-
+lar to (Pertsch et al., 2025), allowing the model to learn
+action generation jointly with latent reasoning in a stable
+and efficient manner. In the final stage, we remove explicit
+action token prediction and instead activate a dedicated ac-
+tion expert, decoupling action generation from token-level
+autoregressive decoding. Specifically, action generation is
+performed by a 16-layer Diffusion Transformer composed of
+alternating self-attention and cross-attention layers, which
+conditions on the learned latent representations to produce
+continuous action trajectories.
+3.3. Training Procedures
+Stage I: Explicit CoT Fine-Tuning. In the first stage,
+we fine-tune the VLM on embodied datasets with explicit
+CoT annotations constructed in Section 3.1. These annota-
+tions provide structured reasoning supervision, including
+task decomposition, movement reasoning, and target object
+information, enabling the model to adapt to embodied ma-
+nipulation tasks with explicit intermediate reasoning. Given
+input images and a language instruction, the image encoder
+first maps the visual observation to a sequence of visual
+tokens, denoted as v, while the instruction text is tokenized
+into textual tokens, denoted as x. The VLM jointly attends
+to both visual and textual tokens and is trained to autoregres-
+sively generate a sequence of CoT tokens. During this stage,
+discrete ground-truth textual tokens are used to explicitly
+supervise CoT generation via teacher forcing. The training
+objective is defined as the negative log-likelihood of the
+ground-truth CoT sequence:
+Lcot = −
+TCoT
+X
+t=1
+log pθ(ct | c<t, v, x) ,
+(1)
+where {ct}TCoT
+t=1 is the ground-truth CoT token sequence, c<t
+is the preceding CoT tokens, and pθ(·) is the conditional
+token distribution parameterized by the VLM.
+In addition to textual supervision, we align visual reasoning
+by predicting future visual latents. Let zt+1 denote the vi-
+4
+Latent Reasoning VLA
+Image Encoder
+VLM
+Sort fruits into 
+the baskets
+Language
+Tokenizer
+Text 
+Token
+EMA
+Align
+Image Encoder
+VLM
+Sort fruits into 
+the baskets
+Tokenizer
+Text 
+Latent
+Curriculum-based Learning
+Visual 
+Token
+Image Encoder
+VLM
+Sort fruits into 
+the baskets
+Tokenizer
+Text 
+Latent
+AE
+Stage I
+Stage II
+<BOT> & <EOT>
+Image
+Action
+Subtasks
+Bbox
+Motion
+Stage III
+Action 
+Token
+Action 
+Noise
+Visual 
+Token
+Action 
+Token
+Visual 
+Token
+Supervised Learning
+Stage I
+Stage II
+step
+Figure 2. Overview of LaRA-VLA. Training proceeds in three stages: (i) explicit CoT fine-tuning with aligned visual prediction latents
+and inverse-dynamics supervision for actions; (ii) a curriculum-based transition from explicit CoT to compact text latents, gradually
+reducing the number of text tokens while increasing reliance on latent reasoning, where the latent representations are also implicitly
+supervised by visual and action signals; and (iii) adaptation of latent-conditioned VLM features to an action expert for efficient action
+generation without explicit CoT at inference time.
+sual latent representation of the next observation encoded by
+the same visual encoder used for the input observations. The
+VLM predicts this latent from the current context, yielding
+the following alignment objective:
+Lvis = ∥ˆzt+1 −zt+1∥1 ,
+(2)
+where ˆzt+1 is the predicted visual latent and zt+1 is obtained
+by encoding the next observation. To stabilize visual latent
+learning and prevent representation collapse, we follow prior
+work (Chen et al., 2025a) and update the parameters used to
+compute target visual latents using an exponential moving
+average (EMA) of the online encoder parameters:
+¯θt
+v = τv ¯θt−1
+v
++ (1 −τv) θt
+v,
+(3)
+where θt
+v denotes the parameters of the online visual encoder
+at iteration t, ¯θt
+v denotes the corresponding EMA-averaged
+parameters used to compute stable target visual latents, and
+τv is the decay rate.
+We further leverage the predicted future visual representa-
+tions together with the preceding visual and textual context
+to infer actions via an inverse dynamics model. Specifi-
+cally, we employ an inverse dynamics function f(vt, vt+1 |
+x, c) = at, which estimates the action that induces the
+transition between consecutive visual states conditioned
+on the instruction and the intermediate reasoning step. To
+efficiently propagate action information across latent reason-
+ing steps, we adopt the fast recursive generation framework
+of (Pertsch et al., 2025), which assigns coarse-grained action
+semantics to all latent representations. Concretely, action
+tokens are trained using an autoregressive objective, similar
+to Equation 1, yielding the action-token loss Lact-dis.
+Stage II: Curriculum-based Replacement of Discrete
+CoT Tokens. In the second stage, we internalize explicit
+textual reasoning into the latent space through a curriculum-
+based training strategy. Embodied reasoning is modeled
+as a sequence of continuous latent states, and discrete CoT
+tokens are progressively replaced by latent representations
+during training. Formally, we adopt the same training ob-
+jectives as in Stage I, including the textual CoT likelihood
+and the visual latent prediction loss. However, instead of
+supervising all reasoning steps with discrete ground-truth
+CoT tokens, we gradually mask out subsets of CoT tokens
+and replace them with learnable latent representations. The
+proportion of discrete CoT tokens decreases over training ac-
+cording to a predefined curriculum schedule, until the entire
+chain-of-thought is fully internalized in the latent space.
+Stage III: Action Generation via Flow Matching. To
+adapt latent reasoning to continuous control, we train the
+action prediction module using a flow matching objective.
+Let at denote the ground-truth action at time step t, and
+let ϵ ∼N(0, I) be Gaussian noise. Following the flow
+matching formulation, we define a linear interpolation be-
+tween noise and action as aτ = (1 −τ) ϵ + τ at, where
+τ ∼U(0, 1). The action expert predicts a velocity field
+vθ(aτ, τ | ht) conditioned on a multi-modal latent context
+ht. Specifically, ht aggregates the latent representation
+5
+Latent Reasoning VLA
+Table 2. Performance comparisons with state-of-the-art methods on LIBERO, grouped by different CoT paradigms.
+CoT Type
+Method
+Spatial
+Goal
+Object
+Long
+Avg.
+No CoT
+OpenVLA (Kim et al., 2025b)
+84.7
+79.2
+88.4
+53.7
+76.5
+π0 (Black et al., 2024)
+96.8
+95.8
+98.8
+85.2
+94.2
+OpenVLA-OFT (Kim et al., 2025a)
+97.6
+97.9
+98.4
+94.5
+97.1
+Textual CoT
+ThinkAct (Huang et al., 2025)
+88.3
+87.1
+91.4
+70.9
+84.4
+MolmoAct (Lee et al., 2025)
+87.0
+87.6
+95.4
+77.2
+86.6
+π0.5 (Intelligence et al., 2025)
+98.8
+98.0
+98.2
+92.4
+96.8
+DeepThinkVLA (Yin et al., 2025)
+99.0
+96.4
+96.6
+96.2
+97.0
+Visual CoT
+CoT-VLA (Zhao et al., 2025a)
+87.5
+87.6
+91.6
+69.0
+81.1
+DreamVLA (Zhang et al., 2025b)
+97.5
+89.5
+94.0
+89.5
+92.6
+F1 (Lv et al., 2025)
+98.2
+95.4
+97.8
+91.3
+95.7
+UD-VLA (Chen et al., 2025b)
+94.1
+91.2
+95.7
+89.6
+92.7
+Latent CoT
+Fast-ThinkAct (Huang et al., 2026)
+92.0
+90.2
+97.2
+79.4
+89.7
+LaRA-VLA (Ours)
+96.4
+98.6
+99.8
+96.6
+97.9
+Current 
+Image
+Future 
+Image
+Text
+Action
+Current 
+Image
+Text
+Future 
+Image
+Action
+Stage III
+Stage I & II
+Figure 3. Attention mechanism used in LaRA-VLA.
+of the current visual observation and language instruction,
+the intermediate text-based reasoning latent, and the pre-
+dicted future visual latent produced by the VLM. Through
+the inverse dynamics supervision applied in earlier stages,
+this latent context already encodes coarse-grained action-
+relevant information. As a result, we do not introduce an
+additional action latent, and actions are generated directly
+from the shared multi-modal latent representation. The flow
+matching loss is defined as
+Lact-con = Eat, ϵ, τ
+h
+∥vθa(aτ, τ | ht) −(at −ϵ)∥2
+2
+i
+,
+(4)
+where ht denotes the multi-modal latent context produced
+by the VLM at time step t.
+LaRA-VLA Attention Mechanism.
+We introduce an
+attention mechanism tailored to our three-stage training
+paradigm, as illustrated in Figure 3. The model operates on
+multimodal tokens including text, current image, future im-
+age, and action tokens, with attention constraints explicitly
+regulating cross-token information flow. Here, text tokens
+serve as a unified abstraction that corresponds to language
+instructions and textual chain-of-thought in Stages I and II,
+and to text latents in Stages II and III. In Stages I and II, fu-
+ture image tokens attend causally to text and current image
+tokens, while interacting bidirectionally among themselves.
+Action tokens are generated autoregressively: each action
+token attends to all preceding text, current image, and future
+image tokens, as well as previously generated action tokens.
+In Stage III, action tokens are excluded from the attention
+computation, and the model is trained solely over text and
+vision tokens under the same attention constraints.
+Loss Function. Our training objective is stage-dependent
+and follows a curriculum-style design. In Stage I, we jointly
+optimize the CoT supervision loss, the visual alignment loss,
+and the discrete action loss, i.e., Lcot + 0.1Lvis + Lact-dis,
+to initialize structured reasoning and action grounding. In
+Stage II, we progressively anneal the explicit CoT supervi-
+sion loss Lcot to zero. The model is lastly optimized using
+0.2 Lvis + Lact-dis, which promotes latent-space reasoning
+while maintaining accurate action semantics. Finally, in
+Stage III, discrete action supervision is replaced by contin-
+uous action regression, and we optimize Lact-con to enable
+efficient continuous action generation.
+4. Experiments
+We evaluate the effectiveness of LaRA-VLA and the overall
+system through a comprehensive set of experiments span-
+ning both simulation benchmarks and real-world robotic
+manipulation tasks. Our experiments are designed to ad-
+dress the following questions:
+•
+How effective is LaRA-VLA compared to state-of-the-art
+methods in simulation benchmarks? (Section 4.1)
+•
+How well does LaRA-VLA perform on long-horizon
+real-world manipulation tasks compared to state-of-the-art
+approaches? (Section 4.2)
+•
+How effective are the latent reasoning components in
+LaRA-VLA, and what additional advantages does our ap-
+6
+Latent Reasoning VLA
+Table 3. Performance comparisons with state-of-the-art methods on SimplerEnv-WindowX, grouped by different CoT paradigms.
+CoT Type
+Method
+Put
+Spoon
+Put
+Carrot
+Stack
+Block
+Put
+Eggplant
+Avg.
+No CoT
+OpenVLA (Kim et al., 2025b)
+0.0
+0.0
+0.0
+4.1
+1.0
+Octo (Ghosh et al., 2024)
+47.2
+9.7
+4.2
+56.9
+29.5
+OpenVLA-OFT (Kim et al., 2025a)
+34.2
+30.0
+30.0
+72.5
+41.8
+π0 (Black et al., 2024)
+29.2
+62.5
+29.2
+91.6
+53.1
+CogACT (Li et al., 2024)
+71.7
+50.8
+15.0
+67.5
+51.3
+Textual CoT
+ThinkAct (Huang et al., 2025)
+58.3
+37.5
+8.7
+70.8
+43.8
+Visual CoT
+F1 (Lv et al., 2025)
+50.0
+70.8
+50.0
+66.7
+59.4
+UD-VLA (Chen et al., 2025b)
+58.3
+62.5
+54.1
+75.0
+62.5
+Latent CoT
+LaRA-VLA (Ours)
+95.8
+62.5
+25.0
+91.7
+68.8
+Task 1: Put all objects into the basket
+Task 2: Sort all fruits into the basket
+Task 4: Stack two bowls
+Task 3: Find the block and place it in the basket
+Figure 4. Real-world setup of four long-horizon tasks.
+proach offer? (Section 4.3)
+4.1. Simulation Experiments
+Benchmarks and Datasets. We conduct experiments on
+two widely used benchmarks, LIBERO (Liu et al., 2023)
+and SimplerEnv (Li et al., 2025). LIBERO consists of four
+task suites, Spatial, Goal, Object, and Long, each containing
+10 single-arm manipulation tasks. We report success rates
+for each suite and the overall average over 50 rollouts per
+task. SimplerEnv evaluates real-to-sim generalization of
+robot manipulation policies trained on real-world data. We
+evaluate on WidowX robots across four tasks and report per-
+task success rates and the overall average over 24 rollouts
+per task. Based on these benchmarks, we construct two
+training datasets, LIBERO-LaRA and Bridge-LaRA, which
+are used to train LaRA-VLA.
+Baselines. For LIBERO, we compare against a broad set
+of state-of-the-art VLA methods covering different CoT
+paradigms. No-CoT baselines include OpenVLA (Kim
+et al., 2025b), π0 (Black et al., 2024), and OpenVLA-
+OFT (Kim et al., 2025a). Textual CoT baselines include
+Figure 5. Real-world results.
+ThinkAct (Huang et al., 2025), MolmoAct (Lee et al., 2025),
+π0.5 (Intelligence et al., 2025), and DeepThinkVLA (Yin
+et al., 2025). Visual CoT methods include CoT-VLA (Zhao
+et al., 2025a), DreamVLA (Zhang et al., 2025b), F1 (Lv
+et al., 2025), and UD-VLA (Chen et al., 2025b).
+We
+additionally compare with the latent CoT method Fast-
+ThinkAct (Huang et al., 2026). For SimplerEnv, we fol-
+low the standard evaluation protocol and compare against
+representative baselines. No-CoT methods include Open-
+VLA, Octo (Ghosh et al., 2024), OpenVLA-OFT, π0, and
+CogACT (Li et al., 2024). We further include textual CoT
+(ThinkAct) and visual CoT (F1, UD-VLA) baselines. Im-
+plementation details and training hyperparameters of LaRA-
+VLA are provided in Appendix A.
+Results. Tables 2 and 3 summarize quantitative results
+on the LIBERO and SimplerEnv-WidowX benchmarks. On
+LIBERO, LaRA-VLA achieves the best overall performance
+with an average success rate of 97.9%, including 99.8% on
+the Object suite and 96.6% on the Long suite, demonstrat-
+ing strong object-centric reasoning and robustness in long-
+horizon manipulation. On SimplerEnv-WidowX, which
+evaluates real-to-sim generalization under diverse visual
+conditions, LaRA-VLA attains the highest average success
+rate of 68.8%, outperforming No-CoT, Textual CoT, and Vi-
+sual CoT baselines. Across both benchmarks, LaRA-VLA
+consistently surpasses textual and visual CoT methods, in-
+dicating that latent reasoning provides more effective and
+7
+Latent Reasoning VLA
+Table 4. Robustness under visual perturbations. We report task success rates under Gaussian blur and Gaussian noise with two severity
+levels. H and L denote high- and low-severity perturbations, respectively.
+Benchmark
+Method
+Gaussian Blur-H
+Gaussian Blur-L
+Gaussian Noise-H
+Gaussian Noise-L
+LIBERO
+Qwen-GR00T (Community, 2026)
+30.0
+76.0
+55.7
+87.9
+LaRA-VLA (Ours)
+42.9
+79.4
+76.0
+92.7
+SimplerEnv
+Qwen-GR00T (Community, 2026)
+13.5
+35.4
+8.3
+22.9
+LaRA-VLA (Ours)
+56.3
+62.5
+22.9
+31.2
+Table 5. Ablation study of different forms of CoT supervision on
+SimplerEnv. Text-CoT denotes explicit textual chain-of-thought,
+Latent Text-CoT denotes latent textual chain-of-thought, and La-
+tent Vis-CoT denotes latent visual chain-of-thought.
+Text-CoT
+Latent Text-CoT
+Latent Vis-CoT
+SR (%)
+×
+×
+×
+55.2
+✓
+×
+×
+58.3
+×
+✓
+×
+64.6
+×
+×
+✓
+63.5
+×
+✓
+✓
+68.8
+stable guidance for action prediction and generalizes better
+than explicit CoT supervision.
+4.2. Real-World Experiments
+Real-World Setup. As illustrated in Figure 4, our real-
+world setup uses an Agilex Cobot Magic wheeled platform
+equipped with three RGB-D cameras. We consider four
+categories of long-horizon manipulation tasks: putting all
+objects into the basket, sorting fruits into the basket, find-
+ing a block and placing it into the basket, and stacking two
+bowls. For data collection, we record 100 demonstration
+trajectories per task category at 30 Hz. During evaluation,
+each task is executed for 12 rollout trials. We compare our
+method against ACT (Zhao et al., 2023), ECoT (Zawalski
+et al., 2025) and GR00T N1.5 (Bjorck et al., 2025) as base-
+lines. Implementation details are provided in Appendix A.
+Results. As shown in Figure 5, LaRA-VLA achieves the
+highest average success rate among all compared methods,
+substantially outperforming ACT and ECoT and surpassing
+GR00T N1.5 overall. In particular, LaRA-VLA attains the
+best performance on three out of four long-horizon real-
+world manipulation tasks, with especially notable gains
+on tasks that require multi-stage reasoning and sustained
+temporal coordination. These results suggest that latent
+reasoning improves robustness to error accumulation over
+long-horizon manipulation.
+4.3. Analysis
+Ablation Study. Table 5 shows that latent CoT supervision
+provides substantially larger gains than explicit textual CoT.
+While explicit textual CoT yields only marginal improve-
+ment over the no-CoT baseline, latent textual CoT leads
+Gaussian Noise
+Gaussian Blur
+Figure 6. Latent-space distributions under Gaussian blur and Gaus-
+sian noise. Clean and perturbed latent remain clustered by semantic
+role, with only moderate distributional shifts, suggesting that the
+learned latent representations are stable under visual corruptions.
+to a significant increase in success rate, highlighting the
+effectiveness of internalized textual reasoning. Further in-
+corporating latent visual CoT yields the best performance,
+as it both injects predictive visual information about fu-
+ture states and implicitly regularizes the latent textual CoT
+through multimodal alignment. Overall, these results indi-
+cate that structured latent CoT representations, especially
+when jointly learned across modalities, are more effective
+than explicit textual reasoning for embodied policy learning.
+Robustness of Latent Representations and LaRA-VLA.
+To further evaluate whether the learned latent representa-
+tions remain stable under input perturbations, we conduct
+additional stress tests on LIBERO and SimplerEnv with two
+common visual corruptions: Gaussian noise and Gaussian
+blur. For Gaussian noise, we use standard deviations of 50
+and 30 for the high- and low-severity settings, respectively.
+For Gaussian blur, we use a kernel size of 15 × 15 with
+σx = σy = 5 for the high-severity setting, and a kernel size
+of 9 × 9 with σx = σy = 3 for the low-severity setting.
+We analyze both latent-space changes and task-level robust-
+ness. As shown in Figure 6, the latent reasoning tokens
+remain semantically consistent under corrupted observa-
+tions, with only moderate distributional shifts. This suggests
+that the learned latent space does not collapse or become
+highly unstable under visual perturbations. We further com-
+pare LaRA-VLA with Qwen-GR00T (Community, 2026),
+which serves as a no-CoT baseline without latent reasoning.
+As shown in Table 4, both models degrade under visual
+8
+Latent Reasoning VLA
+Figure 7. Latent collapse analysis.
+corruption, but LaRA-VLA consistently maintains higher
+success rates across all perturbation types and severity lev-
+els. These results indicate that latent CoT reasoning not only
+improves clean performance, but also enhances robustness
+to corrupted visual inputs.
+Latent Collapse. As shown in Figure 7, we observe no
+evidence of latent representation collapse. Latent tokens
+associated with different reasoning components form well-
+separated and semantically coherent clusters, demonstrating
+clear functional specialization rather than degeneration into
+uniform or uninformative representations. Moreover, latent
+representations of language instruction tokens (gray points)
+remain structured and occupy a distinct subspace from rea-
+soning latents, indicating that latent CoT does not trivially
+reuse language embeddings. Together, these findings show
+that predictive supervision and action grounding provide suf-
+ficient inductive bias to maintain structured latent reasoning,
+even without explicit discrete chain-of-thought generation
+at inference time.
+Inference Efficiency. As shown in Figure 8, LaRA-VLA
+achieves the lowest inference latency among all compared
+methods, requiring only 135 ms per rollout. Compared
+with explicit CoT methods, LaRA-VLA avoids autoregres-
+sive textual reasoning and reduces inference time by up to
+90%. Notably, LaRA-VLA is also faster than Fast-ThinkAct,
+which uses latent CoT reasoning, suggesting that our com-
+pact latent design further improves efficiency beyond simply
+replacing explicit CoT with latent tokens. This advantage
+may come from using fewer latent reasoning tokens, com-
+pact visual goal latents, and a lightweight action expert.
+5. Limitations
+Although LaRA-VLA achieves fast inference and strong per-
+formance through latent chain-of-thought reasoning, several
+limitations remain and warrant further investigation. First,
+latent CoT representations may suffer from collapse in the
+absence of explicit supervision, where the semantics of la-
+0
+1000 2000 3000 4000 5000 6000 7000
+Latency (ms)
+ThinkAct-7B
+ECOT-7B
+Fast-ThinkAct-3B
+LaRA-VLA-4B
+7513 ms
+4434 ms
+805 ms
+135 ms
+Figure 8. Inference time comparison on an NVIDIA A100 GPU.
+tent tokens degenerate toward homogeneous representations,
+particularly as the number of latent tokens increases (Wei
+et al., 2025). To mitigate this risk, our current implemen-
+tation restricts latent reasoning to a single token per step,
+which may limit expressiveness. Second, the training pro-
+cedure is not maximally efficient. LaRA-VLA employs
+a curriculum learning strategy that gradually replaces ex-
+plicit CoT tokens with latent representations. As training
+progresses, the number of CoT-related tokens increases, re-
+sulting in higher training cost. Improving training efficiency
+while preserving stable latent reasoning remains an impor-
+tant direction for future work.
+6. Conclusion
+We presented LaRA-VLA, a latent reasoning framework
+for Vision–Language–Action models that internalizes chain-
+of-thought reasoning into continuous latent representations
+across both textual and visual modalities. Rather than gener-
+ating long explicit CoT sequences at inference time, LaRA-
+VLA replaces them with compact textual CoT latents and
+employs a curriculum-based training strategy to progres-
+sively transfer explicit reasoning into latent space. Visual
+latents are aligned with continuous perceptual features en-
+coded by a shared visual encoder and stabilized using an
+exponential moving average, providing implicit supervisory
+signals that guide the learning of textual CoT latents. Experi-
+ments on simulated benchmarks and long-horizon real-robot
+manipulation tasks demonstrate that LaRA-VLA achieves
+strong performance while significantly improving inference
+efficiency, supporting the view that structured reasoning for
+embodied agents can be effectively realized in latent space
+without explicit chain-of-thought generation.
+Acknowledgements
+This work was supported by the National Natural Science
+Foundation of China (Grant No. U25A20540), the NSFC
+General Program (Grant No. 62436005).
+9
+Latent Reasoning VLA
+Impact Statement
+This paper aims to advance machine learning methods for
+robotic manipulation by improving the efficiency and scal-
+ability of reasoning in Vision–Language–Action models.
+The proposed approach introduces architectural and train-
+ing innovations that enable effective reasoning without ex-
+plicit chain-of-thought generation, potentially facilitating
+real-time robotic deployment. While such advances may
+benefit a wide range of robotic applications, including au-
+tomation and assistive technologies, we do not identify any
+societal risks uniquely introduced by this work beyond those
+generally associated with robotic systems. As with related
+research, the broader impact will depend on how the tech-
+nology is applied and governed in practice.

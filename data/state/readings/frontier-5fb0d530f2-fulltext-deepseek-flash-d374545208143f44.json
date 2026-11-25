@@ -1,0 +1,107 @@
+{
+  "title_zh": "多输出 conformal 回归的统一比较研究与广义一致性分数",
+  "affiliations": [
+    "University of Mons",
+    "Royal Holloway, University of London",
+    "Mohamed bin Zayed University of Artificial Intelligence"
+  ],
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "把长期各自为政的多输出 conformal 方法放进同一框架、同一代码库做系统比较，并给出可直接选用的新一致性分数，对实际部署与后续研究都有直接价值。",
+    "novelty": 70,
+    "novelty_reason": "CDF-based 分数将单变量 HPD-split 推广到任意基础分数与任意生成模型，L-CP 把分布型 conformal 预测搬到可逆模型隐空间；但 L-CP 与同期 CONTRA 算法一致，属并行独立提出。",
+    "technical_depth": 85,
+    "technical_depth_reason": "给出渐近条件覆盖的命题与完整证明、PCP/HD-PCP/C-PCP 与密度类方法的等价性命题，以及 13 个数据集 × 3 个基模型 × 10 次重复的统一实现与 Friedman/Wilcoxon 检验。"
+  },
+  "reading": {
+    "why_read": "提出 C-PCP 与 L-CP 两类多输出 conformal 一致性分数，分别用分数自身的条件 CDF 与可逆生成模型的隐空间做校准，在保持有限样本边际覆盖的同时获得渐近条件覆盖，并在 13 个表格数据集上统一比较 9 种方法。",
+    "task": "多输出回归的 conformal 预测区域既要刻画输出维度间的非线性依赖，又要保留覆盖保证，但相对单变量情形研究稀少。现有做法各有硬伤：逐维 CQR 取 max（M-CP）或 copula 校正只给超矩形区域，捕捉不到相关性；DR-CP 的负密度分数阈值不随输入变化；PCP/HD-PCP/ST-DQR 的区域被有限个 d-球限制；密度法与采样法各有昂贵的计算代价。",
+    "findings": [
+      {
+        "point": "阈值是否随 x 变化决定能否条件覆盖",
+        "detail": "DR-CP 的阈值 $\\hat q$ 与 x 无关，高不确定性输入处区域甚至为空；把分数换成其条件 CDF 后，由概率积分变换分数分布与 x 无关，才谈得上渐近条件覆盖。"
+      },
+      {
+        "point": "球并集的体积上界限制了 PCP 类方法",
+        "detail": "PCP/HD-PCP/ST-DQR 的区域至多是 L 个等半径球的并集，体积上界 $L\\cdot V$，高不确定性输入下装不下 $1-\\alpha$ 的概率质量，结构上就不可能达到渐近条件覆盖。"
+      },
+      {
+        "point": "通用性与计算成本被绑在一起",
+        "detail": "密度法要求可评估 PDF 的模型，采样法要大量采样（实验取 K = L = 100 仍慢 100–200 倍），ST-DQR 还需方向分位回归并在隐空间铺网格映射，高维难扩展。"
+      }
+    ],
+    "method": "用条件 CDF 重写任意基础分数：$s_{\\text{CDF}}(x,y)=F_{W|X=x}(s_W(x,y))$，经验上用 K 个采样点估计；取 $s_W=s_{\\text{PCP}}$ 得 C-PCP，不需预测密度，兼容 diffusion、GAN 等任意生成模型，球半径随 x 自适应。L-CP 则在可逆生成模型 $\\hat Q$ 的隐空间定义 $s_{\\text{L-CP}}(x,y)=d_{\\mathcal{Z}}(\\hat Q^{-1}(y;x))$，只需一次反演，省去网格与逐点采样。论文进一步证明 PCP/HD-PCP/C-PCP 等价于以 $\\hat f_{\\max}$ 为密度的 DR-CP/HD-PCP/C-HDR。",
+    "results": "在 13 个表格数据集（7,207–50,000 样本，d = 2–16）、三个基模型、10 次重复的对比中，C-PCP、L-CP、C-HDR 条件覆盖最优，与 ACC 理论一致；C-HDR 中位区域最小，DR-CP 平均区域最小，采样类方法耗时高 100–200 倍。",
+    "limitations": "ACC 依赖 oracle 基预测器与标定集趋于无穷；CDF-based 分数需估计分数的条件分布，低数据下恰是最难的部分。实验限于表格数据，L-CP 要求模型可逆。"
+  },
+  "claims": [
+    {
+      "claim": "统一比较覆盖 9 种多输出 conformal 方法",
+      "numbers": [
+        "9"
+      ],
+      "source_span": "Abstract",
+      "quote": "nine conformal methods with different multivariate base models"
+    },
+    {
+      "claim": "实证研究在 13 个表格数据集上进行",
+      "numbers": [
+        "13"
+      ],
+      "source_span": "Abstract / Section 6",
+      "quote": "13 tabular datasets"
+    },
+    {
+      "claim": "数据集规模从 7,207 到 50,000 个样本",
+      "numbers": [
+        "7,207",
+        "50,000"
+      ],
+      "source_span": "Section 6",
+      "quote": "contain between 7,207 and 50,000 data points"
+    },
+    {
+      "claim": "输出维度 d 从 2 到 16",
+      "numbers": [
+        "2",
+        "16"
+      ],
+      "source_span": "Section 6",
+      "quote": "the number of output variables d ranging from 2 to 16"
+    },
+    {
+      "claim": "每个数据集与每个方法重复 10 次",
+      "numbers": [
+        "10"
+      ],
+      "source_span": "Figure 5 caption",
+      "quote": "10 runs per dataset and method"
+    },
+    {
+      "claim": "实验中采样数取 K = L = 100",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Section 5.2, Computational complexity",
+      "quote": "we used K = L = 100 in our experiments"
+    },
+    {
+      "claim": "采样类方法的计算时间比 M-CP、L-CP、DR-CP 高 100 到 200 倍",
+      "numbers": [
+        "100",
+        "200"
+      ],
+      "source_span": "Section 6, Computation time",
+      "quote": "sampling-based methods typically require 100 to 200 times more computation time"
+    },
+    {
+      "claim": "在出租车数据例子中 C-PCP 的区域尺寸为 8.2，PCP 为 8.67",
+      "numbers": [
+        "8.2",
+        "8.67"
+      ],
+      "source_span": "Section D.1",
+      "quote": "8.2 compared to 8.67"
+    }
+  ]
+}

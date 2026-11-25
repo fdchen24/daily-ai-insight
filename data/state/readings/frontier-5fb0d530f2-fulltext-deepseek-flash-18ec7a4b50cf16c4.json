@@ -1,0 +1,94 @@
+{
+  "title_zh": "PISA：为高效扩散 Transformer 设计的分段稀疏注意力",
+  "affiliations": [
+    "The Hong Kong University of Science and Technology (Guangzhou)",
+    "The Hong Kong University of Science and Technology"
+  ],
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "直指 DiT 高分辨率图像与长视频推理中自注意力的二次复杂度瓶颈，方法是免训练、可直接替换的注意力算子，并在 Wan2.1、Hunyuan-Video、FLUX.1、SD3.5 上同时给出质量与端到端延迟证据，落地价值明确。",
+    "novelty": 78,
+    "novelty_reason": "把稀疏注意力长期沿用的“保留或丢弃”改写为“精确或近似”，用块均值泰勒展开加全局一阶统计量在 softmax 内部完成补偿，思路来自误差结构而非模块堆叠；但 Taylor/线性近似本身在高效注意力中已有先例。",
+    "technical_depth": 82,
+    "technical_depth_reason": "给出输出误差上界并据此推导协方差感知的块选择分数，消融覆盖零阶/逐块一阶/混合/路由四档，效率对比用端到端 wall-clock 而非 FLOPs 并附核函数分阶段 profile；扣分在于误差界较松、图像端加速幅度有限。"
+  },
+  "reading": {
+    "why_read": "提出免训练的 PISA（分段稀疏注意力），关键 KV 块精确计算、其余块用块级 Taylor 展开近似而非丢弃，在 Wan2.1/Hunyuan-Video 上取得 1.91×/2.57× 端到端加速且质量接近全注意力。",
+    "task": "DiT 用于高分辨率图像与长视频生成时，自注意力成为推理瓶颈：序列变长后分数矩阵的 $O(L^2)$ 计算与访存开销主导延迟。块稀疏注意力只算关键 KV 块，高稀疏率下丢弃大量上下文导致质量塌陷，在 4K 这类偏短序列上还几乎没有收益；线性/混合注意力改写了预训练模型的注意力分布，无法复用权重、必须重训。",
+    "findings": [
+      {
+        "point": "非关键块并非噪声，其贡献可解析恢复",
+        "detail": "pre-softmax 分数 $q_t k^\\top$ 在未选中块上呈以零或负值为中心的对称分布，用块均值为中心的 Taylor 展开即可低误差重构；直接丢弃等于抹掉这部分注意力质量（图 2）。"
+      },
+      {
+        "point": "混合注意力的加法融合破坏 softmax 归一化",
+        "detail": "已有方法把 $O_{sparse}+O_{linear}$ 直接相加，改变了预训练模型的注意力权重分布，因而必须重训；近似项只有写进 softmax 的分子与分母内部，才可能免训练。"
+      },
+      {
+        "point": "逐块一阶项的算术强度太低，理论加速落不了地",
+        "detail": "每个未选块都要一个 $d\\times d$ 矩阵 $H_j$，预存或现场算都是访存受限操作，实测带逐块一阶项反而只有 0.91× 加速（Table 3）。"
+      }
+    ],
+    "method": "在同一个 online softmax 内把输出拆成精确与近似两路：选中块照常精确计算，未选块用块均值 $\\bar k_j$ 做零阶展开；一阶修正改写为全局形式 $q_t \\bar H \\sum_{j\\in U_i}\\alpha_{t,j}$，其中 $\\bar H=\\frac{1}{N}\\sum_j H_j$ 只需预计算一次，规避逐块 $d\\times d$ 矩阵的访存瓶颈，缩放系数取 $\\exp(q_t\\bar k_j^\\top)$ 的均值以抵消 Jensen 不等式带来的低估。块选择分数额外加入 $M_j=\\|H_j-\\bar H\\|_2$，把误差界中的块间异质性纳入路由。核函数将准备、精确、零阶、一阶四段融合，前若干层与去噪步保留 dense warmup。",
+    "results": "87.5% 稀疏度下 Wan2.1-14B 与 Hunyuan-Video 端到端加速 1.91×/2.57×，VBench I.Q. 67.88/68.16 对 dense 67.71/67.65；FLUX.1 在 85% 稀疏度 FID 15.91 优于 dense 16.35。",
+    "limitations": "端到端收益依赖 dense warmup，图像生成上仅 1.2–1.6× 加速；用全局 $\\bar H$ 替代逐块 $H_j$，块间异质性大时误差界第二项不可控；只在 DiT 视觉生成上验证，LLM 未测。"
+  },
+  "claims": [
+    {
+      "claim": "Wan2.1-14B 与 Hunyuan-Video 端到端分别加速 1.91× 与 2.57×",
+      "numbers": [
+        "1.91",
+        "2.57"
+      ],
+      "source_span": "Section 1 Introduction, contributions",
+      "quote": "by 1.91× and 2.57×, respectively"
+    },
+    {
+      "claim": "Wan2.1-14B 720P 在 87.5% 稀疏度下 VBench I.Q. 为 67.88，dense 为 67.71",
+      "numbers": [
+        "87.5",
+        "67.88",
+        "67.71"
+      ],
+      "source_span": "Table 1, Wan2.1-14B 720P, rows 'Dense'/'Ours', column 'I.Q.'",
+      "quote": "67.88"
+    },
+    {
+      "claim": "Hunyuan-Video 13B 在 87.5% 稀疏度下 VBench I.Q. 达 68.16，dense 为 67.65",
+      "numbers": [
+        "87.5",
+        "68.16",
+        "67.65"
+      ],
+      "source_span": "Table 1, Hunyuan-13B 720P, rows 'Dense'/'Ours', column 'I.Q.'",
+      "quote": "68.16"
+    },
+    {
+      "claim": "FLUX.1 在 85% 稀疏度下 FID 为 15.91，优于 dense 的 16.35",
+      "numbers": [
+        "85",
+        "15.91",
+        "16.35"
+      ],
+      "source_span": "Table 2, FLUX.1 1024p, rows 'Dense-Attn'/'Ours', column 'FID'",
+      "quote": "15.91"
+    },
+    {
+      "claim": "逐块一阶近似版本在 Wan2.1-14B 上速度反而只有 0.91×，慢于全注意力",
+      "numbers": [
+        "0.91"
+      ],
+      "source_span": "Table 3, row '1st' (Wan2.1-14B), column 'Spd.'",
+      "quote": "0.91×"
+    },
+    {
+      "claim": "FLUX 上的端到端加速为 1.2–1.6×",
+      "numbers": [
+        "1.2",
+        "1.6"
+      ],
+      "source_span": "Abstract",
+      "quote": "1.2-1.6$\\times$ acceleration on FLUX"
+    }
+  ]
+}

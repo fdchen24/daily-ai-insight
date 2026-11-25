@@ -44,7 +44,30 @@
         "Plan4D：可规划的生成式 4D 世界",
         "地理空间基础模型与气候韧性：迁移、不确定性与决策就绪度综述"
       ]
+    },
+    "2026-11-25": {
+      "counts": {
+        "classic": 1,
+        "frontier": 10,
+        "survey": 1
+      },
+      "total": 12,
+      "generated_at": "2026-11-25T01:18:10.308519+00:00",
+      "titles": [
+        "LLaMA：开放且高效的基座语言模型",
+        "Latent Reasoning VLA：面向视觉-语言-动作模型的潜在推理与预测",
+        "PISA：为高效扩散 Transformer 设计的分段稀疏注意力",
+        "GroupChat-Bench：评估 LLM 智能体对真实群聊长期理解的基准",
+        "Cognitive Supersensing：面向多模态大语言模型的潜在视觉推理训练范式",
+        "AgentArk：将多智能体智能蒸馏进单个 LLM Agent",
+        "多输出 conformal 回归的统一比较研究与广义一致性分数",
+        "La-JEPA：在隐空间做世界建模的紧凑机器人策略",
+        "Feedback Shortcut：面向潜在反馈 Transformer 的投机解码",
+        "哪种失败被干预修复？agent 干预何时有效，自演化 skill 卡在何处",
+        "Yggdrasil：树路由循环专家用于状态追踪与快速 CPU 推理",
+        "城市状态表示：面向自主移动的多模态感知、架构、数据集与基准综述"
+      ]
     }
   },
-  "updated_at": "2026-11-24T06:33:17.829092+00:00"
+  "updated_at": "2026-11-25T01:18:10.308519+00:00"
 }

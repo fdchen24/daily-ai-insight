@@ -1,0 +1,3405 @@
+GroupChat-Bench: Benchmarking LLM Agents on
+Long-Term Understanding of Realistic Group Chats
+Jiho Kim1*, Jeewon Yang1*, Woosog Chay2, Hyeonji Hwang1, Daeun Kyung1,
+Hyunseung Chung1, Eunbyeol Cho1, Yeonsu Kwon1, Yohan Jo2, Edward Choi1
+1KAIST 2SNU
+{jiho.kim, jwy24, edwardchoi}@kaist.ac.kr
+Abstract
+Large language model (LLM) agents are in-
+creasingly expected to participate in persistent
+group communication, yet existing dialogue
+benchmarks largely focus on short, dyadic,
+or single-session interactions. We introduce
+GroupChat-Bench, a benchmark for evaluating
+long-term understanding in scripted multi-party
+dialogues that serve as a proxy for group chats.
+Built from TV show scripts to avoid privacy
+concerns, each conversation stream spans five
+consecutive seasons and approximately 1,300
+sessions. The benchmark tests whether agents
+can track participant-specific information, inter-
+personal relationships, and contextual changes
+over time. Its question pools combine refined
+fan-quiz-style questions with template-based
+questions generated from temporal knowledge
+graphs. Agents are evaluated as dialogue ses-
+sions unfold chronologically, with access only
+to the conversation history available when each
+question is posed. To probe the influence of
+memorized knowledge, GroupChat-Bench in-
+cludes unanswerable questions and settings
+with new or swapped character names. We
+also propose GroupChat-Mem, which com-
+bines structured memory with a raw session
+repository. Experiments reveal limitations in
+existing memory systems, while GroupChat-
+Mem provides a stronger baseline. Code and
+data are available at https://github.com/
+jwyang21/groupchat_bench/.1
+1
+Introduction
+Large language model (LLM) agents are increas-
+ingly deployed in shared digital environments, in-
+cluding household assistants used by multiple fam-
+ily members and enterprise agents integrated into
+collaboration platforms (Clark, 2025; Slack Tech-
+nologies, 2026; Microsoft, 2026; Zoom, 2026). In
+*These authors contributed equally to this work.
+1An earlier version of this work was released as
+DialSim (Kim et al., 2025b).
+such settings, communication unfolds among multi-
+ple participants over time, requiring agents to move
+beyond one-to-one interaction models and engage
+in sustained group communication.
+Such group interactions exhibit three character-
+istics that pose key challenges for LLM agents, as
+illustrated in Figure 1. First, they require multi-
+party grounding: agents must determine not only
+what each utterance means, but also who it con-
+cerns, how it is addressed, and how it fits within the
+relationships among participants (Le et al., 2019;
+Qamar et al., 2023). Second, group chats exhibit
+temporal persistence: personal and relational in-
+formation accumulates over time, changes, and can
+be reinterpreted across sessions, requiring long-
+term contextual knowledge at both individual and
+group levels (Fono and Baecker, 2006; Zhang and
+Cranshaw, 2018). Third, group conversations are
+highly entangled: fragmented utterances, pile-on
+reactions, and interleaved topical threads disrupt
+clean turn-taking, requiring agents to disentangle
+salient context from noisy exchanges (Elsner and
+Charniak, 2008; Mehri and Carenini, 2017).
+However,
+existing
+dialogue
+understanding
+benchmarks do not sufficiently reflect these proper-
+ties. Many focus on short, single-session, or two-
+party conversations (Li et al., 2017; Zhang et al.,
+2018; Sun et al., 2019; Cui et al., 2020); longer-
+context benchmarks often remain two-party or rely
+on overly clean synthetic dialogues (Jang et al.,
+2023; Maharana et al., 2024; Wu et al., 2025); and
+existing multi-party datasets are organized as inde-
+pendent scenes or short episodes, leaving memory
+over long-term group histories untested (Yang and
+Choi, 2019; Poria et al., 2019; Li et al., 2020).
+To address this gap, we propose GroupChat-
+Bench, a benchmark for evaluating long-term un-
+derstanding of scripted multi-party dialogue as a
+proxy for group chats. We use TV show scripts to
+provide human-authored, long-horizon interactions
+among recurring participants without the privacy
+arXiv:2406.13144v7  [cs.CL]  23 Nov 2026
+1) Multi-Party Grounding
+Monica
+Ross
+2) Temporal Persistence
+3) Entangled Interaction
+2025.12.31
+2026.01.07
+2026.02.11
+Chandler
+Rachel, Ross, Monica …  >
++3
+Rachel, Ross, Monica …  >
++3
+Joey
+Rachel
+Monica
+Ooh, that’s great. I love those little guys. 
+Kathy
+No, no, it's not like that. I work for a medical researcher.
+Well, have fun!
+Phoebe
+Chandler
+Ross
+Y'know what, I like Kathy.
+Oh yeah, me too, she's so cool and pretty.
+Yes, you do. Chandler loves Kathy.
+Thank you, Ross.
+Come on, Pheebs, lay off him.
+Ross
+Rachel
+Joey
+Monica
+Joey, I think it's time to give up the bag.
+Estelle said I didn't get it. They had a problem with the bag!
+Joey
+Honey, as terrific as I think you are with it…
+I don't wanna give up the bag! Do I Rach? 
+Nooooo!
+Rachel
+…I just don't know if the world is ready for your bag.
+Oh, Kath, we should get going. We're going to buy hamsters.
+Yeah, he's a little sensitive right now, cause he's so in love.
+Rachel, Ross, Monica …  >
++4
+Chandler
+Joey
+You can't kiss your sister. Chandler can!
+Monica
+Happy New Year, Chandler.
+We wanted to kiss at midnight, but nobody else is going to.
+Ross
+Joey
+I will see that thing I think I know is the thing I think I know!
+YOU KNOW!
+Rachel
+Joey
+Chandler and Monica?! How long have you known?
+They're so weird about it — we can't tell anyone.
+Rachel
+Phoebe
+Rachel
+CHANDLER AND MONICA!!
+I KNOW! And Joey knows! But Ross doesn't know — stop screaming!
+Ross
+What's going on?
+That's a good point.
+Chandler
+Oh my God!
+Joey
+I can't believe I'm hearing this!
+Rachel
+There are other bags that are a little less, umm, controversial.
+Chandler
+Yeah, they're called wallets.
+Phoebe
+Ross
+Pheebs, I can come by after lunch.
+Anyone free to help me move tomorrow?
+Figure 1: Key challenges of group chats. (1) Multi-party grounding: pronouns and address terms (underlined) must
+be resolved across speakers. (2) Temporal persistence: facts emerge, spread, and remain unevenly known across
+sessions, as the Chandler–Monica relationship is discovered by Rachel and later Phoebe, while Ross still remains
+unaware. (3) Entangled interaction: pile-on reactions (bold), interleaved topics (dashed arrow), and fragmented
+messages (dashed line) disrupt clean turn-taking, requiring implicit context to be recovered from noisy exchanges.
+concerns of real chat logs. While these dialogues
+exhibit several challenges relevant to group commu-
+nication, their generalizability to naturally occur-
+ring group chats remains untested. All non-verbal
+descriptions (e.g., gestures, scene notes) are re-
+moved, and every question is verified to be answer-
+able from the utterance text alone (§3.1). Each re-
+sulting conversation stream spans five consecutive
+seasons (∼1,300 sessions on average), over which
+the benchmark evaluates whether agents can track
+participant-specific information, interpersonal rela-
+tionships, and contextual changes over time.
+Question pools combine refined fan-quiz ques-
+tions with template-based questions from tempo-
+ral knowledge graphs extracted from the dialogue.
+During evaluation, agents process sessions chrono-
+logically and answer questions using only the his-
+tory available at query time. To mitigate data con-
+tamination, we include unanswerable questions and
+settings with new or swapped character names.
+We further propose GroupChat-Mem, a hybrid
+memory system for LLM agents that combines
+structured memory with a repository of raw dia-
+logue sessions to support both high-level reasoning
+and fine-grained evidence retrieval. Experiments
+on GroupChat-Bench demonstrate that existing
+memory systems remain limited in long-term multi-
+party dialogue understanding, while GroupChat-
+Mem provides a stronger baseline for this setting.
+2
+Related Work
+Dialogue Understanding Benchmarks
+Existing
+dialogue understanding benchmarks mainly focus
+on short, single-session, or two-party conversa-
+tions (Lowe et al., 2015; Li et al., 2017; Zhang et al.,
+2018; Sun et al., 2019; Cui et al., 2020). Multi-
+party dialogue datasets (Yang and Choi, 2019; Po-
+ria et al., 2019; Li et al., 2020) model interac-
+tions among multiple speakers, but are organized
+as independent scenes or short episodes, leaving
+long-term accumulated group histories unevalu-
+ated. FriendsQA (Yang and Choi, 2019) shares
+our source material, yet evaluates span extrac-
+tion within single scenes (∼0.4k tokens) and re-
+tains original character names; we instead pose
+questions over chronologically accumulating histo-
+ries (∼350k tokens) under contamination controls
+(§3.1.6). SHARE (Kim et al., 2025a) also uses
+scripted dialogue, but focuses on shared memo-
+ries between two individuals across independent
+films for response generation rather than long-
+term multi-party QA. Earlier long-term memory
+benchmarks (Jang et al., 2023; Maharana et al.,
+2024; Wu et al., 2025; Hu et al., 2026b) primar-
+ily study dyadic or synthetic dialogue histories,
+offering limited coverage of the fragmented, entan-
+gled exchanges found in human-authored multi-
+party dialogue (Table 1).
+More recent bench-
+marks, EverMemBench (Hu et al., 2026a) and
+GroupMemBench (Yang et al., 2026), also eval-
+Dataset
+Multi-Party Grounding
+Temporal Persistence
+Entangled Interaction†
+QA Pairs
+Dialogue Length
+Session Continuity
+Short or session-independent dialogues
+DREAM (Sun et al., 2019)
+✗
+0.09k
+–
+✗
+✓
+MELD (Poria et al., 2019)
+✓
+0.14k
+–
+✓
+✗
+Molweni (Li et al., 2020)
+✓
+0.15k
+–
+✓
+✓
+FriendsQA (Yang and Choi, 2019)
+✓
+0.43k
+–
+✓
+✓
+Long-term, but dyadic and synthetic
+Conversation Chronicles (Jang et al., 2023)
+✗
+1.0k
+✓
+✗
+✗
+LoCoMo (Maharana et al., 2024)
+✗
+16k
+✓
+✗
+✓
+LongMemEval (Wu et al., 2025)
+✗
+115k, 1.5M
+✗
+✗
+✓
+GroupChat-Bench (ours)
+✓
+350k
+✓
+✓
+✓
+Table 1: Comparison with existing dialogue understanding benchmarks across key conversational characteristics.
+Dialogue Length denotes the approximate number of tokens in the evaluation context; Session Continuity indicates
+whether sessions form a continuous chronological history involving the same participants (‘–’: single-session).
+†Entangled Interaction refers to fragmented turn-taking, pile-on reactions, and interleaved conversational topics
+(Figure 1); synthetic LLM-generated dialogues are marked as lacking these phenomena when they are not repre-
+sented.
+uate long-term multi-party memory using synthetic
+conversations. EverMemBench emphasizes col-
+laborative recall, memory awareness, and profile
+understanding, while GroupMemBench focuses on
+group dynamics, speaker-grounded belief track-
+ing, and audience-adapted language. In contrast,
+GroupChat-Bench uses human-authored scripted
+dialogue and evaluates long-term understanding
+through questions whose answerability depends on
+the dialogue observed by the agent at query time.
+Agentic Memory Systems Agentic memory sys-
+tems have been developed to enable LLM agents
+to maintain information across long-term interac-
+tions by storing, updating, and retrieving informa-
+tion from past contexts. HippoRAG 2 (Gutiérrez
+et al., 2025) continually indexes new information
+into a knowledge graph and retrieves it via multi-
+hop graph search based on Personalized PageR-
+ank (Haveliwala, 2002), while Mem0 (Chhikara
+et al., 2025) extracts salient facts from conversa-
+tions and consolidates them through LLM-driven
+add/update/delete decisions relative to existing
+memories. A-MEM (Xu et al., 2025) instead or-
+ganizes memory as a network of interlinked notes,
+where new information triggers both the creation
+of new links and the evolution of existing notes.
+LD-Agent (Li et al., 2025) maintains event and
+persona memories for personalized long-term di-
+alogue, but focuses on dyadic response genera-
+tion rather than tracking relationships among mul-
+tiple observed participants. We benchmark general-
+purpose memory systems that can be applied to
+long-term multi-party dialogue streams to assess
+their ability to handle this setting.
+3
+GroupChat-Bench
+3.1
+Data Construction
+GroupChat-Bench was developed using scripts of
+three popular TV shows (i.e., Friends, The Big
+Bang Theory, and The Office2). These scripts were
+first preprocessed to serve as dialogue data. Next,
+questions were generated for each script, drawing
+from fan quizzes and a temporal knowledge graph
+(TKG). We then applied character style transfer
+and anonymized character names using new names,
+with an adversarial setting based on name swap-
+ping. Figure 2 illustrates the construction process.
+3.1.1
+Script Preprocessing
+Each script spans five consecutive seasons (∼20
+episodes per season), with each episode composed
+of multiple scenes.
+Beyond utterances, scripts
+contain non-verbal descriptions of characters’ ac-
+tions, expressions, and scenes, as well as produc-
+tion metadata (e.g., writer names). We remove all
+such content to create Scriptpre, which consists
+solely of speaker-attributed utterances, mirroring
+a text-based group chat in which participants ob-
+serve only each other’s messages; any information
+conveyed non-verbally in the original show is thus
+excluded from the dialogue stream and, by con-
+struction, from the question pool (§3.1.2, §3.1.3).
+We then selected scenes involving the main char-
+acter (i.e., Friends: Ross, The Big Bang Theory:
+Sheldon, The Office: Michael3) from Scriptpre
+and sequentially numbered them as dialogue ses-
+sions Si, resulting in the final dialogue D =
+2The scripts were downloaded from the website Kaggle.
+3The characters with the most lines were selected.
+{S1, S2, ..., SN}. From this point onward, we re-
+fer to these selected scenes as sessions. Each se-
+lected session retains all speaker-attributed utter-
+ances from the original scene, including those of
+other participants, rather than only the main charac-
+ter’s utterances. This session extraction preserves
+a coherent dialogue flow from the main character’s
+perspective while also enabling the construction
+of unanswerable questions. Specifically, scenes
+without the main character are excluded from the
+agent’s observed dialogue stream but retained for
+evidence annotation, allowing us to create ques-
+tions about facts that exist in the script yet remain
+inaccessible to the agent. Additionally, since some
+of our questions involve time conditions, we man-
+ually assigned a date to each session in D, deter-
+mined from conversation content and episode air
+dates; the specific assignment rules are detailed in
+Appendix A.
+3.1.2
+Fan Quiz-Based Question Generation
+We utilized a fan quiz website FunTrivia4 to gen-
+erate our questions. Fan quizzes cover a range of
+difficulty levels and focus on major events from
+each episode, making them promising for evaluat-
+ing dialogue comprehension. We began by extract-
+ing episode-specific quizzes from the site. Since
+these quizzes were created by dedicated fans, many
+required knowledge unrelated to the dialogue itself
+(e.g., “What is the name of the actor who played
+the clerk?”). To filter out these questions, we first
+selected quizzes that could be answered by refer-
+encing Scriptpre using an LLM. The LLM also
+annotated the evidence scenes in Scriptpre that
+support each question.5 The authors then manually
+corrected the LLM annotations for quiz filtering
+and evidence-scene mapping. Note that since both
+procedures are performed against Scriptpre, the
+retained questions rely solely on the utterance text,
+not on non-verbal information.
+We then labeled each question as answerable or
+unanswerable for each session, based on whether
+the main character had observed all correspond-
+ing evidence scenes before the query time. If the
+evidence appeared only outside the main charac-
+ter’s observed sessions (i.e., D), the question was
+labeled unanswerable. We also generated temporal
+variants by adding session dates to questions, en-
+abling evaluation of long-term memory (e.g., “How
+4https://www.funtrivia.com/
+5Fan quizzes exist for each episode, so we annotated them
+based on Scriptpre and then matched them to sessions of D.
+did Rachel buy her new boots on September 23,
+1994?”). Detailed question generation processes
+are provided in Appendix B.
+3.1.3
+Temporal Knowledge Graph-Based
+Question Generation
+Fan quizzes are useful for generating our ques-
+tions, but since they are episode-specific and
+user-generated, the questions don’t span multiple
+episodes and the number of questions is limited
+(∼1k). To address this, we constructed a knowl-
+edge graph for each session and used it to generate
+questions. Initially, we used the LLM to extract
+triples (i.e., [head, relation, tail]) from each session
+Si in D. The authors then manually reviewed all
+extracted triples and removed incorrectly extracted
+ones. We employed 32 relations (e.g., girlfriend)
+derived from DialogRE (Yu et al., 2020), a high-
+quality dataset where human annotators manually
+extracted relations from Friends scripts, classifying
+relationships between characters into 36 categories.
+We adapted and modified these relations for our
+purpose. More details about the relations are pro-
+vided in Appendix C.1. Finally, we combined the
+triples from each session with their dates to create
+a temporal knowledge graph (TKG) composed of
+quadruples (i.e., [head, relation, tail, date]).
+Using the TKG, we generated questions for each
+session by sampling one-hop or two-hop quadru-
+ples and checking whether the main character could
+answer them at the query time. Because the ques-
+tion form and answerability depend on when the
+question is asked, the same fact can be phrased dif-
+ferently across sessions: [Rachel, boyfriend, Ross,
+1994-08-08] yields “Who was Rachel’s boyfriend
+on August 8th, 1994?” when asked later, but “Who
+is Rachel’s boyfriend?” when asked on that date.
+If no prior evidence exists, the correct answer is
+“I don’t know.” We manually verified the answers
+and applied the same procedure to two-hop ques-
+tions. Examples of question templates and gener-
+ated questions are provided in Appendix C.2.
+3.1.4
+Answer Choices Generation
+To create multiple-choice questions, we crafted
+answer choices for each question. All questions
+include the choice “(E) I don’t know.”, which is
+the gold answer for unanswerable questions. For
+fan-quiz questions, the four choices and correct an-
+swers follow the original quiz. For TKG-based
+questions, distractors are sampled from tails of
+other quadruples sharing the same relation; to make
+1. Script Preprocessing
+Download
+   Scripts
+Episode 1 
+Scene #2
+Writer: David Crane
+Ross: No, go on! It’s Paul the Wine Guy!
+Monica: Hi, come in! 
+…
+Scene #10
+(In a sad voice)
+Chandler: I’m sorry.
+Remove Unnecessary 
+Information
+Episode 1 
+Scene #2
+Writer: David Crane
+Ross: No, go on! It’s Paul the Wine Guy!
+Monica: Hi, come in! 
+…
+Scene #10
+(In a sad voice)
+Chandler: I guess the joke’s on me.
+Session #639 (1998.05.20)
+Create Sessions and
+Assign Date
+Session #12 (1994.09.25)
+Session #2 (1994.09.22)
+Ross: No, go on! It’s Paul the Wine Guy!
+Monica: Hi, come in! 
+…
+Chandler: I'm sorry, I didn't catch your 
+name. Paul, was it?
+Monica: Okay, umm-umm, I'll just ...
+2. Question Generation Methods
+1) Fan-Quiz-Based
+Web Crawling
++ Filtering / Revision
+Episode
+Question / Answer
+Q: What is the setting of the first scene?
+A: Central Perk
+Q: How did Rachel buy her new boots in this episode?
+A: Dad’s credit card
+01
+01
+à Filter out
+à Revision
+Date
+Episode-Scene
+01-14
+01-12
+01-11
+01-15 02-01
+Sep. 22, 1994
+Sep. 23, 1994
+Sep. 25, 1994
+Sep. 24, 1994
+01-13
+02-02
+02-03 02-04
+02-05
+02-06
+Evidence Scene
+Question sets
+(01-14)
+Scene 01-14 
+Monica: Rachel, how did you pay for them?
+Rachel: With my credit card.
+Monica: And who pays the credit card bill?
+Rachel: My dad.
+How did Rachel buy her new boots?
+How did Rachel buy her new boots 
+on September 23, 1994?
+(01-13)
+(02-01)
+(02-02)
+…
+Unanswerable
+Unanswerable
+Unanswerable
+Answerable
+Answerable
+Answerable
+2) TKG-Based
+2
+639
+Date
+Session #
+Sep. 22, 1994
+May 20, 1998
+TKG Construction Based on Session
+Paul
+Rachel
+Monica
+dating with
+(Sep. 22, 1994)
+Roommate
+(May 20, 1998)
+Question
+Sessions
+By the way, who is dating {Monica}?
+By the way, who dated {Monica} on {September 22, 1994}?
+By the way, {Rachel} had a roommate on {May 20, 1998}.
+Do you know who dated the roommate on {September 22, 1994}?
+Ross: No, go on! It's Paul the Wine Guy! 
+Monica: Hi, come in! Paul, this is... everybody, 
+everybody, this is Paul. 
+Paul: Hi, pleased to meet you.
+Sep. 22, 1994. Session #2
+May 20, 1998. Session #639
+Rachel: Is Monica around? I-I have to ask 
+her something. 
+Ross: She's doing her laundry. 
+Rachel: Okay, I'll talk to my roommate later.
+Template-Based Question Generation
+After #639
+After #2
+#3 - #11
+3. Question Style Transfer
+Generated Question
+By the way, who dated {Monica} on {September 22, 1994}?
+Character
+Transferred Question
+Chandler
+Oh, could you BE any more specific about who was going out with Monica on September 22, 1994?
+Phoebe
+Oh my gosh, so like, who was Monica’s date on that super specific day, September 22, 1994?
+11
+Figure 2: Overview of the GroupChat-Bench construction pipeline, including script preprocessing, fan-quiz- and
+TKG-based question generation, and character style transfer. Character names are subsequently anonymized (New
+Names) or swapped among characters (Swapped Names) (§3.1.6); original names shown for illustration.
+the test more adversarial, we prioritize the subject’s
+own past or future partners (e.g., Rachel’s past or fu-
+ture boyfriends for “Who is Rachel’s boyfriend?”),
+so that memorized or temporally misplaced knowl-
+edge points to a wrong choice.
+3.1.5
+Question Style Transfer
+Although fan quiz-based and TKG-based ques-
+tions provide broad coverage, their quiz-like or
+templated structure can result in artificial phras-
+ing. To make the questions more natural, we apply
+character style transfer, rewriting each question in
+the distinctive tone of the corresponding charac-
+ter so that the characters themselves appear to be
+asking (e.g., Generic style: “How did Rachel buy
+her new boots?”→Style of Joey Tribbiani from
+Friends: “Hey, how did Rachel manage to snag
+those killer boots, huh?”). This transformation is
+powered by the LLM, and subsamples are reviewed
+by the authors to ensure that the original intent
+was preserved. More examples of style-transferred
+questions for each character are in Appendix D.
+All LLM-assisted procedures in the data con-
+struction process were performed using GPT-
+4 (OpenAI, 2023).
+3.1.6
+Character Name Transformation
+To reduce agents’ reliance on prior knowledge of
+the TV shows, we replace original character names
+with new names unseen in the source shows (e.g.,
+Joey →John); we refer to this setting as New
+Names and use it as the default in all experiments
+unless otherwise noted. We additionally create a
+more adversarial Swapped Names setting by ex-
+changing names among characters (e.g., Joey ↔
+Monica), which makes memorized character knowl-
+edge actively misleading, as it now contradicts the
+dialogue context.
+3.2
+Agent Evaluation
+The final dataset consists of the dialogue D and
+session-specific candidate question sets. Specifi-
+cally, D contains N dialogue sessions, and each
+session Si is associated with a candidate question
+set Qi. Each Qi contains question-answer pairs
+(qi,j, ai,j), where qi,j is a question that can be asked
+during Si and ai,j is the corresponding gold answer.
+Agents process sessions in chronological order
+and answer one question per session. At each ses-
+sion Si, we sample a question-answer pair (qi, ai)
+from Qi under a stratified sampling policy, target-
+ing 50% fan-quiz questions and 20% unanswer-
+able questions to ensure coverage of both question
+sources and answerability conditions. Each ques-
+tion is posed at a randomly sampled point within
+the session, and the agent can use only the dialogue
+history observed up to that point. We repeat this
+procedure three times with independently sampled
+question sets, using the same questions for all mem-
+Dialogue
+Sep 22, 1994. Session #2.
+Nate: No, go on! It's Paul the Wine Guy!
+Patricia: Hi, come in! Paul, this is...... everybody, 
+this is paul
+All: Hey! Paul! Hi! The Wine Guy! Hey!
+James: I'm sorry, I didn't catch your name. Paul, 
+was it?
+...
+Sep 22, 1994. Session #3.
+Jennifer: Ooh, I just pulled out four eyelashes. 
+Nate: Linda, what're you, uh what're you up to 
+tonight?
+Linda: Well, I was kinda supposed to be headed 
+for Aruba on my honeymoon, so nothing!
+...
+Sep 22, 1994. Session #3.
+Jennifer: Ooh, I just pulled out four eyelashes. 
+Nate: Linda, what're you, uh what're you up to       
+tonight?
+Linda: Well, I was kinda supposed to be headed for 
+Aruba on my honeymoon, so nothing!
+...
+S (Session Repository)
+Open
+Information
+Extraction
+Patricia
+John
+Merge
+Patricia
+John
+Response Generation (LLM)
+2-Hop SubGraph
+Query
+Oh my gosh, so like, who was Patricia’s date on that 
+super specific day, September 22, 1994?
+Not enough evidence
+Paul
+Answer
+Memory Construction
+Retrieval and Response Generation
+Patricia
+Session Retrieval
+BM25 
+OpenAI Emb.
+Patricia
+Graph (R) Traversal
+Store
+R (Relational Memory)
+Enough evidence
+Explore one additional hop 
+→ Max hop limit: “I don’t know.”
+Figure 3: Overall architecture of GroupChat-Mem. (1) An LLM performs Open Information Extraction (schema-free
+extraction of [subject, relation, object] records) over incoming sessions to build the relational memory R, while raw
+sessions are stored in the session repository S. (2) Given a query, evidence is retrieved from both R and S, with
+additional graph traversal over R when the initial evidence is insufficient.
+FR
+TBBT
+TO
+Dialogue Length (tokens)
+335,439
+367,636
+352,914
+# of Dialogue Sessions
+788
+805
+2,347
+Fan Quiz Questions†
+192.9
+26.7
+42.7
+TKG Questions†
+1173.2
+1280.1
+455.1
+Total Question Candidates†
+1366.1
+1306.8
+497.9
+,→Answerable Questions†
+1215.0
+1239.7
+410.9
+,→Unanswerable Questions†
+151.1
+67.2
+86.9
+Approx. # of Possible Tests
+1366.1788
+1306.8805
+497.92347
+Table 2: Statistics of GroupChat-Bench. † denotes the
+average number of questions per session. FR: Friends,
+TBBT: The Big Bang Theory, TO: The Office.
+ory systems within each run. Reported accuracies
+are averaged over the three runs and characterize
+performance under this stratified evaluation pro-
+tocol rather than uniform sampling over the full
+candidate pool.
+3.3
+Statistics and Evaluation Formats
+Table 2 presents the statistics of GroupChat-Bench,
+including the number of dialogue sessions and the
+average number of question candidates per ses-
+sion. GroupChat-Bench supports both multiple-
+choice and open-ended question formats for evalu-
+ation. In the multiple-choice setting, each question
+provides five answer choices. During evaluation,
+unanswerable questions are sampled to constitute
+20% of the test questions, balancing the five an-
+swer choices rather than reflecting their natural fre-
+quency in the candidate pool. In the open-ended set-
+ting, we used the token-level F1/EM (Exact Match)
+metrics from SQuAD (Rajpurkar et al., 2016) for
+evaluation. The detailed evaluation protocol is pro-
+vided in Appendix E.3.
+3.4
+Quality Control
+To assess annotation quality, sampled instances
+from each of the four components — quiz filter-
+ing, evidence-scene mapping, triple extraction, and
+style transfer — were independently re-annotated
+by a reviewer who did not participate in the ini-
+tial annotation. Agreement with the initial annota-
+tion was 99% for quiz filtering (n=100), 97% for
+evidence-scene mapping (n=100), 94% for triple
+extraction (n=50), and 96.5% for style transfer
+(n=200).
+4
+GroupChat-Mem
+In long-running group chats, evidence relevant to
+a query may be distributed across sessions, while
+other queries hinge on the precise wording of a par-
+ticular exchange. Retrieving only raw dialogue can
+miss distributed evidence, whereas relying solely
+on compressed records can omit conversational de-
+tail (Han et al., 2026). To meet both requirements,
+we develop GroupChat-Mem, a dual-view memory
+baseline that maintains an automatically induced
+relational memory alongside a raw session reposi-
+tory, retrieves evidence from both, and uses them
+jointly for response generation (Figure 3).
+Memory Construction from Dialogues
+As
+the dialogue D = {S1, S2, ..., SN} progresses,
+GroupChat-Mem maintains a relational memory
+R and a raw session repository S.
+For R, an LLM performs Open Information Ex-
+traction (OpenIE) (Banko et al., 2007), producing
+records of the form [subject, relation, object]. The
+extraction is open-schema and does not rely on pre-
+defined entity types or relation labels. Extraction
+is triggered at two points: when a query arrives
+during session Si, the LLM extracts records from
+the partial session Si,j observed up to that turn, and
+Memory System
+Friends
+The Big Bang Theory
+The Office
+Qwen3.5
+Gemma4
+GPT-OSS
+Qwen3.5
+Gemma4
+GPT-OSS
+Qwen3.5
+Gemma4
+GPT-OSS
+Reference Settings
+Random Choice
+20.00
+20.00
+20.00
+20.00
+20.00
+20.00
+20.00
+20.00
+20.00
+Direct QA (No History)
+21.36 (0.57)
+28.72 (0.48)
+24.62 (1.90)
+22.53 (0.52)
+27.25 (0.76)
+29.61 (1.44)
+28.22 (0.29)
+32.28 (0.39)
+30.34 (0.95)
+Oracle Memory
+(Upper Bound)
+Sessions+TKGs
+96.70 (0.99)
+96.79 (0.74)
+93.23 (0.95)
+95.45 (0.61)
+95.11 (0.59)
+92.84 (0.75)
+91.79 (0.32)
+92.91 (0.27)
+91.00 (0.63)
+Sessions
+77.20 (0.29)
+79.15 (0.89)
+77.45 (1.28)
+85.13 (0.26)
+81.95 (1.39)
+85.80 (0.61)
+76.99 (0.60)
+78.00 (0.74)
+77.96 (1.03)
+TKGs
+64.09 (1.10)
+64.21 (0.77)
+63.07 (0.79)
+63.73 (0.87)
+65.26 (0.56)
+64.64 (0.31)
+58.24 (0.20)
+59.78 (0.42)
+60.08 (0.26)
+Simple RAG
+BM25
+69.88 (0.89)
+69.29 (1.79)
+56.22 (1.21)
+69.69 (2.66)
+68.90 (1.41)
+61.49 (1.88)
+65.79 (0.24)
+64.48 (0.13)
+59.59 (0.40)
+OpenAI Embedding
+70.39 (0.76)
+70.18 (1.21)
+58.71 (0.19)
+74.91 (1.55)
+76.02 (1.61)
+67.83 (0.69)
+74.27 (1.37)
+74.58 (1.06)
+67.01 (0.50)
+Agentic Memory
+HippoRAG 2
+73.18 (1.09)
+73.01 (1.15)
+60.07 (0.81)
+78.10 (0.36)
+77.43 (1.78)
+68.07 (1.49)
+75.13 (0.79)
+75.32 (0.66)
+68.53 (0.85)
+Mem0
+71.15 (0.78)
+71.45 (1.87)
+62.27 (1.42)
+73.87 (1.34)
+71.35 (0.19)
+64.89 (0.71)
+68.77 (1.03)
+69.88 (0.37)
+66.04 (0.70)
+A-MEM
+65.23 (0.96)
+69.20 (0.37)
+57.95 (0.89)
+69.57 (0.12)
+70.19 (0.33)
+61.82 (0.31)
+68.06 (0.83)
+69.32 (0.38)
+62.69 (0.28)
+GroupChat-Mem
+77.83 (2.48)
+77.58 (1.18)
+64.81 (1.17)
+77.52 (2.48)
+78.92 (0.85)
+70.27 (0.56)
+78.68 (0.98)
+77.06 (0.34)
+69.00 (0.34)
+Table 3: Main experimental results on GroupChat-Bench (New Names setting), reported as the mean and standard
+deviation over three runs with different sampled question sets. The best results are highlighted in bold.
+when the session ends, it extracts once more from
+the complete session Si. Each extraction covers
+the entire (partial) session and replaces any ear-
+lier extraction for Si, so that records are revised as
+later utterances resolve references or clarify prior
+statements. The extracted records form a graph-
+structured memory in which subjects and objects
+serve as nodes and relations as edges, each times-
+tamped with its source session. Shared nodes con-
+nect records from different sessions, linking related
+evidence across session boundaries. In parallel,
+each original session Si is stored in S, preserving
+exact wording, local discourse context, and con-
+versational nuances that relational extraction may
+omit (see Algorithm 1 in Appendix E.1 for details).
+Note that R is induced online from the observed
+dialogue only and is fully independent of the TKG
+used for benchmark construction — it accesses
+none of the TKG’s relation schema, verified triples,
+or annotations.
+Memory Retrieval and Response Generation
+Given a user query, GroupChat-Mem retrieves ev-
+idence from both memory components, R and S.
+This parallel retrieval combines structured rela-
+tional information from R with detailed conver-
+sational context from S, without committing to a
+single retrieval source in advance.
+For retrieval from R, GroupChat-Mem first
+prompts the LLM to identify the top-n query-
+relevant nodes and constructs a two-hop neighbor-
+hood around each selected node. The records con-
+tained in these neighborhoods are then linearized
+and ranked according to their cosine similarity to
+the query (Karpukhin et al., 2020), using OpenAI
+embeddings (OpenAI, 2024). The top-kr records
+are retained as the initial relational evidence.
+For retrieval from S, each dialogue session is
+treated as a retrieval unit. Relevant sessions are
+retrieved using a combination of lexical and seman-
+tic matching. Specifically, BM25 (Robertson and
+Zaragoza, 2009) captures keyword-level relevance,
+while embedding-based cosine similarity captures
+semantic relevance. GroupChat-Mem retrieves ks
+sessions in total, with half selected according to
+their BM25 scores and the other half according
+to their embedding-based cosine similarity to the
+query. The retrieved sessions serve as raw session
+evidence for response generation.
+Using the evidence retrieved from both mem-
+ory views, GroupChat-Mem prompts the LLM to
+generate an initial response and assess whether the
+query can be answered with sufficient support. If
+the retrieved evidence is sufficient, the response
+is returned directly. Otherwise, GroupChat-Mem
+initiates a fine-grained traversal over the induced
+relational memory.
+Among the nodes appearing in the initially
+retrieved records, GroupChat-Mem prompts the
+LLM to select the node most relevant to the query.
+Starting from the selected node, GroupChat-Mem
+expands the relational neighborhood one hop at
+a time. After each expansion, the LLM attempts
+to answer the query using the accumulated rela-
+tional evidence and assesses whether the resulting
+answer is sufficiently supported. The traversal ter-
+minates when a supported answer can be generated
+or when the maximum hop limit is reached. If the
+available dialogue evidence remains insufficient,
+GroupChat-Mem returns “I don’t know.” The com-
+plete retrieval procedure is summarized in Algo-
+rithm 2 (Appendix E.1).
+5
+Experiments
+5.1
+Experimental Setting
+In our experiments, we used the multiple-choice
+format to efficiently and accurately assess the
+agent’s dialogue understanding capabilities. To
+fairly compare GroupChat-Mem with other base-
+lines, we used Qwen3.5-35B-A3B (Qwen Team,
+2026), Gemma4-26B-A4B (Google DeepMind,
+2026), and GPT-OSS 20B (OpenAI, 2025) as the
+LLM backbones. Detailed experimental settings,
+including the hyperparameters used in our experi-
+ments, are provided in Appendix E.
+5.2
+Baselines
+We compare GroupChat-Mem against three rep-
+resentative agentic memory systems, along with
+two simple RAG baselines. For all baselines, we
+used the official implementations and tuned their
+hyperparameters and prompts for evaluation on
+GroupChat-Bench.
+BM25 and OpenAI Embedding serve as represen-
+tative simple RAG baselines, using sparse lexical
+retrieval and dense semantic retrieval, respectively.
+HippoRAG 2 (Gutiérrez et al., 2025) is a graph-
+based retrieval framework that constructs associa-
+tive memory over textual evidence and retrieves
+query-relevant passages through graph search.
+Mem0 (Chhikara et al., 2025) maintains long-term
+agent memory by extracting, updating, and deleting
+compact memory items from ongoing interactions,
+rather than storing the full dialogue history as-is.
+A-MEM (Xu et al., 2025) constructs an agentic
+memory system by converting past interactions into
+memory notes and dynamically linking them ac-
+cording to semantic and contextual relevance.
+5.3
+Results
+As shown in Table 3, GroupChat-Mem achieves the
+best performance in 8 of 9 settings, outperforming
+the strongest baseline by up to 4.7 points. Neverthe-
+less, all memory systems remain below 80, leaving
+a gap of roughly 20 points to the Oracle upper
+bound (Sessions+TKGs). This gap highlights that
+retrieving relevant evidence from long group-chat
+histories remains the key bottleneck.
+Oracle Memory
+LLMs achieve scores of 91–96
+when given both the evidence sessions for each
+question and the corresponding TKGs. Interest-
+ingly, performance drops substantially when either
+representation is removed, even though the evi-
+dence sessions alone contain sufficient information
+Memory System
+New Names
+Original Names
+Swapped Names
+BM25
+65.13
+66.29 (+1.16)
+61.97 (-3.16)
+OpenAI Embedding
+66.43
+68.01 (+1.58)
+65.20 (-1.23)
+HippoRAG 2
+68.75
+69.97 (+1.22)
+66.77 (-1.98)
+Mem0
+68.29
+72.60 (+4.31)
+66.97 (-1.32)
+A-MEM
+64.13
+66.62 (+2.49)
+62.00 (-2.13)
+GroupChat-Mem
+73.41
+75.18 (+1.78)
+71.57 (-1.84)
+Table 4: Results on GroupChat-Bench (Friends) under
+different character-name settings (New: Joey →John;
+Swapped: Joey ↔Monica), averaged across all back-
+bone models. Deltas are relative to New Names.
+Figure 4: Analysis on the performance of each method
+with respect to (a) multi-party complexity and (b) long-
+term progression of the given dialogue.
+to answer the questions. This suggests that raw
+multi-party dialogue remains difficult for LLMs to
+interpret and that explicit structural representations
+can substantially aid reasoning.
+Impact of Pretrained Knowledge
+Because
+LLMs may have prior knowledge of the TV shows
+used in our benchmark, we replace character names
+with new names by default to reduce reliance on
+memorized information. Nevertheless, in Direct
+QA without dialogue history, models scored above
+the random-choice baseline (20%) and reached up
+to 32.3%, indicating that name replacement alone
+is insufficient. To further examine the effect of
+character names, we compare two additional set-
+tings: Original Names and the adversarial Swapped
+Names (e.g., Joey ↔Monica). As shown in Table 4,
+performance improves with Original Names but de-
+clines below the New Names default with Swapped
+Names. This suggests that swapped names not only
+reduce the usefulness of memorized knowledge but
+also make it actively misleading by conflicting with
+the dialogue context.
+Challenges in Long-Term Multi-Party Dialogue
+Understanding
+We analyzed baseline perfor-
+mance by the number of participants in the evi-
+dence sessions and by dialogue length. As shown
+in Figure 4(a), performance decreases as the num-
+ber of participants increases, demonstrating the
+difficulty of tracking information and relationships
+across multiple speakers. Figure 4(b) shows a sim-
+ilar decline as dialogue history grows, indicating
+that retrieving and integrating relevant evidence
+becomes increasingly challenging over long-term
+interactions. However, GroupChat-Mem degrades
+more gracefully than the other methods, highlight-
+ing its robustness to extended conversational his-
+tories. These results identify speaker multiplicity
+and dialogue length as key challenges in long-term
+group-chat understanding and demonstrate the ad-
+vantage of GroupChat-Mem in the latter setting.
+Further Analyses
+We additionally examine the
+effect of question format, the contribution of each
+memory component, and the behavior of the in-
+duced relational memory. First, evaluation for-
+mat matters: GroupChat-Mem accuracy drops
+by 13–29 points across backbones when moving
+from labeled MCQ (choices given as explicit op-
+tions) to open-ended evaluation (e.g., 77.8→64.5
+for Qwen3.5; Appendix E.3.2). Because answer
+choices bound the output space, the two formats
+probe complementary abilities: labeled MCQ of-
+fers reliable automatic scoring of discriminative un-
+derstanding, motivating its use as our default, while
+open-ended evaluation measures generative recall
+and leaves considerable headroom. Second, com-
+ponent ablations (Appendix F.2) show that both
+memory views are necessary, though to different
+degrees: removing the session repository is most
+damaging (-19.8 points on average), as compressed
+records omit the precise wording that many queries
+hinge on, while removing the relational memory
+costs 4.6 points, as evidence linked across distant
+sessions can no longer be resolved. Disabling the
+iterative graph traversal further degrades perfor-
+mance by 1.5 points, confirming its role in incre-
+mentally gathering additional evidence when ini-
+tial retrieval is insufficient. The appendix also re-
+ports a breakdown of accuracy by question type
+(Appendix E.4), the distribution of gold answer
+choices (Appendix E.5), and qualitative examples
+showing how GroupChat-Mem retrieves evidence
+across session boundaries (Appendix G).
+6
+Conclusion
+We introduced GroupChat-Bench, a benchmark for
+evaluating long-term multi-party dialogue under-
+standing over chronologically accumulating group-
+chat histories. The benchmark tests whether LLM
+agents can track participant-specific information,
+evolving relationships, and contextual changes
+across extended interactions. We also proposed
+GroupChat-Mem, which combines relational mem-
+ory with a raw session repository. Experiments re-
+veal limitations in existing memory systems, while
+GroupChat-Mem provides a stronger and more ro-
+bust baseline for long dialogue histories.
+Limitations
+Scripted dialogue as a proxy for group chats.
+Ideally, GroupChat-Bench would be built from
+naturally occurring group communication, such
+as corporate Slack channels or workplace meet-
+ing transcripts. However, such data is difficult to
+access and release: it raises serious privacy and
+consent concerns for the participants, and is typ-
+ically treated as proprietary corporate assets. We
+therefore use TV scripts as a proxy, since they pro-
+vide human-authored, long-horizon multi-party di-
+alogue with persistent character relationships, free
+of these constraints. To partially compensate for
+the lack of real-world data, we selected shows
+that cover diverse everyday contexts, including in-
+terpersonal relationships (Friends), academic set-
+tings (The Big Bang Theory), and workplace in-
+teractions (The Office), though they remain con-
+strained to narrative-driven dialogue. These scripts
+retain key conversational phenomena such as frag-
+mented turn-taking, pile-on reactions, and topic
+shifts across speakers (Figure 1), but they do not
+capture some surface characteristics of text-based
+messaging, such as typos, emojis, or asynchronous
+short reactions. We expect the core challenges eval-
+uated by GroupChat-Bench (multi-party ground-
+ing, temporal persistence, and evidence distributed
+across noisy exchanges) to transfer to such settings,
+though extending the benchmark with naturally oc-
+curring (appropriately consented) chat data is a
+natural next step.
+Data contamination.
+Since the source shows
+likely appear in pretraining corpora, we mitigate
+contamination by replacing character names with
+unseen ones (the New Names setting), adversarially
+swapping names among characters (the Swapped
+Names setting), and including unanswerable ques-
+tions. We further quantify residual leakage directly
+via the Direct QA baseline (Section 5.3). While
+these measures make memorized knowledge unreli-
+able or even misleading for solving the benchmark,
+they cannot rule out that models exploit memorized
+plot structure. Constructing a comparable bench-
+mark from dialogue guaranteed to be unseen during
+pretraining remains an open challenge for the field.
+Ethics Statement
+Data sources and copyright.
+GroupChat-Bench
+is built from fan-transcribed scripts of three TV
+shows, obtained from publicly available Kaggle
+datasets, and from fan-created quizzes on Fun-
+Trivia.
+The underlying shows are copyrighted
+works; our use and release are strictly limited to
+non-commercial academic research, following es-
+tablished practice in prior dialogue benchmarks
+constructed from the same transcripts (Yang and
+Choi, 2019; Poria et al., 2019). The released di-
+alogue differs from the original scripts: all non-
+verbal descriptions and production metadata are
+removed.
+Fan-quiz questions are likewise fil-
+tered and rewritten rather than reproduced verbatim
+(§3.1.2, §3.1.5). We release the benchmark under
+a research-only license and will promptly remove
+any content upon request from the relevant rights
+holders.
+Use of AI Assistants
+We used an LLM-based writing assistant solely
+to polish the writing of this paper, i.e., for gram-
+mar correction and paraphrasing of author-written
+text. It was not used to generate scientific content,
+ideas, analyses, or citations, and all suggestions
+were reviewed and edited by the authors, who take
+full responsibility for the final content. Separately,
+GPT-4 was used as a component of the dataset con-
+struction pipeline as a research object.
+Acknowledgments
+This work was supported by the Institute of In-
+formation & Communications Technology Plan-
+ning & Evaluation (IITP) grants (RS-2019-
+II190075, RS-2024-00338140), the InnoCORE
+Program (N10250156), and the National Re-
+search Foundation of Korea (NRF) grant (NRF-
+2020H1D3A2A03100945, RS-2024-00333484),
+funded by the Korean government (MSIT).
+References
+Michele Banko, Michael J. Cafarella, Stephen Soder-
+land, Matt Broadhead, and Oren Etzioni. 2007. Open
+information extraction from the web. In Proceed-
+ings of the 20th International Joint Conference on
+Artificial Intelligence.
+Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet
+Singh, and Deshraj Yadav. 2025. Mem0: Building
+production-ready ai agents with scalable long-term
+memory. arXiv preprint arXiv:2504.19413.
+Charles Clark. 2025. Introducing Alexa+, the next gen-
+eration of Alexa. Amazon News. Accessed: 2026-
+05-18.
+Leyang Cui, Yu Wu, Shujie Liu, Yue Zhang, and Ming
+Zhou. 2020. MuTual: A dataset for multi-turn dia-
+logue reasoning. In Proceedings of the 58th Annual
+Meeting of the Association for Computational Lin-
+guistics, pages 1406–1416, Online. Association for
+Computational Linguistics.
+Micha Elsner and Eugene Charniak. 2008. You talk-
+ing to me? a corpus and algorithm for conversation
+disentanglement. In Proceedings of ACL-08: HLT,
+pages 834–842, Columbus, Ohio. Association for
+Computational Linguistics.
+David Fono and Ron Baecker. 2006. Structuring and
+supporting persistent chat conversations. In Proceed-
+ings of the 2006 20th Anniversary Conference on
+Computer Supported Cooperative Work, CSCW ’06,
+page 455–458, New York, NY, USA. Association for
+Computing Machinery.
+Google DeepMind. 2026. Gemma-4-26b-a4b. https:
+//huggingface.co/google/gemma-4-26B-A4B.
+Hugging Face model card. Accessed: 2026-06-03.
+Bernal Jiménez Gutiérrez, Yiheng Shu, Weijian Qi,
+Sizhe Zhou, and Yu Su. 2025. From rag to memory:
+Non-parametric continual learning for large language
+models. In International Conference on Machine
+Learning, pages 21497–21515. PMLR.
+Haoyu Han, Li Ma, Yu Wang, Harry Shomer, Kai Guo,
+Yongjia Lei, Zhisheng Qi, Zhigang Hua, Bo Long,
+Hui Liu, Charu Aggarwal, and Jiliang Tang. 2026.
+RAG vs. GraphRAG: A systematic evaluation and
+key insights.
+In Proceedings of the 32nd ACM
+SIGKDD Conference on Knowledge Discovery and
+Data Mining, pages 8966–8977.
+Taher H Haveliwala. 2002. Topic-sensitive pagerank.
+In Proceedings of the 11th international conference
+on World Wide Web, pages 517–526.
+Chuanrui Hu, Tong Li, Xingze Gao, Hongda Chen,
+Yi Bai, Dannong Xu, Tianwei Lin, Xiaohong Li, Yun-
+yun Han, Jian Pei, and Yafeng Deng. 2026a. Evaluat-
+ing long-horizon memory for multi-party collabora-
+tive dialogues. In Proceedings of the ACM SIGKDD
+International Conference on Knowledge Discovery
+and Data Mining, pages 9082–9090.
+Yuanzhe Hu, Yu Wang, and Julian McAuley. 2026b.
+Evaluating memory in LLM agents via incremental
+multi-turn interactions. In International Conference
+on Learning Representations.
+Jihyoung Jang, Minseong Boo, and Hyounghun Kim.
+2023. Conversation chronicles: Towards diverse tem-
+poral and relational dynamics in multi-session con-
+versations. In Proceedings of the 2023 Conference
+on Empirical Methods in Natural Language Process-
+ing, pages 13584–13606, Singapore. Association for
+Computational Linguistics.
+Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick
+Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, and
+Wen-tau Yih. 2020. Dense passage retrieval for open-
+domain question answering. In Proceedings of the
+2020 Conference on Empirical Methods in Natural
+Language Processing, pages 6769–6781. Association
+for Computational Linguistics.
+Eunwon Kim, Chanho Park, and Buru Chang. 2025a.
+SHARE: Shared memory-aware open-domain long-
+term dialogue dataset constructed from movie script.
+In Proceedings of the 63rd Annual Meeting of the
+Association for Computational Linguistics (Volume
+1: Long Papers), pages 14474–14498. Association
+for Computational Linguistics.
+Jiho Kim, Woosog Chay, Hyeonji Hwang, Daeun
+Kyung, Hyunseung Chung, Eunbyeol Cho, Yeonsu
+Kwon, Yohan Jo, and Edward Choi. 2025b. Dial-
+Sim: A dialogue simulator for evaluating long-term
+multi-party dialogue understanding of conversational
+agents. arXiv preprint arXiv:2406.13144.
+Ran Le, Wenpeng Hu, Mingyue Shang, Zhenjun You, Li-
+dong Bing, Dongyan Zhao, and Rui Yan. 2019. Who
+is speaking to whom? learning to identify utterance
+addressee in multi-party conversations. In Proceed-
+ings of the 2019 Conference on Empirical Methods
+in Natural Language Processing and the 9th Inter-
+national Joint Conference on Natural Language Pro-
+cessing (EMNLP-IJCNLP), pages 1909–1919, Hong
+Kong, China. Association for Computational Linguis-
+tics.
+Hao Li, Chenghao Yang, An Zhang, Yang Deng, Xiang
+Wang, and Tat-Seng Chua. 2025. Hello again! LLM-
+powered personalized agent for long-term dialogue.
+In Proceedings of the 2025 Conference of the Na-
+tions of the Americas Chapter of the Association for
+Computational Linguistics: Human Language Tech-
+nologies (Volume 1: Long Papers), pages 5259–5276.
+Association for Computational Linguistics.
+Jiaqi Li, Ming Liu, Min-Yen Kan, Zihao Zheng, Zekun
+Wang, Wenqiang Lei, Ting Liu, and Bing Qin. 2020.
+Molweni: A challenge multiparty dialogues-based
+machine reading comprehension dataset with dis-
+course structure. In Proceedings of the 28th Inter-
+national Conference on Computational Linguistics,
+pages 2642–2652, Barcelona, Spain (Online). Inter-
+national Committee on Computational Linguistics.
+Yanran Li, Hui Su, Xiaoyu Shen, Wenjie Li, Ziqiang
+Cao, and Shuzi Niu. 2017. Dailydialog: A manually
+labelled multi-turn dialogue dataset. In Proceedings
+of the Eighth International Joint Conference on Nat-
+ural Language Processing (Volume 1: Long Papers),
+pages 986–995.
+Ryan Lowe, Nissan Pow, Iulian Serban, and Joelle
+Pineau. 2015. The Ubuntu dialogue corpus: A large
+dataset for research in unstructured multi-turn dia-
+logue systems. In Proceedings of the 16th Annual
+Meeting of the Special Interest Group on Discourse
+and Dialogue, pages 285–294, Prague, Czech Repub-
+lic. Association for Computational Linguistics.
+Adyasha Maharana, Dong-Ho Lee, Sergey Tulyakov,
+Mohit Bansal, Francesco Barbieri, and Yuwei Fang.
+2024.
+Evaluating very long-term conversational
+memory of LLM agents. In Proceedings of the 62nd
+Annual Meeting of the Association for Computational
+Linguistics (Volume 1: Long Papers), pages 13851–
+13870. Association for Computational Linguistics.
+Shikib Mehri and Giuseppe Carenini. 2017. Chat disen-
+tanglement: Identifying semantic reply relationships
+with random forests and recurrent neural networks.
+In Proceedings of the Eighth International Joint Con-
+ference on Natural Language Processing (Volume 1:
+Long Papers), pages 615–623, Taipei, Taiwan. Asian
+Federation of Natural Language Processing.
+Microsoft. 2026. Catch up on meetings with Microsoft
+365 Copilot in Teams. Microsoft Support. Accessed:
+2026-05-18.
+OpenAI. 2023.
+Gpt-4 technical report.
+Preprint,
+arXiv:2303.08774.
+OpenAI. 2024.
+New embedding models and
+API
+updates.
+https://openai.com/index/
+new-embedding-models-and-api-updates/.
+Accessed: 2026-06-17.
+OpenAI. 2025. gpt-oss-120b & gpt-oss-20b model card.
+Preprint, arXiv:2508.10925.
+Soujanya Poria, Devamanyu Hazarika, Navonil Ma-
+jumder, Gautam Naik, Erik Cambria, and Rada Mi-
+halcea. 2019.
+MELD: A multimodal multi-party
+dataset for emotion recognition in conversations. In
+Proceedings of the 57th Annual Meeting of the As-
+sociation for Computational Linguistics, pages 527–
+536, Florence, Italy. Association for Computational
+Linguistics.
+Ayesha Qamar, Adarsh Pyarelal, and Ruihong Huang.
+2023. Who is speaking? speaker-aware multiparty
+dialogue act classification. In Findings of the As-
+sociation for Computational Linguistics: EMNLP
+2023, pages 10122–10135, Singapore. Association
+for Computational Linguistics.
+Qwen Team. 2026.
+Qwen3.5-35b-a3b.
+https://
+huggingface.co/Qwen/Qwen3.5-35B-A3B.
+Hug-
+ging Face model card. Accessed: 2026-06-03.
+Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and
+Percy Liang. 2016. Squad: 100,000+ questions for
+machine comprehension of text. In Proceedings of
+the 2016 conference on empirical methods in natural
+language processing, pages 2383–2392.
+Stephen Robertson and Hugo Zaragoza. 2009. The prob-
+abilistic relevance framework: Bm25 and beyond.
+Foundations and Trends® in Information Retrieval,
+3(4):333–389.
+Slack Technologies. 2026. Slack AI agents with Agent-
+force & Agentic AI. Slack Official Website. Ac-
+cessed: 2026-05-18.
+Kai Sun, Dian Yu, Jianshu Chen, Dong Yu, Yejin Choi,
+and Claire Cardie. 2019. DREAM: A challenge data
+set and models for dialogue-based reading compre-
+hension. Transactions of the Association for Compu-
+tational Linguistics, 7:217–231.
+Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang,
+Kai-Wei Chang, and Dong Yu. 2025. Longmemeval:
+Benchmarking chat assistants on long-term interac-
+tive memory. In International Conference on Learn-
+ing Representations.
+Wujiang Xu, Zujie Liang, Kai Mei, Hang Gao, Juntao
+Tan, and Yongfeng Zhang. 2025. A-Mem: Agentic
+Memory for LLM Agents. In Advances in Neural
+Information Processing Systems, volume 38.
+Jingbo Yang, Kwei-Herng Lai, Xiaowen Wang, Shiyu
+Chang, Yaar Harari, and Evgeniy Gabrilovich. 2026.
+GroupMemBench: Benchmarking LLM agent mem-
+ory in multi-party conversations.
+arXiv preprint
+arXiv:2605.14498.
+Zhengzhe Yang and Jinho D. Choi. 2019. FriendsQA:
+Open-domain question answering on TV show tran-
+scripts. In Proceedings of the 20th Annual SIGdial
+Meeting on Discourse and Dialogue, pages 188–197,
+Stockholm, Sweden. Association for Computational
+Linguistics.
+Dian Yu, Kai Sun, Claire Cardie, and Dong Yu. 2020.
+Dialogue-based relation extraction. In Proceedings
+of the 58th Annual Meeting of the Association for
+Computational Linguistics, pages 4927–4940, Online.
+Association for Computational Linguistics.
+Amy X. Zhang and Justin Cranshaw. 2018. Making
+sense of group chat through collaborative tagging and
+summarization. Proc. ACM Hum.-Comput. Interact.,
+2(CSCW).
+Saizheng Zhang, Emily Dinan, Jack Urbanek, Arthur
+Szlam, Douwe Kiela, and Jason Weston. 2018. Per-
+sonalizing dialogue agents: I have a dog, do you have
+pets too? In Proceedings of the 56th Annual Meet-
+ing of the Association for Computational Linguistics
+(Volume 1: Long Papers), pages 2204–2213.
+Zoom. 2026. Getting started with Zoom AI Companion
+features. Zoom Support. Accessed: 2026-05-18.
+A
+Date Assignment
+We first extracted elements from the scripts that
+could indicate dates (e.g., Valentine’s Day, Christ-
+mas Eve). Then, we reviewed the scripts again
+to analyze the relative timing of the sessions. For
+example, if there is a line mentioning that Chan-
+dler broke up with his girlfriend two days ago, we
+annotated the session where he broke up with his
+girlfriend as occurring two days prior to the men-
+tioned session. Next, while watching each episode,
+we pinpointed sessions where the dates might have
+changed by observing whether the characters’ out-
+fits changed between sessions. Finally, we assigned
+a specific date to each session based on the actual
+broadcast date of the episode, adjusting for the rel-
+ative differences in dates and events such as Christ-
+mas.
+B
+Question Generation Based on Fan
+Quizzes
+For each scene si,k from episode pi in Scriptpre,
+we define the set of answerable questions as
+FanAi,k and the set of unanswerable questions
+as FanUi,k. The process of generating questions
+based on fan quizzes is as follows.
+First, we collected quizzes for each season
+and episode of Friends, The Big Bang Theory,
+and The Office from the FunTrivia website. For
+each episode pi in Scriptpre, we used GPT-4
+to determine if the crawled questions CrQi =
+{qi,0, qi,1, ..., qi,l} could be answered using only
+pi. If a question qi,m could be answered, GPT-4
+identified the scenes ESi,m that provide evi-
+dence for the answer, compiling them into Qi =
+{(qi,m, ESi,m)}l
+m=0. Subsequently, the authors re-
+viewed each ESi,m, made necessary corrections,
+and annotated whether a single scene from ESi,m
+was sufficient to answer qi,m or if multiple scenes
+were needed to be considered simultaneously. For
+each si,k within pi, we assessed the answerability
+of the questions in Qi.
+For each si,k, if a question qi,m could be an-
+swered using just one scene, and si,k occurs af-
+ter the initial appearance of the main character in
+ESi,m, we included qi,m in FanAi,k. This ensures
+that the main character had adequate exposure to
+the relevant evidence. Additionally, for questions
+requiring verification across multiple scenes, if the
+main character appears in all ESi,m scenes and si,k
+occurs after the last scene of ESi,m, we included
+qi,m in FanAi,k. If the main character does not ap-
+pear in any of the ESi,m scenes, qi,m was included
+in FanUi,k since the main character has not expe-
+rienced any evidence to answer the question. The
+rest are not included in the dataset as it is unclear
+whether they are answerable per scene. Addition-
+ally, to generate questions that require long-term
+memory, we added the most recent date of the evi-
+dence scenes for each question.
+C
+Question Generation Based on a
+Temporal Knowledge Graph
+C.1
+Relations
+We used the following 32 relations: ‘age’, ‘alumni’,
+‘boss’, ‘boyfriend’, ‘brother’, ‘client’, ‘date of
+birth’, ‘dating with’, ‘ex-boyfriend’, ‘ex-fiance’,
+‘ex-fiancee’, ‘ex-girlfriend’, ‘ex-husband’, ‘ex-
+roommate’, ‘ex-wife’, ‘father’, ‘fiance’, ‘fiancee’,
+‘girlfriend’, ‘hometown’, ‘husband’, ‘job’, ‘ma-
+jor’, ‘mother’, ‘neighbor’, ‘pet’, ‘place of birth’,
+‘place of work’, ‘roommate’, ‘sister’, ‘subordinate’,
+‘wife’.
+C.2
+Question Templates and Generated
+Questions
+Templates for one-hop questions are provided in Ta-
+ble 20 and Table 21. The former contains templates
+without temporal information, while the latter in-
+cludes templates with temporal details. Since re-
+lations like “brother” and “sister” remain constant
+over time, questions about these relations do not
+require temporal information. Hence, no temporal
+templates were created for them. In Table 21, “on
+{time}” is used, but {time} can be not only the full
+date (year, month, and day) but also just the year
+and month, or even just the year. In these cases, “in
+{time}” is used.
+The templates for two-hop questions are avail-
+able in Table 22.
+These templates incorporate
+temporal information. To frame questions in the
+present tense, adjust the verbs to the present tense
+and remove the temporal information, following
+the approaches demonstrated in Table 20 and Ta-
+ble 21.
+D
+Character Style Transfer
+Table 23 shows the results of the character style
+transfer for three selected questions. To make the
+questions sound more natural and conversational,
+we prepended each one with “By the way,”. This
+helps them blend seamlessly into the flow of the
+conversation. The table shows how each question
+appears when rephrased in the style of various char-
+acters. The ‘Default’ setting is applied when the
+question is asked by a character who is not a recur-
+ring character of the TV show.
+E
+Experimental Setting
+E.1
+Algorithm
+This section explains the full GroupChat-Mem al-
+gorithm in detail. Algorithm 1 describes how the
+two memories, R and S, are constructed. Extrac-
+tion always takes the complete partial session Si,j
+as input rather than the latest utterance alone, so
+references resolved later in the session are reflected
+in the resulting records. A query posed at turn
+j is answered over the point-in-time views R(i,j)
+and S(i,j), which add the current partial session to
+what was committed before Si; records from differ-
+ent sessions are connected, linking evidence across
+session boundaries.
+Algorithm 2 details retrieval and response gen-
+eration. When the initial answer over the parallel
+evidence of Stage 1 is “I don’t know.”, Stage 2 re-
+peatedly asks the LLM which entity to look up next
+and expands that entity’s relational neighborhood,
+re-answering after each expansion. The traversal
+stops when an answer is produced, when the LLM
+reports no further entity to examine, or when the
+hop limit H is reached, in which case GroupChat-
+Mem returns “I don’t know.”
+Algorithm 1: GroupChat-Mem: Memory
+Construction
+Input: Dialogue stream D = {S1, . . . , SN};
+timestamps {ti}N
+i=1; LLM M;
+query turn j within each session Si
+Output: Committed memories R, S; query-time
+views R(i,j), S(i,j)
+1 R ←∅, S ←∅
+2 for i = 1 to N do
+/* point-in-time view at query turn j
+*/
+3
+Ei,j ←OPENIE(M, Si,j)
+▷complete
+partial session
+4
+R(i,j) ←R ∪{(s, r, o, ti) | (s, r, o) ∈Ei,j}
+5
+S(i,j) ←S ∪{(Si,j, ti)}
+/* commit once the session ends
+*/
+6
+Ei ←OPENIE(M, Si)
+7
+R ←R ∪{(s, r, o, ti) | (s, r, o) ∈Ei}
+8
+S ←S ∪{(Si, ti)}
+▷verbatim
+9 return R, S
+E.2
+Hyperparameters
+The value and meaning of each hyperparameter
+used for the experiments are provided in Table 5,
+Table 6, Table 7, Table 8, and Table 9.
+E.3
+Question Format
+GroupChat-Bench is a dataset that includes pairs of
+questions, answers, and choices. The questions are
+Algorithm 2: GroupChat-Mem: Retrieval
+and Response Generation
+Input: Query q at turn j of Si; views R(i,j), S(i,j)
+(Alg. 1);
+LLM M; embedder f(·); params n, kr, ks; hop
+limit H
+Output: Answer a
+/* Stage 1: parallel retrieval
+*/
+1 V ←SELECTNODES(M, q, R, n)
+2 C ←S
+v∈V TWOHOPNBHD(R, v) ▷if V = ∅:
+records matching q’s timestamp
+3 ER ←TOPkr
+ e ∈C; cos(f(LIN(e)), f(q))
+
+4 ES ←TOPks/2
+ S; BM25(q, ·)
+
+∪TOPks/2
+ S; cos(f(·), f(q))
+
+5 a ←M(q, ER, ES)
+6 if a̸ = “I don’t know.” then return a
+/* Stage 2: entity-guided traversal
+*/
+7 F ←∅, Vvis ←∅, exhausted←true
+8 for h = 1 to H do
+9
+o ←NEXTLOOKUP(M, q, ER, ES, F, Vvis)
+▷entity / Unknown / Idk
+10
+if o ∈{IDK, UNKNOWN} then return “I don’t
+know.”
+11
+v ←RESOLVE(o, NODES(R))
+12
+if v = ⊥or v ∈Vvis then exhausted←false;
+break
+13
+∆←ONEHOP(R, v) \ (ER ∪F)
+14
+if ∆= ∅then exhausted←false; break
+15
+Vvis ←Vvis ∪{v}, F ←F ∪∆
+16
+a ←M(q, ER ∪F, ES)
+17
+if a̸ = “I don’t know.” then return a
+18 if exhausted then return “I don’t know.”
+19 return M(q, ER, ES)
+Hyperparameter
+Value
+Meaning
+kr
+250
+# retrieved relational evidence
+ks
+40
+# retrieved sessions
+n
+3
+# query-relevant nodes extracted by LLMs
+Table 5: Hyperparameters used for Groupchat-Mem
+experiments. Detailed explanation on hyperparameter
+ablation is available on Appendix F.1.
+Hyperparameter
+Value
+Meaning
+kneighbors
+5
+# nearest notes retrieved for memory update
+turns_per_note
+5
+# utterances used to construct each note
+num_retrieved
+100
+# notes retrieved for each QA
+max_hops
+6
+# max iterations during the entity-guided traversal
+Table 6: Hyperparameters used for A-MEM experi-
+ments.
+Hyperparameter
+Value
+Meaning
+turns_per_batch
+5
+# utterances per fact-extraction
+top_s
+10
+# memories used for each update
+Table 7: Hyperparameters used for Mem0 experiments.
+Hyperparameter
+Value
+Meaning
+num_retrieved
+40
+# passages retrieved for QA
+synonymy_sim_threshold
+0.8
+Cosine-similarity threshold
+synonymy_topk
+2047
+Max # synonym neighbors
+linking_top_k
+5
+# phrase nodes seeded for PPR
+passage_node_weight
+0.05
+Relative weight of passage nodes
+damping
+0.5
+PPR damping (restart) factor
+use_filter
+True
+Applying the LLM fact-filter
+Table 8: Hyperparameters used for HippoRAG 2 experi-
+ments.
+Hyperparameter
+Value
+Meaning
+Decoding (client sampling)
+temperature (Qwen, Gemma)
+0.6
+Sampling temperature
+temperature (GPT-OSS)
+1.0
+Sampling temperature
+top_p (Qwen, Gemma)
+0.95
+Nucleus sampling probability mass
+top_p (GPT-OSS)
+1.0
+Nucleus sampling probability mass
+max_tokens
+16384
+Max generated tokens per LLM call
+thinking_token_budget
+10000
+Reasoning-token budget for QA
+reasoning_effort
+high
+Reasoning level for QA
+vLLM serving
+max-model-len
+65536
+Max context length served
+gpu-memory-utilization
+0.90
+Fraction of reserved GPU memory
+max-num-seqs
+256
+Max concurrent decoding sequences
+Table 9: General serving and decoding hyperparam-
+eters shared across all experiments.
+Qwen/Gemma
+use thinking_token_budget; GPT-OSS is harmony-
+format and instead uses reasoning_effort.
+available in three formats: template-based multiple-
+choice, natural language multiple-choice, and open-
+ended. Users can choose any of these formats to
+evaluate the agent’s performance.
+First, we provide multiple-choice questions in
+both template and natural language formats. For ex-
+ample, a template-based question might be, “Who
+was going out with Paul in September 1994?”
+with choices “(A) Emily, (B) Monica, (C) Ryan,
+(D) Rachel, (E) I don’t know”. In contrast, the
+same question in natural language format could
+be phrased as, “Who was going out with Paul in
+September 1994? Was it Emily, Monica, Ryan,
+Rachel, or do you not know?”
+Additionally, we offer the option to ask questions
+in an open-ended format (e.g., “Who was going out
+with Paul in September 1994?”) without provid-
+ing answer choices. This approach allows us to
+evaluate the agent’s ability to generate open-ended
+responses. The open-ended format is particularly
+useful for fan quiz-based questions, where some an-
+swers may require longer responses (e.g., Question:
+“Why did Monica and Chandler say they were late
+getting to the hospital?” Correct answer: “Monica
+went back for her jacket”).
+For natural language multiple-choice and open-
+ended questions, we used a generative reading-
+comprehension protocol rather than exact multiple-
+choice label matching. Since the model produces
+free-form answers, we adopt the official SQuAD
+v1.1 evaluation (Rajpurkar et al., 2016): each an-
+swer is normalized (lowercasing, punctuation and
+article removal, whitespace normalization) and
+scored against every candidate option using token-
+level F1 and exact match.
+E.3.1
+Choices in Multiple-Choice Questions
+The number of questions based on fan quizzes was
+significantly smaller than the questions based on
+the TKG. Thus, 50% of the questions were in-
+tentionally extracted from the fan quiz-based dur-
+ing the simulation. Since each question has five
+choices, unanswerable questions were set to com-
+prise 20% of the total to fairly stratify the correct
+answers.
+E.3.2
+Performance on different question
+formats
+Table 10-12 report GroupChat-Mem performance
+on GroupChat-Bench (New Names) across dif-
+ferent question formats.
+In most settings, La-
+beled MCQ achieves the highest performance,
+while Open-Ended evaluation yields the lowest per-
+formance. This suggests that providing answer
+choices substantially facilitates the task by narrow-
+ing the answer space, with explicit option labels
+offering an additional advantage over choices em-
+bedded in natural-language questions.
+Model
+Friends
+Labeled MCQ
+Naturalized MCQ
+Open-Ended
+Qwen3.5
+77.83 (2.48)
+74.62 (1.16)
+64.47 (0.79)
+Gemma4
+77.58 (1.18)
+73.65 (1.23)
+58.97 (0.89)
+GPT-OSS
+64.81 (1.17)
+63.41 (0.39)
+45.01 (0.51)
+Table 10:
+Performance of GroupChat-Mem on
+GroupChat-Bench (Friends, New Names) across ques-
+tion formats. Labeled MCQ presents choices explicitly
+with option labels, whereas Naturalized MCQ incorpo-
+rates the choices into a natural-language question.
+Model
+The BigBang Theory
+Labeled MCQ
+Naturalized MCQ
+Open-Ended
+Qwen3.5
+77.52 (2.48)
+76.27 (1.29)
+58.26 (0.81)
+Gemma4
+78.92 (0.85)
+80.04 (0.68)
+55.20 (1.57)
+GPT-OSS
+70.27 (0.56)
+68.82 (0.99)
+41.74 (0.45)
+Table 11:
+Performance of GroupChat-Mem on
+GroupChat-Bench (The Big Bang Theory, New Names)
+across question formats.
+Model
+The Office
+Labeled MCQ
+Naturalized MCQ
+Open-Ended
+Qwen3.5
+78.68 (0.98)
+72.97 (0.51)
+52.92 (1.05)
+Gemma4
+77.06 (0.34)
+76.41 (0.66)
+49.51 (0.64)
+GPT-OSS
+69.00 (0.34)
+68.84 (0.85)
+43.20 (0.41)
+Table 12:
+Performance of GroupChat-Mem on
+GroupChat-Bench (The Office, New Names) across
+question formats.
+E.4
+Performance on different question types
+Table 13 shows the performance of each mem-
+ory system on GroupChat-Bench (Friends, New
+Names) per question type. All memory systems
+show higher performance in Fanquiz questions
+compared to TKG questions, and GroupChat-Mem
+outperforms all baselines.
+Memory System
+Friends
+Fanquiz
+TKG
+Overall
+HippoRAG2
+75.21 (0.45)
+62.30 (1.90)
+68.75 (0.97)
+A-MEM
+72.73 (0.79)
+55.53 (0.66)
+64.13 (0.36)
+Mem0
+73.58 (1.17)
+63.00 (1.5)
+68.29 (1.23)
+GroupChat-Mem
+79.33 (1.21)
+67.48 (1.90)
+73.41 (1.51)
+Table 13: Performance of each memory system on
+GroupChat-Bench (Friends, New Names) per question
+type.
+E.5
+The distribution of correct options
+Table 14-16 show the count of correct answers per
+option for each QA set. The correct answers are
+evenly distributed across the 5 options: (A), (B),
+(C), (D), and (E).
+QA set
+Friends
+(A)
+(B)
+(C)
+(D)
+(E)
+QA set 1
+157
+157
+158
+158
+158
+QA set 2
+157
+158
+157
+158
+158
+QA set 3
+158
+157
+157
+158
+158
+All
+472
+472
+472
+474
+474
+Table 14: The number of correct answers per option in
+Friends QA sets.
+QA set
+The Big Bang Theory
+(A)
+(B)
+(C)
+(D)
+(E)
+QA set 1
+161
+161
+161
+162
+160
+QA set 2
+161
+162
+161
+161
+160
+QA set 3
+161
+162
+161
+161
+160
+All
+483
+485
+483
+484
+480
+Table 15: The number of correct answers per option in
+The Big Bang Theory QA sets.
+QA set
+The Office
+(A)
+(B)
+(C)
+(D)
+(E)
+QA set 1
+469
+469
+470
+470
+469
+QA set 2
+469
+470
+469
+470
+469
+QA set 3
+469
+469
+470
+470
+469
+All
+1407
+1408
+1409
+1410
+1407
+Table 16: The number of correct answers per option in
+The Office QA sets.
+F
+Ablation Study
+F.1
+Hyperparameter Ablation
+To determine the values of each hyperparame-
+ter used in Groupchat-Mem, we conducted grid
+searches. In detail, the performance of Qwen3.5
+was evaluated on the even sessions of Friends
+dataset with new names.
+Table 17 shows that
+(kr, ks) = (250, 40) is an optimal combination
+among all the candidates that we tried. The per-
+formance of LLM tends to improve as kr and ks
+increase, but it saturates beyond a certain point.
+Table 18 shows that using n = 1 results in the
+highest performance, closely followed by n = 3.
+Considering that seed nodes (i.e., the query-related
+candidates extracted by LLMs) act as starting point
+for traversing the relational memory, using n = 1
+could be riskier than using n = 3; a single mis-
+match leaves no seed nodes and thereby retrieves
+no additional relational evidence in n = 1, whereas
+two other candidates still remain in n = 3. There-
+fore, we finalized 3 as a value of n.
+ks
+kr
+50
+150
+250
+350
+450
+1
+71.24 (2.80)
+71.49 (1.90)
+72.00 (2.36)
+73.18 (2.36)
+72.93 (1.84)
+5
+73.01 (1.80)
+74.03 (1.63)
+75.89 (1.52)
+75.21 (2.29)
+76.06 (2.16)
+10
+74.62 (1.32)
+75.80 (2.55)
+76.90 (1.66)
+77.41 (1.59)
+77.66 (1.78)
+15
+75.80 (1.69)
+77.75 (1.65)
+77.07 (1.44)
+78.60 (1.40)
+77.16 (2.75)
+20
+75.72 (1.84)
+77.33 (1.28)
+77.16 (1.98)
+78.00 (3.46)
+78.68 (2.08)
+25
+76.65 (2.54)
+77.75 (2.94)
+78.76 (1.06)
+77.41 (0.88)
+78.43 (0.25)
+30
+76.82 (1.06)
+77.07 (0.96)
+78.17 (1.41)
+79.53 (0.82)
+78.43 (0.00)
+35
+77.66 (0.88)
+78.76 (1.17)
+78.00 (0.96)
+79.95 (1.11)
+78.17 (1.11)
+40
+78.00 (1.63)
+79.95 (1.11)
+80.37 (0.82)
+78.93 (1.11)
+78.93 (0.67)
+45
+78.76 (0.53)
+77.66 (1.32)
+79.73 (0.59)
+79.53 (2.74)
+79.53 (1.61)
+50
+79.10 (1.28)
+78.34 (3.13)
+79.02 (0.39)
+79.02 (1.40)
+78.85 (1.17)
+Table 17: Results of hyperparameter ablation on kr and
+ks (GroupChat-Mem).
+n
+1
+3
+5
+7
+9
+Qwen3.5
+76.90 (0.67)
+76.40 (1.78)
+75.30 (1.44)
+75.97 (0.82)
+74.96 (2.27)
+Table 18: Results of hyperparameter ablation on n
+(GroupChat-Mem).
+F.2
+An ablation study to evaluate each
+component of GroupChat-Mem
+To evaluate the contribution of each component in
+GroupChat-Mem, we measured performance un-
+der ablation scenarios in which a single compo-
+nent was removed from the full GroupChat-Mem
+pipeline. As shown in Table 19, removing any
+module leads to a performance drop across all data
+types, confirming that each component contributes
+meaningfully to question-answering performance.
+Method
+Qwen3.5
+Gemma4
+GPT-OSS
+Ours
+77.83
+77.58
+64.81
+- R
+73.60 (-4.23)
+72.88 (-4.70)
+59.90 (-4.91)
+- S
+60.74 (-17.09)
+54.57 (-23.01)
+45.64 (-19.17)
+- Traversal through R
+76.73 (-1.10)
+75.04 (-2.54)
+63.83 (-0.98)
+Table 19: Experimental results on GroupChat-Bench
+(Friends, New Names). R and S refer to the relational
+memory and raw session repository, respectively.
+G
+Qualitative Analysis
+G.1
+Comparing retrieved evidence from
+GroupChat-Mem and Baseline Methods
+To understand the source of GroupChat-Mem’s
+gains over the three baselines (HippoRAG 2, A-
+Mem, Mem0), we compare the evidence each mem-
+ory system retrieves for a fixed question. We con-
+sistently observe that the evidence required to an-
+swer the question is retrieved only by GroupChat-
+Mem, while it is absent from the retrievals of most
+baselines (at least two of the three). Figure 5 illus-
+trates a representative case: for the question "Who
+Figure 5: GroupChat-Mem retrieves the dated gold memory and answers correctly, whereas all three baselines
+retrieve many dialogue sessions that do not contain the gold entity and therefore fail.
+was the made-up childhood friend John used to
+talk about?", GroupChat-Mem retrieves the gold
+relational evidence [John, imaginary childhood
+friend name, Maurice, January 15, 1998] in a
+compact, structured form and answers correctly.
+In contrast, A-Mem, HippoRAG 2, and Mem0
+each retrieve lots of unstructured dialogue that does
+not contain the answer entity (Maurice), and there-
+fore all fail. This suggests that GroupChat-Mem
+could retrieve more accurate and answer-bearing
+evidence compared to all baselines.
+G.2
+Visualization of the Induced Relational
+Memory
+Figure 6 visualizes the relational memory R in-
+duced by GroupChat-Mem, centered on one main
+character from the Friends dataset under the New
+Names setting, with snapshots sampled at three
+different time points. The visualization illustrates
+two properties of R. First, relational evidence is
+consolidated into a structured form rather than dis-
+persed across multiple sessions. Second, the in-
+formation associated with each character is con-
+tinually updated as the dialogue progresses. This
+representation reduces the burden on the LLM of
+comprehending long, unstructured session histo-
+ries, and makes gold evidence more explicit and
+easily inspectable.
+H
+Annotator Instructions
+Figure 7 and Figure 8 show the screenshots of the
+dataset labeling process. Figure 7 illustrates the
+annotation process for the questions based on fan
+quizzes, and Figure 8 describes the review process
+for selecting triples for the TKG.
+I
+Prompts
+Figures
+9–15 present the prompts used in
+the GroupChat-Mem experiments, Figure 16–18
+present those used for HippoRAG 2, Figure 19–21
+present those used for Mem0, and Figure 22–25
+present those used for A-MEM.
+For brevity, some prompts are truncated, with
+omitted content denoted as “...”; the full prompts
+are available at https://github.com/jwyang21/
+groupchat_bench/.
+Figure 6: Snapshots of the relational memory centered on one main character (Nate), taken across three consecutive
+years. Red and gray arrows represent romantic and the other relations, respectively.
+Figure 7: The actual process of annotating questions from fan quizzes.
+Figure 8: The actual process of reviewing extracted triples.
+Question Type
+Relation
+Template
+Question Example
+Without Time
+alumni
+Who is {sub}’s alumni?
+Who is Lincoln High School’s alumni?
+boss
+Who is {sub}’s boss?
+Who is Chandler’s boss?
+subordinate
+Who is {sub}’s subordinate?
+Who is Chandler’s subordinate?
+client
+Who is {sub}’s client?
+Who is Chandler’s client?
+neighbor
+Who is {sub}’s neighbor?
+Who is Chandler’s neighbor?
+roommate
+Who is {sub}’s roommate?
+Who is Chandler’s roommate?
+ex-roommate
+Who is {sub}’s ex-roommate?
+Who is Chandler’s ex-roommate?
+fiance
+Who is {sub}’s fiance?
+Who is Rachel’s fiance?
+fiancee
+Who is {sub}’s fiancee?
+Who is Ross’s fiancee?
+ex-fiance
+Who is {sub}’s ex-fiance?
+Who is Rachel’s ex-fiance?
+ex-fiancee
+Who is {sub}’s ex-fiancee?
+Who is Ross’s ex-fiancee?
+pet
+Who is {sub}’s pet?
+Who is Ross’s pet?
+dating with
+Who is dating {sub}?
+Who is dating Ross?
+job
+What is {sub}’s job?
+What is Ross’s job?
+place of work
+Where does {sub} work?
+Where does Ross work?
+age
+How old is {sub}?
+How old is Ross?
+major
+What is {sub}’s major?
+What is Ross’s major?
+mother
+Who is {sub}’s mother?
+Who is Ross’s mother?
+father
+Who is {sub}’s father?
+Who is Ross’s father?
+place of birth
+Where was {sub} born?
+Where was Ben born?
+hometown
+Where is {sub}’s hometown?
+Where is Monica’s hometown?
+date of birth
+When was {sub} born?
+When was Ben born?
+husband
+Who is {sub}’s husband?
+Who is Emily’s husband?
+wife
+Who is {sub}’s wife?
+Who is Ross’s wife?
+girlfriend
+Who is {sub}’s girlfriend?
+Who is Joey’s girlfriend?
+boyfriend
+Who is {sub}’s boyfriend?
+Who is Monica’s boyfriend?
+ex-husband
+Who is {sub}’s ex-husband?
+Who is Carol’s ex-husband?
+ex-wife
+Who is {sub}’s ex-wife?
+Who is Ross’s ex-wife?
+ex-girlfriend
+Who is {sub}’s ex-girlfriend?
+Who is Ross’s ex-girlfriend?
+ex-boyfriend
+Who is {sub}’s ex-boyfriend?
+Who is Rachel’s ex-boyfriend?
+brother
+Who is {sub}’s brother?
+Who is Monica’s brother?
+sister
+Who is {sub}’s sister?
+Who is Ross’s sister?
+Table 20: Templates for one-hop questions without temporal information.
+Question Type
+Relation
+Template
+Question Example
+With Time
+boss
+Who was {sub}’s boss on {time}?
+Who was Chandler’s boss on September 26th, 1994?
+client
+Who was {sub}’s client on {time}?
+Who was Chandler’s client on September 26th, 1994?
+neighbor
+Who was {sub}’s neighbor on {time}?
+Who was Chandler’s neighbor on September 26th, 1994?
+roommate
+Who was {sub}’s roommate on {time}?
+Who was Chandler’s roommate on September 26th, 1994?
+fiance
+Who was {sub}’s fiance on {time}?
+Who was Rachel’s fiance on September 26th, 1994?
+fiancee
+Who was {sub}’s fiancee on {time}?
+Who was Ross’s fiancee on September 26th, 1994?
+pet
+Who was {sub}’s pet on {time}?
+Who was Ross’s pet on September 26th, 1994?
+dating with
+Who dated {sub} on {time}?
+Who dated Ross on September 26th, 1994?
+job
+What was {sub}’s job on {time}?
+What was Monica’s job on September 26th, 1994?
+place of work
+Where did {sub} work on {time}?
+Where did Monica work on September 26th, 1994?
+age
+How old was {sub} on {time}?
+How old was Monica on September 26th, 1994?
+major
+What was {sub}’s major on {time}?
+What was Ross’s major on September 26th, 1994?
+husband
+Who was {sub}’s husband on {time}?
+Who was Emily’s husband on September 26th, 1994?
+wife
+Who was {sub}’s wife on {time}?
+Who was Ross’s wife on September 26th, 1994?
+girlfriend
+Who was {sub}’s girlfriend on {time}?
+Who was Ross’s girlfriend on September 26th, 1994?
+boyfriend
+Who was {sub}’s boyfriend on {time}?
+Who was Rachel’s boyfriend on September 26th, 1994?
+Table 21: Templates for one-hop questions with temporal information.
+First Relation
+Second Relation
+Template
+Question Example
+roommate, wife, husband,
+girlfriend, boyfriend, client,
+neighbor, boss, subordinate,
+fiance, fiancee
+roommate, wife, husband, pet,
+girlfriend, boyfriend, client, neighbor,
+boss, subordinate, fiance, fiancee
+{sub1} had a {First Relation} on {time1}.
+Who was the {Second Relation} of the
+{First Relation} on {time2}?
+Monica had a roommate on September 26th, 1994.
+Who was the boyfriend of the roommate
+on October 5th, 1996?
+dating with
+{sub1} had a {First Relation} on {time1}.
+Who dated the {First Relation} on {time2}?
+Monica had a roommate on September 26th, 1994.
+Who dated the roommate on October 5th, 1996?
+job, major, age
+{sub1} had a {First Relation} on {time1}.
+What was the {Second Relation} of the
+{First Relation} on {time2}?
+Monica had a roommate on September 26th, 1994.
+What was the job of the roommate
+on October 5th, 1996?
+mother, father, son, daughter,
+sister, brother
+{sub1} had a {First Relation} on {time1}.
+Who is the {Second Relation} of the
+{First Relation}?
+Monica had a roommate on September 26th, 1994.
+Who is the mother of the roommate?
+date of birth, place of birth,
+{sub1} had a {First Relation} on {time1}.
+When (Where) was the {First Relation} born?
+Monica had a roommate on September 26th 1994.
+When was the roommate born?
+place of work
+{sub1} had a {First Relation} on {time1}.
+Where did the {First Relation} work
+on {time2}?
+Monica had a roommate on September 26th, 1994.
+Where did the roommate work
+on October 5th, 1996?
+hometown
+{sub1} had a {First Relation} on {time1}.
+Where is the hometown of the
+{First Relation}?
+Monica had a roommate on September 26th, 1994.
+Where is the hometown of the roommate?
+dating with
+roommate, wife, husband,
+girlfriend, boyfriend, client, neighbor,
+boss, subordinate, fiance, fiancee
+{sub1} dated a person on {time1}.
+Who was the {Second Relation} of the
+person on {time2}?
+Monica dated a person on September 26th, 1994.
+Who was the boss of the person
+on October 5th, 1996?
+mother, father, son,
+daughter, sister, brother
+roommate, wife, husband,
+girlfriend, boyfriend, client, neighbor,
+boss, subordinate, fiance, fiancee
+Who was the {Second Relation} of {sub1}’s
+{First Relation} on {time2}?
+Who was the roommate of Ross’s
+sister on September 26th, 1994?
+dating with
+Who dated {sub1}’s {First Relation}
+on {time2}?
+Who dated Ben’s father on September 26th, 1994?
+job, age, major
+What was the {Second Relation} of
+{sub1}’s {First Relation} on {time2}?
+What was the job of Ben’s father on September 26th, 1994?
+mother, father, son, daughter,
+sister, brother
+Who is the {Second Relation} of
+{sub1}’s {First Relation}?
+Who is the mother of Ross’s son?
+date of birth, place of birth
+When (Where) was {sub1}’s {First Relation}
+born?
+When was Monica’s brother born?
+place of work
+Where did {sub1}’s {First Relation}
+work on {time2}?
+Where did Monica’s brother work
+on October 5th, 1996?
+hometown
+Where is the hometown of
+{sub1}’s {First Relation}?
+Where is the hometown of Ross’s son?
+Table 22: Templates for two-hop questions.
+Original Question
+Character
+Style Transferred Question
+By the way, how did Rachel buy her new boots?
+Default
+Hey, any idea what Rachel used to snag those stylish
+new boots of hers?
+Monica
+Hey, do you know what Rachel used to snag those super
+cute new boots she’s been rocking?
+Chandler
+So, could we BE any more curious about how Rachel
+snagged those new boots?
+Joey
+Hey, how did Rachel manage to snag those killer
+boots, huh?
+Phoebe
+Oh my gosh! Do you have any idea how Rachel snagged
+those super cute new boots?
+By the way, who dated Monica on September 22, 1994?
+Default
+So, who was Monica’s date on the night of
+September 22, 1994?
+Chandler
+Oh, could you BE any more specific about who was
+going out with Monica on September 22, 1994?
+Joey
+Hey, just outta curiosity, who was goin’ out with
+Monica on September 22, 1994?
+Phoebe
+Oh my gosh, so like, who was Monica’s date on that
+super specific day, September 22, 1994?
+Rachel
+Oh my god, so like, who was going out with Monica
+on September 22, 1994?
+By the way, Rachel had a roommate on October 28, 1994.
+Who dated the roommate in September 1994?
+Default
+Oh. My. God. Remember when Rachel had a roommate
+back on October 28, 1994? So, who was going out with
+that roommate by September 1994?
+Monica
+Hey, just out of curiosity, do you know who was going
+out with Rachel’s roommate from back in September 1994?
+I remember she got that roommate around October 28, 1994.
+Chandler
+So, just for a little stroll down memory lane, Rachel
+was bunking with someone on October 28, 1994.
+Any wild guesses on who was dating this mystery
+co-habitant by September 1994?
+Joey
+Hey, so you know how Rachel was living with someone
+back on October 28, 1994, right? So I’m just wonderin’
+here, who was going out with this roommate of hers in
+September 1994?
+Phoebe
+By the way, Rachel had a roommate on October 28, 1994.
+Who dated the roommate in September 1994?
+Table 23: Examples of the results of character style transfer.
+You are an intelligent information extractor.
+You should extract information from input dialogue.
+The extracted information should be in a structured form: `{head , relation ,
+tail}`.
+Relation describes how tail entity is related to head entity.
+Below are the requirements you should follow during the task.
+========================================
+[REQUIREMENTS]
+- Output format: Return a list consisting of {head , relation , tail}.
+For example , the output format should be [{head: 'Charlie ', relation: 'visited
+', tail: 'Michael '}]
+- Avoid using apostrophes (') in heads and tails: The head and tail should
+represent distinct entities , not include the relationship itself.
+For example , output {" Andrew", "son", "Peter "} instead of {"Andrew 's little
+boy", "is", "Peter "}.
+- No pronouns: Replace all pronouns with their correct referents.
+...
+========================================
+[EXAMPLES]
+1. Correct output
+(Example 1)
+- Dialogue:
+Emily: Hey Mark , I just got back from visiting my grandmother Rose in Florida
+last weekend.
+Mark: That sounds nice! How long were you there?
+Emily: About a week. Her house is right near the beach in Tampa.
+Mark: I've never been to Tampa. Is it nice there?
+Emily: It's beautiful! The weather was perfect. She has this gorgeous garden
+where we had breakfast every morning.
+- Output:
+Here is the extracted structured information in the form of `{head , relation ,
+tail}`:
+[{head: 'Emily ', relation: 'visited ', tail: 'Rose '},
+{head: 'Emily ', relation: 'grandmother ', tail: 'Rose '},
+{head: 'Rose ', relation: 'lives in ', tail: 'Florida '},
+{head: 'Rose ', relation: 'house ', tail: 'near beach '},
+{head: 'Rose ', relation: 'has ', tail: 'garden '}]
+--------------------
+2. Incorrect output
+(Example 1)
+...
+========================================
+[BEGIN TASK]
+Now , extract structured information from the following dialogues.
+Dialogue:
+{input_text}
+Triples:
+Figure 9: Prompt used for OpenIE.
+You are an intelligent language model.
+Your task is to identify question subject from given question , referring to a
+set of provided candidates.
+A question subject refers to the person or object that the question is mainly
+focused on.
+Below are the requirements and examples about this task.
+[REQUIREMENTS]
+1. You should not directly answer the question , but only identify its subject.
+For example , if the question is 'Who was the vice president of Barack Obama?',
+you should not answer 'Joe Biden ', even though he was actually Barack
+Obama 's vice president.
+Instead , you should answer 'Barack Obama ' because he is the main focus of the
+question.
+...
+[Examples]
+Example 1.
+- Question: "Lily and Daniel established this company on November 28, 2000. Do
+you know the name of this company ?"
+- Questioner: Michael
+- Options for question subject: [" company", "past", "Daniel", "name", "this
+company", "Lily"]
+- Constraint: Returning up to 1 question subject
+- Question subject: ["Lily"] or [" Daniel "]
+- Explanation:
+- The question asks for the name of a company , but the context provided
+attributes the company 's existence directly to "Lily" and "Daniel ".
+The core information sought is tied to an entity that they created.
+Therefore , the question is fundamentally centered on the actions and
+creations of Lily and Daniel , making them the primary subjects of the
+inquiry.
+- However , since up to 1 question subject should be returned , the final
+output should be either ["Lily"] or [" Daniel "]. If the constraint was
+to output up to 2 or more question subjects , the final output should
+be ["Lily", "Daniel "] or [" Daniel", "Lily"] (The order of elements
+inside the output list does not matter).
+...
+========================================
+You will be given a question , a questioner , and a set of options for the
+question subject.
+Your task is to return up to {k} candidates for the question subject after
+carefully analyzing the question and the provided options.
+- Each output **MUST** be exactly one of the items in the given list (copy
+it verbatim) - never output any entity that is not in the given list.
+Do NOT output any intermediate steps leading to the final answer.
+Your final output must be a list of strings , with each element representing a
+candidate for the question subject.
+- Question: {question}
+- Questioner: {questioner}
+- Options for the question subject: {options}
+- Constraint: Returning up to {k} question subject
+- Question subject:
+Figure 10: Prompt used to identify candidates of query-related TKG nodes.
+You are an intelligent language model.
+Your task is to select the FINAL question subject(s) for a given question ,
+choosing ONLY from a given list of candidate subjects.
+A question subject refers to the person or object that the question is mainly
+focused on.
+You are given a list of candidate subjects for the question. You must pick the
+final answer FROM THIS GIVEN LIST ONLY.
+[REQUIREMENTS]
+1. You should not directly answer the question , but only identify its subject.
+For example , if the question is 'Who was the vice president of Barack Obama?',
+you should not answer 'Joe Biden ', even though he was actually Barack
+Obama 's vice president.
+Instead , you should answer 'Barack Obama ' because he is the main focus of the
+question.
+2. If the question contains a first -person pronoun ('I', 'my ', 'me ', 'mine ')
+and the questioner appears in the given list , include the questioner as a
+subject - the questioner is highly likely to be the subject in this case.
+...
+[Examples]
+Example 1.
+- Question: "Lily and Daniel established this company on November 28, 2000. Do
+you know the name of this company ?"
+- Questioner: Michael
+- Options for question subject: [" company", "past", "Daniel", "name", "this
+company", "Lily"]
+- Constraint: Returning up to 3 question subject
+- Question subject: ["Lily", "Daniel "]
+- Explanation:
+- The question is fundamentally centered on the company created by Lily
+and Daniel. Both "Lily" and "Daniel" are present in the given list , so
+they are selected.
+- Since it holds that "length of a list ["Lily", "Daniel "] <= 3", this
+list can be a final output without any additional process.
+...
+========================================
+You are given a list of candidate subjects ({ options }) for this question.
+Select up to {k} MOST LIKELY question subject(s) from this given list.
+- Each question subject **MUST** be exactly one of the items in the given
+list (copy it verbatim) - never include any entity that is not in the
+given list.
+Do NOT output any intermediate steps leading to the final answer.
+Your final output must be a list of strings , with each element being exactly
+one of the items in the given list.
+- Question: {question}
+- Questioner: {questioner}
+- Options for the question subject: {options}
+- Constraint: Returning up to {k} question subject
+- Question subject:
+Figure 11: Prompt used to finalize query-related TKG nodes.
+You are an intelligent language model. You are given a question , plus triples
+and dialogues retrieved so far.
+Your ONLY task now is to decide whether there is a specific named entity (a
+person , place , or thing) - appearing among the entities in the triples you
+have gathered so far - that you would need to look up more facts about in
+order to answer the question. For example , an entity the question refers
+to only indirectly , whose details are not yet clear from what is given.
+Output exactly one of the following , on a single line , with no explanation , no
+punctuation , and no quotes:
+- The exact name of that one entity , written exactly as it appears in the
+triples - if there is a specific entity , among the entities appearing in
+the triples , whose additional facts you should look up next to answer the
+question.
+- UNKNOWN - if it seems that you still need to look up some additional entity
+to answer , but you cannot pinpoint which specific entity - among the
+entities appearing in the triples gathered so far - it is.
+- I don 't know - if, with the information gathered so far , you cannot answer
+the question AND you cannot find any entity worth looking up more facts
+about.
+Use the date(s) in the question to decide which entity is meant when relevant.
+[QUESTION]
+{question}
+[ENTITIES ALREADY LOOKED UP]
+{resolved}
+[FACTS GATHERED SO FAR]
+{focused}
+[TRIPLES]
+{triples}
+[DIALOGUES]
+{history}
+Answer:
+Figure 12: Prompt used to identify which entity to look up for TKG traversal.
+You are an intelligent language model. Your task is to answer the question
+based on the provided triples and dialogues.
+The triples are provided as a list of quadruples: [{head , relation , tail , date
+}, ...], where relation represents the connection between head and tail ,
+and date indicates when the relationship occurred.
+...
+[REQUIREMENTS]
+- Your output should be a SINGLE option. In other words , your final output
+must be an element of [(A), (B), (C), (D), (E)].
+...
+Below is an example of solving each question based on the provided triples and
+dialogues.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017?
+(A) Amazon
+(B) Google
+(C) Microsoft
+(D) Apple
+(E) I don 't know. (None of the above)
+- Triples:
+[{Daniel , accepted , a job offer from Amazon , July 10, 2017} , {Daniel , started ,
+working at the company that offered him a position in July , August 20,
+2017}, ...]
+- Dialogues:
+[Date: July 10, 2017, Session 1]
+Mike: So, any news on the job front , Daniel?
+Daniel: Great news! I just accepted a job offer from Amazon.
+Mike: That 's amazing! Congratulations!
+[Date: August 20, 2017, Session 2]
+Julie: Hey Daniel , how are things?
+Daniel: Really good! I finally started working at the company that offered me
+a position in July.
+Julie: Glad to hear it! How 's it going so far?
+...
+The first triple states that Daniel received and accepted a job offer from
+Amazon.
+...
+Therefore , the correct answer is (A), and your final output should be '(A) '.
+========================================
+Please note that you should output only a SINGLE option from [(A), (B), (C), (
+D), (E)], without any intermediate steps.
+Now , let 's solve the question by referring to the triples and dialogues below:
+- Question:
+{question}
+- Triples:
+{triples}
+- History:
+{history}
+- Answer:
+Figure 13: Prompt used for multi-structured question-answering.
+You are an intelligent language model. Your task is to answer the question
+based on the provided triples and dialogues.
+...
+Below are the requirements you must follow when answering questions.
+[REQUIREMENTS]
+- Your output should be a SINGLE option. In other words , your final output
+must match exactly to only a SINGLE option among total five options which
+are provided at the end of each question.
+...
+Below is an example of solving each question based on the provided triples and
+dialogues.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017? Amazon
+? Google? Microsoft? Apple? Or you don 't know?
+- Triples:
+July 10, 2017: [{'Daniel ', 'accepted ', 'a job offer from Amazon '}]
+August 20, 2017: [{'Daniel ', 'started ', 'working at the company that offered
+him a position in July '}]
+...
+- Dialogues:
+[Date: July 10, 2017, Session 1]
+Mike: So, any news on the job front , Daniel?
+Daniel: Great news! I just accepted a job offer from Amazon.
+Mike: That 's amazing! Congratulations!
+[Date: August 20, 2017, Session 2]
+Julie: Hey Daniel , how are things?
+Daniel: Really good! I finally started working at the company that offered me
+a position in July.
+Julie: Glad to hear it! How 's it going so far?
+...
+The first triple states that Daniel received and accepted a job offer from
+Amazon.
+...
+Therefore , the correct answer is "Amazon", and your final output should be "
+Amazon ".
+========================================
+Please note that you should output only a SINGLE option from the five options
+provided at the end of each question , without any intermediate steps.
+Now , let 's solve the question by referring to the triples and dialogues below:
+- Question:
+{question}
+- Triples:
+{triples}
+- History:
+{history}
+- Answer:
+Figure 14: Prompt used for multi-unstructured question answering.
+You are an intelligent language model. Your task is to answer the question
+based on the provided triples and dialogues.
+...
+Below are the requirements you must follow when answering questions.
+[REQUIREMENTS]
+- Your output should be a SINGLE word / phrase / or a sentence. Always try to
+answer as concisely as possible.
+...
+Below is an example of solving each question based on the provided triples and
+dialogues.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017?
+- Triples:
+July 10, 2017: [{'Daniel ', 'accepted ', 'a job offer from Amazon '}]
+August 20, 2017: [{'Daniel ', 'started ', 'working at the company that offered
+him a position in July '}]
+...
+- Dialogues:
+[Date: July 10, 2017, Session 1]
+Mike: So, any news on the job front , Daniel?
+Daniel: Great news! I just accepted a job offer from Amazon.
+Mike: That 's amazing! Congratulations!
+[Date: August 20, 2017, Session 2]
+Julie: Hey Daniel , how are things?
+Daniel: Really good! I finally started working at the company that offered me
+a position in July.
+Julie: Glad to hear it! How 's it going so far?
+...
+The first triple states that Daniel received and accepted a job offer from
+Amazon.
+...
+Therefore , the correct answer is "Amazon", and your final output should be "
+Amazon ".
+========================================
+Please note that you should output only a SINGLE word / phrase / or a sentence
+, without any intermediate steps.
+Now , let 's solve the question by referring to the triples and dialogues below:
+- Question:
+{question}
+- Triples:
+{triples}
+- History:
+{history}
+- Answer:
+Figure 15: Prompt used for open-ended question answering.
+You are an intelligent information extractor.
+You should extract information from input passage.
+...
+========================================
+[REQUIREMENTS]
+- Output format: Return a dictionary including two keys: "named entities" and
+"triples ".
+...
+========================================
+[EXAMPLES]
+1. Correct output
+(Example 1)
+- Dialogue:
+Emily: Hey Mark , I just got back from visiting my grandmother Rose in Florida
+last weekend.
+Mark: That sounds nice! How long were you there?
+Emily: About a week. Her house is right near the beach in Tampa.
+Mark: I've never been to Tampa. Is it nice there?
+Emily: It's beautiful! The weather was perfect. She has this gorgeous garden
+where we had breakfast every morning.
+- Output:
+Here is the extracted structured information , strictly following the
+requirements.
+{
+"named_entities ": ["Emily", "Rose", "Florida", "garden"],
+"triples ": [
+[" Emily", "visited", "Rose"],
+[" Emily", "grandmother", "Rose"], ...
+]
+}
+--------------------
+2. Incorrect output
+(Example 1: Named entities are extracted correctly , but the triples are wrong)
+- Dialogue:
+Miguel: Did you see the championship game last night?
+Sophia: Yes! It was so exciting when the Tigers won in the final minutes.
+Miguel: I couldn 't believe that last -minute goal by Carlos Rodriguez. He 's
+such a talented player.
+Sophia: Absolutely! He's been with the team for what , five years now?
+- Incorrect output:
+{
+"named_entities ": [" Carlos Rodriguez", "summer soccer camp"],
+"triples ": [
+[" Carlos Rodriguez", "is talented player and runs", "summer soccer camp"],
+[" Carlos Rodriguez", "is", "Carlos Rodriguez "]
+]
+}
+...
+========================================
+[BEGIN TASK]
+Now , extract structured information from the following passages.
+Passage:
+{passage}
+Output:
+Figure 16: Prompt used for triple extraction in HippoRAG 2.
+You are a critical component of a high -stakes question -answering system. Your
+task is to filter candidate facts based on their relevance to a given
+query , keeping only the facts that are crucial for answering it. The query
+may require multi -hop reasoning that connects several facts.
+Requirements:
+- Select up to {top_k} relevant facts from the candidate list that have a
+strong connection to the query.
+- You must ONLY use facts from the candidate list. Do NOT generate new facts.
+- If no candidate fact is relevant , return an empty list.
+- Output a JSON object of the form {"fact": [[" subject", "predicate", "object
+"], ...]}.
+[EXAMPLE 1]
+Question: Are Imperial River (Florida) and Amaradia (Dolj) both located in the
+same country?
+Candidate facts:
+[[" imperial river", "is located in", "florida"], [" imperial river", "is a
+river in", "united states"], [" imperial river", "may refer to", "south
+america"], [" amaradia", "flows through", "ro ia de amaradia"], [" imperial
+river", "may refer to", "united states "]]
+Output: {"fact": [[" imperial river", "is located in", "florida"], [" imperial
+river", "is a river in", "united states"], [" amaradia", "flows through", "
+ro ia de amaradia "]]}
+[EXAMPLE 2]
+Question: When is the director of film The Ancestor 's birthday?
+Candidate facts:
+[[" jean jacques annaud", "born on", "1 october 1943"] , ["tsui hark", "born on
+", "15 february 1950"] , ["pablo trapero", "born on", "4 october 1971"] , ["
+the ancestor", "directed by", "guido brignone"], ["benh zeitlin", "born on
+", "october 14
+1982"]]
+Output: {"fact": [["the ancestor", "directed by", "guido brignone "]]}
+[EXAMPLE 3]
+Question: In what geographic region is the country where Teafuone is located?
+Candidate facts:
+[[" teafuaniua", "is on the", "east"], [" motuloa", "lies between", "teafuaniua
+"], [" motuloa", "lies between", "teafuanonu "], [" teafuone", "is", "islet
+"], [" teafuone", "located in", "nukufetau "]]
+Output: {"fact": [[" teafuone", "is", "islet"], [" teafuone", "located in", "
+nukufetau "]]}
+...
+Now filter the candidate facts for the query below.
+Question: {question}
+Candidate facts:
+{facts}
+Output:
+Figure 17: Prompt used to select query-related triples in HippoRAG 2.
+You are an intelligent language model. Your task is to answer the question
+based on the provided history.
+Each history is formatted as a dialogue.
+...
+[REQUIREMENTS]
+- Your output should be a SINGLE option. In other words , your final output
+must be an element of [(A), (B), (C), (D), (E)].
+...
+Below is an example of solving each question based on the provided history.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017?
+(A) Amazon
+(B) Google
+(C) Microsoft
+(D) Apple
+(E) I don 't know. (None of the above)
+- History:
+[Date: July 10, 2017, Session 1]
+Walter: So, any news on the job front , Daniel?
+Daniel: Great news! I just accepted a job offer from Amazon.
+Walter: That 's amazing! Congratulations!
+[Date: August 20, 2017, Session 2]
+Wendy: Hey Daniel , how are things?
+Daniel: Really good! I finally started working at the company that offered me
+a position in July.
+Wendy: Glad to hear it! How 's it going so far?
+[Date: March 5, 2022, Session 3]
+Kyle: What 's new with you , Emma?
+Emma: I have some exciting news. I started working at Microsoft last week!
+Kyle: Wow , Microsoft! That 's a huge accomplishment.
+The first history (dialogue) states that Daniel received and accepted a job
+offer from Amazon.
+The second history indicates that Daniel joined the company that offered him a
+position in July , which , based on the first history , is Amazon.
+The third history mentions a name of a company , Microsoft , but it is unrelated
+to Daniel.
+Therefore , the correct answer is (A), and your final output should be '(A) '.
+========================================
+Please note that you should output only a SINGLE option from [(A), (B), (C), (
+D), (E)], without any intermediate steps.
+Now , let 's solve the question by referring to the history below:
+- Question:
+{question}
+- History:
+{history}
+- Answer:
+Figure 18: Prompt used for question-answering in HippoRAG 2.
+You are an intelligent information extractor.
+You should extract information from input conversation and the its date (i.e.,
+when the input converastion occurred).
+Each piece of extracted information should be represented as single natural
+language sentence.
+Below are the requirements you should follow during the task.
+========================================
+[REQUIREMENTS]
+- Output format: Return a dictionary with a key "fact".
+- It should have a list of natural language sentences as its value.
+- Each sentence should represent a self -contained fact.
+- If you think the sentence needs a specific temporal information to be
+self -contained , you should add the temporal information at the end of
+the sentence.
+- In this case , the temporal information added to the sentence should be
+absolute (i.e., September 24, 1924, December 1900, 2014, etc.), and
+relative form is not allowed (e.g., yesterday , last year , etc.)
+- If you cannot specify the absolute form out of the relative form , don '
+t include that uncertain temporal information in the fact sentence.
+...
+========================================
+[EXAMPLES]
+1. Correct output
+(Example 1)
+[Conversation date]
+February 10, 2015
+[Conversation]
+Emily: Hey Mark , I just got back from visiting my grandmother Rose in Florida
+last weekend.
+Mark: That sounds nice! How long were you there?
+Emily: About a week. Her house is right near the beach in Tampa.
+Mark: I've never been to Tampa. Is it nice there?
+Emily: It's beautiful! The weather was perfect. She has this gorgeous garden
+where we had breakfast every morning.
+- Output:
+{" facts" : ["Emily visited Rose on February 2015" , "Rose is Emily 's
+grandmother", "Rose is living in Florida on February 2015" , "Rose 's house
+is near beach on February 2015" , "Rose has a garden on February 2015"]}
+--------------------
+2. Incorrect output
+(Example 1)
+...
+========================================
+[BEGIN TASK]
+Now , extract facts from the following conversations.
+[Conversation date]
+{date}
+[Conversation]
+{dialogue}
+Figure 19: Prompt used for extracting salient facts in Mem0.
+You are a smart memory manager which controls the memory of a system.
+You can perform four operations: (1) add into the memory , (2) update the
+memory , (3) delete from the memory , and (4) no change.
+...
+There are specific guidelines to select which operation to perform:
+1. **Add**: If the retrieved facts contain new information not present in the
+memory , then you have to add it by generating a new ID in the id field.
+...
+2. ** Update **: If the retrieved facts contain information that is already
+present in the memory but the information is totally different , then you
+have to update it.
+...
+3. ** Delete **:
+If the retrieved facts contain information that contradicts
+the information present in the memory , then you have to delete it.
+...
+4. **No Change **:
+If the retrieved facts contain information that is already
+present in the memory , then you do not need to make any changes.
+...
+Below is the current content of my memory which I have collected till now. You
+have to update it in the following format only:
+```
+{retrieved_old_memory}
+```
+The new retrieved facts are mentioned in the triple backticks. You have to
+analyze the new retrieved facts and determine whether these facts should
+be added , updated , or deleted in the memory.
+```
+{new_facts}
+```
+You must return your response in the following JSON structure only:
+{
+"memory" : [
+{
+"id" : "<ID of the memory >",
+"text" : "<Content of the memory >",
+"event" : "<Operation to be performed >",
+"old_memory" : "<Old memory content >"
+}
+]
+}
+Follow the instruction mentioned below:
+- Do not return anything from the custom few shot prompts provided above.
+- If the current memory is empty , then you have to add the new retrieved facts
+to the memory.
+- You should return the updated memory in only JSON format as shown above. The
+id should be the same if no changes are made.
+- The "event" field must be exactly one of "ADD", "UPDATE", "DELETE", or "NONE
+".
+...
+Do not return anything except the JSON format.
+Figure 20: Prompt used for memory update in Mem0.
+You are an intelligent language model. Your task is to answer the question
+based on the provided memories.
+Each memory is a short , self -contained fact extracted from past conversations.
+You will be given a question with five answer choices: (A), (B), (C), (D), and
+(E). Among these options , only one is correct.
+Additionally , you will be provided with memories.
+Below are the requirements you must follow when answering questions.
+[REQUIREMENTS]
+- Your output should be a SINGLE option. In other words , your final output
+must be an element of [(A), (B), (C), (D), (E)].
+- For example , if you think '(A) Helen ' is the correct answer , you should ONLY
+output '(A)', neither '(A) Helen ' nor 'Helen '.
+- Solve questions based on the provided memories only. Actively use the
+provided memories to solve the question.
+- You are not allowed to output intermediate processes of how you solved the
+question.
+- Ensure that the logic leading to your final answer is correct.
+- 'Logic ' refers to entire thought process for arriving at your final answer
+.
+- Before outputting your final answer , check once again whether your answer is
+correct. If it is incorrect , revise it accordingly.
+- Avoid outputting '(E)' too readily , as this option indicates you don 't know
+the answer. If there 's any information available to solve the question ,
+make full use of it.
+Below is an example of solving each question based on the provided memories.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017?
+(A) Amazon
+(B) Google
+(C) Microsoft
+(D) Apple
+(E) I don 't know. (None of the above)
+- Memories:
+- Daniel accepted a job offer from Amazon
+- Daniel started working in August 2017 at the company that offered him a
+position in July
+- Emma started working at Microsoft
+The memories state that Daniel accepted a job offer from Amazon and started
+working there. The mention of Microsoft is about Emma , not Daniel.
+Therefore , the correct answer is (A), and your final output should be '(A) '.
+========================================
+Please note that you should output only a SINGLE option from [(A), (B), (C), (
+D), (E)], without any intermediate steps.
+Now , let 's solve the question by referring to the memories below:
+- Question:
+{question}
+- Memories:
+{memories}
+- Answer:
+Figure 21: Prompt used for question-answering in Mem0.
+Generate a structured analysis of the following content by:
+1. Identifying the most salient keywords (focus on nouns , verbs , and key
+concepts)
+2. Extracting core themes and contextual elements
+3. Creating relevant categorical tags
+Format the response as a JSON object:
+{
+"keywords ": [
+// several specific , distinct keywords that capture key concepts and
+terminology
+// Order from most to least important
+// Don 't include keywords that are the name of the speaker or time
+// At least three keywords , but don 't be too redundant.
+],
+"context ":
+// one sentence summarizing:
+// - Main topic/domain
+// - Key arguments/points
+// - Intended audience/purpose
+,
+"tags": [
+// several broad categories/themes for classification
+// Include domain , format , and type tags
+// At least three tags , but don 't be too redundant.
+]
+}
+Content for analysis:
+{content}
+Figure 22: Prompt used for note construction in A-MEM.
+You are an AI memory evolution agent responsible for managing and evolving a
+knowledge base.
+Analyze the the new memory note according to keywords and context , also with
+their several nearest neighbors memory.
+Make decisions about its evolution.
+The new memory context:
+{context}
+content: {content}
+keywords: {keywords}
+The nearest neighbors memories (each line starts with a 0-based memory index):
+{nearest_neighbors_memories}
+Based on this information , determine:
+1. Should this memory be evolved? Consider its relationships with other
+memories.
+2. What specific actions should be taken (strengthen , update_neighbor)?
+2.1 If choose to strengthen the connection , which memory should it be
+connected to? Use the memory index (the 0-based number shown for each
+neighbor above) in suggested_connections. Can you give the updated tags
+of this memory?
+2.2 If choose to update_neighbor , you can update the context and tags of
+these memories based on the understanding of these memories. If the
+context and the tags are not updated , the new context and tags should
+be the same as the original ones. Generate the new context and tags in
+the sequential order of the input neighbors.
+Tags should be determined by the content of these characteristic of these
+memories , which can be used to retrieve them later and categorize them.
+Note that the length of new_tags_neighborhood must equal the number of input
+neighbors , and the length of new_context_neighborhood must equal the
+number of input neighbors.
+The number of neighbors is {neighbor_number }.
+Return your decision in JSON format with the following structure:
+{
+"should_evolve ": true or false ,
+"actions ": [" strengthen", "update_neighbor "],
+"suggested_connections ": [0, 2],
+"tags_to_update ": ["tag_1 ",..." tag_n"],
+"new_context_neighborhood ": ["new context ",...,"new context"],
+"new_tags_neighborhood ": [[" tag_1 ",...," tag_n "] ,...[" tag_1 ",...," tag_n "]]
+}
+Figure 23: Prompt used to link and update memory notes in A-MEM.
+Given the following question , generate several keywords , using 'cosmos ' as the
+separator.
+Question: {question}
+Format your response as a JSON object with a "keywords" field containing the
+selected text.
+Example response format:
+{" keywords ": "keyword1 , keyword2 , keyword3 "}
+Figure 24: Prompt used to generate retrieval keywords from the question in A-MEM (following the official
+implementation).
+You are an intelligent language model. Your task is to answer the question
+based on the provided memory.
+Each memory is formatted as a dialogue.
+...
+Below are the requirements you must follow when answering questions.
+[REQUIREMENTS]
+- Your output should be a SINGLE option. In other words , your final output
+must be an element of [(A), (B), (C), (D), (E)].
+- For example , if you think '(A) Helen ' is the correct answer , you should ONLY
+output '(A)', neither '(A) Helen ' nor 'Helen '.
+...
+Below is an example of solving each question based on the provided memory.
+[EXAMPLE]
+- Question:
+Sophia: Do you remember which company Daniel joined on August 20, 2017?
+(A) Amazon
+(B) Google
+(C) Microsoft
+(D) Apple
+(E) I don 't know. (None of the above)
+- Memory:
+memory index: 0
+talk start time: August 12, 1996
+memory content:
+Walter: So, any news on the job front , Daniel? I know you 've been interviewing
+lately.
+Daniel: Great news! I just accepted a job offer from Amazon that I received
+earlier this July.
+Walter: That 's amazing! Congratulations! What role are you going to take on?
+Daniel: I'll be joining their team as a senior software engineer. I'm really
+excited about it.
+Walter says: They 're lucky to have you. We should definitely grab dinner to
+celebrate this weekend!
+memory context: The speakers discuss Daniel 's successful job hunt ,
+highlighting his acceptance of a senior software engineer position at
+Amazon and their plans to celebrate the milestone.
+memory keywords: job offer , Amazon , July , senior software engineer , celebrate
+memory tags: career , friendship , milestone , technology
+memory index: 5
+...
+Therefore , the correct answer is (A), and your final output should be '(A) '.
+========================================
+Please note that you should output only a SINGLE option from [(A), (B), (C), (
+D), (E)], without any intermediate steps.
+Now , let 's solve the question by referring to the memory below:
+- Question:
+{question}
+- Memory:
+{memory}
+- Answer:
+Figure 25: Prompt used for question-answering in A-MEM.

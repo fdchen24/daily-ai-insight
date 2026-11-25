@@ -1,0 +1,3608 @@
+Yggdrasil: Tree-Routed Recurrent Experts for State Tracking and Fast CPU
+Inference
+Cosmo Santoni 1
+Abstract
+Parallel-trainable recurrences such as Mamba, lin-
+ear attention, and DeltaNet offer constant-cost
+streaming inference, but they suffer from two lim-
+itations: 1) they struggle to track discrete state,
+and 2) they read every parameter at every step,
+tying model capacity directly to CPU latency.
+We introduce Yggdrasil, a recurrent architecture
+that decouples capacity from per-step compute
+by looking up each layer’s transition in a large,
+tree-routed bank of recurrent experts. Each router
+addresses its bank using the current token and
+the state of the layer below. We prove that this
+cross-layer context is necessary—a single token-
+indexed layer of non-expanding transitions with
+finitely many reachable states cannot perform con-
+ditional resets—while avoiding feedback from the
+layer’s own past preserves parallel-scan training.
+Because each step traverses one tree path and
+reads a single expert per layer, active weights stay
+within a few hundred kilobytes in CPU L2 cache
+while the full bank resides in RAM. Among the
+parallel-trainable models we evaluate, Yggdrasil
+is the only one to solve all five state-tracking tasks.
+At matched active parameter counts, it achieves
+the lowest test bits on enwik8 (1.540 bpb) and the
+human genome hg38 (1.567 bpb), while stepping
+3.0× and 3.3× faster on a single CPU core (6.7 µs
+and 5.8 µs) than the fastest streaming baseline,
+and delivering the highest GPU throughput of all
+models at batch 1024. On the Genomic Bench-
+marks, it is the strongest causal model at matched
+active parameters (86.0% mean accuracy).
+1. Introduction
+Many sequence tasks must score symbols one at a time as
+they arrive, including base-by-base DNA modelling, byte-
+level compression, and on-device inference (Hutter, 2006;
+Zhang et al., 2025; Gerganov & llama.cpp contributors,
+1Imperial College London, London, United Kingdom. Corre-
+spondence to: Cosmo Santoni <cosmo.santoni@ic.ac.uk>.
+Preprint. November 24, 2026.
+2023; Gemma Team, 2025). Because these workloads can-
+not batch over time, their cost is governed by a single step
+at batch size one, ideally running at constant cost per posi-
+tion on one CPU core (Williams et al., 2009). Base-level
+genomic models like HyenaDNA model DNA causally with-
+out a tokeniser (Nguyen et al., 2023), but recompute their
+context window at every base unless distilled into a recur-
+rence (Massaroli et al., 2023). Parallel-trainable recurrences
+such as Mamba (Gu & Dao, 2024; Dao & Gu, 2024), linear
+attention (Katharopoulos et al., 2020; Schlag et al., 2021),
+and the DeltaNet family (Yang et al., 2024; 2025; Siems
+et al., 2025) do provide constant-cost streaming steps. Yet
+they hit two fundamental walls. First, they struggle to track
+discrete state, and none of the parallel-trainable baselines
+solves all five state-tracking tasks we evaluate (S5, A5, par-
+ity, cycle navigation, and modular arithmetic with operator
+precedence). The strongest, DeltaProduct-4, solves four (Ta-
+ble 1), whereas LSTMs and GRUs solve all five at the cost
+of sequential training (Hochreiter & Schmidhuber, 1997;
+Cho et al., 2014; Delétang et al., 2023). Second, they are
+dense, reading every parameter at every step so that any
+added capacity directly increases per-token latency.
+We introduce Yggdrasil, a recurrent architecture that breaks
+both walls with a single mechanism, looking up each layer’s
+transition in a large bank of recurrent experts rather than
+computing it (Figure 1). Each routed layer stores 2D experts,
+and a depth-D binary tree selects one in D comparisons to
+supply the transition, input, and readout for that step. The
+tree computes its address from the current token and the
+state of the layer below. Because this address never reads
+the layer’s own past, each layer remains an affine recurrence
+and trains as an associative parallel scan (Blelloch, 1990;
+Martin & Cundy, 2018).
+This design directly satisfies the three requirements for ex-
+act state tracking. First, transitions must be non-diagonal,
+since diagonal recurrences cannot track non-solvable groups
+like S5 and A5 (Merrill et al., 2024; Shakerinava et al.,
+2026); Theorem 14 establishes the finite-state form of this
+limit for stacks of diagonal layers. Second, transitions need
+negative or complex eigenvalues, as eigenvalues restricted
+to [0, 1] cannot track parity (Grazzi et al., 2025). Third,
+conditional resets require transition selection that depends
+on more than the current token, and we prove that a sin-
+gle token-indexed layer of non-expanding transitions with
+1
+arXiv:2611.29954v1  [cs.LG]  23 Nov 2026
+Yggdrasil
+finitely many reachable states cannot even retain the first
+symbol of its input (Theorem 1). Yggdrasil combines block
+rotations with signed decays—giving non-diagonal tran-
+sitions with eigenvalues outside [0, 1]—while cross-layer
+routing supplies the context needed for conditional resets.
+Every ingredient is necessary in trained models. Removing
+the rotations sends S5 and A5 to chance, and using a shared
+transition or token-only routing sends modular arithmetic to
+chance (Section H).
+The same lookup makes Yggdrasil hardware-aware. Like
+Mamba (Gu & Dao, 2024), it is built around the memory
+hierarchy, but for CPU inference rather than GPU training
+(Section 3.3). Because each step reads only one expert
+per layer, its active weights fit inside the cache of a single
+CPU core while the full bank resides in RAM. Mixtures
+of experts and memory layers also decouple storage from
+compute (Shazeer et al., 2017; Fedus et al., 2022; Lample
+et al., 2019; Berges et al., 2024; Cheng et al., 2026), but
+only in layers that look up outputs. Yggdrasil moves sparse
+lookup into the recurrence itself; replacing its recurrent
+experts with output-only experts loses 0.244 bits per byte
+at equal storage (Section H). Prior work on input-switched
+affine networks, second-order RNNs, and PD-SSM also
+selects transitions per step (Foerster et al., 2017; Giles et al.,
+1992; Omlin & Giles, 1996; Terzi´c et al., 2025). Yggdrasil is
+the first to look up recurrent transitions in a large tree-routed
+bank using lower-layer context, preserving both parallel-
+scan training and a cache-sized CPU step.
+Contributions.
+1. Tree-routed recurrent experts. Yggdrasil looks up
+each routed layer’s transition in a bank of 2D experts,
+requiring O(D) routing work and cache-sized weight
+reads per step while preserving parallel-scan training
+(Section 3).
+2. State-tracking and sparse-access theory. We prove
+that a single token-indexed layer of non-expanding
+transitions with finitely many reachable states cannot
+perform conditional resets. We give exact construc-
+tions tracking S5 and A5 in 8-bit integer arithmetic
+and every finite automaton, plus a counting separation
+between sparse and dense models in weights read per
+step (Section 4).
+3. Accuracy.
+Yggdrasil is the only parallel-trainable
+model in Table 1 to solve all five state-tracking tasks.
+It achieves the lowest test bits on hg38 and enwik8 at
+every matched active size (Tables 7 and 8), with its
+smallest models outperforming every dense baseline
+at roughly 10× the active parameter count. At 470k
+active parameters (307.3M stored), it averages 86.0%
+across the eight Genomic Benchmarks tasks (five splits
+each) under the Caduceus protocol (Grešová et al.,
+2023; Schiff et al., 2024), making it the best causal
+model at matched active parameters.
+4. Speed. Yggdrasil is the fastest model on one CPU core,
+with its largest models stepping 3.3× and 3.0× faster
+than the fastest streaming baseline, and achieves the
+highest GPU throughput at batch 1024 across all sizes
+on both datasets (Table 17). At equal stored parame-
+ters, its CPU step is 162×–13,566× faster than dense
+models, and at least 3,289× faster at 730M (Section 5).
+2. Background and related work
+Linear recurrences.
+An affine recurrence updates a state
+ht ∈Rn as ht = ¯Atht−1+¯ut. When the coefficients do not
+depend on ht−1, affine composition is associative and all
+states can be computed in parallel over time (Blelloch, 1990;
+Martin & Cundy, 2018). The transition is time-invariant
+in S4, S4D, S5, and the LRU (Gu et al., 2022a;b; Smith
+et al., 2023; Orvieto et al., 2023), and input-dependent in
+the Mamba family (Gu & Dao, 2024; Dao & Gu, 2024;
+Lahoti et al., 2026). Linear attention corresponds to a scalar
+or identity transition with a rank-one write (Katharopoulos
+et al., 2020; Schlag et al., 2021). To move beyond diagonal
+transitions, recent work uses delta rules, Householder prod-
+ucts, one-hot column transitions, structured linear CDEs,
+and factored recurrent maps (Schlag et al., 2021; Yang et al.,
+2024; 2025; Siems et al., 2025; Terzi´c et al., 2025; Walker
+et al., 2025; Sutskever et al., 2011), while unitary RNNs
+constrain the dynamics to preserve norm (Arjovsky et al.,
+2016; Lezcano-Casado & Martínez-Rubio, 2019). All of
+these models—like RWKV-7 (Peng et al., 2025)—read ev-
+ery parameter at every step. By contrast, GRUs, LSTMs,
+and the sLSTM of xLSTM gate on the state itself and must
+train sequentially, whereas xLSTM’s mLSTM gates only on
+the input and trains in parallel (Cho et al., 2014; Hochreiter
+& Schmidhuber, 1997; Beck et al., 2024).
+State tracking.
+A model tracks a task if the correct label
+is the unique logit maximiser at every labelled step of every
+valid input sequence. Its margin is the smallest gap between
+the correct logit and any other logit; in our constructions,
+this margin is positive and independent of sequence length.
+Group tasks require maintaining a running product, and they
+expose the limits of diagonal recurrences, since positive di-
+agonal transitions cannot track parity and general diagonal
+transitions cannot track non-solvable groups (Sarrof et al.,
+2024; Merrill et al., 2024; Grazzi et al., 2025; Shakerinava
+et al., 2026). Non-diagonal recurrences overcome this bar-
+rier (Grazzi et al., 2025; Siems et al., 2025; Terzi´c et al.,
+2025). However, group tasks only permute states, whereas
+general finite automata also reset them. In a permutation–
+reset automaton, each input either permutes the states or
+2
+Yggdrasil
+(a)
+token layer
+h(0)
+t−1
+Axt
+h(0)
+t
+Q Pxt
+Txt[xt]
+xt
+routed layer l
+h(l)
+t−1
+Art
+h(l)
+t
+Q Prt
+transition
+readout
+Trt[xt]
+token input
+ft
+router input
+e(xt)
+Ulow
+rt W layer input
+ν(h(l−1)
+t
+)
+βout
+softmax
+p(yt | x≤t)
+(b)
+Ax1
+h(0)
+1
+x1
+Ar1
+h(1)
+1
+Ar1
+h(L)
+1
+Ax2
+h(0)
+2
+x2
+Ar2
+h(1)
+2
+Ar2
+h(L)
+2
+AxT
+h(0)
+T
+xT
+ArT
+h(1)
+T
+ArT
+h(L)
+T
+· · ·
+· · ·
+· · ·
+token
+layer
+l = 1
+l = L
+Figure 1. Yggdrasil looks up each layer’s transition instead of computing it. Orange marks the token, green an expert lookup, blue the
+state and grey the parameters shared within a layer, and layer superscripts are dropped inside each layer. (a) One inference step. The token
+layer applies the transition stored for xt. In each routed layer a depth-D tree router reads ft = [e(xt); ν(h(l−1)
+t
+)] and selects expert rt,
+which supplies the transition Art, the token input Trt[xt], the layer-input map U low
+rt
+and the readout Prt. The readouts of all layers are
+summed before the softmax. (b) The stack unrolled over time, with token inputs and readouts omitted. Each router reads the layer below
+at the same step and never its own layer’s past, so the selected transitions change from step to step while each layer still trains as a parallel
+scan.
+resets all of them to a single state. By Krohn–Rhodes theory,
+every finite automaton is the image of a cascade of such au-
+tomata arranged in levels, where each level reads the token
+and the previous states of lower levels (Krohn & Rhodes,
+1965; Eilenberg, 1976; Maler & Pnueli, 1994; Liu et al.,
+2023). The routed layers of Yggdrasil realise this cascade
+with one level per layer (Theorem 2). Section A discusses
+additional work on state tracking in linear recurrences.
+Transition selection.
+Sparse parameter access.
+Mixtures of experts, hash lay-
+ers, product-key memories, memory layers, and Engram
+decouple stored capacity from active computation (Shazeer
+et al., 2017; Fedus et al., 2022; Roller et al., 2021; Lam-
+ple et al., 2019; Berges et al., 2024; Cheng et al., 2026).
+Token-indexed tables provide another form of sparse access
+(Sadhukhan et al., 2026; Gemma Team, 2025; Zhou et al.,
+2026; Tseng & De Sa, 2026), while hierarchical experts, soft
+decision trees, and fast feedforward networks use trees for
+conditional computation (Jordan & Jacobs, 1994; Frosst &
+Hinton, 2017; Belcak & Wattenhofer, 2023a; Cho & Bengio,
+2014). All of these methods retrieve a value that enters the
+current step’s output; Yggdrasil instead retrieves the tran-
+sition of its recurrence, a difference we compare at equal
+storage in Section H. Following mixture-of-experts conven-
+tion, we distinguish stored parameters (the full model, de-
+termining memory footprint) from active parameters (those
+read per token, determining step latency and compute). Yg-
+gdrasil is built around this split, keeping active parameters
+in one CPU core’s cache while the stored bank resides in
+RAM.
+3. Yggdrasil
+Yggdrasil stacks one token layer and L routed recurrent
+layers, each maintaining a state h(l)
+t
+∈Rn (Figure 1). At
+every step, each layer applies an expert that supplies its
+transition, additive input, and readout. The token layer
+selects its expert directly from the token xt ∈{1, . . . , V }.
+Each routed layer instead selects one of 2D experts from xt
+and the updated state h(l−1)
+t
+of the layer below.
+3.1. Contextual transition lookup
+Given a selected expert r = r(l)
+t , layer l updates and reads
+out its state using only that expert’s parameters:
+h(l)
+t
+= Arh(l)
+t−1 + Γru(l)
+t ,
+o(l)
+t
+= Prh(l)
+t .
+(1)
+Here u(l)
+t
+packs the token code, a constant coordinate, and
+a projection of the normalised state from the layer below.
+Because neither the expert address nor u(l)
+t
+depends on h(l)
+t−1,
+the update remains affine in the layer’s own state.
+3
+Yggdrasil
+Routing.
+Each routed layer’s tree router reads the feature
+vector
+f (l)
+t
+= [e(l)(xt); ν(h(l−1)
+t
+)],
+(2)
+where e(l) is a learned token embedding and ν is RMS
+normalisation. At each internal node η, the router branches
+right if w⊤
+η f (l)
+t
++βη > 0 and left otherwise, reaching one of
+2D experts in D comparisons. The token layer has no layer
+below it and uses r(0)
+t
+= xt, forming an input-switched
+affine recurrence; a token-only tree router could always be
+collapsed into this direct lookup (Section C.1).
+Transitions.
+To support exact state operations while re-
+maining non-expanding, each transition combines coordi-
+natewise decay with block rotations:
+Ar = diag(clip(dr, −1, 1))
+ eΩr,1 ⊕· · · ⊕eΩr,G
+,
+(3)
+with G = n/b blocks of size b and skew-symmetric gen-
+erators Ωr,g = 1
+2(Sr,g −S⊤
+r,g). Because each eΩr,g is or-
+thogonal, ∥Ar∥2 ≤1, and Theorem 6 bounds state growth
+under bounded additive inputs. Decays in {±1} realise
+every orthogonal map within a block, while zero decays
+add signed partial permutations (Theorem 4), which are the
+exact operations used in our constructions (Section 4).
+Inputs and outputs.
+The additive input sums a token
+term Tr[xt] = Urv(xt) + cr and a lower-layer term
+U low
+r
+W (l)ν(h(l−1)
+t
+), where the shared matrix W (l) com-
+presses the lower state to rank klow and the expert matrix
+U low
+r
+expands it. For finite vocabularies, Tr[xt] can be ma-
+terialised as table rows, though our runtime also supports
+the factored form (Section J). A shared matrix Q(l) projects
+each expert readout o(l)
+t
+∈RR to the C output classes. Sum-
+ming all layers’ contributions with an output bias before
+the softmax allows each selected expert to control both its
+layer’s state update and its contribution to the prediction.
+Section C gives the full parameterisation.
+3.2. Parallel evaluation and training
+Because layer l’s router and additive input depend only on
+the token and layer l −1, they can be evaluated at every
+position in parallel once layer l −1 is computed. Only the
+affine recurrence in Equation (1) runs over time. Affine
+composition obeys
+(A2, u2) • (A1, u1) = (A2A1, A2u1 + u2),
+which is associative and yields an O(log T)-depth parallel
+scan per layer, for a total depth of O((L + 1) log T) across
+the stack (Theorem 5). Routing never feeds back into the
+layer that routes, so once routes are selected, each layer
+trains like a standard linear recurrence. Moreover, because
+routing reads h(l−1)
+t
+after its update with xt, streaming infer-
+ence and parallel training visit the layers in the exact same
+order.
+Hard routing.
+The forward pass uses a single hard-
+selected expert from the start of training, perturbed by router
+noise. A straight-through estimator computes routing gradi-
+ents from a soft top-B over tree paths at backward tempera-
+ture 0.5 (Frosst & Hinton, 2017; Bengio et al., 2013). The
+non-selected experts enter only this gradient and never the
+forward recurrence (Section D).
+Hierarchical residual experts.
+To share gradient updates
+across sparsely selected experts, every node in the router
+tree (including leaves) stores a residual ∆η for each expert
+parameter. Expert r sums the residuals along its root-to-leaf
+path:
+θr =
+1
+√
+D + 1
+D
+X
+j=0
+∆ηj(r),
+(4)
+where ηj(r) is the node at depth j. We initialise the root
+from a single expert and set all deeper residuals to zero.
+Each routed layer therefore starts as a single shared tran-
+sition whose experts specialise only where training splits
+them. Internal nodes learn from all paths passing through
+them, while deeper residuals allow individual experts to
+diverge. Because independent leaf residuals can realise any
+expert bank, this parameterisation preserves the function
+class (Section D.2). At inference, we materialise the sums
+once into the stored expert bank.
+3.3. Hardware-aware design
+Yggdrasil ties per-step cost to the memory hierarchy rather
+than total parameter count. For fixed width, block size, input
+ranks, and output size, a routed layer stores Θ(2D) parame-
+ters but performs only O(D) work per token, because each
+step reads D router nodes and one expert, while the transi-
+tion, lower-layer input, and readout cost O(nb), O(nklow),
+and O(nR + CR) regardless of bank size (Table 11). Dou-
+bling the expert bank adds just one node comparison per
+routed layer, trading Θ(2D) storage for O(D) compute.
+On a CPU core, this trade keeps the active working set in
+cache. Our medium and large models read roughly 100 and
+280 KB of 8-bit weights per token, which fits comfortably
+inside a single core’s 2 MB L2 cache, while the full bank
+of 2D experts stays in RAM (Section J). Across all sizes, a
+step touches between 30 and 281 KB (under 0.2% of stored
+weights), running 2.6× to 5× faster than the same step
+with cold caches (Section J). On a GPU, the step executes
+as a single fused kernel over precomputed expert banks,
+achieving the highest throughput of all evaluated models at
+batch size 1024 (Section K).
+4. State tracking and conditional computation
+Three mechanisms drive Yggdrasil’s expressivity: its transi-
+tions realise exact discrete dynamics, its tree routers decide
+4
+Yggdrasil
+when to apply them, and sparse access lets the model store
+far more dynamics than any single step reads. We analyse
+these three properties in turn for the architecture of Sec-
+tion 3, deferring proofs and resource bounds to Section B.
+4.1. Exact permutation tracking
+Let each token specify a permutation matrix Πx on five
+coordinates, and set v = (−2, −1, 0, 1, 2)⊤. A token-layer
+expert with transition Πx and input Πxv −v produces, start-
+ing from h0 = 0,
+ht = Πxtht−1 + Πxtv −v
+= Πxt · · · Πx1v −v.
+Because the entries of v are distinct, ht uniquely identifies
+the composed permutation. A linear readout then assigns the
+largest logit to the corresponding group element with a pos-
+itive margin independent of sequence length (Theorem 9).
+This construction tracks both S5 and its subgroup A5 exactly.
+Moreover, because its states, inputs, materialised transitions,
+and readout coefficients all fit in 8-bit integers, 32-bit accu-
+mulation evaluates the updates and logits without error at
+any length.
+The same construction extends to any finite group with a
+faithful orthogonal representation of dimension m ≤b,
+tracked by a single block with readout rank R ≥m, which
+covers parity and cycle navigation as special cases. Parity
+requires the eigenvalue −1, which an expert achieves via
+either a negative decay or a π-rotation of a two-dimensional
+block (−I). Non-solvable groups, however, require off-
+diagonal transitions, because no stack of diagonal affine
+layers with finitely many reachable states per layer can
+track A5, even if each layer selects its coefficients from the
+token and all states below it (Theorem 14). This establishes
+a finite-state counterpart to bounded-precision limits on
+recurrent models (Merrill et al., 2024; Grazzi et al., 2025;
+Shakerinava et al., 2026).
+4.2. Contextual writes and finite automata
+A token-indexed affine map can reset its state on a desig-
+nated symbol by setting Ax = 0. Writing the first symbol
+and preserving it across all later steps is harder, because
+the same symbol must trigger a write at t = 1 and leave
+the state untouched afterwards. A single token layer with
+non-expanding transitions and finitely many reachable states
+cannot do this, whereas adding one routed layer can.
+Theorem 1 (Contextual memory). A single token-only affine
+layer whose transitions are non-expanding in the Euclidean
+norm, ∥Ax∥2 ≤1, and which reaches finitely many states
+cannot track the first symbol of an arbitrary binary input,
+even with an arbitrary readout depending on (ht, xt). A
+token layer and one routed layer with block size b ≥2 and
+router depth D = 2 can track both the first-symbol task and
+even pairs, whose label is [xt̸ = x1].
+The positive construction uses two token-layer coordinates
+to separate the first step from all later steps. Reading this
+context, the routed layer writes the current symbol at t = 1
+and applies the identity thereafter, without ever depending
+on its own past state. The impossibility result is a spe-
+cial case of Theorem 11, and the construction appears in
+Theorem 12. The same obstruction governs modular arith-
+metic with operator precedence, which a token layer and
+one routed layer of depth 7 track modulo 5.
+Permutations and contextual resets suffice for any finite
+automaton. In its Krohn–Rhodes cascade (Section 2), every
+component either permutes its states or resets to a fixed state,
+selected by the token and the states of lower levels.
+Theorem 2 (Finite automata). Every finite automaton can
+be tracked by Yggdrasil with sufficiently large state width,
+block size, readout rank and router depth. If the automaton
+admits a permutation–reset cascade with ℓlevels, ℓ+ 1
+routed layers suffice.
+The proof assigns one routed layer to each cascade level and
+implements its permutations and resets as partial permuta-
+tions, with bank size 2D ≥2V Q
+i mi for components of
+sizes mi (Section B.11).
+4.3. A memory–computation separation
+Sparse access lets a model query a large transition table
+without reading all of it at every step. We formalise this
+advantage using a family of hidden-counter tasks. Each
+token carries an action at ∈{1, . . . , K} and a counter
+increment, and the label is a running product in a fixed finite
+group G whose factor is looked up in a table φ indexed
+by the action and the counter modulo M, yielding |G|KM
+distinct tasks (Theorem 15).
+When M is the product of the first I primes, a token layer
+tracks the counter via its residues and a single routed layer
+retrieves the corresponding table entry. State width, block
+size, router depth, and per-token work all grow only polyno-
+mially in log M and log K (Theorem 17). By contrast, any
+dense architecture with ω bits per weight that reads all of its
+weights at every step requires
+work per token ≥M log2 |G| −c/K
+2ω
+(5)
+to realise a fraction 2−c of the family, which grows linearly
+in M. Yggdrasil pays for a larger task family once in stored
+experts, whereas a dense model pays at every step. The
+separation thus lies in weights read per step, not weights
+stored (Section B.15).
+5
+Yggdrasil
+Table 1. State tracking. Final-answer accuracy on test sequences of lengths 40 to 256 after 100k training steps on lengths 3 to 40. Chance
+is 0.008 on S5, 0.017 on A5, 0.5 on parity and 0.2 on cycle navigation and modular arithmetic. Best of 3 seeds by validation. The search
+selected the size of every model per task (Section F). DeltaProduct uses 2 or 4 Householder factors per step and negative eigenvalues.
+Sequential models train step by step and parallel models over the whole sequence at once. Bold marks a solved task (raw accuracy ≥0.90,
+Delétang et al. (2023)).
+Non-solvable
+Abelian
+Reset
+Model
+S5
+A5
+Parity
+Cycle
+Mod. arith.
+(Merrill et al., 2024)
+(Merrill et al., 2024)
+(Delétang et al., 2023)
+(Delétang et al., 2023)
+(Delétang et al., 2023)
+Sequential GRU
+0.979
+1.000
+1.000
+1.000
+1.000
+LSTM
+0.995
+0.999
+1.000
+1.000
+1.000
+Parallel
+Transformer
+0.010
+0.031
+0.506
+0.238
+0.225
+Mamba-2
+0.010
+0.017
+0.569
+0.650
+0.395
+Gated DeltaNet
+0.018
+0.999
+0.999
+0.615
+0.826
+DeltaProduct-2
+0.688
+0.999
+1.000
+0.713
+1.000
+DeltaProduct-4
+0.935
+1.000
+1.000
+0.684
+1.000
+PD-SSM
+0.009
+0.020
+0.807
+0.986
+1.000
+Yggdrasil
+1.000
+0.980
+1.000
+1.000
+0.981
+5. Experiments
+We evaluate Yggdrasil across four axes: length generalisa-
+tion on state tracking, accuracy and latency on DNA and
+text at matched active parameter counts, transfer to DNA
+classification on the Genomic Benchmarks, and scaling plus
+ablations.
+5.1. Protocol
+Tasks. Our state-tracking suite covers the word problems
+of S5 and A5 (Merrill et al., 2024; Grazzi et al., 2025;
+Siems et al., 2025), parity, cycle navigation, and modular
+arithmetic with operator precedence (Delétang et al., 2023),
+trained on lengths 3–40 and tested on lengths 40–256. Next-
+token prediction uses base-level hg38 and byte-level enwik8
+(Section E).
+Models and sizes. We compare against official public imple-
+mentations of GRU, LSTM, Mamba-2, Mamba-2 + PKM,
+a Llama-style Transformer, Gated DeltaNet, DeltaProduct
+(with 2 or 4 Householder factors), PD-SSM, and HyenaDNA
+(Cho et al., 2014; Hochreiter & Schmidhuber, 1997; Dao
+& Gu, 2024; Lample et al., 2019; Touvron et al., 2023;
+Vaswani et al., 2017; Yang et al., 2025; Siems et al., 2025;
+Terzi´c et al., 2025; Nguyen et al., 2023) (Section F). Text
+models target 35k, 105k, and 330k active parameters; DNA
+models target 27k, 90k, and 290k. Every model sits within
+10% of its target using its native architecture, with Yggdrasil
+accessing at most 0.22% of its stored parameters per token.
+On state tracking, hyperparameter search also selects model
+size.
+Training and selection. For every model and task, we
+run eight Bayesian-search trials on one seed, selecting by
+validation bits on text and DNA and by out-of-distribution
+validation accuracy on state tracking. We then train the
+chosen configuration across three seeds and report the seed
+with the best validation score (Section D.1). We follow
+the length split of Walker et al. (2025) but report accuracy
+on held-out test sequences rather than the best validation
+accuracy reached during training.
+Metrics. We score text and DNA by test bits per token
+of the float model over the full test split. State tracking is
+scored by final-answer accuracy averaged over test lengths,
+with ≥0.90 marking a solved task (Delétang et al., 2023).
+Latency. All CPU timings measure one batch-1 step com-
+puting the full output distribution on a single pinned core.
+Yggdrasil runs in our 8-bit integer kernel (Jacob et al., 2018),
+and each baseline runs in its fastest public runtime (includ-
+ing 8-bit quantised runtimes) that matches its float accuracy
+(Section J).
+5.2. State tracking
+Yggdrasil is the only parallel-trainable model in Table 1 to
+solve all five state-tracking tasks. Among the other paral-
+lel baselines, DeltaProduct-4 solves four, DeltaProduct-2
+solves three, Gated DeltaNet and PD-SSM solve two, and
+Transformer and Mamba-2 solve none. Only PD-SSM and
+Yggdrasil among the parallel models solve cycle naviga-
+tion. GRU and LSTM also solve all five tasks, but require
+sequential training.
+5.3. DNA and text
+At matched active parameter counts, Yggdrasil achieves the
+lowest test bits and the lowest CPU latency at all three sizes
+on both datasets (Figure 2 and Tables 7 and 8). On hg38, its
+largest model reaches 1.567 bits per base versus 1.598 for
+Mamba-2 with a product-key memory (PKM) (Lample et al.,
+2019), the strongest baseline. Its 8-bit kernel steps in 5.8 µs,
+6
+Yggdrasil
+100
+101
+102
+CPU inference time (μs / token)
+1.6
+1.8
+2.0
+2.2
+2.4
+Test bits per byte
+enwik8 (text), one CPU core
+100
+101
+102
+CPU inference time (μs / base)
+1.55
+1.60
+1.65
+1.70
+1.75
+1.80
+1.85
+Test bits per base
+hg38 (DNA), one CPU core
+Yggdrasil (ours)
+GRU
+LSTM
+Mamba-2
+Transformer
+HyenaDNA
+small (35k / 27k)
+medium (105k / 90k)
+large (330k / 290k)
+Pareto frontier
+Figure 2. Accuracy against inference time on one CPU core. Float test bits per byte on enwik8 (left) and per base on hg38 (right)
+against microseconds per token. Each line joins one model at the three sizes of active parameters (Tables 7 and 8), and marker size grows
+with the size, labelled in the key by its active parameters on enwik8 / hg38. Points are the best of 3 seeds by validation. HyenaDNA is
+shown at its offline time per base. Gated DeltaNet and DeltaProduct have no public CPU runtime and appear in Figure 3. The dotted
+staircase is the Pareto frontier, and no model reaches the hatched region.
+Table 2. Genomic Benchmarks, causal models. Test accuracy
+(%), mean over 5 splits with the range over the splits after ±, at
+about 470k parameters (active for Yggdrasil, which stores 307.3M
+total parameters). HyenaDNA, Mamba and Yggdrasil are pre-
+trained on the human genome and fine-tuned per task. Bold marks
+the best per row.
+Published
+Task
+CNN
+HyenaDNA
+Mamba
+Yggdrasil
+(Grešová et al., 2023) (Schiff et al., 2024) (Schiff et al., 2024) (Schiff et al., 2024)
+Mouse
+71.5±8.7
+78.0±2.5
+74.3±5.4
+74.0±4.1
+Coding
+89.2±0.8
+90.4±0.5
+90.4±0.4
+93.4±0.6
+Hum./worm
+94.2±0.2
+96.4±0.2
+96.7±0.2
+96.6±0.2
+Cohn
+70.2±2.1
+72.9±1.4
+73.2±2.9
+72.9±1.6
+Ensembl
+74.4±12.2
+84.9±0.6
+86.2±0.8
+88.2±0.6
+Reg.
+87.2±0.5
+86.9±1.2
+81.4±21.1
+87.1±1.3
+OCR
+69.8±1.3
+78.3±0.7
+81.5±0.2
+79.6±0.5
+Non-TATA
+86.1±0.9
+94.4±0.2
+93.3±0.7
+96.0±1.0
+Mean
+80.3
+85.3
+84.6
+86.0
+3.3× faster than GRU at 18.9 µs, the fastest streaming base-
+line. Even HyenaDNA’s offline scoring takes 1.4×–2.7×
+longer per base than Yggdrasil’s streaming step across sizes,
+while recomputing its window per base is orders of mag-
+nitude slower (Section L). On enwik8, Yggdrasil’s largest
+model reaches 1.540 bits per byte versus 1.673 for Mamba-2
++ PKM, stepping in 6.7 µs versus 20.2 µs for GRU (3.0×
+faster).
+The efficiency gap is even starker across scales. With 35.5k
+active parameters on enwik8 and 25.2k on hg38, our small-
+est Yggdrasil models reach 1.667 and 1.620 bits and out-
+perform every dense baseline at the largest size, despite
+using 8.5×–9.9× fewer active parameters on enwik8 and
+10.8×–11.9× fewer on hg38. Mamba-2 + PKM, matched
+to Yggdrasil in both stored and active parameters, trails at
+every size on both datasets. Over the full test stream, the
+timed 8-bit kernel stays within 0.010 bits per token of the
+float model (Section J). On a GPU, Mamba-2 is faster at
+batch size 1, whereas at batch size 1024 Yggdrasil achieves
+the highest throughput of all models at every size, running
+1.5×–3.0× faster than Mamba-2 (Table 17 and Figure 3).
+5.4. Genomic Benchmarks
+We evaluate transfer to DNA classification on the eight
+tasks of the Genomic Benchmarks (Grešová et al., 2023)
+under the Caduceus protocol (Schiff et al., 2024): mouse
+enhancers (Mouse), coding versus intergenomic sequences
+(Coding), human versus worm (Hum./worm), Cohn and
+Ensembl human enhancers (Cohn, Ensembl), regulatory
+elements (Reg.), open chromatin regions (OCR), and non-
+TATA promoters (Non-TATA). Because each task classifies
+a short sequence, a causal streaming model can score it as
+it arrives. Pretrained on hg38 and fine-tuned per task at
+roughly 470k active parameters (307.3M stored; Section M),
+Yggdrasil averages 86.0%, outperforming both HyenaDNA
+(85.3%) and Mamba (84.6%) as the strongest causal model
+at matched active parameters (Table 2).
+5.5. Scaling and ablations
+Speed at equal stored parameters. Matching models from
+roughly 5M to 730M stored parameters, Yggdrasil is 162×–
+1,740× faster per CPU step than dense baselines at 5M,
+widening to 3,289×–13,566× at 730M (Table 15). Dense
+7
+Yggdrasil
+models must read every weight on every token, whereas
+Yggdrasil reads only 56k to 172k parameters per step (Sec-
+tion J).
+Ablations. Removing block rotations sends S5 and A5 to
+chance, and either sharing transitions or routing on the token
+alone sends modular arithmetic to chance. On enwik8, re-
+moving the routed-layer recurrence to store outputs instead
+costs 0.244 bits per byte at equal storage and token-only
+routing costs 0.153, whereas sharing a single transition per
+routed layer stays within 0.003 bits per byte while losing
+conditional resets on modular arithmetic (Section H).
+6. Conclusion
+Yggdrasil replaces computed recurrent transitions with con-
+textual lookups into a tree-routed bank of experts. Address-
+ing each bank from the token and the state of the layer below
+yields contextual transitions while preserving parallel-scan
+training. The resulting architecture tracks permutations,
+conditional memory, and arbitrary finite automata; solves
+all five evaluated state-tracking benchmarks in parallel; and
+keeps active weights in CPU L2 cache while the expert bank
+sits in RAM, improving both accuracy and CPU latency at
+matched active parameter counts.
+Limitations.
+Yggdrasil shifts capacity from per-token
+compute into stored parameters. Its largest models occupy
+681.3 MB on enwik8 and 146.5 MB on hg38, which fits eas-
+ily in laptop RAM but is much larger than the 1.5 MB foot-
+print of the matched dense baselines. Our main comparisons
+therefore hold active parameters fixed. Dense models with
+comparable storage, such as a 41M-parameter Transformer-
+XL (1.06 bpc on enwik8; Dai et al., 2019), achieve lower
+bits at the cost of reading every parameter on every step.
+Finally, our experiments cover up to 470k active parameters
+and contexts of 256 bytes or 1024 bases; scaling to larger
+active sizes, longer contexts, subword vocabularies, and
+attention hybrids remains future work.
+Acknowledgements
+This work was supported by the Wellcome Trust
+(226072/Z/22/Z) and by the Medical Research Council
+(MRC) Centre for Global Infectious Disease Analysis (refer-
+ence MR/X020258/1), funded by the United Kingdom MRC.
+I thank Akshay Kumar at Radix Trading for generously ded-
+icating his spare time and effort to this work through discus-
+sions that helped shape its conception, for valuable feedback
+and pointers, and for suggesting related work. I thank the
+Research Software for Infectious Disease Epidemiology
+(RESIDE) team at Imperial College London for access to
+their computing cluster. The GPU compute was funded by
+MRC Mid-Range Equipment Funding (UKRI2681). For the
+purpose of open access, the author has applied a CC BY
+public copyright licence to this submission.
+Software and Data
+Code is available at https:
+//github.com/CosmoNaught/yggdrasil.
+References
+Agarwal, A., Tan, Y. S., Ronen, O., Singh, C., and Yu, B.
+Hierarchical shrinkage: Improving the accuracy and in-
+terpretability of tree-based models. In Proceedings of the
+39th International Conference on Machine Learning, vol-
+ume 162 of Proceedings of Machine Learning Research,
+pp. 111–135. PMLR, 2022.
+Arjovsky, M., Shah, A., and Bengio, Y. Unitary evolution
+recurrent neural networks. In Proceedings of the 33rd In-
+ternational Conference on Machine Learning, volume 48
+of Proceedings of Machine Learning Research, pp. 1120–
+1128, 2016.
+Beck, M., Pöppel, K., Spanring, M., Auer, A., Prudnikova,
+O., Kopp, M., Klambauer, G., Brandstetter, J., and
+Hochreiter, S. xLSTM: Extended long short-term mem-
+ory. In Advances in Neural Information Processing Sys-
+tems, volume 37, 2024.
+Belcak, P. and Wattenhofer, R. Fast feedforward networks.
+arXiv preprint arXiv:2308.14711, 2023a.
+Belcak, P. and Wattenhofer, R. Exponentially faster lan-
+guage modelling.
+arXiv preprint arXiv:2311.10770,
+2023b.
+Bengio, Y., Léonard, N., and Courville, A. Estimating
+or propagating gradients through stochastic neurons for
+conditional computation. arXiv preprint arXiv:1308.3432,
+2013.
+Berges, V.-P., O˘guz, B., Haziza, D., Yih, W.-t., Zettlemoyer,
+L., and Ghosh, G. Memory layers at scale. arXiv preprint
+arXiv:2412.09764, 2024.
+Blelloch, G. E. Prefix sums and their applications. Technical
+Report CMU-CS-90-190, School of Computer Science,
+Carnegie Mellon University, 1990.
+Bo, Y., Mao, W., Shao, Y., Bai, W., Ye, P., Ma, X., Zhao,
+J., Chen, H., and Shen, C. Revisiting convolution archi-
+tecture in the realm of DNA foundation models. arXiv
+preprint arXiv:2502.18538, 2025.
+Cheng, X., Tian, R., Zeng, W., Dai, D., Chen, Q., Wang,
+B., Xie, Z., Huang, K., Yu, X., Deng, C., Zhou, S., Zhao,
+C., Hao, Z., Li, Y., Zhang, H., Zhang, Z., Wei, Y., Xu,
+8
+Yggdrasil
+M. Y., Zhang, H., Zhao, D., and Liang, W. Conditional
+memory via scalable lookup: A new axis of sparsity for
+large language models. arXiv preprint arXiv:2601.07372,
+2026.
+Cho, K. and Bengio, Y.
+Exponentially increasing the
+capacity-to-computation ratio for conditional computa-
+tion in deep learning, 2014.
+Cho, K., van Merriënboer, B., Gulcehre, C., Bahdanau, D.,
+Bougares, F., Schwenk, H., and Bengio, Y. Learning
+phrase representations using RNN encoder–decoder for
+statistical machine translation. In Proceedings of the 2014
+Conference on Empirical Methods in Natural Language
+Processing (EMNLP), pp. 1724–1734, 2014.
+Dai, Z., Yang, Z., Yang, Y., Carbonell, J., Le, Q., and
+Salakhutdinov, R. Transformer-XL: Attentive language
+models beyond a fixed-length context.
+In Proceed-
+ings of the 57th Annual Meeting of the Association for
+Computational Linguistics, pp. 2978–2988, 2019. doi:
+10.18653/v1/P19-1285.
+Dao, T. Flashattention-2: Faster attention with better paral-
+lelism and work partitioning. In International Conference
+on Learning Representations, 2024.
+Dao, T. and Gu, A.
+Transformers are SSMs: General-
+ized models and efficient algorithms through structured
+state space duality. In Proceedings of the 41st Interna-
+tional Conference on Machine Learning, volume 235 of
+Proceedings of Machine Learning Research, pp. 10041–
+10071, 2024.
+Delétang, G., Ruoss, A., Grau-Moya, J., Genewein, T., Wen-
+liang, L. K., Catt, E., Cundy, C., Hutter, M., Legg, S., Ve-
+ness, J., and Ortega, P. A. Neural networks and the Chom-
+sky hierarchy. In International Conference on Learning
+Representations, 2023.
+Duan, Q., Huang, B., Song, Z., Lehmann, I., Gu, L., Eils,
+R., and Wild, B. JanusDNA: A powerful bi-directional
+hybrid DNA foundation model. In Advances in Neural In-
+formation Processing Systems, 2025. arXiv:2505.17257.
+Eilenberg, S. Automata, Languages, and Machines, Vol-
+ume B, volume 59 of Pure and Applied Mathematics.
+Academic Press, New York, 1976.
+Fan, T.-H., Chi, T.-C., and Rudnicky, A. Advancing regular
+language reasoning in linear recurrent neural networks.
+In Proceedings of the 2024 Conference of the North
+American Chapter of the Association for Computational
+Linguistics: Human Language Technologies (Volume 2:
+Short Papers), pp. 45–53. Association for Computational
+Linguistics, 2024. doi: 10.18653/v1/2024.naacl-short.4.
+Fedus, W., Zoph, B., and Shazeer, N. Switch transformers:
+Scaling to trillion parameter models with simple and ef-
+ficient sparsity. Journal of Machine Learning Research,
+23(120):1–39, 2022.
+Foerster, J. N., Gilmer, J., Sohl-Dickstein, J., Chorowski,
+J., and Sussillo, D. Input switched affine networks: An
+RNN architecture designed for interpretability. In Pro-
+ceedings of the 34th International Conference on Ma-
+chine Learning, volume 70 of Proceedings of Machine
+Learning Research, pp. 1136–1145. PMLR, 2017.
+Frosst, N. and Hinton, G. Distilling a neural network into
+a soft decision tree. In Proceedings of the First Interna-
+tional Workshop on Comprehensibility and Explanation
+in AI and ML (CEX 2017), co-located with AI*IA 2017,
+volume 2071 of CEUR Workshop Proceedings, 2017.
+Gemma
+Team.
+Introducing
+Gemma
+3n:
+The
+developer
+guide.
+Google
+Developers
+Blog,
+https://developers.googleblog.com/
+introducing-gemma-3n-developer-guide/,
+2025.
+Gerganov, G. and llama.cpp contributors.
+llama.cpp:
+LLM inference in C/C++. https://github.com/
+ggml-org/llama.cpp, 2023.
+Giles, C. L., Miller, C. B., Chen, D., Chen, H.-H., Sun,
+G.-Z., and Lee, Y.-C. Learning and extracting finite state
+automata with second-order recurrent neural networks.
+Neural Computation, 4(3):393–405, 1992. doi: 10.1162/
+neco.1992.4.3.393.
+Grazzi, R., Siems, J., Zela, A., Franke, J. K. H., Hutter,
+F., and Pontil, M. Unlocking state-tracking in linear
+RNNs through negative eigenvalues. In International
+Conference on Learning Representations, 2025.
+Grešová, K., Martinek, V., ˇCechák, D., Šimeˇcek, P.,
+and Alexiou, P.
+Genomic benchmarks:
+A collec-
+tion of datasets for genomic sequence classification.
+BMC Genomic Data, 24:25, 2023.
+doi:
+10.1186/
+s12863-023-01123-8.
+Gu, A. and Dao, T. Mamba: Linear-time sequence modeling
+with selective state spaces. In Conference on Language
+Modeling (COLM), 2024.
+Gu, A., Goel, K., and Ré, C. Efficiently modeling long
+sequences with structured state spaces. In International
+Conference on Learning Representations, 2022a.
+Gu, A., Gupta, A., Goel, K., and Ré, C. On the parameteri-
+zation and initialization of diagonal state space models.
+In Advances in Neural Information Processing Systems,
+volume 35, 2022b.
+9
+Yggdrasil
+Hochreiter, S. and Schmidhuber, J. Long short-term memory.
+Neural Computation, 9(8):1735–1780, 1997.
+Hutter, M. The human knowledge compression contest (Hut-
+ter prize). http://prize.hutter1.net/, 2006.
+Irie, K., Csordás, R., and Schmidhuber, J. Practical com-
+putational power of linear transformers and their recur-
+rent and self-referential extensions. In Proceedings of
+the 2023 Conference on Empirical Methods in Natural
+Language Processing, pp. 9455–9465. Association for
+Computational Linguistics, 2023. doi: 10.18653/v1/2023.
+emnlp-main.588.
+Jacob, B., Kligys, S., Chen, B., Zhu, M., Tang, M., Howard,
+A., Adam, H., and Kalenichenko, D.
+Quantization
+and training of neural networks for efficient integer-
+arithmetic-only inference. In Proceedings of the IEEE
+Conference on Computer Vision and Pattern Recognition
+(CVPR), pp. 2704–2713, 2018.
+Jordan, M. I. and Jacobs, R. A. Hierarchical mixtures of
+experts and the EM algorithm. Neural Computation, 6
+(2):181–214, 1994.
+Katharopoulos, A., Vyas, A., Pappas, N., and Fleuret, F.
+Transformers are RNNs: Fast autoregressive transformers
+with linear attention. In Proceedings of the 37th Interna-
+tional Conference on Machine Learning, volume 119 of
+Proceedings of Machine Learning Research, pp. 5156–
+5165, 2020.
+Kelley, D. R., Reshef, Y. A., Bileschi, M., Belanger, D.,
+McLean, C. Y., and Snoek, J.
+Sequential regulatory
+activity prediction across chromosomes with convolu-
+tional neural networks. Genome Research, 28(5):739–
+750, 2018.
+Kingma, D. P. and Ba, J. Adam: A method for stochastic
+optimization. In International Conference on Learning
+Representations, 2015.
+Krohn, K. and Rhodes, J. Algebraic theory of machines. I.
+prime decomposition theorem for finite semigroups and
+machines. Transactions of the American Mathematical
+Society, 116:450–464, 1965.
+Lahoti, A., Li, K. Y., Chen, B., Wang, C., Bick, A., Kolter,
+J. Z., Dao, T., and Gu, A.
+Mamba-3: Improved se-
+quence modeling using state space principles. In Inter-
+national Conference on Learning Representations, 2026.
+arXiv:2603.15569.
+Lample, G., Sablayrolles, A., Ranzato, M., Denoyer, L.,
+and Jégou, H. Large memory layers with product keys.
+In Advances in Neural Information Processing Systems,
+volume 32, 2019.
+Lezcano-Casado, M. and Martínez-Rubio, D.
+Cheap
+orthogonal constraints in neural networks: A simple
+parametrization of the orthogonal and unitary group. In
+Proceedings of the 36th International Conference on Ma-
+chine Learning, volume 97 of Proceedings of Machine
+Learning Research, pp. 3794–3803, 2019.
+Liu, B., Ash, J. T., Goel, S., Krishnamurthy, A., and Zhang,
+C. Transformers learn shortcuts to automata. In Interna-
+tional Conference on Learning Representations, 2023.
+Maler,
+O. and Pnueli,
+A.
+On the cascaded de-
+composition of automata,
+its complexity and its
+application
+to
+logic.
+Unpublished
+manuscript,
+1994.
+URL https://www-verimag.imag.fr/
+~maler/Papers/decomp.pdf.
+Martin, E. and Cundy, C. Parallelizing linear recurrent neu-
+ral nets over sequence length. In International Conference
+on Learning Representations, 2018.
+Massaroli, S., Poli, M., Fu, D., Kumbong, H., Parnichkun,
+R., Romero, D., Timalsina, A., McIntyre, Q., Chen, B.,
+Rudra, A., Zhang, C., Ré, C., Ermon, S., and Bengio,
+Y. Laughing hyena distillery: Extracting compact recur-
+rences from convolutions. In Advances in Neural Informa-
+tion Processing Systems, volume 36, pp. 17072–17116,
+2023. doi: 10.52202/075280-0747.
+Merrill, W., Petty, J., and Sabharwal, A. The illusion of
+state in state-space models. In Proceedings of the 41st
+International Conference on Machine Learning, volume
+235 of Proceedings of Machine Learning Research, pp.
+35492–35506, 2024.
+Muca Cirone, N., Orvieto, A., Walker, B., Salvi, C., and
+Lyons, T. Theoretical foundations of deep selective state-
+space models. In Advances in Neural Information Pro-
+cessing Systems, volume 37, pp. 127226–127272, 2024.
+doi: 10.52202/079017-4041.
+Nguyen, E., Poli, M., Faizi, M., Thomas, A., Birch-Sykes,
+C., Wornow, M., Patel, A., Rabideau, C., Massaroli, S.,
+Bengio, Y., Ermon, S., Baccus, S. A., and Ré, C. Hye-
+naDNA: Long-range genomic sequence modeling at sin-
+gle nucleotide resolution. In Advances in Neural Infor-
+mation Processing Systems, volume 36, 2023.
+Omlin, C. W. and Giles, C. L. Constructing deterministic
+finite-state automata in recurrent neural networks. Jour-
+nal of the ACM, 43(6):937–972, 1996. doi: 10.1145/
+235809.235811.
+ONNX Runtime developers. ONNX Runtime. https:
+//onnxruntime.ai/, 2021.
+10
+Yggdrasil
+Orvieto, A., Smith, S. L., Gu, A., Fernando, A., Gulcehre,
+C., Pascanu, R., and De, S. Resurrecting recurrent neural
+networks for long sequences. In Proceedings of the 40th
+International Conference on Machine Learning, volume
+202 of Proceedings of Machine Learning Research, pp.
+26670–26698, 2023.
+Peng, B., Zhang, R., Goldstein, D., Alcaide, E., Du, X.,
+Hou, H., Lin, J., Liu, J., Lu, J., Merrill, W., Song, G., Tan,
+K., Utpala, S., Wilce, N., Wind, J. S., Wu, T., Wuttke, D.,
+and Zhou-Zheng, C. RWKV-7 “Goose” with expressive
+dynamic state evolution. In Conference on Language
+Modeling (COLM), 2025.
+Roller, S., Sukhbaatar, S., Szlam, A., and Weston, J. Hash
+layers for large sparse models. In Advances in Neural
+Information Processing Systems, volume 34, pp. 17555–
+17566. Curran Associates, Inc., 2021.
+Sadhukhan, R., Cao, S., Dong, H., Zhao, C., Purpura-
+Pontoniere, A., Tian, Y., Liu, Z., and Chen, B. STEM:
+Scaling transformers with embedding modules. In Inter-
+national Conference on Learning Representations, 2026.
+Sarrof, Y., Veitsman, Y., and Hahn, M. The expressive
+capacity of state space models: A formal language per-
+spective. In Advances in Neural Information Processing
+Systems, volume 37, 2024.
+Schiff, Y., Kao, C. H., Gokaslan, A., Dao, T., Gu, A., and
+Kuleshov, V. Caduceus: Bi-directional equivariant long-
+range DNA sequence modeling. In Proceedings of the
+41st International Conference on Machine Learning, vol-
+ume 235 of Proceedings of Machine Learning Research,
+pp. 43632–43648, 2024.
+Schlag, I., Irie, K., and Schmidhuber, J. Linear transformers
+are secretly fast weight programmers. In Proceedings
+of the 38th International Conference on Machine Learn-
+ing, volume 139 of Proceedings of Machine Learning
+Research, pp. 9355–9366, 2021.
+Schmidinger, N., Schneckenreiter, L., Seidl, P., Schimunek,
+J., Hoedt, P.-J., Brandstetter, J., Mayr, A., Luukkonen,
+S., Hochreiter, S., and Klambauer, G. Bio-xLSTM: Gen-
+erative modeling, representation and in-context learning
+of biological and chemical sequences. arXiv preprint
+arXiv:2411.04165, 2024.
+Shakerinava, M., Khavari, B., Ravanbakhsh, S., and Chan-
+dar, S. The expressive limits of diagonal SSMs for state-
+tracking. In International Conference on Learning Rep-
+resentations, 2026.
+Shazeer, N., Mirhoseini, A., Maziarz, K., Davis, A., Le,
+Q., Hinton, G., and Dean, J. Outrageously large neural
+networks: The sparsely-gated mixture-of-experts layer.
+In International Conference on Learning Representations,
+2017.
+Siems, J., Carstensen, T., Zela, A., Hutter, F., Pontil, M.,
+and Grazzi, R. DeltaProduct: Improving state-tracking
+in linear RNNs via Householder products. In Advances
+in Neural Information Processing Systems, volume 38,
+2025.
+Smith, J. T. H., Warrington, A., and Linderman, S. W. Sim-
+plified state space layers for sequence modeling. In Inter-
+national Conference on Learning Representations, 2023.
+Sutskever, I., Martens, J., and Hinton, G. Generating text
+with recurrent neural networks. In Proceedings of the 28th
+International Conference on Machine Learning (ICML),
+pp. 1017–1024. ACM, 2011.
+Terzi´c, A., Menet, N., Hersche, M., Hofmann, T., and
+Rahimi, A. Structured sparse transition matrices to en-
+able state tracking in state-space models. In Advances
+in Neural Information Processing Systems, volume 38,
+2025.
+Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux,
+M.-A., Lacroix, T., Rozière, B., Goyal, N., Hambro, E.,
+Azhar, F., Rodriguez, A., Joulin, A., Grave, E., and Lam-
+ple, G. LLaMA: Open and efficient foundation language
+models. arXiv preprint arXiv:2302.13971, 2023.
+Tseng, A. and De Sa, C. L3: Large lookup layers. arXiv
+preprint arXiv:2601.21461, 2026.
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones,
+L., Gomez, A. N., Kaiser, Ł., and Polosukhin, I. Atten-
+tion is all you need. In Advances in Neural Information
+Processing Systems, volume 30, 2017.
+Walker, B., Yang, L., Muca Cirone, N., Salvi, C., and Lyons,
+T. Structured linear CDEs: Maximally expressive and
+parallel-in-time sequence models. In Advances in Neural
+Information Processing Systems, volume 38, 2025.
+Williams, S., Waterman, A., and Patterson, D. Roofline:
+An insightful visual performance model for multicore
+architectures. Communications of the ACM, 52(4):65–76,
+2009.
+Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C.,
+Moi, A., Cistac, P., Rault, T., Louf, R., Funtowicz, M.,
+Davison, J., Shleifer, S., von Platen, P., Ma, C., Jernite,
+Y., Plu, J., Xu, C., Le Scao, T., Gugger, S., Drame, M.,
+Lhoest, Q., and Rush, A. Transformers: State-of-the-art
+natural language processing. In Proceedings of the 2020
+Conference on Empirical Methods in Natural Language
+Processing: System Demonstrations, pp. 38–45, 2020.
+doi: 10.18653/v1/2020.emnlp-demos.6.
+11
+Yggdrasil
+Yang, S. and Zhang, Y. FLA: A Triton-based library for
+hardware-efficient implementations of linear attention
+mechanism.
+https://github.com/fla-org/
+flash-linear-attention, 2024.
+Yang, S., Wang, B., Zhang, Y., Shen, Y., and Kim, Y. Par-
+allelizing linear transformers with the delta rule over
+sequence length. In Advances in Neural Information
+Processing Systems, volume 37, 2024.
+Yang, S., Kautz, J., and Hatamizadeh, A. Gated delta net-
+works: Improving Mamba2 with delta rule. In Interna-
+tional Conference on Learning Representations, 2025.
+Zhang, J., Cheng, Z., Zhao, Y., Wang, S., Zhou, D., Lu,
+G., and Song, L. L3TC: Leveraging RWKV for learned
+lossless low-complexity text compression. In Proceed-
+ings of the AAAI Conference on Artificial Intelligence,
+volume 39, pp. 13251–13259, 2025.
+Zhou, W., Gu, Y., Iacovides, G., Qiu, Y., Zhao, Q., and
+Mandic, D. Tensorizing Engram: Sharing latents across
+n-gram embeddings is beneficial in LLMs. arXiv preprint
+arXiv:2606.08347, 2026.
+12
+Yggdrasil
+A. Further related work
+The linear RNN of Fan et al. (2024) computes a block-diagonal transition from each input and extrapolates on regular
+languages such as even pairs and modular arithmetic, without a bank of stored experts or a tree that addresses one. Linear
+transformers fail parity, which their recurrent and self-referential extensions solve (Irie et al., 2023). Depth recovers part of
+what diagonal transitions lose, since chains of diagonal selective layers approach the expressivity of dense ones as the chain
+grows (Muca Cirone et al., 2024), and state-space models with non-negative gates recognise exactly the star-free languages
+at finite precision (Sarrof et al., 2024). Grazzi et al. (2025) show that linear recurrences whose transitions are products of
+generalised Householder matrices, each with eigenvalues in [−1, 1], can recognise any regular language, and Yggdrasil
+reaches every finite automaton with one selected transition per layer, drawn from a routed bank and addressed by the layer
+below.
+B. Proofs
+Conventions.
+For a word w = x1 · · · xs the token layer applies Fw = Fxs ◦· · · ◦Fx1 with Fx(h) = Axh + Tx[x], so
+Fuw = Fw ◦Fu, the linear part of Fw is Axs · · · Ax1, and the state after a prefix u is h(u) = Fu(0).
+Offset coding. A state ut = Atut−1 + ct with u0 = v̸ = 0 is run as ht = ut −v, with h0 = 0 and the constant expert input
+Atv + ct −v. The readout Put = Pht + Pv puts Pv into βout if all experts share it, and otherwise into the column of Pr
+that reads a constant coordinate κ with transition row 0, row κ of cr equal to 1 and row κ of Ur and U low
+r
+equal to 0, so
+hκ = 1 for t ≥1.
+Unused parts. Unused coordinates have transition row 0 and input 0, every construction has U low
+r
+= 0, and layers other than
+the one named have output map 0.
+Token tests and padding. With e(l)(x) a ±1 binary code of x, a node with weight 1 on one entry and bias 0 tests that bit, so
+⌈log2 V ⌉levels determine xt. Nodes with wη = 0 and βη = 0 always go left and pad a tree router to depth D, and experts
+on paths that decode no token are arbitrary.
+B.1. Contraction
+Fact 3 (Contraction subclass). For every expert transition Ar = diag(δr) (Θr,1 ⊕· · · ⊕Θr,G) with rotations Θr,g and
+|δr,i| ≤1, ∥Ar∥2 ≤1, and ∥P
+r πrAr∥2 ≤1 for all πr ≥0 with P
+r πr = 1.
+Proof of Theorem 3. For skew-symmetric Ω, exp(Ω)⊤exp(Ω) = exp(−Ω) exp(Ω) = I, so every Θr,g is orthogonal and
+the block-diagonal factor has norm 1. Since ∥diag(δr)∥2 = maxi |δr,i| ≤1, submultiplicativity gives ∥Ar∥2 ≤1, and the
+triangle inequality gives ∥P
+r πrAr∥2 ≤P
+r πr∥Ar∥2 ≤1.
+B.2. Transition set
+Fact 4 (Rotation transition set). The matrices Ar that an expert can express form exactly the set {diag(δ) (Θ1 ⊕· · · ⊕ΘG) :
+Θg ∈SO(b), |δi| ≤1}. With δ ∈{±1}n it contains every block-diagonal orthogonal matrix, and with δ ∈{0, ±1}n it
+contains every signed partial permutation matrix whose nonzero entries lie inside the blocks.
+Proof of Theorem 4. Every transition lies in the stated set, since clip(dr, −1, 1) ∈[−1, 1]n and exp(Ω) is orthogonal
+(Section B.1) with det exp(Ω) = etr Ω= 1.
+Conversely, given δ and Θg, take dr = δ, which the clip leaves unchanged. By the real normal form, Θ ∈SO(b)
+is X diag(Rotϕ1, . . . , Rotϕj, ±1, . . . , ±1)X⊤with X orthogonal, and since det Θ = 1 the entries −1 come in pairs,
+each a rotation by π. As Rotϕ = exp
+
+0 −ϕ
+ϕ
+0
+
+, Θ = exp(Ω) with Ω= XΩ′X⊤skew-symmetric for a block-diagonal
+skew-symmetric Ω′, and Sr,g = Ωgives 1
+2(Sr,g −S⊤
+r,g) = Ω.
+Orthogonal blocks. If Θ ∈O(b) has det Θ = −1, then Θ = E (EΘ) with E = diag(−1, 1, . . . , 1) and EΘ ∈SO(b),
+which for each such block gives diag(δ) (Θ′
+1 ⊕· · · ⊕Θ′
+G) with δ ∈{±1}n and Θ′
+g ∈SO(b).
+Signed partial permutations. Let a b×b block P have at most one nonzero entry, ±1, in each row and column, with nonzero
+rows I and Pi,π(i) = σi. The injective π on I extends to a permutation with matrix Π, and P = diag(ε)Π with εi = σi on
+13
+Yggdrasil
+I and 0 otherwise. By the previous step Π = diag(δ′)Θ′ with δ′ ∈{±1}b and Θ′ ∈SO(b), so P = diag(ε ⊙δ′)Θ′ with
+ε ⊙δ′ ∈{0, ±1}b. Applying this to every block proves the claim.
+B.3. Parallel training
+Proposition 5 (Parallel training). Fix the hard or soft expert probabilities of every layer and step. All states of the L + 1
+layers are computed exactly by L + 1 associative scans, each of depth O(log T).
+Proof of Theorem 5. With the probabilities πt,r fixed, layer l follows h(l)
+t
+= ¯Ath(l)
+t−1 + ¯ut with ¯At = P
+r πt,rAr and
+¯ut = P
+r πt,r
+ Tr[xt] + U low
+r
+W (l)ν(h(l−1)
+t
+)
+
+, where the last term is absent in the token layer. Step t is the affine map
+( ¯At, ¯ut), and • is associative as a composition of maps, so an associative scan of depth O(log T) with O(T) products gives
+all prefix products and hence all h(l)
+t
+from h(l)
+0
+= 0 (Blelloch, 1990). The inputs and, in training, the probabilities of layer l
+depend only on the tokens and h(l−1)
+t
+, so scanning layers 0, . . . , L in order gives sequential depth O((L + 1) log T) (Martin
+& Cundy, 2018).
+B.4. State bound
+Proposition 6 (State bound). For its total additive inputs us, both hard and soft updates of a layer satisfy ∥ht∥2 ≤
+∥h0∥2 + P
+s≤t ∥us∥2. If every transition has norm at most ¯δ < 1, then ∥ht∥2 ≤¯δt∥h0∥2 + maxs ∥us∥2/(1 −¯δ).
+Proof of Theorem 6. By Theorem 3, ∥¯At∥2 ≤1 for hard transitions and convex mixtures, so ∥ht∥2 ≤∥ht−1∥2 + ∥ut∥2,
+and induction gives the first claim. Under the strict bound, ∥ht∥2 ≤¯δt∥h0∥2 + P
+s≤t ¯δt−s∥us∥2, and the geometric series
+gives the second.
+In a routed layer ∥ν(h)∥2 < √n, so with the finite token table the additive input is bounded uniformly over input sequences.
+B.5. Token-only tree routers in the token layer
+Proposition 7 (The token layer needs no tree router). A tree router that reads only the token sends each token to one expert.
+The token layer, with the expert of token x set to the expert that the tree router selects for x, gives the same states and
+outputs.
+Proof of Theorem 7. A tree router that reads only e(xt) selects an expert λ(xt). Set Ax = Aλ(x), Ux = Uλ(x), cx = cλ(x)
+and P (0)
+x
+= Pλ(x). Both layers then apply the same maps at every step.
+B.6. Routing after normalisation
+Lemma 8 (Tests survive the division). Let the previous layer have a coordinate κ whose transition row is 0 and whose
+total input is 1 in every expert and for every token (row κ of cr is 1, and row κ of Ur and, in a routed layer, of U low
+r
+is 0),
+so hκ = 1 after every step. Then for all w ∈Rn and β ∈R, a node with bias 0, weight 0 on the token embedding and
+weights w + βeκ on ν(h) has score w⊤ν(h) + β ν(h)κ = ς (w⊤h + β) with ς > 0, so it routes exactly as the affine test
+w⊤h + β > 0.
+Proof of Theorem 8. Row κ of every transition is 0 and row κ of the total input Tr[x] + U low
+r
+Wν(·) is 1, so hκ = 1. As
+ν(h) = ς h with ς = ( 1
+n∥h∥2 + ϵ)−1/2 > 0, ν(h)κ = ς and the score (w + βeκ)⊤ν(h) equals ς (w⊤h + β) for every w,
+including wκ̸ = 0.
+Since hκ = 1, ς ≤√n, and ∥h∥≤H, a uniform bound because the construction reaches finitely many states, gives
+ς ≥(H2/n + ϵ)−1/2, so a test with margin µ keeps margin at least µ(H2/n + ϵ)−1/2. A test with β = 0 needs no κ.
+14
+Yggdrasil
+B.7. Group tasks
+Theorem 9 (Groups). Let G be a finite group, let token x stand for gx ∈G, and let ρ : G →O(m) be a faithful orthogonal
+representation with m ≤b. Then the token layer, using one block and readout rank R ≥m, tracks the running product
+gt = gxt · · · gx1.
+Proof of Theorem 9. A vector with trivial stabiliser. For g̸ = id, ρ(g)̸ = I by faithfulness, so the fixed space of ρ(g) is a
+proper subspace, and as a finite union of these has measure zero, some v has ρ(g)v̸ = v for all g̸ = id. Then ρ(g)v = ρ(g′)v
+implies g = g′, so the ρ(g)v are distinct, all of length ∥v∥.
+Experts and state. On the first m coordinates of block 1, expert x has transition ρ(gx) ⊕Ib−m, an expert transition by
+Theorem 4, and input Tx[x] = ρ(gx)v −v. This is the offset coding of ut = ρ(gt)v with u0 = v, since h0 = 0 = ρ(id)v −v
+and, inductively, ht = ρ(gxt)
+ ρ(gt−1)v −v
+
++ ρ(gxt)v −v = ρ(gt)v −v.
+Output. Take P (0)
+x
+=
+  Im 0
+0
+0
+
+∈RR×n for every x, possible as R ≥m, row g of Q(0) equal to
+ (ρ(g)v)⊤, 0
+
+and
+βout,g = ⟨ρ(g)v, v⟩. The logit of class g is ⟨ρ(g)v, ρ(gt)v⟩, and ∥v∥2 −⟨ρ(g)v, ρ(gt)v⟩= 1
+2∥ρ(g)v −ρ(gt)v∥2 is 0 for
+g = gt and at least µ = 1
+2 ming̸=id ∥ρ(g)v −v∥2 > 0 otherwise, a margin µ at every length.
+Task weights. Parity is Z2 with ρ(1) = −1 on R1 and v = 1. Cycle navigation moves by −1, 0 or +1 in Z5, with ρ the 5×5
+cyclic permutation matrices (or the rotations by multiples of 2π/5 in a plane). For S5 and A5, ρ is the 5×5 permutation
+matrices, for which any v with distinct entries has trivial stabiliser. With v = (−2, −1, 0, 1, 2), the inputs and states have
+integer entries in [−4, 4], the readout rows entries in [−2, 2], and the biases and logits are integers in [−10, 10], so the
+construction runs exactly in 8-bit integer arithmetic with 32-bit accumulation at every length.
+B.8. Fixed vectors of a contraction
+Lemma 10. If ∥A∥2 ≤1 and Aw = w, then A⊤w = w.
+Proof. ∥A⊤w −w∥2 = ∥A⊤w∥2 −2⟨A⊤w, w⟩+ ∥w∥2 = ∥A⊤w∥2 −2⟨w, Aw⟩+ ∥w∥2 = ∥A⊤w∥2 −∥w∥2 ≤0, since
+∥A⊤∥2 = ∥A∥2 ≤1.
+B.9. Reset limit of the token layer
+Theorem 11 (Obstruction for token-only non-expanding affine layers). Let the token layer have any experts with ∥Ax∥2 ≤1,
+any output that depends only on (h(0)
+t , xt), and finitely many reachable states. Suppose a task has words γ, α and χ such
+that for all u ∈γα{α, χ}∗and u′ ∈γχ{α, χ}∗some nonempty word w gives uw and u′w different labels. Then the token
+layer does not track the task.
+Proof of Theorem 11. Suppose the token layer tracks the task. The words α and χ are nonempty, since for empty α the
+words u = u′ = γχ would be equal.
+Step 1 (two disjoint invariant sets). Let Zα = {h(γαy) : y ∈{α, χ}∗} and Zχ = {h(γχy) : y ∈{α, χ}∗}, both finite.
+They are disjoint, since h(u) = h(u′) would give uw and u′w the same state Fw(h(u)) and the same last token, hence
+the same output, while their labels differ. With o = h(γ), Fα and Fχ preserve Zα and Zχ and send o into Zα and Zχ
+respectively, so they map Z = Zα ∪Zχ ∪{o} into itself.
+Step 2 (an idempotent). Every self-map s of the finite set Z has an idempotent power sj, j ≥1, since its powers eventually
+cycle and the cycle contains sj for a multiple j of its length that is at least the index. Let eα = (Fα|Z)jα, eχ = (Fχ|Z)jχ
+and e = (eχ ◦eα)j be idempotent. The leftmost factor of e is eχ = eχ ◦eχ, so
+eχ ◦e = e,
+hence
+e ◦eχ ◦e = e ◦e = e
+on Z.
+Step 3 (two maps with common fixed points). The word ye = (αjαχjχ)j, which starts with α, applies e. The affine maps
+Φ = Fye and Ψ = Fye ◦F jχ
+χ have linear parts AΦ and AΨ of norm at most 1, and Φ = e and Ψ = e ◦eχ on Z. Then
+p = Φ(o) = h(γye) ∈Zα and q = Ψ(o) = h(γχjχye) ∈Zχ, so p̸ = q, and by Step 2
+Φ(p) = e(e(o)) = p,
+Φ(q) = e(e(eχ(o))) = q,
+Ψ(q) = (e ◦eχ ◦e)(eχ(o)) = q,
+Ψ(p) = (e ◦eχ ◦e)(o) = p.
+15
+Yggdrasil
+Step 4 (contradiction). From Φ(o) = Φ(p) = p and Φ(q) = q, AΦ(p−o) = 0 and AΦ(q−p) = q−p, so A⊤
+Φ(q−p) = q−p
+by Theorem 10 and ⟨p−o, q−p⟩= ⟨AΦ(p−o), q−p⟩= 0. Likewise Ψ(o) = Ψ(q) = q and Ψ(p) = p give ⟨q−o, p−q⟩= 0.
+Adding gives ⟨(p −o) −(q −o), q −p⟩= −∥q −p∥2 = 0, which contradicts p̸ = q.
+Connection to Theorem 1. The first-symbol impossibility follows from the example below. The positive construction in
+Theorem 12 stores the first symbol in ξt; reading ξt directly gives the first-symbol label, and the stated token-dependent
+readout gives even pairs.
+Examples. “First symbol” (label x1) and even pairs over {a, b} satisfy the hypothesis with γ empty, α = a, χ = b and
+w = a, which gives the labels a and b, or 0 and 1. Modular arithmetic satisfies it with γ = 1, α = +0, χ = ×0 and
+w = +0, since after u the finished terms sum to 1 and the current term is 0, after u′ both are 0, and w gives the labels 1 and
+0. No group task with the running product as label satisfies it, since if the products gα and gχ of α and χ have orders oα and
+oχ, then γαoα and γχoχ both reach the state of gγ.
+B.10. Even pairs and modular arithmetic
+Proposition 12 (Resets with one routed layer). A token layer and one routed layer of router depth D=2, with b ≥2, track
+even pairs over {a, b}, whose label is 1 if xt̸ = x1 and 0 otherwise. A token layer and one routed layer of router depth
+D=7, with b ≥10 and R ≥5, track modular arithmetic modulo 5 with +, −, × and the usual precedence.
+Proof of Theorem 12 for even pairs. Token layer. One expert, used by every token, acts on two coordinates (κ, ζ) of one
+block (b ≥2) with transition ( 0 0
+1 0 ), a partial permutation (a rotation by 90◦followed by δκ = 0), and input (1, 0). Hence
+(κ, ζ) ←(1, old κ), giving (1, 0) at t = 1 and (1, 1) for t ≥2, and κ meets the condition of Theorem 8.
+Tree router. The top node tests ζ −1
+2κ > 0, which by Theorem 8 goes right exactly when t ≥2, with margin 1
+2 before the
+division. Both second-level nodes test the token with e(a) = 1, e(b) = −1 and go right when xt = a, giving the experts
+(first, a), (first, b), (later, a) and (later, b).
+Routed layer. On one coordinate ξ, first-step experts have transition 0 and input e(x1) and later experts transition 1 and
+input 0, so ξt = e(x1) for t ≥1.
+Output. With R ≥1, the expert for the current token y has first row of Pr equal to −e(y) e⊤
+ξ and other rows 0, Q has the
+single nonzero entry 1 at row 1 and column 1, and βout = 0. Class 1 (xt̸ = x1) has logit −e(y)e(x1) = ±1, positive exactly
+when xt̸ = x1, and class 0 has logit 0, a margin of 1.
+Proof of Theorem 12 for modular arithmetic. Task. Residues 0, . . . , 4 come at odd steps and operators +, −, × at even
+steps, with acc1 = 0 and term1 = x1. At odd t ≥3 with o = xt−1 and r = xt, o ∈{+, −} gives acct = acct−2+termt−2
+and termt = ±r, and o = × gives acct = acct−2 and termt = termt−2 r, all modulo 5. The label at odd t is acct + termt,
+and even steps are unlabelled.
+Token layer. One block (b ≥10) holds two areas ut and uf of 5 coordinates for one-hot codes over Z5 of the current term
+and the pending factor, with u0 = (0, e1) under offset coding. Let Πr be the permutation ej 7→erj for r̸ = 0. A residue
+r̸ = 0 sets ut ←Πruf, the residue 0 sets ut ←e0, and both set uf ←0. The operators + and −keep ut and set uf ←e1
+and e4, and × sets uf ←ut and ut ←0. Each is a partial permutation within the block (Theorem 4). By induction, (ut, uf)
+is (etermt, 0) after an odd step, (etermt−1, e±1) after ± and (0, etermt−1) after ×, since ut = Πx1e1 = ex1 at t = 1 and, at
+odd t ≥3, Πre±1 = e±r after ± and Πretermt−2 = er termt−2 after ×, with e0 for r = 0. As u0 has no ut component, the
+run state h = u −u0 agrees with u on ut.
+Tree router. Levels 1–4 test the bits of the token code. Our implementation has V = 9 with one token unused, and
+with V = 8 three levels and D = 6 suffice. Levels 5–7 find the index j of the one-hot ut, the node for bit ι testing
+P
+j′∈S ut
+j′ −P
+j′ /∈S ut
+j′ > 0 with S = {j′ : bit ι of j′ is 1}. At residue and ± steps ut is one-hot, the value is ±1 and the
+division keeps its sign (Theorem 8 with β = 0). At × steps every test has value 0, and the route does not matter because all
+× experts are equal.
+Routed layer. It holds a 5-coordinate accumulator with u0 = e0 (offset coding) and a constant coordinate κ. Experts with
+xt ∈{+, −} and index j apply ea 7→ea+j, the others keep it, so by induction it is eacc′
+t, with acc′
+t the sum of all terms
+followed by an operator ± at a step ≤t, which equals acct at odd t.
+16
+Yggdrasil
+Output. At a residue step the expert knows j = termt, and with Q = (I5 0) ∈R5×R and R ≥5, Pr shifts the accumulator
+by j and puts the shifted offset ej into the column of κ, so the label has logit 1 and every other class 0, a margin of 1.
+Exact stores. Both constructions store with δ = 0 and keep with δ = 1, whereas δ = 0.1 would keep 10% of the old value at
+every store. The d = 0 block of the initialisation (Section D) provides exact stores in every expert.
+B.11. Finite automata
+Outline. The construction assigns one routed layer to each cascade level and a final layer to the readout. Each component state
+has a one-hot encoding, and expert transitions implement its permutations and resets as partial permutations (Theorem 4). A
+cascade reads lower-level states from before the current token, so the construction preserves enough information to recover
+those states after the lower layers have updated. Theorem 13 gives the width and depth bounds.
+Setting. By the Krohn–Rhodes theorem (Krohn & Rhodes, 1965), every finite automaton is a homomorphic image of the
+reachable part of a cascade of permutation–reset automata A1, . . . , AJ over the same input alphabet. Automaton Ai has
+states {1, . . . , mi}, initial state qi,0 and level λ(i) ∈{1, . . . , ℓ}. At step t, xt and the states qj,t−1 before step t of all j with
+λ(j) < λ(i) decide whether Ai applies a permutation Π or the constant map to a state ˆq. The image map commutes with the
+steps on reachable states, so the label at step t is a function Y (q1,t, . . . , qJ,t) ∈{0, . . . , C −1}. Let Jl be the number of
+automata in level l and J<l the number below it.
+Theorem 13 (Finite-automaton construction). Let a finite automaton be the image of the reachable part of a cascade of
+J permutation–reset automata in ℓlevels, automaton i having mi ≤m states, where 2m divides b. Then a model with
+L = ℓ+ 1 routed layers, n ≥2Jm + 2, R ≥2 and router depth D = 1 + ⌈log2 V ⌉+ P
+i⌈log2 mi⌉tracks the automaton.
+For a cascade of J automata with mi states, the router depth D = 1 + ⌈log2 V ⌉+ P
+i⌈log2 mi⌉gives a bank of 2D ≥
+2V Q
+i mi experts.
+Proof of Theorems 2 and 13. State layout. The token layer holds (κ, ζ) as in Section B.10, with κ = 1 and ζ = [t ≥2]
+after step t. For each Ai with λ(i) = l ≤ℓ, routed layer l holds 2m coordinates inside one block, the first mi forming the
+current area ui and coordinates m+1, . . . , m+mi the previous area ¯ui, and since 2m divides b these tile whole blocks. For
+each λ(j) < l it holds a relay ˜uj of mj coordinates, plus ζ and κ, in total 2mJl + P
+λ(j)<l mj + 2 ≤2m(Jl + J<l) + 2 ≤
+2Jm + 2 ≤n coordinates. Relays, ζ and κ have transition 0, so their position is free. The collector, routed layer ℓ+1, uses
+only κ.
+Invariant. For t ≥1, after step t, routed layer l ≤ℓholds ui = eqi,t, ¯ui = eqi,t−1 if Ai was reset at step t and ¯ui = 0
+otherwise, ˜uj = eqj,t−1 for every λ(j) < l, ζ = [t ≥2] and κ = 1. We induct over t, and within a step over l.
+Tree router of routed layer l. It reads the token and the normalised state of layer l −1 after step t, which satisfies the
+invariant (for l = 1, the token layer). Level 1 tests ζ −1
+2κ > 0, of value ± 1
+2, so by Theorem 8 it goes right exactly when
+t ≥2. The next ⌈log2 V ⌉levels read xt. On the right, for each λ(j) < l −1, ⌈log2 mj⌉levels read qj,t−1 from ˜uj by binary
+search, testing “q ∈S” as P
+q∈S ˜uj,q −P
+q /∈S ˜uj,q > 0. For each λ(j) = l −1, the path then knows the inputs of Aj at
+step t, hence whether it was reset or permuted by Π. After a reset it reads qj,t−1 from ¯uj, and after a permutation it tests
+qj,t ∈Π(S) on uj by the same rule, which is equivalent to qj,t−1 ∈S. All these tests have no offset and value ±1, so the
+division keeps their sign (Theorem 8 with β = 0). The right path thus knows xt and all qj,t−1 with λ(j) < l, and the left
+path (t = 1) knows x1. This takes 1 + ⌈log2 V ⌉+ P
+λ(j)<l⌈log2 mj⌉≤D levels, padded to D.
+Experts of routed layer l. On the right, the expert knows for each λ(i) = l whether Ai permutes by Π or resets to ˆq, and
+applies
+ui
+¯ui
+
+←
+Π
+0
+0
+0
+ ui
+¯ui
+
+or
+ui
+¯ui
+
+←
+0
+0
+I
+0
+ ui
+¯ui
+
++
+eˆq
+0
+
+,
+partial permutations inside one block and hence transitions (Theorem 4). On ˜uj, ζ and κ it has transition 0 and inputs
+eqj,t−1, 1 and 1. From the invariant after step t −1, a permutation gives ui = Πeqi,t−1 = eqi,t and ¯ui = 0, and a reset gives
+ui = eˆq = eqi,t and ¯ui = eqi,t−1. On the left (t = 1) the expert knows qi,1 and whether Ai was reset, has transition 0 and
+writes the invariant values as its input, which proves the base case.
+Collector and output. Routed layer ℓ+1 routes as a layer at level ℓ+1, reading levels below ℓfrom the relays and level ℓ
+from the current and previous areas, in exactly D levels. Its expert thus knows xt and the cascade state before step t, hence
+17
+Yggdrasil
+the label y = Y (q·,t). With ϑ(y) = (cos 2πy
+C , sin 2πy
+C , 0, . . . , 0) ∈RR, Pr = ϑ(y)e⊤
+κ , row y of Q equal to ϑ(y)⊤, βout = 0
+and all other output maps 0, the logit of class y′ is cos(2π(y′ −y)/C), maximal only at y′ = y with margin 1 −cos(2π/C)
+for C ≥2 (and C = 1 is trivial).
+B.12. Diagonal stacks
+Proposition 14 (Diagonal stacks). Let every layer of a stack have diagonal transitions (real or complex), with transition
+and input chosen from the token and the states of the previous layers, and let each layer reach finitely many states. If the
+tokens generate A5, the stack does not track the running product in A5.
+The proposition is the recurrent form of a classical fact of Krohn–Rhodes theory, that cascades of abelian groups and resets
+realise only solvable groups (Krohn & Rhodes, 1965). The proof shows that a stack of diagonal layers with finitely many
+reachable states is such a cascade.
+Let Zl be the finite set of reachable state tuples of layers 0, . . . , l, τ l
+w the transformation of Zl induced by a word w,
+and Sl = {τ l
+w}. For l ≥1, πl : Zl →Zl−1 drops the top state, which is surjective and commutes with every τw, so
+θl(τ l
+w) = τ l−1
+w
+is a semigroup homomorphism.
+Proof of Theorem 14. Step 1 (diagonal permutation groups are abelian). Let Y ⊂Cn be finite and Γ a group of permutations
+of Y , each the restriction of some h 7→Σσh + cσ with Σσ diagonal. On the span U of the differences of Y , Σσ(y −y′) =
+σ(y) −σ(y′), so Λ(σ) = Σσ|U depends only on σ and is a homomorphism into commuting matrices. If Λ(σ) = I, then
+σ(y) = y + τ for a fixed τ, and summing over Y gives |Y |τ = 0. So Λ is injective and Γ is abelian.
+Step 2 (every subgroup of Sl is solvable). Let H ≤Sl have identity e and Y = e(Zl). Each g ∈H satisfies g = ge = eg,
+so it is determined by g|Y , a bijection of Y with inverse g−1|Y . For l = 0, each g|Y is the restriction of an affine map with
+diagonal linear part, so H is abelian by Step 1. For l ≥1, θl(H) is solvable by induction. With e′ = θl(e), πl(y) = e′(πl(y))
+on Y , so each g in the kernel N of θl on H maps every fibre Yy′ = {y ∈Y : πl(y) = y′} onto itself. For g = τ l
+w, the lower
+layers follow the same trajectory from every y ∈Yy′, so the top state of g(y) is Σwytop + cw with Σw diagonal. The top
+state determines y in Yy′, so N acts on each fibre as a group of Step 1 and embeds in a product of abelian groups. So H is
+an extension of the solvable H/N by the abelian N.
+Step 3 (a group image of a finite semigroup is the image of a subgroup). Let θ : S →G be a surjective homomorphism from
+a finite semigroup onto a group, and take an idempotent e minimising |eSe| (as in Section B.9). The set eSe is closed under
+products with identity e. For a ∈eSe let f = aj, j ≥1, be idempotent. Then fSf ⊆eSe, so fSf = eSe by minimality,
+e = fxf for some x, and e = f(fxf) = fe = f. Hence aj = e, a is invertible in eSe, and eSe is a group with image
+θ(e)θ(S)θ(e) = G, since the idempotent θ(e) is the identity.
+Step 4 (conclusion). Suppose the stack tracks the running product. For z ∈ZL let ψ(z) = g(u) for a word u reaching z (the
+empty word reaches the zero tuple, with g = e). If u and u′ reach z, the outputs after ux and u′x agree, so gxg(u) = gxg(u′)
+and ψ is well defined. Then ψ(τ L
+w(z)) = gwψ(z), with gw the product of w, later tokens on the left, so τ L
+w 7→gw is a
+homomorphism of SL onto A5. By Steps 3 and 2, A5 is then the image of a solvable group, a contradiction.
+This is the finite-state form of the limits of diagonal recurrences (Merrill et al., 2024; Grazzi et al., 2025), and the same
+proof bounds the derived length of every subgroup of SL by L+1, so a stack of L+1 such diagonal layers tracks no running
+product in a token-generated group of derived length above L+1.
+B.13. Hidden-counter family
+A token is xt = (at, ιt) with action at ∈{1, . . . , K} and increment ιt ∈{0, 1}, so V = 2K, and qt = P
+s≤t ιs mod M.
+For a table φ : {1, . . . , K} × ZM →G, task Wφ has labels st = φ(at, qt) st−1 with s0 = e.
+Lemma 15 (Distinct tasks). If φ̸ = φ′, then Wφ and Wφ′ label some input of length at most M differently. So the family
+{Wφ} holds |G|KM distinct tasks.
+Proof of Theorem 15. Pick (a, q) with φ(a, q)̸ = φ′(a, q), and feed q −1 tokens (1, 1) and then (a, 1) if q ≥1, or (a, 0)
+if q = 0. This input has length max(q, 1) ≤M and counter q at its last step. Either an earlier label differs, or both states
+before the last step equal some s and the last labels are φ(a, q)s̸ = φ′(a, q)s.
+18
+Yggdrasil
+B.14. Capacity
+Theorem 16 (Capacity). Fix n = b = 8, V = 2, C = 60, R ≥5, a token layer and one routed layer, and all other sizes,
+and let N(D) = Θ(2D) be the number of weights of the model of router depth D. For a finite set Λ ⊂R, let FΛ(D) be the
+set of maps from inputs to label sequences (the argmax of Equation (7) at every step, with ties broken by a fixed rule) that
+this model computes in exact arithmetic with every weight in Λ. Then log2 |FΛ(D)| ≤N(D) log2 |Λ| for every Λ, and for
+every D there is a set ΛD with |ΛD| ≤2D + c0, for a constant c0, such that log2 |FΛD(D)| ≥2D−1 log2 60. The compute
+per token is O(D).
+Proof of Theorem 16. Upper bound and compute. With all sizes but D fixed (including k, klow and the embedding size), the
+token layer, embeddings and shared maps have N0 weights independent of D, so N(D) = N0 + (2D −1)(dim f + 1) +
+2DNexpert = Θ(2D), and there are at most |Λ|N(D) weight settings. By Table 11, a step costs D dot products of length
+dim f plus compute independent of D.
+Lower bound. For D = 1 take M = 1, with every expert applying φ(0) as below. For D ≥2 let K = 1, M = 2D−1,
+G = A5 and θ = 2π/M. We show that the model tracks every Wφ, φ : ZM →A5, with weights in one set ΛD, which by
+Theorem 15 gives |FΛD(D)| ≥602D−1.
+Token layer. Coordinates 1, 2 hold the counter and coordinate 3 is κ. Token 1 applies Rotθ on coordinates 1, 2 with input
+Rotθv −v, v = (1, 0), token 0 the identity with input 0, and both have transition 0 and input 1 on coordinate 3 (transitions
+by Theorem 4). By Theorem 9 for ZM, as Rotθ has order M and only q ≡0 fixes v, (h1, h2) = (cos θt −1, sin θt) with
+θt = qtθ, and h3 = 1.
+Tree router. The top node tests (1 −cos θt) −1
+2(1 −cos θ) > 0, written as −h1 −1
+2(1 −cos θ)h3 > 0. Its value is
+−1
+2(1 −cos θ) for qt = 0 and at least 1
+2(1 −cos θ) for qt̸ = 0, since then cos θt ≤cos θ, so by Theorem 8 it goes right
+exactly when qt̸ = 0. Below the left child all levels are padding and all experts are for q = 0. For qt̸ = 0,
+(h1, h2) = 2 sin(θt/2) (cos ψt, sin ψt),
+ψt = π/2 + θt/2 ∈(π/2, 3π/2),
+with ψt strictly increasing in qt. For ψ∗∈(π/2, 3π/2), weights (sin ψ∗, −cos ψ∗) give the value 2 sin(θt/2) sin(ψ∗−ψt),
+positive exactly when ψt < ψ∗since |ψ∗−ψt| < π, and ψ∗
+i = π/2 + (i −1
+2)θ/2 tests “qt < i”. A binary search over
+q ∈{1, . . . , M −1} uses thresholds i ∈{2, . . . , M −1} and ⌈log2(M −1)⌉≤D −1 levels below the right child. These
+tests have no offset, so the division keeps their sign, and before it their margin is at least 2 sin(π/M) sin(π/(2M)) ≥4/M 2,
+because θt/2 ∈[π/M, π −π/M], |ψ∗
+i −ψt| = |i −1
+2 −qt| π/M ∈[π/(2M), π −π/(2M)] by |i −1
+2 −qt| ≤M −5
+2,
+and sin x ≥2x/π on [0, π/2].
+Experts. The expert for q applies on coordinates 1–5 of the routed layer ρ(φ(q)), with ρ the 5×5 permutation representation
+of A5 extended by the identity on coordinates 6–8 (even permutations lie in SO(8)), and input ρ(φ(q))w −w for w =
+(−2, −1, 0, 1, 2). The routed layer reads qt after the token-layer update, so by the induction of Theorem 9, h(1)
+t
+= ρ(st)w−w,
+and the output of Theorem 9 with R ≥5 and one Pr for every expert tracks st.
+Weight values.
+Every weight lies in ΛD = {−10, . . . , 10} ∪{± 1
+2} ∪{±θ, cos θ −1, sin θ, −1
+2(1 −cos θ)} ∪
+{sin ψ∗
+i , −cos ψ∗
+i : 2 ≤i ≤M −1} ∪ΛA5, where ΛA5 holds the entries of fixed skew-symmetric logarithms of
+the 60 matrices ρ(g) ⊕I3 (Theorem 4) and Rotθ is the exponential of the skew-symmetric matrix with entries ±θ. So
+|ΛD| ≤2(M −2) + c′
+0 ≤2D + c0.
+With D + O(1) bits per weight, the bounds give 2D−1 log2 60 ≤log2 |FΛD(D)| ≤log2(2D + c0) N(D), so in exact
+arithmetic the number of represented functions is exponential in the compute per token and within a factor O(D) of the
+capacity of N(D) weights at that precision.
+B.15. Separation
+Theorem 17 (Separation). Let M = p1 · · · pI be a product of distinct primes, and let G have a faithful orthogonal
+representation of dimension m. With b ≥max(m, maxi pi), n = (I+1)b, R ≥m and D = ⌈log2 K⌉+ P
+i⌈log2 pi⌉, a
+token layer and one routed layer track every Wφ, and for fixed G and the first I primes their compute per token is polynomial
+in log M and log K. Call a model dense if its architecture is fixed, every step reads all its N weights other than its token
+embedding and one de-dimensional row of that embedding, and each number has ω bits. A dense model that tracks at least
+a fraction 2−c of the family has compute per token at least de + N ≥(M log2 |G| −c/K)/(2ω).
+19
+Yggdrasil
+Proof of Theorem 17, construction. Token layer. By the Chinese remainder theorem, qt is determined by ri,t = qt mod pi.
+Block i ≤I holds the offset code eri,t −e0 in its first pi coordinates. Increment 1 applies the cyclic shift Πi : ej 7→
+ej+1 mod pi with input Πie0 −e0, and increment 0 the identity with input 0, which is Theorem 9 for Zpi with the regular
+representation and v = e0. Block I+1 holds κ. Each transition is block-diagonal with permutations or partial permutations,
+hence an expert transition (Theorem 4).
+Tree router. The first ⌈log2 K⌉levels read the action code of xt. Then, for each i, ⌈log2 pi⌉levels read the bits of ri,t, testing
+bit ι as P
+r∈S hr −1
+2κ > 0 over block i with S = {r : bit ι of r is 1}. As 0 /∈S, the sum is [ri,t ∈S], the value is ± 1
+2, and
+by Theorem 8 the division keeps the route. The expert reached knows at and qt.
+Experts and output. The expert for (a, q) applies ρ(φ(a, q)) on the first m coordinates of one block of the routed layer, with
+input ρ(φ(a, q))w −w for a w with trivial stabiliser. As in Theorem 9, h(1)
+t
+= ρ(st)w −w, and its readout with R ≥m
+and one Pr for every expert tracks st.
+Compute. A step costs D dot products of length dim f = O(log K + n), transitions of nb per layer, and terms independent
+of M and K for fixed G. For the first I primes, the prime number theorem gives log M = Θ(I log I), maxi pi = Θ(log M)
+and I = O(log M), so b = O(log M + m), n = O(log2 M + m log M) and D ≤⌈log2 K⌉+ log2 M + I = O(log K +
+log M).
+Any packing of the residue areas into blocks of size b plus one coordinate for κ also works, using P
+i pi + 1 token-layer and
+m routed-layer coordinates. With a permutation representation and w = (0, 1, . . . , m −1), every materialised transition
+and every input, routing and readout coefficient is an integer or ± 1
+2, and the biases βout,g = ⟨ρ(g)w, w⟩are integers of size
+O(m3).
+Proof of Theorem 17, lower bound. The dense model has 2Kde embedding numbers and N further weights of ω bits, hence
+at most 2ω(2Kde+N) settings, each tracking at most one of the |G|KM tasks of Theorem 15. Tracking a fraction 2−c thus
+needs ω(2Kde + N) ≥KM log2 |G| −c, and as 2Kde + N ≤2K(de + N), de + N ≥(M log2 |G| −c/K)/(2ω). A
+dense step reads all N weights and de embedding numbers, so its compute is at least de + N.
+C. Architecture
+Expert parameters.
+Each expert r of layer l stores a decay vector dr ∈Rn, block matrices Sr,g ∈Rb×b, a token map
+Ur ∈Rn×k and offset cr ∈Rn, a readout P (l)
+r
+∈RR×n and, in a routed layer, a layer-input map U low
+r
+∈Rn×klow. Each
+layer shares a token code v(x) ∈Rk and a readout Q(l) ∈RC×R across its experts, and a routed layer also shares a router
+token embedding e(l)(x) ∈RF and the compression W (l) ∈Rklow×n. The token layer has V experts and a routed layer
+has 2D. In training, each expert parameter of a routed layer is the sum of Equation (4), and the saved model stores the
+materialised expert bank.
+Layer update.
+Routed layer l routes on the features
+f (l)
+t
+= [e(l)(xt); ν(h(l−1)
+t
+)],
+ν(h) =
+h
+q
+1
+n
+P
+i h2
+i + ϵ
+,
+reaches expert r = r(l)
+t
+by the router traversal below and updates
+h(l)
+t
+= Arh(l)
+t−1 + Tr[xt] + U low
+r
+W (l)ν(h(l−1)
+t
+),
+(6)
+which is Equation (1) with Γr = [Ur cr U low
+r
+] and u(l)
+t
+= [v(xt); 1; W (l)ν(h(l−1)
+t
+)]. The prediction sums the readouts of
+all layers,
+p(yt | x≤t) = softmax
+
+βout +
+L
+X
+l=0
+Q(l)P (l)
+r(l)
+t h(l)
+t
+
+,
+(7)
+where βout is an output bias. The token layer is the case r(0)
+t
+= xt without the last term of Equation (6), so Γr = [Ur cr]
+and u(0)
+t
+= [v(xt); 1].
+20
+Yggdrasil
+C.1. Token layer
+The token layer stores one expert per token, r(0)
+t
+= xt, and updates
+h(0)
+t
+= Axth(0)
+t−1 + Txt[xt].
+(8)
+It is an input-switched affine network (Foerster et al., 2017) with rotation-and-decay transitions, and a token-only tree router
+adds no expressivity to it (Theorem 7).
+Router traversal.
+With node scores sη = w⊤
+η f + βη, the traversal of a routed layer visits the nodes and selects the expert
+η0 = 0,
+ηj+1 = 2ηj + 1 + [ sηj(f (l)
+t ) > 0 ],
+r(l)
+t
+= ηD −(2D −1).
+D. Training and initialisation
+Router top-B.
+In training, each node score of a routed layer receives router noise ˜sη = sη + σroute ξη, with ξη ∼
+Logistic(0, 1) drawn independently per visited node, step and sequence, and evaluation uses the noiseless sη. A path that
+turns right at the nodes in a set R and left at the others has log-probability
+log π =
+X
+j<D
+log σ
+ ϵj ˜sηj/τ
+
+,
+ϵj = +1 if ηj ∈R, ϵj = −1 otherwise.
+The top-B set grows one level at a time from the top node. Each retained path is extended to both children, and the B
+children with the largest log-probabilities are kept, always including the child chosen by hard routing on the noisy scores in
+slot 1. The selection carries no gradient. The retained experts r1, . . . , rB receive weights wi = softmaxi(log πri), and a
+routed-layer step uses
+¯At =
+B
+X
+i=1
+wiAri,
+¯ut =
+B
+X
+i=1
+wi
+ Tri[xt] + U low
+ri W (l)ν(h(l−1)
+t
+)
+
+,
+¯Pt =
+B
+X
+i=1
+wiPri,
+with one associative scan per layer (Theorem 5). The token layer gives weight 1 to the expert addressed by its token.
+Straight-through routing.
+The forward pass uses the weights wst = e1 + w −sg(w), where e1 puts weight 1 on slot 1
+and sg stops the gradient. The forward value is thus the hard routing of inference, and the gradient is that of the soft top-B
+at the backward temperature τ of Table 3.
+Initialisation.
+The decays dr are uniform on [0.6, 1], except in the first block of every expert, where they are 0, so every
+expert starts with an exact reset block. The entries of Sr,g are N(0, σ2
+g) with σg = 0.05 · (1/0.05)(g−1)/(G−1), so the first
+block starts near the identity and the last at a larger rotation, and exp(Ωr,g) is computed with the matrix exponential at
+every step. The token codes v(x) and router token embeddings e(l)(x) are drawn from N(0, 1), the entries of Ur from
+N(0, 0.25/k), those of cr from N(0, 0.01), those of Pr and W (l) from N(0, 1/n), those of Q(l) from N(0, 0.01/R) and
+the node weights from N(0, 1/(F + n)). The node biases, the maps U low
+r
+and the bias βout start at zero, so h(l−1)
+t
+enters no
+expert input at the start. In a routed layer the expert parameters are drawn once and placed on the top node, scaled so that
+every expert starts equal to this draw (Section 3.2). Every layer starts from the zero state.
+D.1. Search and training protocol
+Every model trains with Adam (Kingma & Ba, 2015) with β1 = 0.9 and ϵ = 10−8, gradient clipping at global norm 1 and a
+cosine schedule that decays to 1% of the peak learning rate after a linear warm-up over 10% of the steps. Every window of
+text or DNA starts from the zero state. The baselines search the settings of Table 5. Yggdrasil fixes β2 = 0.999, uses no
+weight decay and searches the settings of Table 3. Selection follows Section 5, and Table 4 gives the budget. Each final
+run keeps its best validation checkpoint, evaluated every 5k steps on 512 windows for text and DNA and every 4k steps
+on the state tasks. The test splits of text and DNA are cut into windows of the training length for every model and for the
+ablation. Training runs in fp32 without TF32, except for the Transformer, which uses bf16 autocast with FlashAttention-2
+(Dao, 2024), and DeltaProduct, whose chunked kernel requires bf16 autocast.
+21
+Yggdrasil
+Table 3. Search space and selected settings of Yggdrasil. On text and DNA the size fixes the shape, with router depth D = 10, block
+size b = 16, router token dimension F = 16, input rank and layer-input rank k = klow = n/4 and readout rank R = n/8. The state
+tasks use the same rank rule. Values marked † are searched on the state tasks only. The large enwik8 model searches the learning rate in
+[0.125, 20] × 10−3. Intervals are searched log-uniformly. The routed-layer learning-rate scale multiplies the learning rate of the routed
+layers. Text and DNA cells list small/medium/large, and state cells list S5/A5/parity/cycle/modular arithmetic.
+Setting
+Searched values enwik8 (sizes)
+hg38 (sizes)
+State tasks
+Peak learning rate (×10−3)
+[0.5, 20]
+4.2/8.3/0.84
+0.86/0.75/0.84 5.4/6.7/3.3/15.6/2.8
+Routed-layer learning-rate scale {0.3, 1}
+1/0.3/1
+1/1/0.3
+0.3/0.3/1/1/1
+Router noise σroute
+{0, 0.05, 0.1}
+0.05/0.05/0.1
+0.05/0.05/0.1
+0.05/0/0.1/0/0.1
+Backward temperature
+–
+0.5
+0.5
+0.5
+Router top-B
+{4, 8}
+8/8/8
+8/8/8
+8/8/4/4/8
+Routed layers
+{1, 2, 4}†
+4
+4
+4/2/2/4/4
+State size n
+{64, 128, 256}†
+64/128/256
+64/128/256
+128/256/64/64/128
+Router depth D
+{4}†
+10
+10
+4
+Table 4. Search and training budget. Steps are given as steps × batch × window length. Search spaces are in Tables 3 and 5.
+Task
+Models
+Search
+Final training
+Seeds
+Evaluation
+enwik8
+Yggdrasil, GRU, LSTM,
+Mamba-2, Mamba-2 +
+PKM, Transformer, Gated
+DeltaNet,
+DeltaProduct-2/4
+8 Bayesian trials per size,
+10k × 64 × 256, 1 seed
+80k × 64 × 256
+3
+best validation, full test
+split
+hg38
+Yggdrasil, GRU, LSTM,
+Mamba-2, Mamba-2 +
+PKM, Transformer, Gated
+DeltaNet,
+DeltaProduct-2/4,
+HyenaDNA
+8 Bayesian trials per size,
+10k × 16 × 1024, 1 seed
+80k × 16 × 1024
+3
+best validation, full test
+split
+State tracking
+all models of Table 1
+8 Bayesian trials per task,
+size searched, 10k steps of
+256 sequences, 1 seed
+100k steps of 256
+sequences
+3
+best validation, test
+lengths 40–256
+Ablation
+every variant of Tables 9
+and 10
+8 Bayesian trials per variant
+and task, with the trial
+length of the full model on
+that task, 1 seed
+as for the full model
+3
+as for the full model
+22
+Yggdrasil
+D.2. Hierarchical residual experts
+Hierarchical residual experts follow hierarchical shrinkage in decision trees (Agarwal et al., 2022) and the fast feedforward
+layers of UltraFastBERT, in which every node on the path contributes to the output (Belcak & Wattenhofer, 2023b). They
+avoid the shrinking batch of hard trees, in which an independent expert would learn only from the few tokens that reach it
+(Belcak & Wattenhofer, 2023a). They leave the function class unchanged, since a sum of skew-symmetric generators is
+skew-symmetric and the decays are clipped after the sum.
+E. Tasks and settings
+Text and DNA. enwik8 is split into 90M, 5M and 5M bytes with V = 256 (Hutter, 2006). hg38 is read one nucleotide at a
+time with V = 5, the four bases and the unknown base, on the interval split of Basenji and HyenaDNA (Kelley et al., 2018;
+Nguyen et al., 2023) (Section L).
+State tracking. A word problem is a sequence of group elements labelled at each position by their running product, and on
+S5 and A5 the final answer is the final group element. Training draws fresh sequences at every step with random lengths
+from 3 to 40 and averages the loss over every labelled position, as in the word problems of Liu et al. (2023) and Merrill et al.
+(2024). Validation and test sets hold 4096 and 8192 sequences with lengths drawn uniformly from 40 to 256. Search trials
+are validated every 2k steps. The validation set selects the trial and the checkpoint, as in Walker et al. (2025), and the test set
+gives the score. The search also sets the size of every model (Tables 3 and 5).
+State-tracking results. The learned models generalise beyond the training lengths on the tasks that the constructions of
+Section 4 support. A token-layer block suffices for the group tasks, and contextual routing supports modular arithmetic with
+precedence (Table 1). Mamba-2 remains near chance on both S5 and A5. DeltaProduct-4 reaches 0.935 on S5, consistent
+with the finding that sufficiently long Householder products can learn this task (Siems et al., 2025).
+F. Baselines
+Implementations.
+GRU and LSTM are the PyTorch modules with a token embedding and a linear output layer. Mamba-2 is
+the mamba_ssm language model with expansion 2, convolution width 4 and, on text and DNA, head size P = min(64, d/4)
+rounded down to a multiple of 8 (Dao & Gu, 2024). The Transformer is the transformers (Wolf et al., 2020) Llama
+model (Touvron et al., 2023) with RMSNorm pre-normalisation, rotary position embeddings, a SwiGLU MLP of width 8d/3,
+no biases, 2 to 4 heads and an untied output layer. Gated DeltaNet and DeltaProduct are the fla models (Yang & Zhang,
+2024) with their default value expansion, output gate, short convolution and MLP ratio (Yang et al., 2025; Siems et al.,
+2025). Gated DeltaNet and DeltaProduct use negative eigenvalues on the state tasks (Grazzi et al., 2025), and DeltaProduct
+also on text and DNA, where it adds a forget gate. HyenaDNA is the model code of its authors with V = 5, trained from
+scratch (Nguyen et al., 2023). PD-SSM is the released model code of its authors with their default dictionary size of 8,
+trained from scratch (Terzi´c et al., 2025). Mamba-2 + PKM is the Mamba-2 language model with one product-key memory
+layer (Lample et al., 2019), whose keys and values bring its stored parameters to those of Yggdrasil at each size, and its
+number of heads and selected keys is searched with its other settings.
+Active parameters.
+Active parameters are the total minus the rows of an untied input table that the current token does
+not read; every baseline therefore counts its whole output layer as active. For Yggdrasil they are one expert per layer, the
+token rows of its tables, the D nodes on the path of each routed layer and the shared maps. Stored parameters count every
+parameter of the trained model and active parameters those that one token reads, both with the token input of each expert
+in its factored form Ur, while the file size is that of the weights the timed runtime loads, which in table mode holds the
+precomputed rows Tr[x] for every token in place of Ur. Tables 7 and 8 give both counts.
+23
+Yggdrasil
+Table 5. Search spaces of the baselines. On text and DNA the size fixes the shape (Table 6). Learning rates are searched log-uniformly.
+GRU (enwik8 small, hg38 small and medium), LSTM (enwik8 medium), Mamba-2 (enwik8 large, hg38 medium), Gated DeltaNet
+(enwik8 small) and DeltaProduct-4 (enwik8 medium) search the learning rate up to 8 × 10−2. DP is DeltaProduct and GDN Gated
+DeltaNet.
+Setting
+Text and DNA
+State tasks
+Learning rate
+[5 × 10−4, 2 × 10−2] [10−4, 2 × 10−2]
+Weight decay on matrices {0, 0.01, 0.1}
+{0, 10−6, 0.01, 0.1}
+β2
+{0.95, 0.99, 0.999}
+{0.95, 0.99, 0.999}
+Layers
+fixed
+1 to 4
+Width
+fixed
+{64, 128, 256, 384, 512}
+Head size, Transformer
+fixed
+16 to 128
+Head size, GDN and DP
+fixed
+16 to 128, and 12 heads of 32 at every width
+PD-SSM layers
+–
+1, 2 or 4 at width 64 or 128, 1 or 2 at width 256
+Mamba-2 head size
+min(64, d/4)
+{16, 32, 64}
+Mamba-2 state size
+128
+{16, 32, 64}
+Trial length
+10k steps
+10k steps
+Table 6. Shapes of the models of Tables 7 and 8. L is the number of layers, d the width and H the number of heads, and for Mamba-2
+N is the state size and P the head dimension.
+Model
+enwik8
+hg38
+Small
+Yggdrasil
+4 routed layers, n=64, D=10
+4 routed layers, n=64, D=10
+GRU
+L=2, d=44
+L=2, d=48
+LSTM
+L=2, d=40
+L=2, d=40
+Mamba-2
+L=1, d=40, N=128, P=8
+L=1, d=48, N=128, P=8
+Transformer
+L=2, d=32, H=2
+L=2, d=32, H=2
+Gated DeltaNet
+L=1, d=40, H=2
+L=1, d=40, H=2
+DeltaProduct-2
+L=2, d=24, H=2
+L=2, d=24, H=2
+DeltaProduct-4
+L=1, d=32, H=2
+L=1, d=32, H=2
+HyenaDNA
+–
+L=2, d=16
+Medium
+Yggdrasil
+4 routed layers, n=128, D=10
+4 routed layers, n=128, D=10
+GRU
+L=2, d=84
+L=2, d=84
+LSTM
+L=2, d=72
+L=2, d=76
+Mamba-2
+L=2, d=64, N=128, P=16
+L=2, d=64, N=128, P=16
+Transformer
+L=2, d=60, H=2
+L=2, d=60, H=2
+Gated DeltaNet
+L=1, d=72, H=2
+L=1, d=80, H=2
+DeltaProduct-2
+L=2, d=48, H=3
+L=2, d=48, H=3
+DeltaProduct-4
+L=1, d=56, H=4
+L=1, d=56, H=4
+HyenaDNA
+–
+L=2, d=52
+Large
+Yggdrasil
+4 routed layers, n=256, D=10
+4 routed layers, n=256, D=10
+GRU
+L=2, d=152
+L=2, d=152
+LSTM
+L=2, d=136
+L=2, d=136
+Mamba-2
+L=2, d=128, N=128, P=32
+L=2, d=128, N=128, P=32
+Transformer
+L=2, d=112, H=4
+L=2, d=108, H=3
+Gated DeltaNet
+L=2, d=96, H=3
+L=2, d=96, H=3
+DeltaProduct-2
+L=2, d=88, H=3
+L=1, d=120, H=4
+DeltaProduct-4
+L=2, d=80, H=2
+L=2, d=80, H=2
+HyenaDNA
+–
+L=2, d=104
+24
+Yggdrasil
+G. Results at every size
+Tables 7 and 8 report every model at the three sizes of active parameters.
+Table 7. enwik8 at the three sizes. Total stored parameters, active parameters read per token, file size (MB) of the weights the timed
+runtime loads, microseconds per token on one CPU core and on a GPU at batch 1, and float test bits per byte on the full test split in
+windows of 256 bytes, best of 3 seeds by validation. Timing as in Sections 5 and K, shapes in Table 6, and – marks untimed entries. Bold
+marks the best per column within each size.
+Model
+Total
+Active
+File (MB)
+CPU µs / token ↓
+GPU µs / token ↓
+Test bits / byte ↓
+(Hutter, 2006)
+Small, 35k active parameters
+Sequential
+GRU
+46.5k
+35.3k
+0.2
+10.0
+40.0
+2.371
+LSTM
+47.0k
+36.8k
+0.2
+11.3
+44.4
+2.353
+Parallel
+Transformer
+43.2k
+35.0k
+0.1
+64.0
+193.6
+2.298
+Mamba-2
+42.6k
+32.4k
+1.0
+22.9
+29.3
+2.436
+Mamba-2 + PKM
+16.3M
+34.1k
+–
+–
+–
+1.898
+Gated DeltaNet
+46.9k
+36.7k
+–
+–
+101.4
+2.338
+DeltaProduct-2
+40.7k
+34.6k
+–
+–
+147.3
+2.222
+DeltaProduct-4
+45.1k
+37.0k
+–
+–
+121.2
+2.287
+Yggdrasil
+16.3M
+35.5k
+154.3
+1.4
+57.6
+1.667
+Medium, 105k active parameters
+Sequential
+GRU
+128.9k
+107.5k
+0.5
+12.8
+60.9
+2.077
+LSTM
+121.2k
+102.9k
+0.5
+13.9
+52.8
+2.091
+Parallel
+Transformer
+117.4k
+102.1k
+0.5
+91.2
+236.3
+2.036
+Mamba-2
+120.0k
+103.7k
+1.0
+28.3
+45.7
+2.039
+Mamba-2 + PKM
+54.3M
+101.2k
+–
+–
+–
+1.714
+Gated DeltaNet
+116.8k
+98.4k
+–
+–
+132.4
+2.111
+DeltaProduct-2
+116.0k
+103.8k
+–
+–
+130.5
+1.964
+DeltaProduct-4
+121.1k
+106.9k
+–
+–
+89.5
+2.038
+Yggdrasil
+54.2M
+101.8k
+317.1
+2.5
+76.2
+1.559
+Large, 330k active parameters
+Sequential
+GRU
+357.2k
+318.4k
+1.4
+20.2
+87.1
+1.885
+LSTM
+368.0k
+333.3k
+1.5
+23.7
+125.3
+1.869
+Parallel
+Transformer
+373.3k
+344.7k
+0.5
+130.0
+224.4
+1.796
+Mamba-2
+335.8k
+303.2k
+1.2
+43.0
+43.8
+1.896
+Mamba-2 + PKM
+195.7M
+330.7k
+–
+–
+–
+1.673
+Gated DeltaNet
+348.9k
+324.4k
+–
+–
+125.5
+1.727
+DeltaProduct-2
+373.6k
+351.2k
+–
+–
+179.9
+1.724
+DeltaProduct-4
+331.4k
+311.0k
+–
+–
+162.0
+1.740
+Yggdrasil
+195.4M
+329.5k
+681.3
+6.7
+80.1
+1.540
+25
+Yggdrasil
+Table 8. hg38 at the three sizes. Columns as in Table 7, per base, on the full test split of 253.9M bases in windows of 1024 bases. Best of
+3 seeds by validation. HyenaDNA is timed in offline scoring on the CPU and in streaming on the GPU (Section L). Bold marks the best
+per column within each size.
+Model
+Total
+Active
+File (MB)
+CPU µs / base ↓
+GPU µs / base ↓
+Test bits / base ↓
+(Kelley et al., 2018; Nguyen et al., 2023)
+Small, 27k active parameters
+Sequential
+GRU
+28.7k
+28.5k
+0.1
+9.4
+46.1
+1.728
+LSTM
+26.6k
+26.5k
+0.1
+11.1
+48.2
+1.726
+Parallel
+Transformer
+27.1k
+27.0k
+0.2
+111.7
+197.3
+1.753
+Mamba-2
+29.4k
+29.1k
+0.9
+21.4
+28.2
+1.822
+Mamba-2 + PKM
+15.6M
+23.6k
+–
+–
+–
+1.756
+Gated DeltaNet
+26.8k
+26.7k
+–
+–
+93.0
+1.763
+DeltaProduct-2
+28.6k
+28.5k
+–
+–
+128.7
+1.723
+DeltaProduct-4
+29.1k
+28.9k
+–
+–
+76.0
+1.752
+HyenaDNA
+26.8k
+26.7k
+0.2
+1.7
+270.6
+1.763
+Yggdrasil
+15.6M
+25.2k
+17.9
+1.1
+67.4
+1.620
+Medium, 90k active parameters
+Sequential
+GRU
+86.5k
+86.2k
+0.3
+12.4
+56.3
+1.681
+LSTM
+94.4k
+94.1k
+0.4
+13.5
+65.5
+1.678
+Parallel
+Transformer
+87.3k
+87.1k
+0.4
+184.4
+250.5
+1.728
+Mamba-2
+88.3k
+87.9k
+0.9
+27.2
+46.5
+1.714
+Mamba-2 + PKM
+52.1M
+82.1k
+–
+–
+–
+1.621
+Gated DeltaNet
+97.2k
+96.9k
+–
+–
+135.6
+1.737
+DeltaProduct-2
+91.9k
+91.7k
+–
+–
+171.0
+1.682
+DeltaProduct-4
+93.0k
+92.8k
+–
+–
+117.9
+1.720
+HyenaDNA
+92.7k
+92.4k
+0.4
+5.0
+317.3
+1.694
+Yggdrasil
+52.0M
+81.4k
+48.1
+1.9
+79.7
+1.590
+Large, 290k active parameters
+Sequential
+GRU
+280.6k
+280.0k
+1.1
+18.9
+90.3
+1.640
+LSTM
+299.5k
+298.9k
+1.2
+22.7
+91.5
+1.637
+Parallel
+Transformer
+281.6k
+281.1k
+0.4
+276.2
+269.7
+1.690
+Mamba-2
+272.3k
+271.4k
+1.1
+41.8
+44.7
+1.685
+Mamba-2 + PKM
+188.1M
+285.2k
+–
+–
+–
+1.598
+Gated DeltaNet
+300.7k
+300.3k
+–
+–
+126.1
+1.653
+DeltaProduct-2
+290.8k
+290.3k
+–
+–
+90.5
+1.694
+DeltaProduct-4
+291.2k
+290.9k
+–
+–
+162.1
+1.651
+HyenaDNA
+297.7k
+297.0k
+0.5
+8.3
+384.0
+1.655
+Yggdrasil
+188.0M
+289.1k
+146.5
+5.8
+102.1
+1.567
+26
+Yggdrasil
+H. Ablations
+The ablations change one part of Yggdrasil at a time and keep the token layer. Passing the output gives the next layer the
+readout o(l)
+t
+= Prh(l)
+t
+of the layer below, of dimension 16, in place of its state of dimension 128, both in the router features
+and in the layer input. The residual stream gives the next layer the sum of the projected outputs of all layers below. Routing
+on the output keeps the state in the layer input and gives the router the output of the layer below. The shared transition keeps
+one transition per routed layer, while the experts keep their own inputs and readouts. The diagonal variant removes the
+rotations in every layer, and the non-negative variant clips the decays to [0, 1] in every layer while keeping the rotations,
+whose complex eigenvalues lie outside [0, 1].
+Storing outputs sets Ar = 0 in every routed-layer expert, so the state of a routed layer is the current expert input and carries
+no recurrence. Its experts then store outputs, as in memory layers and Engram (Lample et al., 2019; Cheng et al., 2026).
+Its input-map rank is raised from 32 to 49 to match the stored bytes of the full model. Every variant has its own search
+of 8 trials on each task on which it runs, with the protocol of the full model (Table 4). On enwik8 the shared transition is
+matched to the full model in active parameters. Every cell is the validation-best of 3 seeds.
+Removing the rotations leaves S5 and A5 at 0.016, against chance levels of 0.008 and 0.017 (Table 9). Clipping the decays
+to [0, 1] alone leaves the rotations to supply eigenvalues outside [0, 1], and S5 still reaches 0.901 and parity 0.999. Doing
+both, so that every eigenvalue lies in [0, 1], sends parity, S5 and A5 to chance, as Theorem 14 and Grazzi et al. (2025)
+predict. A shared transition or token-only routing leaves modular arithmetic at 0.290 and 0.260, near its chance level of 0.2.
+What flows between layers does not decide state tracking, since all three such variants solve the four group tasks and keep
+modular arithmetic far above chance.
+On text and DNA the routed-layer recurrence and contextual routing carry most of the gain (Table 10). Removing the
+routed-layer recurrence to store outputs costs 0.244 bits per byte on enwik8 and token-only routing 0.153, whereas sharing a
+single transition per routed layer stays within 0.003 bits per byte on enwik8 and 0.004 on hg38. Expert-specific transitions
+are therefore required for conditional resets on modular arithmetic (0.290 vs. 0.981) while contextual routing and recurrence
+carry most of the language-modelling gain. The state passed between layers must be wide. Passing the 16-dimensional
+output costs 0.040 bits on enwik8 and 0.016 on hg38, and a wide residual stream stays within 0.005 of passing the state.
+Table 9. Ablations on state tracking. Test accuracy of the best of 3 seeds by validation. Setup and bold as in Table 1.
+Variant
+S5
+A5
+Parity
+Cycle
+Mod. arith.
+Full Yggdrasil
+1.000
+0.980
+1.000
+1.000
+0.981
+Pass output, not state
+1.000
+1.000
+1.000
+1.000
+0.998
+Residual stream
+1.000
+1.000
+1.000
+1.000
+0.800
+Router reads output
+1.000
+1.000
+1.000
+1.000
+0.741
+Shared transition
+1.000
+1.000
+1.000
+1.000
+0.290
+Diagonal transitions
+0.016
+0.016
+1.000
+0.918
+0.370
+Non-negative decay
+0.901
+0.959
+0.999
+1.000
+0.817
+Diagonal, non-negative decay
+0.009
+0.015
+0.517
+0.866
+0.383
+Route on token only
+0.896
+1.000
+1.000
+1.000
+0.260
+Table 10. Ablations on language modelling. Test bits of the medium models, best of 3 seeds by validation.
+Variant
+enwik8 ↓
+hg38 ↓
+Full Yggdrasil
+1.559
+1.590
+Store outputs
+1.803
+1.689
+Route on token only
+1.712
+1.676
+Shared transition
+1.562
+1.594
+Pass output, not state
+1.599
+1.606
+Residual stream
+1.564
+1.594
+Router reads output
+1.575
+1.597
+I. Compute per step
+Table 11 breaks one inference step of Yggdrasil into its components and gives the compute of each.
+27
+Yggdrasil
+Table 11. Compute of one inference step. dim f = F + n is the size of the node input and C the number of classes.
+Component
+Compute
+Grows with experts?
+Router traversal (routed layers) LD dot products of length dim f
+only through D
+Transition (every layer)
+(L+1)nb multiply-adds
+no
+Token input
+one table row per layer
+no
+Layer input (routed layers)
+2Lnklow multiply-adds
+no
+Output (every layer)
+(L+1)(nR + CR) multiply-adds no
+The token addresses its token-layer expert directly. In a routed layer each node test sets the address of the next node, so
+selecting an expert takes D dependent comparisons. A dense recurrent step costs one multiply-add per stored weight.
+J. CPU timing
+Protocol.
+Every model runs on one core of an Intel Xeon Gold 6426Y (Sapphire Rapids, 2 MB of L2 per core, 37.5 MB of
+shared L3 per socket), pinned to one thread with the whole node reserved. A timed step consumes one token and computes
+the full distribution over all V classes at batch 1. Each measurement streams real test tokens with the state carried, skips the
+first 10,000 tokens and reports the median, over 5 rounds of 2000 steps, of the mean time per token in each round. The
+Transformer keeps a sliding key–value cache over its training window T, and HyenaDNA is timed as in Section L. The
+comparison at equal stored parameters uses random weights from the initialisation of each model. Speedups are computed
+from unrounded times.
+Runtimes.
+Yggdrasil runs in our 8-bit integer kernel (Jacob et al., 2018). A step reads the token-layer expert of the token,
+traverses each tree router on ν(h(l−1)
+t
+), reads one expert per routed layer and computes the logits, with 8-bit states, routing
+weights and readouts, fixed-point block transitions and AVX-512 VNNI integer dot products. The kernel stores the token
+input of each expert either as the precomputed rows Tr[x] (table mode) or as the 8-bit factor Ur from which it computes
+Tr[x] at every step (factored mode). Both modes compute the same integer function. Each baseline is timed in the fastest
+runtime of Table 12 that passes the accuracy check. Compiled runtimes are driven by a C++ loop, and ONNX Runtime
+(ONNX Runtime developers, 2021) binds every input and output once to preallocated buffers so that a step is a single call.
+At equal stored parameters Yggdrasil runs in factored mode on enwik8 and in table mode on hg38 (Table 16).
+Table 12. CPU runtimes of the baselines. Runtimes and precisions tried, and the fastest that passes the accuracy check, at the active sizes
+of Tables 7 and 8 and at the stored sizes of Table 15.
+Model
+Runtimes tried
+Fastest
+Transformer
+llama.cpp (Gerganov & llama.cpp contributors, 2023) with Q8_0
+or fp32 weights, ONNX Runtime with 8-bit or fp32 weights
+ONNX Runtime at five of the six active sizes,
+llama.cpp Q8_0 at equal stored parameters
+Mamba-2
+llama.cpp with Q8_0 or fp32 weights
+llama.cpp, Q8_0 at equal stored parameters
+GRU, LSTM
+OpenVINO 2026.4 C++ API (GRUCell and LSTMCell on
+oneDNN, fp32 weights, fp32 or bf16 arithmetic), 8-bit Torch-
+Script step in libtorch, ONNX Runtime with 8-bit or fp32 weights
+OpenVINO at every active size, 8-bit libtorch at
+equal stored parameters except ONNX Runtime
+for the LSTM at 5M
+HyenaDNA
+libtorch in fp32 or with dynamic 8-bit linear layers
+libtorch
+Bytes read per step.
+The bytes a step reads are the 64-byte lines that the kernel addresses in that step, enumerated from
+its own addresses and routing on the test stream. Latency follows the protocol above, once with warm caches and once with
+every cache evicted by reading 256 MB before each step (Table 13). Over the full test stream, every routed layer uses at least
+99.2% of its 210 experts, with routing entropy of 8.7 to 9.4 bits out of 10 on enwik8 and 4.7 to 9.8 bits on hg38.
+Accuracy check.
+Each runtime is scored in bits per token on the first 32 test windows, each from an empty state, and
+passes when it is within 0.02 bits per token of the float model on the same windows. All reported bits are those of the float
+models.
+Streaming accuracy.
+The timed kernel also runs over the full test split, 4,999,936 bytes of enwik8 and 253,885,440 bases
+of hg38, with the state carried from the first token to the last, as in the timing. It is then within 0.003 to 0.010 bits per token
+28
+Yggdrasil
+Table 13. Bytes read per step. File size of the timed model, bytes of weights read per step, and microseconds per token on one CPU core
+measured in the cache benchmark with warm caches and with all caches evicted before every step.
+Data
+Size
+File (MB)
+Read per step (KB)
+Warm (µs/tok)
+Evicted (µs/tok)
+enwik8
+Small
+154
+44.2
+1.50
+6.93
+Medium
+317
+101.4
+2.51
+9.54
+Large
+681
+280.7
+6.76
+17.74
+hg38
+Small
+18
+29.9
+1.22
+6.12
+Medium
+48
+78.1
+1.91
+7.78
+Large
+147
+239.5
+5.78
+15.66
+of the float model on the same stream (Table 14). Carrying the state also lowers the bits below the reported ones, which reset
+the state at every window.
+Table 14. Bits per token of Yggdrasil over the full test split. Reset starts every window of 256 bytes or 1024 bases from the zero state,
+as in the reported results. Stream carries the state over the whole split, as in the timing. The 8-bit kernel is the timed one, in table mode.
+Reset
+Stream
+Data
+Size
+Float
+8-bit
+Float
+8-bit
+enwik8
+Small
+1.667
+1.676
+1.626
+1.635
+Medium
+1.559
+1.565
+1.510
+1.516
+Large
+1.540
+1.545
+1.485
+1.490
+hg38
+Small
+1.620
+1.625
+1.614
+1.620
+Medium
+1.590
+1.594
+1.583
+1.589
+Large
+1.567
+1.569
+1.560
+1.563
+Equal stored parameters.
+We also compare inference latency at approximately 5M, 20M, 50M, 200M and 730M stored
+parameters, using randomly initialised weights. Yggdrasil uses state width 128 and two configurations at each size, more
+layers with shallower routers or fewer layers with deeper routers. We time the slower configuration. Dense models are
+matched to its stored parameter count within 4%. Table 16 gives every shape, parameter count and file size in bytes per
+parameter.
+At 5M stored parameters, Yggdrasil is 162× to 1,740× faster per CPU step than the dense baselines, and at 730M the range
+is 3,289× to 13,566× (Table 15). Across these configurations, Yggdrasil accesses 56k to 172k parameters per token. The
+gap grows because the dense implementations read their non-embedding weights on every step, while Yggdrasil reads the
+selected paths and experts.
+Table 15. Speed at equal stored parameters. CPU time of Yggdrasil in microseconds per token and the speedup of Yggdrasil over
+each dense model with the same stored parameters, at batch 1 with random weights (Section J). The models in each row store 5.3–5.5M,
+18.4–19.2M, 54.1–54.2M, 209.6–210.7M and 730–731M on enwik8, and 4.9–5.0M, 15.9–16.4M, 51.8–52.0M, 207.1–208.5M and
+727–730M on hg38. Active, CPU µs and File / Q8_0 refer to the timed Yggdrasil configuration of Table 16. File / Q8_0 is the size of the
+Yggdrasil file divided by that of the Q8_0 file of the matched Transformer.
+enwik8 (V = 256) (Hutter, 2006)
+hg38 (V = 5) (Kelley et al., 2018; Nguyen et al., 2023)
+Yggdrasil
+Speedup over
+Yggdrasil
+Speedup over
+Stored params Active CPU µs
+File /
+Q8_0 Transf. Mamba-2 GRU LSTM Active CPU µs
+File /
+Q8_0 Transf. Mamba-2 GRU LSTM
+5M
+56k
+1.02
+0.98
+518
+473
+174
+162
+62k
+0.96
+0.86
+1,740
+421
+173
+165
+20M
+123k
+3.15
+1.07
+493
+451
+166
+163
+98k
+2.14
+0.88
+2,177
+555
+219
+217
+50M
+102k
+3.76
+1.16
+1,178
+1,480
+511
+512
+81k
+2.25
+0.87
+5,332
+2,219
+811
+816
+200M
+103k
+5.45
+1.16
+3,311
+3,895
+1,805 1,812
+83k
+3.48
+0.87
+9,375
+5,780
+2,823 2,831
+730M
+172k
+11.06
+1.17
+5,146
+6,214
+3,300 3,289
+139k
+7.72
+0.86
+13,566
+9,131
+4,683 4,721
+29
+Yggdrasil
+Table 16. Configurations at equal stored parameters (Table 15). Shape, stored parameters and file size in bytes per parameter (B/p) of
+every model. Yggdrasil has n=128 and two configurations per size. The slower one is listed first, and the dense models are matched to it
+and timed against it.
+enwik8 (V =256)
+hg38 (V =5)
+Model
+Shape
+Params
+B/p
+Shape
+Params
+B/p
+5M
+Yggdrasil
+2 routed layers, D=7
+5.5M
+1.05
+3 routed layers, D=7
+4.9M
+0.92
+1 routed layer, D=8
+5.4M
+1.05
+1 routed layer, D=9
+6.5M
+0.92
+Transformer
+L=3, d=384, head 64
+5.5M
+1.07
+L=4, d=320, head 64
+5.0M
+1.06
+Mamba-2
+L=11, d=256, N=128, P=64
+5.3M
+1.25
+L=7, d=320, N=128, P=64
+4.9M
+1.25
+GRU
+L=2, d=656
+5.5M
+1.10
+L=2, d=640
+4.9M
+1.01
+LSTM
+L=2, d=568
+5.5M
+1.01
+L=2, d=552
+4.9M
+1.01
+20M
+Yggdrasil
+5 routed layers, D=8
+18.5M
+1.19
+5 routed layers, D=8
+16.3M
+0.92
+3 routed layers, D=9
+21.7M
+1.20
+3 routed layers, D=9
+19.5M
+0.92
+Transformer
+L=6, d=512, head 64
+19.2M
+1.06
+L=9, d=384, head 64
+15.9M
+1.06
+Mamba-2
+L=14, d=448, N=128, P=64
+18.9M
+1.12
+L=12, d=448, N=128, P=64
+16.0M
+1.13
+GRU
+L=2, d=1224
+18.6M
+1.05
+L=2, d=1168
+16.4M
+1.00
+LSTM
+L=2, d=1056
+18.4M
+1.00
+L=2, d=1008
+16.3M
+1.00
+50M
+Yggdrasil
+4 routed layers, D=10
+54.2M
+1.23
+4 routed layers, D=10
+52.0M
+0.92
+1 routed layer, D=12
+54.2M
+1.23
+1 routed layer, D=12
+52.0M
+0.92
+Transformer
+L=9, d=704, head 64
+54.1M
+1.06
+L=13, d=576, head 64
+51.8M
+1.06
+Mamba-2
+L=25, d=576, N=128, P=64
+54.2M
+1.09
+L=24, d=576, N=128, P=64
+51.8M
+1.09
+GRU
+L=2, d=2104
+54.2M
+1.03
+L=2, d=2080
+52.0M
+1.00
+LSTM
+L=2, d=1824
+54.2M
+1.03
+L=2, d=1800
+51.9M
+1.00
+200M
+Yggdrasil
+4 routed layers, D=12
+210.2M
+1.24
+4 routed layers, D=12
+208.0M
+0.92
+1 routed layer, D=14
+210.1M
+1.24
+1 routed layer, D=14
+207.9M
+0.92
+Transformer
+L=19, d=960, head 64
+210.7M
+1.06
+L=13, d=1152, head 64
+207.1M
+1.06
+Mamba-2
+L=36, d=960, N=128, P=64
+209.9M
+1.07
+L=25, d=1152, N=128, P=64
+207.9M
+1.07
+GRU
+L=4, d=2944
+209.6M
+1.01
+L=4, d=2944
+208.1M
+1.00
+LSTM
+L=4, d=2552
+209.8M
+1.01
+L=4, d=2552
+208.5M
+1.00
+730M
+Yggdrasil
+7 routed layers, D=13
+730.0M
+1.24
+7 routed layers, D=13
+727.7M
+0.92
+4 routed layers, D=14
+833.8M
+1.24
+4 routed layers, D=14
+831.6M
+0.92
+Transformer
+L=28, d=1472, head 64
+730.2M
+1.06
+L=28, d=1472, head 64
+729.5M
+1.06
+Mamba-2
+L=46, d=1600, N=128, P=64
+730.9M
+1.07
+L=59, d=1408, N=128, P=64
+727.9M
+1.07
+GRU
+L=4, d=5504
+730.0M
+1.01
+L=4, d=5504
+727.2M
+1.00
+LSTM
+L=4, d=4768
+730.1M
+1.01
+L=4, d=4768
+727.7M
+1.00
+K. GPU timing
+Every model runs on one NVIDIA A100-PCIE-40GB with torch 2.10.0 and CUDA 12.8, each baseline in its fastest public
+GPU path. These are the fused cuDNN kernels for GRU and LSTM, mamba_ssm for Mamba-2, the Hugging Face Llama
+decode with FlashAttention and a key–value cache for the Transformer, the fla kernels for Gated DeltaNet and DeltaProduct
+and the Hugging Face model for HyenaDNA, streamed as in Section L. Yggdrasil runs one fused Triton 3.6.0 kernel that
+updates all layers, followed by the output layer, with the expert banks precomputed. Every model runs under CUDA graphs
+with one step per replay, whose outputs match eager execution to within 2 × 10−6, and computes the full output distribution
+in fp32. Each measurement is the median of 5 rounds of 512 steps after 64 warm-up steps.
+30
+Yggdrasil
+Table 17. GPU inference. Microseconds per token at batch 1 and tokens per second at batch 1024, on one A100 under CUDA graphs, at
+the small, medium and large sizes. Bold marks the best per column within each dataset.
+Batch 1, µs / token ↓
+Batch 1024, tokens / s ↑
+Model
+Small
+Medium
+Large
+Small
+Medium
+Large
+enwik8, 35k, 105k and 330k active parameters (Hutter, 2006)
+Sequential
+GRU
+40.0
+60.9
+87.1
+12.5M
+5.84M
+1.65M
+LSTM
+44.4
+52.8
+125.3
+11.0M
+5.83M
+889k
+Parallel
+Transformer
+193.6
+236.3
+224.4
+1.39M
+685k
+398k
+Mamba-2
+29.3
+45.7
+43.8
+7.77M
+3.18M
+1.77M
+Gated DeltaNet
+101.4
+132.4
+125.5
+9.13M
+5.29M
+2.43M
+DeltaProduct-2
+147.3
+130.5
+179.9
+3.53M
+3.39M
+1.98M
+DeltaProduct-4
+121.2
+89.5
+162.0
+5.03M
+4.16M
+1.81M
+Yggdrasil
+57.6
+76.2
+80.1
+15.7M
+7.15M
+2.59M
+hg38, 27k, 90k and 290k active parameters (Kelley et al., 2018; Nguyen et al., 2023)
+Sequential
+GRU
+46.1
+56.3
+90.3
+10.1M
+6.04M
+1.67M
+LSTM
+48.2
+65.5
+91.5
+11.9M
+5.51M
+895k
+Parallel
+Transformer
+197.3
+250.5
+269.7
+508k
+203k
+109k
+Mamba-2
+28.2
+46.5
+44.7
+7.32M
+3.17M
+1.78M
+Gated DeltaNet
+93.0
+135.6
+126.1
+9.26M
+5.29M
+2.47M
+DeltaProduct-2
+128.7
+171.0
+90.5
+3.55M
+3.42M
+2.59M
+DeltaProduct-4
+76.0
+117.9
+162.1
+5.11M
+4.23M
+1.83M
+HyenaDNA
+270.6
+317.3
+384.0
+30.2k
+15.1k
+8.70k
+Yggdrasil
+67.4
+79.7
+102.1
+21.8M
+8.19M
+2.82M
+31
+Yggdrasil
+20
+50
+100
+200
+500
+GPU inference time (μs / token)
+1.6
+1.8
+2.0
+2.2
+2.4
+Test bits per byte
+enwik8 (text), GPU, batch 1
+20
+50
+100
+200
+500
+GPU inference time (μs / base)
+1.55
+1.60
+1.65
+1.70
+1.75
+1.80
+1.85
+Test bits per base
+hg38 (DNA), GPU, batch 1
+Yggdrasil (ours)
+GRU
+LSTM
+Mamba-2
+Transformer
+HyenaDNA
+Gated DeltaNet
+DeltaProduct-2
+DeltaProduct-4
+small (35k / 27k)
+medium (105k / 90k)
+large (330k / 290k)
+Pareto frontier
+Figure 3. Accuracy against inference time on a GPU at batch 1. Float test bits per byte on enwik8 (left) and per base on hg38 (right)
+against microseconds per token on one A100, from Table 17. Lines and markers as in Figure 2. HyenaDNA is shown at its streaming time
+per base. The dotted staircase is the Pareto frontier, and no model reaches the hatched region.
+L. Genomics
+Split.
+We use the hg38 intervals of the Basenji BED file (Kelley et al., 2018), which the HyenaDNA code loads for its
+training, validation and test sets (Nguyen et al., 2023). No test interval overlaps a training or validation interval. HyenaDNA
+is trained from scratch at the three sizes with the protocol of Section D.1.
+HyenaDNA timing.
+The official HyenaDNA code has no recurrent decode. Its CPU time is that of offline scoring, in
+which one forward pass over a window of 1024 bases is divided by the window length. This is a lower bound on its time in
+streaming. A streaming step recomputes the window for every new base and takes 1,605, 5,003 and 7,297 µs on one core at
+the three sizes, 876 to 997 times its offline time. Its GPU time is that of streaming.
+M. Genomic Benchmarks
+We follow the protocol of Caduceus (Schiff et al., 2024) on the eight tasks of the Genomic Benchmarks (Grešová et al.,
+2023). Yggdrasil is first pretrained on the hg38 training split by next-base prediction for 10,000 steps at batch 1024 with
+windows of 1024 bases, about 10.5B bases, with reverse-complement augmentation. The model has state size 336, 4 routed
+layers (5 layers in total), router depth D = 10 and input rank 84, and its learning rate of 6.23 · 10−3 comes from the
+hyperparameter search. It stores 307.3M parameters and reads about 470k active parameters per base, and it reaches 1.575
+test bits per base on hg38. Every fine-tune starts from this checkpoint. Each task is run on 5 cross-validation splits with
+seeds 1 to 5 and a 90/10 split of the training set into training and validation, with early stopping on validation accuracy.
+Yggdrasil trains for 10 epochs at batch 256. For each task we take the learning rate in {10−3, 2 · 10−3} and the choice of
+reverse-complement augmentation with the best mean validation accuracy over the 5 splits, and report its mean test accuracy.
+Table 18 adds the published bidirectional models at matched active parameter counts, Caduceus-Ph and Caduceus-PS (Schiff
+et al., 2024), ConvNova (Bo et al., 2025), JanusDNA (Duan et al., 2025) and DNA-xLSTM-PH and DNA-xLSTM-PS
+(Schmidinger et al., 2024). They read the whole sequence, or its reverse complement, before they classify it, so none of
+them can score a stream.
+32
+Yggdrasil
+Table 18. Genomic Benchmarks, all models. Test accuracy (%) under the protocol of Caduceus, mean over 5 cross-validation splits with
+the range over the splits after ±. Params are active parameters for Yggdrasil (307.3M stored) and JanusDNA. Bold marks the best per
+column.
+Model
+Params
+Mouse
+Coding
+Hum./worm
+Cohn
+Ensembl
+Reg.
+OCR
+Non-TATA
+Mean
+(Grešová et al., 2023)
+CNN (Schiff et al., 2024)
+264k
+71.5±8.7
+89.2±0.8
+94.2±0.2
+70.2±2.1
+74.4±12.2
+87.2±0.5
+69.8±1.3
+86.1±0.9
+80.3
+Causal
+HyenaDNA (Schiff et al., 2024)
+436k
+78.0±2.5
+90.4±0.5
+96.4±0.2
+72.9±1.4
+84.9±0.6
+86.9±1.2
+78.3±0.7
+94.4±0.2
+85.3
+Mamba (Schiff et al., 2024)
+468k
+74.3±5.4
+90.4±0.4
+96.7±0.2
+73.2±2.9
+86.2±0.8
+81.4±21.1
+81.5±0.2
+93.3±0.7
+84.6
+Yggdrasil
+470k
+74.0±4.1
+93.4±0.6
+96.6±0.2
+72.9±1.6
+88.2±0.6
+87.1±1.3
+79.6±0.5
+96.0±1.0
+86.0
+Bidirectional
+Caduceus-Ph (Schiff et al., 2024)
+470k
+75.4±7.4
+91.5±0.3
+97.3±0.1
+74.7±0.4
+89.3±0.8
+87.2±1.1
+82.8±0.6
+94.6±0.7
+86.6
+Caduceus-PS (Schiff et al., 2024)
+470k
+79.3±5.8
+91.0±0.3
+96.8±0.2
+74.5±0.7
+90.0±0.6
+87.3±0.7
+81.8±0.6
+94.5±1.0
+86.9
+ConvNova (Bo et al., 2025)
+386k
+78.4±0.9
+94.3±0.1
+96.7±0.2
+74.3±0.5
+90.0±0.4
+87.3±0.2
+79.3±0.4
+95.1±0.3
+86.9
+JanusDNA (Duan et al., 2025)
+426k
+77.0±4.8
+91.2±0.3
+97.1±0.1
+74.1±0.5
+89.7±0.4
+87.7±0.5
+82.2±0.3
+95.7±0.4
+86.8
+DNA-xLSTM-PH (Schmidinger et al., 2024)
+500k
+78.0±1.8
+93.1±0.1
+96.5±0.1
+74.2±0.5
+92.0±0.1
+87.2±0.2
+82.6±0.2
+95.1±0.4
+87.3
+DNA-xLSTM-PS (Schmidinger et al., 2024)
+500k
+77.8±0.7
+93.4±0.2
+95.6±0.1
+73.4±0.5
+90.2±0.4
+86.9±0.5
+80.0±0.2
+94.9±0.1
+86.5
+33

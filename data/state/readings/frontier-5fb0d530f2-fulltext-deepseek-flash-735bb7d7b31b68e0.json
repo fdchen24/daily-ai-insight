@@ -1,0 +1,74 @@
+{
+  "title_zh": "Latent Reasoning VLA：面向视觉-语言-动作模型的潜在推理与预测",
+  "affiliations": [
+    "Xi'an Jiaotong University",
+    "Beijing Academy of Artificial Intelligence",
+    "University of Chinese Academy of Sciences",
+    "Peking University"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把 CoT 推理从推理期显式生成搬到连续 latent 空间，直接针对 VLA 实时部署的时延瓶颈，并配套给出数据标注管线、仿真与真机验证。",
+    "novelty": 76,
+    "novelty_reason": "相对 Fast-ThinkAct 只 latent 化文本 CoT，这里把文本与未来视觉 CoT 一并内化为连续 latent，并让视觉 latent 反过来监督文本 latent、直接条件化 flow matching 动作头；三阶段课程本身是组合式创新。",
+    "technical_depth": 78,
+    "technical_depth_reason": "有逐阶段消融、视觉扰动鲁棒性、latent 塌缩与延迟测量以及真机长程任务，但消融只在 SimplerEnv 单基准、真机结果仅以图呈现且每任务次数有限、部分强基线未在同一设定对比。"
+  },
+  "reading": {
+    "why_read": "提出 LaRA-VLA，用三阶段课程训练把文本与视觉 CoT 逐步内化为连续 latent 表示并以之条件化动作生成，在 LIBERO 上平均成功率达 97.9%，推理时不再生成显式 CoT。",
+    "task": "VLA 借助 CoT 中间推理提升长程操作的可解释性与泛化，但文本 CoT 必须在推理时自回归生成整段推理，token 序列拉长后 KV-cache 与延迟急剧膨胀，控制频率被压到远低于实时要求；视觉 CoT 则多依赖 VQ 离散视觉 token。两类做法都把推理压进离散空间，而机器人的感知与动作本身连续，于是效果与实时性难以兼得。",
+    "findings": [
+      {
+        "point": "推理开销来自推理期逐 token 生成显式 CoT，代价随推理链长度线性增长",
+        "detail": "长推理链拉长 token 序列、挤占 KV-cache 并推高内存与延迟，作者指出此类模型控制频率常低于 5 Hz，甚至只有 1 Hz 左右，无法用于实时控制。"
+      },
+      {
+        "point": "离散 token 化的推理表示与连续感知、连续控制之间存在表示错配",
+        "detail": "文本 CoT 被限制在语言词表，视觉 CoT 通常对齐 VQ 离散视觉 token，而观测与动作都是连续量，推理与控制之间因此存在表示断层。"
+      },
+      {
+        "point": "仅把文本 CoT 隐式化不足以支撑动作，且现有标注管线监督冗余或缺失",
+        "detail": "Fast-ThinkAct 的视觉 grounding 仍留在离散 trace；ECoT 标注穷举物体框、Emma-x 缺目标定位，latent 缺少与视觉预测、动作语义耦合的监督信号。"
+      }
+    ],
+    "method": "Stage I 用显式监督打底：文本 CoT 走 NLL，视觉 CoT 改为预测连续视觉 latent $\\hat z_{t+1}$（目标由同一 image encoder 编码下一帧、EMA 更新防塌缩，$\\mathcal{L}_{vis}=\\|\\hat z_{t+1}-z_{t+1}\\|_1$），并用 inverse dynamics 的离散 action token 注入动作语义。Stage II 按课程把 CoT token 逐步替换为可学习 latent、$\\mathcal{L}_{cot}$ 退火到零，视觉预测与动作损失转为隐式监督，同时消掉推理时延与离散-连续错配。Stage III 换成 16 层 Diffusion Transformer action expert 做 flow matching：$a_\\tau=(1-\\tau)\\epsilon+\\tau a_t$，条件 $h_t$ 融合当前观测、语言、文本 latent 与预测视觉 latent。数据由 Qwen3-VL 语义锚点加夹爪状态时间锚点的自动管线标注，GroundingDINO/SAM3 给目标框。",
+    "results": "LIBERO 平均 97.9%（Object 99.8、Long 96.6），高于 π0.5 与 Fast-ThinkAct；SimplerEnv-WidowX 平均 68.8% 为最高。单次推理 135 ms，较显式 CoT 快最多 90%，也快于 Fast-ThinkAct；真机四任务中三项最优。",
+    "limitations": "作者承认 latent 缺显式监督易塌缩，故每步仅用一个 latent token，限制表达力，课程训练成本也随 CoT token 增多而上升。真机结果仅以图给出，SimplerEnv 子任务波动大（Stack Block 明显偏低），消融只在单一基准上做。"
+  },
+  "claims": [
+    {
+      "claim": "在 LIBERO 上平均成功率达 97.9%，其中 Object 99.8%、Long 96.6%",
+      "numbers": [
+        "97.9",
+        "99.8",
+        "96.6"
+      ],
+      "source_span": "Section 4.1 Results, LIBERO 结果段落",
+      "quote": "an average success rate of 97.9%, including 99.8% on the Object suite and 96.6% on the Long suite"
+    },
+    {
+      "claim": "在 SimplerEnv-WidowX 上取得最高平均成功率 68.8%",
+      "numbers": [
+        "68.8"
+      ],
+      "source_span": "Section 4.1 Results / Table 3, row 'LaRA-VLA (Ours)'",
+      "quote": "the highest average success rate of 68.8%"
+    },
+    {
+      "claim": "单次 rollout 推理延迟仅 135 ms",
+      "numbers": [
+        "135"
+      ],
+      "source_span": "Section 4.3 Inference Efficiency / Figure 8",
+      "quote": "requiring only 135 ms per rollout"
+    },
+    {
+      "claim": "相对显式 CoT 方法推理时间最多降低 90%",
+      "numbers": [
+        "90"
+      ],
+      "source_span": "Section 4.3 Inference Efficiency",
+      "quote": "reduces inference time by up to 90%"
+    }
+  ]
+}

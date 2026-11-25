@@ -1,0 +1,129 @@
+{
+  "title_zh": "GroupChat-Bench：评估 LLM 智能体对真实群聊长期理解的基准",
+  "affiliations": [
+    "KAIST",
+    "SNU"
+  ],
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "把「长期多方对话记忆」这一被短程/双人/合成数据掩盖的问题做成可复现基准，并给出明确的上界与瓶颈诊断（检索而非推理）。",
+    "novelty": 66,
+    "novelty_reason": "基准侧用人类剧本构造跨五季、按时间累积且带不可答与人名互换控制的多方流，区别于双人/合成的长上下文基准；GroupChat-Mem 则是 OpenIE 关系图 + BM25/embedding + 图遍历的组合，组件层面偏工程整合。",
+    "technical_depth": 80,
+    "technical_depth_reason": "四个标注环节有独立复标一致性（99%/97%/94%/96.5%），Oracle 上界、R/S/traversal 消融、超参网格、Direct QA 量化泄漏都齐；但默认多选题 + 分层采样会抬高绝对分数，且 Oracle 使用了构造基准的 TKG。"
+  },
+  "reading": {
+    "why_read": "提出 GroupChat-Bench 基准与配套记忆系统 GroupChat-Mem：以电视剧剧本构造跨五季、按时间累积的多方对话流，要求只用提问时刻可见的历史作答，并用关系记忆加原始会话双视图检索超过现有记忆系统。",
+    "task": "LLM 智能体开始进入多人共用的持续通信场景（家庭助手、企业协作平台），需要在多方之间长期跟踪信息。这类交互有三重难点：多方指代要求判断每句话涉及谁、对谁说；时间持续性要求跨 session 更新甚至重新解释关系；交错纠缠让发言碎片化、出现跟风刷屏与并行话题。现有对话基准多为短程、双人、单会话，长上下文基准仍是双人或合成对话，现有多方数据集由独立场景或短剧集组成，长期群组记忆从未被真正测过。",
+    "findings": [
+      {
+        "point": "压缩记忆与原始对话各有不可替代的信息，单一视图必然漏证据",
+        "detail": "消融显示去掉原始会话库平均掉 19.8 分（压缩记录丢失查询所依赖的措辞），去掉关系记忆则掉 4.6 分（跨远距离会话的关联证据无法解析）。"
+      },
+      {
+        "point": "原始多方对话本身难以直接用于推理",
+        "detail": "Oracle 上界实验里，只给证据会话远不如再叠加显式结构（后者达 91–96 分），说明长而交错的多方对话对模型是理解负担，结构化表示能显著减轻。"
+      },
+      {
+        "point": "预训练中的剧情与人名记忆构成泄漏，且难以根除",
+        "detail": "不含任何对话历史的 Direct QA 仍可达 32.3%，远高于随机；互换角色名后分数反而低于替换新名，说明记忆被激活但与上下文冲突，反而更具误导性。"
+      }
+    ],
+    "method": "数据侧：三部剧各取连续五季、约 1300 个 session，删去舞台说明只留「说话人+台词」并按剧情与播出日期赋日期。题目两源：FunTrivia 粉丝问答经 GPT-4 初筛、作者校对并标注证据场景，据主角是否看过证据判定可答/不可答并加日期变体；再用 LLM 抽三元组、人工复核建带日期的时序知识图谱，按 1-hop/2-hop 模板出题，无证据时正解为 I don't know。题目再做角色语气改写与人名替换/互换。评测按时间顺序逐 session 提问，每 session 一题，只用当时历史，分层采样含 20% 不可答题。模型侧：GroupChat-Mem 以 OpenIE 建关系图 R、原文存会话库 S，查询时从 R 取 2-hop 邻域按 embedding 排序、从 S 按 BM25 与 embedding 各取一半，证据不足则沿 R 逐跳扩展重答。",
+    "results": "多选题、三个骨干下，GroupChat-Mem 在 9 个设定中 8 个最优，最高超最强基线 4.7 分（Friends/Qwen3.5 为 77.83）；但所有记忆系统仍低于 80，与 Oracle 的 91–96 相差约 20 分，检索而非推理是瓶颈。",
+    "limitations": "剧本只是群聊代理，缺错字、表情与异步短反应，且只保留含主角的场景，智能体实际是单一角色视角；人名替换只能量化而无法排除剧情记忆泄漏，开放作答下分数再降 13–29 分。"
+  },
+  "claims": [
+    {
+      "claim": "GroupChat-Mem 在 9 个设定中的 8 个取得最优",
+      "numbers": [
+        "8",
+        "9"
+      ],
+      "source_span": "Section 5.3, first paragraph",
+      "quote": "the best performance in 8 of 9 settings"
+    },
+    {
+      "claim": "相比最强基线最高提升 4.7 分",
+      "numbers": [
+        "4.7"
+      ],
+      "source_span": "Section 5.3, first paragraph",
+      "quote": "by up to 4.7 points"
+    },
+    {
+      "claim": "所有记忆系统均低于 80 分",
+      "numbers": [
+        "80"
+      ],
+      "source_span": "Section 5.3, first paragraph",
+      "quote": "all memory systems remain below 80"
+    },
+    {
+      "claim": "与 Oracle 上界相差约 20 分",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Section 5.3, first paragraph",
+      "quote": "a gap of roughly 20 points"
+    },
+    {
+      "claim": "Oracle 设定下模型得分 91–96",
+      "numbers": [
+        "91",
+        "96"
+      ],
+      "source_span": "Section 5.3, 'Oracle Memory'",
+      "quote": "achieve scores of 91–96"
+    },
+    {
+      "claim": "Friends 数据集、Qwen3.5 骨干下 GroupChat-Mem 取得 77.83 分",
+      "numbers": [
+        "77.83"
+      ],
+      "source_span": "Table 3, row 'GroupChat-Mem', Friends/Qwen3.5",
+      "quote": "77.83 (2.48)"
+    },
+    {
+      "claim": "去掉原始会话库平均损失 19.8 分",
+      "numbers": [
+        "19.8"
+      ],
+      "source_span": "Section 5.3, 'Further Analyses'",
+      "quote": "(-19.8 points on average)"
+    },
+    {
+      "claim": "去掉关系记忆损失 4.6 分",
+      "numbers": [
+        "4.6"
+      ],
+      "source_span": "Section 5.3, 'Further Analyses'",
+      "quote": "costs 4.6 points"
+    },
+    {
+      "claim": "无对话历史的 Direct QA 最高可达 32.3%",
+      "numbers": [
+        "32.3"
+      ],
+      "source_span": "Section 5.3, 'Impact of Pretrained Knowledge'",
+      "quote": "up to 32.3%"
+    },
+    {
+      "claim": "从 Labeled MCQ 换到开放作答后准确率下降 13–29 分",
+      "numbers": [
+        "13",
+        "29"
+      ],
+      "source_span": "Section 5.3, 'Further Analyses'",
+      "quote": "13–29 points"
+    },
+    {
+      "claim": "每个对话流跨越连续五季、约 1300 个 session",
+      "numbers": [
+        "1,300"
+      ],
+      "source_span": "Abstract",
+      "quote": "1,300 sessions"
+    }
+  ]
+}

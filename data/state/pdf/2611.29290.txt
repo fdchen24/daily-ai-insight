@@ -1,0 +1,4700 @@
+Which Failure Does an Intervention Repair? When
+Agent Interventions Help, and Where Self-Evolving Skills
+Stall
+Zihan Jin1
+Gaoyuan Du2*†
+Jiate Li1*
+Dongze Ye1*
+Shawn Li1
+Yue Zhao1
+Defu Cao1
+1University of Southern California
+2Amazon
+An intervention that improves one agent can break another, and adding a stronger harness on top need not
+repair the damage. Agent interventions such as skills, harnesses, and extra inference budget are nonetheless
+usually credited with one average gain, measured under one setup. We ask instead when each intervention
+helps and which failure it repairs. A matched factorial study over nine benchmarks, four models, four skill
+conditions, four harness levels, and three budgets, with nearly 0.9 million trajectories, changes one axis
+at a time. No configuration is best everywhere, interventions interact rather than add, and a harness can
+absorb a skill’s gain, rescue a failure the skill causes, or leave the gain intact. The failure left by the current
+system points to the fix: missing knowledge to a stronger model, execution errors to a richer harness. Yet
+feedback is not recovery: a matched recovery repairs mainly failures that leave a visible error signal. Skills
+that evolve from the agent’s own experience hit a bottleneck: they rarely beat a short human-written skill,
+can learn dataset shortcuts, break when moved to another model, and cannot supply missing facts, which
+outside information does. A benchmark-level switch to the model favored by a 20-task labeled pilot achieves
+both higher performance and lower cost than always using the stronger model. Agent interventions should
+be judged by which failure they repair and under which configuration.
+Keywords:
+{ Date: November 21, 2026
+§ Code: https://github.com/Zihan-Zoe/same-skill-different-harness
+õ Data: https://huggingface.co/datasets/Zihan-Zoe/same-skill-different-harness
+# Contact: zihanjin@usc.edu
+1. Introduction
+Can a skill built for one model break another? A skill optimized for score on Qwen3.5-9B was transferred,
+unchanged, to a stronger model. On Hotpot Context, that model answers 62.0% of questions correctly without
+the skill and 13.6% with it. A stronger harness that feeds back errors and allows a revision does not repair
+it: the score stays at 12.2. The model still knows the answer. In 74.1% of its responses with the skill a
+correct answer is present, against 76.8% without, but the skill makes the model fill its answer field with a
+fact-extraction worksheet instead of the answer. The intervention did not add a capability. It interacted with a
+model it was not built for and with an answer interface that the harness enforces.
+This case is not an anomaly. Modern agents wrap a language model in a stack of interventions: reusable
+skills [35], tool interfaces and execution feedback [40, 44], reflection and revision [23, 33], extra inference
+budget [34], and, increasingly, skills that the agent evolves from its own trajectories [25, 42]. Each new
+intervention is reported as a gain under its authors’ model, harness, and budget. Agent benchmarks score the
+stack as a whole [20, 21, 45]. Neither tells us whether a gain belongs to the intervention, which failure it
+*Listed in alphabetical order by last name.
+†This work does not relate to the author’s position at Amazon.
+1
+arXiv:2611.29290v1  [cs.LG]  22 Nov 2026
+Which Failure Does an Intervention Repair?
+2
+H0
+H1
+H2
+H3
+−20
+0
+20
+40
+60
+Skill gain over NoSkill (points)
++66.2
++2.2
+(a) Skill value moves with the harness
+Absorbed: SQuAD, Trace2Skill
+Rescued: FullWiki, Direct
+Preserved: UCSB SOP, SkillOpt
+SQuAD
+Hotpot
+Context
+Hotpot
+FullWiki
+Spread-
+sheet
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90
+Failures rescued by H2 (%)
+76.9
+63.5
+24.2
+21.5
+1.3
+1.8
+1.5
+17.4
+(b) Signalled failures are rescued more
+Error signal visible
+No error signal
+None
+H1
+SkillOpt
+H1
+SkillOpt
+H2
+SkillOpt
+H3
+None
+Own-
+facts
+skill
+Ask +
+retrieve
+Passages
+always
+0
+20
+40
+60
+80
+100
+Accuracy (%)
+62.0
+13.6
+12.2
+12.2
+5.0
+6.3
+60.0
+72.0
+Hotpot Context, GPT-5.6-sol
+skill built on Qwen3.5-9B
+SimpleQA
+Qwen3.5-9B, H1
+(c) Self-evolved skills stall
+Figure 1. The first three findings at a glance. (a) With Qwen3.5-9B, the same frozen skill can lose its gain as the harness
+rises (absorbed), turn a loss into a gain (rescued), or keep its gain (preserved) (Table 3). (b) Among Qwen3.5-9B H1
+failures, those whose own trajectory shows an error signal are rescued by H2 far more often on the three QA benchmarks,
+but only modestly more often on Spreadsheet (21.5% versus 17.4%) (Section 4). (c) A skill optimized on Qwen3.5-9B
+collapses on GPT-5.6-sol, and richer harnesses do not restore it; on SimpleQA, a skill built from the agent’s own facts
+barely helps, whereas retrieved passages do (Section 5).
+repaired, or whether it survives a change in the rest of the system.
+We therefore ask: when does an intervention help, and which failure does it repair? Answering this
+requires changing one intervention at a time on the same task instances. We build a matched factorial matrix
+over task instance, model, skill, harness, and budget (Section 2): 1,872 test instances from nine benchmarks,
+four models, four skill conditions (no skill, a one-shot self-generated skill, and two self-evolving methods,
+all built by the same model and frozen before testing), four harness levels, and three budgets, each cell run
+three times. The matrix contains nearly 0.9 million trajectories. The study supports four groups of findings,
+summarized in Figure 1.
+• When interventions help (Section 3). No configuration is best everywhere, and interventions interact rather
+than add. Even with the model fixed, a harness can absorb a skill’s gain, rescue a failure the skill causes, or
+leave the gain intact: an 18-word SQuAD skill adds 66.2 points under a minimal harness and 2.2 under
+execution feedback.
+• Which failure they repair (Section 4). The failure left by the current system points to the fix, but feedback is
+not recovery: a matched recovery repairs mainly failures that leave a visible error signal.
+• Where self-evolution stalls (Section 5). Skills evolved from the agent’s own experience rarely beat a short
+human-written skill, can learn dataset shortcuts, break when moved to another model (the opening case),
+and cannot supply missing facts.
+• How to choose an intervention (Section 6). Choosing per task does not pay: neither a router nor escalation
+on failure signals beats a simple fixed configuration. Choosing per benchmark does: a small labeled pilot
+beats always switching to a stronger model at lower cost.
+2. A Matched Factorial Study
+The study crosses five factors (Figure 2). Tasks are 1,872 test instances from nine benchmarks whose
+dominant bottlenecks differ: missing knowledge (SimpleQA), an answer contract (SQuAD), multi-hop
+integration with supplied evidence or with search (Hotpot Context and FullWiki), code (BigCodeBench-Hard),
+procedure following (Amazon SOP and UCSB SOP), spreadsheet manipulation (SpreadsheetBench), and
+multiple-choice mathematics (LiveMathematicianBench). Models are Qwen3.5-9B, Sonnet 4.6, Sonnet 5,
+Which Failure Does an Intervention Repair?
+3
+Figure 2. The matched factorial design. Each comparison changes one axis (model, skill, harness, or budget) on the
+same task instances and holds the others fixed.
+Table 1. The harness ladder. Each level adds one mechanism to the level above it; no level sees evaluator outcomes or
+gold answers.
+H0 Minimal
+The benchmark’s own prompt, with the skill appended when present
+H1 Interface
++ a standardized answer or tool interface with legal-action guidance
+H2 Execution
++ execution errors or observations fed back, with up to three bounded retries
+H3 Reflection
++ one revision of the response or trajectory that does not see the outcome
+and GPT-5.6-sol. Skills are NoSkill; Direct, written in one call from training items; SkillOpt, optimized
+from scored rollouts; and Trace2Skill, distilled from successful and failed trajectories. In the main matrix,
+Qwen3.5-9B builds every skill from training items only, and each skill is frozen and reused unchanged for
+every model; Section 5 adds a stronger constructor, GPT-5.6-sol, on two benchmarks. The harness rises one
+mechanism at a time (Table 1), and the budget sweeps Low, Medium, and High caps on tokens, turns, and
+time for H1 and H2. Every cell is run three times, for nearly 0.9 million trajectories.
+A comparison changes exactly one axis on the same task instances and repeats, so every difference is
+paired. For each failed execution we also record why it failed, using logged errors, evaluator records, and
+answer rules, and we freeze that label before any matched outcome is inspected. An independent judge and
+an author check of 200 sampled labels validate them; LiveMath, whose labels the independent judge does not
+reproduce, is excluded from every failure-conditioned analysis. Appendix A gives each benchmark’s harness
+implementation, budget ceilings, splits, metrics, and statistical methods; Appendix B gives skill construction
+and provenance; and Appendix D.4 gives the failure taxonomy and label validation.
+3. When Interventions Help
+No configuration is best everywhere.
+Across the 512 Default-budget cells (Table 2), the best model
+changes with the benchmark, the skill, and the harness; skills, harnesses, and budgets help on some tasks and
+do little or harm on others; and within one benchmark, the same intervention can help some instances and
+hurt others (Figure 3). On LiveMath with Sonnet 5, Trace2Skill gains 6.60 points on the 53 instances that
+carry a recurring correct answer option and loses 4.93 on the other 71, so its average effect is near zero.
+Which Failure Does an Intervention Repair?
+4
+Table 2. Combined Default-budget Skill × Harness performance matrix. Rows follow the Benchmark × Skill layout;
+columns group each Model into H0–H3 Harness conditions. Each entry is the mean benchmark-native performance
+on a 0–100 scale over three complete repeats. Bold blue, a red-shaded cell , and a box mark the row, block and
+benchmark maxima respectively.
+Benchmark
+Skill / contrast
+Qwen3.5-9B
+Sonnet 4.6
+Sonnet 5
+GPT-5.6-sol
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+Spreadsheet
+NoSkill
+12.5
+9.3 24.9 30.4
+48.6
+49.2
+51.1
+53.1 33.5 31.9 34.5 34.2 35.1 35.0
+36.0 37.5
+Direct
+14.3 13.3 28.6 28.8
+45.8
+43.3
+45.8
+48.9 30.1 31.4 34.0 28.2 33.7 33.0
+35.0 36.0
+SkillOpt
+8.0
+9.3 22.5 26.2
+34.2
+39.6
+40.4
+36.1 30.2 30.5 33.2 29.0 33.3 34.0
+34.8 37.3
+Trace2Skill
+9.3 10.1 22.7 25.1
+34.5
+36.7
+38.0
+39.3 26.1 25.7 26.9 24.5 33.2 33.7
+34.5 36.5
+LiveMath
+NoSkill
+34.1 34.9 34.4 36.3
+31.7
+32.0
+30.9
+31.7 40.1 38.7 37.9 35.2 52.2 53.5
+51.9 49.2
+Direct
+33.3 32.3 33.3 30.9
+28.5
+29.8
+31.5
+29.8 36.3 36.6 38.4 37.4 50.0 51.9
+49.7 51.1
+SkillOpt
+40.3 40.6 39.8 40.6
+31.5
+33.6
+33.1
+35.5 34.7 37.4 37.1 32.5 55.4 55.1
+58.6 54.3
+Trace2Skill 53.2 58.1 56.5 54.6
+33.9
+34.4
+33.6
+37.1 40.6 39.0 36.8 35.5 61.6 62.1
+57.8 60.5
+UCSB SOP
+NoSkill
+52.8 51.0 52.6 59.2
+61.7
+60.2
+60.2
+60.2 66.7 65.9 66.7 64.2 69.9 69.3
+70.3 68.4
+Direct
+54.1 57.5 55.2 60.4
+59.0
+58.7
+59.4
+63.0 66.5 65.5 66.1 61.3 68.2 68.6
+68.2 66.9
+SkillOpt
+66.3 66.3 65.9 62.9
+67.4
+67.2
+65.9
+65.1 68.6 67.8 69.3 67.6 72.6 73.1
+71.6 70.3
+Trace2Skill 62.1 61.9 61.9 62.1
+58.9
+57.5
+60.6
+62.9 65.1 66.1 65.0 64.0 71.8 70.3
+71.2 68.2
+Amazon SOP
+NoSkill
+28.3 33.9 88.6 95.1
+82.7
+82.7 100.0
+99.6
+2.6
+4.2 58.9 87.8 58.5 57.1 100.0 99.0
+Direct
+1.7
+1.7
+1.7
+1.7
+90.8
+80.2
+99.4
+99.2
+2.6
+1.7 85.7 89.5 57.8 57.8
+95.7 99.0
+SkillOpt
+8.8
+6.7 94.8 98.2 100.0 100.0 100.0 100.0
+1.7
+9.0 61.5 80.0 59.1 58.5 100.0 99.3
+Trace2Skill 19.6
+8.6 80.6 93.3
+77.1
+82.9 100.0
+99.9
+9.4
+6.8 58.5 85.1 57.1 55.9
+98.0 99.3
+SimpleQA
+NoSkill
+10.7
+5.1
+4.7
+5.0
+33.8
+30.1
+29.9
+29.7 31.6 29.2 30.4 29.6 69.4
+67.8
+68.0 68.8
+Direct
+8.0
+6.3
+6.1
+6.4
+28.2
+29.7
+30.1
+29.3 27.6 25.0 24.6 25.7 65.0 66.1
+67.0 69.2
+SkillOpt
+11.3
+6.3
+6.3
+5.9
+33.4
+30.1
+30.1
+32.9 27.7 30.9 29.3 30.8 67.6 68.0
+66.6 68.4
+Trace2Skill
+9.9
+6.0
+5.4
+5.6
+33.3
+29.8
+29.0
+31.1 30.3 31.2 31.2 28.0 67.8 67.4
+66.9 68.8
+SQuAD
+NoSkill
+10.7 36.6 78.6 79.3
+0.0
+85.4
+85.6
+86.3
+1.8 90.0 89.0 89.4 23.9 63.4
+63.1 68.3
+Direct
+46.7 76.4 75.9 76.3
+42.4
+80.4
+80.3
+82.0 37.6 89.2 88.3 87.4 59.3 73.6
+74.4 77.2
+SkillOpt
+29.0 77.0 77.6 77.4
+0.0
+82.4
+82.1
+82.6 50.3 87.1 86.9 84.7 49.7 63.8
+64.1 66.6
+Trace2Skill 76.9 55.0 80.8 79.2
+16.1
+86.7
+86.9
+87.2 69.3 91.0 90.6 90.7 72.8 80.6
+80.8 81.1
+Hotpot Context
+NoSkill
+18.6 59.3 59.7 58.6
+0.0
+66.2
+66.2
+67.8
+3.4 64.3 64.6 65.8 22.6 62.0
+61.9 61.3
+Direct
+21.3 55.2 55.3 57.3
+16.6
+66.8
+66.9
+69.2
+9.9 62.9 62.7 64.8 29.7 64.6
+64.3 60.9
+SkillOpt
+0.0 44.0 47.9 59.7
+0.0
+68.2
+68.4
+68.6
+0.0 63.9 63.0 64.9
+0.0 13.6
+12.2 12.2
+Trace2Skill 26.2 58.4 58.6 59.2
+1.0
+68.6
+68.1
+68.7 17.6 62.8 62.1 65.4 28.0 61.6
+62.0 61.3
+Hotpot FullWiki
+NoSkill
+24.2 25.9 26.8 26.9
+29.1
+30.4
+29.3
+31.1 31.1 30.9 31.3 33.2 21.0 22.6
+23.1 19.9
+Direct
+1.4
+3.9 28.4 29.8
+26.7
+26.1
+26.7
+28.0 27.2 26.7 27.8 27.4 27.2 27.2
+27.2 26.8
+SkillOpt
+21.1 24.0 34.9 35.6
+19.8
+20.7
+21.0
+23.9 20.1 24.0 23.6 24.4 15.2 20.0
+17.1 16.8
+Trace2Skill 32.7 34.1 36.0 39.1
+44.0
+41.6
+41.7
+42.7 41.1 45.0 43.2 41.9 31.6 30.1
+32.6 28.9
+Interventions interact rather than add.
+If effects simply added up, each cell’s score would follow from
+a model effect, a skill effect, and a harness effect alone. Letting each pair of axes interact instead predicts
+held-out cells better on seven of eight benchmarks (mean leave-one-cell-out 𝑅2 from 0.729 to 0.812; paired
+sign-flip 𝑝= 0.0078; Appendix Figure 8). Appendix D.3 gives the fitting procedure and the test.
+Skill value moves with the harness.
+The skill–harness interaction is the easiest to trace, because the model
+and the frozen skill stay fixed while the harness rises one mechanism at a time. For Qwen3.5-9B, three
+regimes recur (Table 3).
+• Absorbed. Asked which company won a contest to have its ad shown free during Super Bowl 50, the
+model without a skill answers in a full sentence and fails exact match; with an 18-word skill, “Use only the
+Which Failure Does an Intervention Repair?
+5
+H0
+H1
+H2
+H3
+Harness
+0
+50
+100
+Performance
+(a)
+Qwen3.5-9B
+Sonnet 4.6
+Sonnet 5
+GPT-5.6
+Hotpot
+FullWiki
+Amazon
+SOP
+SimpleQA
+0
+20
+40
+60
+80
+100
+Envelope (points)
+10.6
+0.1
+3.9
+48.0
+7.3
+81.1
+0.1
+(b)
+Skill
+Harness
+Budget
+H0
+H1
+H2
+H3
+Harness
+NoSkill
+Direct
+SkillOpt
+Trace2Skill
+Skill
+12.5
+9.3
+24.9
+30.4
+14.3
+13.3
+28.6
+28.8
+8.0
+9.3
+22.5
+26.2
+9.3
+10.1
+22.7
+25.1
+(c)
+Meta-option
+(n=53)
+All
+(n=124)
+Non-meta
+(n=71)
+−5
+0
+5
+Trace2Skill − NoSkill
++6.6
+0.0
+-4.9
+(d)
+0
+10
+20
+30
+Performance
+Figure 3. Intervention response is heterogeneous. (a) SQuAD without a skill: the best model changes with the harness.
+(b) Within-axis envelopes for three benchmarks: each responds to a different axis. (c) Spreadsheet with Qwen3.5-9B:
+the best skill (outlined) changes with the harness. (d) LiveMath with Sonnet 5: Trace2Skill helps on instances with a
+recurring answer option and hurts on the rest.
+supplied context and return the shortest span that answers the question,” it answers “Death Wish Coffee”.
+At H1 the model without a skill gives the same short answer, because the answer interface imposes the
+same contract. The skill’s gain falls from 66.2 at H0 to 2.2 at H2, and adding H1 to the skill even lowers the
+score from 76.9 to 55.0. Re-scored by whether a response contains a gold answer, NoSkill already reaches
+96.1 at H0: the absorbed gain is answer format.
+• Rescued. On Hotpot FullWiki, Direct leads the agent into repeated malformed actions until the turn limit,
+so its gain is −22.0 at H1. At H2 each malformed action is returned as an error, and the gain becomes +1.7;
+215 of the 221 failure-to-success transitions in this cell follow such feedback.
+• Preserved. On UCSB SOP, the agent without a skill executes a payment whose precondition fails but raises
+no error, so H2 has nothing to feed back. SkillOpt adds the missing check and keeps a 13.3–15.2-point
+gain through H0–H2.
+Across the four models, SQuAD absorption and Hotpot FullWiki preservation recur; the rescued cells are
+specific to Qwen3.5-9B, because the stronger models show no large skill-induced penalty for H2 to remove.
+Extended to the full matrix, the same classification reproduces the Qwen3.5-9B regimes of Table 3 and
+finds 18/96 skill–model–benchmark combinations absorbed, 12/96 preserved, and 4/96 rescued (Table 41).
+Appendix E reports the regimes for every model and the format-versus-content re-scoring.
+Interventions also differ in cost.
+On the six benchmarks with token telemetry, Figure 4 sets each
+intervention’s score change against its change in total tokens on the same cells, for all four models. Direct and
+SkillOpt roughly double token use (median +106% and +94%), leave the score within five points in 69 and
+Which Failure Does an Intervention Repair?
+6
+Table 3. Skill gain over NoSkill at each harness level for Qwen3.5-9B (points, Default budget). The interaction column
+is the change in gain from H0 to the level where the regime appears, with a 95% instance-cluster bootstrap interval.
+Regime
+Benchmark
+Skill
+H0
+H1
+H2
+H3
+Interaction [95% CI]
+Absorbed
+SQuAD
+Trace2Skill
++66.2
++18.4
++2.2
+−0.1
+H2: −64.0 [−69.9, −58.2]
+SQuAD
+Direct
++36.0
++39.9
+−2.7
+−3.0
+H2: −38.7 [−44.6, −32.4]
+Rescued
+Hotpot FullWiki
+Direct
+−22.8
+−22.0
++1.7
++2.9
+H2: +24.4 [+19.1, +29.8]
+Amazon SOP
+SkillOpt
+−19.5
+−27.2
++6.2
++3.0
+H2: +25.7 [+12.1, +39.8]
+Preserved
+Hotpot FullWiki
+Trace2Skill
++8.4
++8.2
++9.2
++12.2
+H2: +0.8 [−2.6, +4.0]
+UCSB SOP
+SkillOpt
++13.5
++15.2
++13.3
++3.6
+H2: −0.2 [−4.8, +4.4]
+Table 4. Room to help on each axis, per benchmark (points). Δ+
+𝑆, Δ+
+𝐻, and Δ+
+𝐵are the largest gains of any alternative
+skill, any harness above H0, and any budget above Low; Δ𝑀is the best-to-worst span across models. Bold blue marks
+the largest envelope per row; the columns are not comparable across axes. ‡Contains native-score floor cells. Relaxed
+Δ+
+𝐻re-scores the same trajectories with a relaxed answer check (SQuAD and Hotpot Context: the response contains a
+gold answer; Amazon SOP: field-level relaxed parser); – not re-scored.
+Benchmark
+Δ+
+𝑆
+Δ+
+𝐻
+Relaxed Δ+
+𝐻
+Δ+
+𝐵
+Δ𝑀
+Spreadsheet
+0.00
+5.54
+–
+4.18
+24.33
+LiveMath
+8.15
+0.79
+–
+2.67
+22.26
+UCSB SOP
+5.55
+0.00
+–
+NA
+10.42
+Amazon SOP‡
+0.00
+48.03
+46.33
+81.13
+53.10
+SimpleQA
+0.13
+0.00
+–
+0.10
+60.85
+SQuAD‡
+17.13
+44.34
+2.12
+0.24
+11.88
+Hotpot Context‡
+1.71
+48.18
+0.00
+0.00
+9.57
+Hotpot FullWiki
+10.58
+3.92
+–
+7.26
+6.99
+61 of 96 comparisons, and when they do move it, hurt about as often as they help (15 better and 12 worse; 14
+and 21). Trace2Skill looks cheap (median +5%) only because on five of these six benchmarks its validation
+gate kept the human-written seed of 17–85 words (Table 10); that seed helps in 28 of 80 comparisons and
+hurts in 4, whereas the evolved LiveMath skill, at 2,603 words, costs a median +195%. The H0→H1 and
+H1→H2 steps are nearly free in median tokens (+2% and +0%), and H1→H2 never lowers the score by five
+points or more, whereas the H3 revision doubles token use (+103%) and helps in only 7. A single accuracy
+number hides these prices.
+Finding 1: Intervention value is conditional
+No configuration is best everywhere, and interventions interact rather than add. A harness can absorb a
+skill’s gain, rescue a failure the skill causes, or leave the gain intact, so a skill gain reported without its
+harness cannot be interpreted.
+4. Which Failure an Intervention Repairs
+The bottleneck points to the axis.
+Averaged over a benchmark, the axis with room to help follows its
+bottleneck (Table 4). SimpleQA moves only with the model (a 60.85-point span across models, against
+at most 0.13 points from any skill), UCSB SOP is led by the skill, and on Spreadsheet and Amazon SOP
+the harness gain sits at the step from H1 to H2, where execution feedback lets a failed step be retried. On
+Which Failure Does an Intervention Repair?
+7
+0.25×
+1×
+4×
+−100
+−50
+0
+50
+100
+Score change (points)
+better 15 · worse 12 · within ±5: 69
+median tokens +106%
+Direct vs NoSkill
+0.25×
+1×
+4×
+better 14 · worse 21 · within ±5: 61
+median tokens +94%
+SkillOpt vs NoSkill
+0.25×
+1×
+4×
+better 37 · worse 4 · within ±5: 55
+median tokens +5%
+human seed
+median +4%
+evolved
+(LiveMath)
+median +195%
+Trace2Skill vs NoSkill
+0.25×
+1×
+4×
+Token ratio (log scale)
+−100
+−50
+0
+50
+100
+Score change (points)
+better 34 · worse 5 · within ±5: 57
+median tokens +2%
+H0 → H1
+0.25×
+1×
+4×
+Token ratio (log scale)
+better 18 · worse 0 · within ±5: 78
+median tokens +0%
+H1 → H2
+0.25×
+1×
+4×
+Token ratio (log scale)
+better 7 · worse 0 · within ±5: 89
+median tokens +103%
+H2 → H3
+Figure 4. Quality and cost of each intervention. Each point is one matched comparison at the Default budget: a skill
+against NoSkill at the same model, benchmark, and harness, or one harness step at the same model, benchmark, and
+skill (96 per panel; four models, six benchmarks). The x-axis is the ratio of mean total tokens per instance; the y-axis is
+the change in native score. Blue and orange points change the score by at least five points up or down; the grey band
+marks ±5. Spreadsheet and UCSB SOP log no tokens and are excluded; for GPT-5.6-sol, whose input-token field is
+not recorded, total tokens are used for every model. The Trace2Skill panel shows the human-written seed on every
+benchmark except LiveMath, where the evolved candidate passed its validation gate.
+SQuAD and Hotpot Context, the large harness gain is answer format: re-scored on answer content, their
+harness envelopes fall from 44.34 to 2.12 and from 48.18 to 0.00, whereas Amazon SOP’s barely moves
+(48.03 to 46.33). The case studies in Appendix G read each benchmark in turn: its expected bottleneck and
+observed failure labels, its best configuration, and the mechanism behind it. Spreadsheet, for example, is
+limited by execution, so a capable model with execution feedback beats any added skill (Appendix G.1),
+whereas SimpleQA moves only with the model (Appendix G.5).
+The residual failure points to the fix.
+We then map each frozen failure label to an axis before loading any
+outcome (procedural to skill; execution, state, and answer contract to harness; reasoning, factual knowledge,
+and abstention to model) and replay every failure under the mapped action and under the other axes (Figure 5).
+Execution failures gain +9.58 points from the harness over the mean of the other axes [+4.77, +13.93], and
+capability failures gain +64.54 from a stronger model [+58.68, +70.16]; both survive the estimated label
+errors. Procedural failures do not map to a skill (+3.77 [−5.66, +14.47]). A stronger model rescues the most
+in every row, but it replaces the agent rather than repairing it; among fixes that keep the model, the richer
+harness is the strongest on execution failures (33.50% against 18.41% for the best alternative). Most failures
+Which Failure Does an Intervention Repair?
+8
+Figure 5. Success under the action mapped from each failure type versus the other axes. Hatched: gain over the
+non-aligned mean not significant.
+stay out of reach: in 59.7% of comparisons, no single tested action reaches success. Appendix D.4 gives the
+root composition and the aligned contrasts, and Appendix D.6 the capability boundaries.
+Feedback is not recovery.
+A matched recovery helps only if the failure travels the whole way from exposure
+to a correct final answer: the error must be exposed to the model, the model must act on it, the fix must work
+locally, and the repaired run must end correct. These stages break in different places. For Qwen3.5-9B at H2,
+BigCode exposes an error in 70–76% of executions, yet the model repairs at most 2% of them, because coarse
+test verdicts do not point to a fix. Spreadsheet repairs about two thirds of the errors it responds to, but only
+about one fifth of those runs end correct, because a local fix rarely makes the whole workbook right. Across
+the four models, H2 rescues 27.1% of the Hotpot FullWiki failures that were visible, actionable, and locally
+correctable, but only 1.3% of such failures on Spreadsheet.
+Recovery needs a visible signal.
+To test this within each benchmark and without using H2 outcomes, we
+code every Qwen3.5-9B H1 failure by its own trajectory: an interface or contract violation, a runtime or tool
+error, or no error signal. Failures with a signal are rescued far more often on SQuAD (76.9% versus 1.3%),
+Hotpot Context (63.5% versus 1.8%), and Hotpot FullWiki (24.2% versus 1.5%), and modestly more often on
+Spreadsheet (21.5% versus 17.4%). BigCode’s signals are visible but rarely acted on, and UCSB SOP shows
+no difference. On SQuAD, 98.7% of H2 rescues come from interface violations, so recovery there is almost
+entirely format repair. Appendix E gives the recovery-stage and signal tables.
+Finding 2: The failure points to the fix, but feedback is not recovery
+Missing knowledge calls for a stronger model, and execution errors call for a richer harness. Even a
+matched recovery repairs a failure only when the error is exposed, the model can act on it, and the
+repair survives to the final answer; it succeeds mainly when the failure leaves a visible signal.
+5. Where Self-Evolving Skills Stall
+Self-evolving skills promise to improve an agent from its own experience without changing the model or the
+harness. The matched design shows four ways in which they fall short, and three experiments test why.
+Four shortfalls.
+• They rarely beat a few human-written lines. Trace2Skill’s evolved candidate does not beat its human-
+written initial skill on five of seven benchmarks, and on the test split that initial skill also beats SkillOpt by
+10–15 points on three QA benchmarks. The few human-written lines are also cheap: where the gate kept
+them, they add a median 4% tokens, whereas the evolved 2,603-word LiveMath skill adds 195% (Figure 4).
+Which Failure Does an Intervention Repair?
+9
+Table 5. Evidence on the skill bottleneck (locked test). (a) Skills rebuilt with GPT-5.6-sol, evaluated on Qwen3.5-9B;
+paired differences from the row reference. (b) Same Qwen3.5-9B constructor, different procedure, averaged over Models;
+bold blue marks the row maximum, and a box and a red-shaded cell mark NoSkill and Direct scores above
+SkillOpt. (c) Rejected Trace2Skill candidates against their human-written seeds, on Qwen3.5-9B. (d) SimpleQA,
+Qwen3.5-9B at H1; Δ against NoSkill.
+(a)
+Benchmark Ref.
+SkillOpt Trace2Skill
+UCSB SOP NoSkill
++5.38
++13.48
+Seed
+−2.71
++5.38
+SimpleQA
+NoSkill
++0.75
++0.61
+Seed
++0.67
++0.09
+(b)
+Benchmark
+NoSkill Direct SkillOpt
+Hotpot Context
+50.14
+51.77
+36.66
+SQuAD
+59.47
+71.73
+66.33
+Spreadsheet
+34.78
+33.15
+29.91
+Hotpot FullWiki
+27.31
+24.28
+22.63
+(c)
+Benchmark
+Seed Cand. Cand. −Seed
+UCSB SOP
+62.00 49.19 −12.81 [−17.76, −8.19]
+Amazon SOP
+50.52 45.38 −5.14 [−16.00, +5.24]
+Hotpot Context
+63.69 61.94 −1.75 [−3.46, +0.05]
+SimpleQA
+6.75
+6.34 −0.41 [−2.00, +1.22]
+SQuAD (F1)
+83.39 85.43 +2.04 [−0.18, +4.29]
+SQuAD (EM)
+72.97 67.03 −5.94 [−9.78, −2.11]
+Hotpot FullWiki 48.95 60.57 +11.62 [+8.11, +15.16]
+(d)
+Skill
+Acc.
+Δ Wrong
+NoSkill
+5.0
+–
+263
+Own-data facts
+6.3
++1.3
+251
+Knowledge boundary
+2.0
+−3.0
+45
++ search on request
+60.0 +55.0
+54
+NoSkill + search always 72.0 +67.0
+34
+• They can learn shortcuts. On LiveMath, where one answer option recurs and is correct whenever present,
+the evolved skill encodes a rule for picking it: for Qwen3.5-9B it raises accuracy from 11.2% to 71.5% on
+the 53 items with that option and lowers it from 52.7% to 43.7% on the other 71.
+• They overfit to the model they were built on. This is the opening case. On Hotpot Context, GPT-5.6-sol
+scores 62.0 at H1 without a skill and 13.6 with the SkillOpt skill optimized on Qwen3.5-9B, which makes
+it fill its answer field with a fact-extraction worksheet; H2 and H3 both stay at 12.2, because the answer
+stays well-formed and the outcome-blind revision does not correct it.
+• They cannot supply missing facts. On SimpleQA, no skill moves accuracy, whereas a stronger model does.
+Why they stall.
+• The constructor may be too weak, but a stronger one is not sufficient. Rebuilding both methods with
+GPT-5.6-sol (Table 5a) lets Trace2Skill beat the human-written skill on UCSB SOP (+5.38 [+1.71,
++9.14]) but makes SkillOpt worse than its Qwen-built version (−6.05), and leaves SimpleQA unchanged.
+• The procedure can be the limit. With the constructor fixed, the one-shot Direct skill beats the iteratively
+optimized SkillOpt skill on four of eight benchmarks (Table 5b), and Trace2Skill’s rejected candidates
+are no better than the human-written seed on five of six (Table 5c).
+• When knowledge is missing, the agent guesses instead of asking, so asking must be designed in. On
+SimpleQA at H1, a skill built from the agent’s own training facts moves accuracy from 5.0% to 6.3%, and a
+short human-written skill that asks the model to request facts it does not recall removes most wrong guesses
+but cannot raise accuracy on its own. When each request is answered with passages from the cited sources,
+the same model reaches 60.0%, and 72.0% when the passages come with every question (Table 5d).
+Which Failure Does an Intervention Repair?
+10
+Appendix C gives the design and full results of the four experiments.
+Finding 3: Self-evolution needs something from outside the agent
+Skills evolved from the agent’s own experience rarely beat a short human-written skill, can learn dataset
+shortcuts, break when moved to another model, and cannot supply missing facts. A stronger constructor
+does not fix this; guidance or information from outside the agent’s experience does.
+6. How to Choose an Intervention
+Two policies that did not pay.
+If the failure points to the fix, a controller could choose the intervention per
+task. A router that chooses an action from the task text, or from a predicted failure type, does not beat the
+fixed Trace2Skill+H2 configuration (39.42% and 40.10% against 45.29%), although an oracle that chooses
+on one repeat and is scored on the others shows that headroom exists (49.24%). Behavior before recovery
+does predict which Qwen3.5-9B H1 failures H2 will rescue (AUROC 0.945, against 0.796 for benchmark
+identity), but escalating only H1 failures reaches 42.1% against 41.6% for always using H2: it cuts regressions
+from 2.20 to 0.87 per 100 instances yet costs 68% more tokens, because H1 must run first. The failure state is
+informative, but a policy that turns it into accuracy or cost gains remains open. Appendices E and F give the
+methods and offline replays.
+A policy that does pay.
+The failure signal is too sparse to choose per task online. Escalating Qwen3.5-
+9B+H2 to a stronger model only when its trajectory ends in a visible error, an abstention, or an over-long
+answer adds about one point, because 89% of its failures at H2 are silent: the signalled ones were already
+retried inside H2 (Appendix F.4, Table 50). Choosing per benchmark from a small labeled pilot works.
+Running Qwen3.5-9B+H2 and a stronger model on 20 labeled tasks, and switching the whole benchmark
+only if the stronger model scores higher on them, reaches 57.4 against 53.5 for always using GPT-5.6-sol, at
+36% lower cost, because the stronger model is worse on some benchmark–skill combinations (on SQuAD,
+for example; Appendix F.4, Table 51). The same pilot gains nothing over always using H2 rather than H1,
+and matches always using H3 at 10% lower cost. Configuration dependence, which makes an average gain
+misleading, is what a benchmark-level pilot exploits (Appendix F.4).
+Finding 4: Choose the intervention per benchmark, not per task
+Per-task signals are too sparse to choose an intervention online: most residual failures at H2 are silent.
+A small labeled pilot per benchmark works: 20 labeled tasks are enough to keep the stronger model
+only where it helps, scoring higher than always switching at 36–42% lower cost.
+7. Discussion
+A diagnostic checklist.
+The findings do not yield a universal ranking, but they do yield an order of questions
+to ask before choosing an intervention (Figure 6). Each step rests on a result above.
+1. Fix the configuration and read the residual failures, not the average gain. A skill gain measured at one
+harness does not survive another (Table 3), so the question is what still fails under the model, harness, and
+budget that will be deployed.
+2. Is the answer or capability missing? Factual, reasoning, and abstention failures respond to a stronger
+model (+64.54 points over the other axes) or to outside information (SimpleQA: 5.0% to 60.0%), not to a
+skill built from the agent’s own experience.
+Which Failure Does an Intervention Repair?
+11
+Fix the configuration;
+collect the residual failures
+1. Is the answer or
+capability missing?
+(factual, reasoning, abstention)
+2. Execution, state, or
+answer-contract error?
+3. Does the error leave a
+visible signal in the trace?
+Stronger model or outside information
+A skill cannot supply it (SimpleQA: 5.0 → 6.3;
+with retrieved passages, 60.0)
+Procedural: try a skill, but test it against
+a short human-written skill and on the
+target model and harness
+Richer harness with execution feedback (H2)
+SQuAD: 76.9% of signalled failures rescued,
+1.3% of silent ones
+Encode the missing check in a skill
+(UCSB SOP: SkillOpt keeps +13.3 at H2)
+yes
+no
+no
+yes
+yes
+no
+Figure 6. A diagnostic flow for choosing an intervention from a system’s residual failures. Each branch cites the result
+it rests on; procedural failures do not map reliably to a skill (+3.77 [−5.66, +14.47]), so a candidate skill must be tested
+against a short human-written one.
+3. Is it an execution, state, or answer-contract error? These respond to a richer harness: among fixes that
+keep the model, H2 rescues 33.50% of execution failures against 18.41% for the best alternative.
+4. Does the error leave a visible signal? Feedback can only return what the trace exposes: failures with a
+signal are rescued far more often (SQuAD: 76.9% versus 1.3%). A silent error, such as a payment whose
+failed precondition raises nothing, needs the check written into a skill (UCSB SOP keeps a 13.3-point gain
+at H2).
+5. Does the repair survive to the final answer? A local fix can still leave the outcome wrong (Spreadsheet),
+and coarse verdicts may not point to a fix at all (BigCode).
+6. Before adopting an evolved skill, compare it with a short human-written skill, test it on the target model
+and harness, and check subsets for shortcuts.
+7. When the right axis is unclear, decide per benchmark from a small labeled pilot.
+Running both
+configurations on 20 labeled tasks and committing the whole benchmark recovers most of the oracle’s
+advantage (Appendix F.4).
+The checklist is a diagnostic for a system designer, not a per-task controller. Per-task policies do not beat a
+fixed configuration. A benchmark-level labeled pilot, by contrast, does (Section 6), but it also cannot reach
+every failure: in 59.7% of comparisons, no single tested action succeeds.
+Limits.
+Skill construction. Main-matrix skills are built by Qwen3.5-9B and reused unchanged, so the
+cross-model results, including the opening collapse, test transfer rather than construction by each model; the
+stronger constructor is tested on two benchmarks only. Model scope. The skill–harness regimes, the signal
+coding, and the pre-recovery prediction use Qwen3.5-9B, and rescue appears only for it. Feedback versus
+retry. H2 bundles error feedback with up to three retries, so their contributions are not separated. Failure
+labels. Only 56.5% of source failures are labeled, the labels are validated at the level of the intervention axis,
+Which Failure Does an Intervention Repair?
+12
+and LiveMath is excluded. Tested space. “Out of reach” means beyond every tested action, at temperature 0
+and with budgets swept only at H1 and H2.
+8. Related Work
+Evaluating agents.
+Agent benchmarks compare model backbones under fixed scaffolds [20, 21, 45], and
+HAL evaluates models, scaffolds, and benchmarks jointly [13]. Others fix the task and vary the agent’s visible
+context [39] or simulated user [14], or check tool actions against executable task contracts [2]. We vary one
+intervention at a time on the same task instances and repeats, so each effect is paired and attributed to one axis.
+Skills and harnesses.
+SkillsBench compares no-skill, curated, and self-generated skills across model–
+harness configurations [18]; SkillLearnBench scores skill generation on the skill, the trajectory, and the
+outcome [49]; Shaposhnikov et al. [32] evaluate about 500 skills across 19 agent–model configurations; and
+Ding et al. [6] survey skill evolution and evaluation. Other work builds skill libraries [31], routes among
+skills [38], and learns the harness from experience [11]; added components can also over-privilege a skill
+[17] or break agent behavior [15, 16]. We evaluate self-evolving methods rather than only curated or one-shot
+skills, and link each effect, gain or loss, to the failure it acts on.
+Feedback, recovery, and asking.
+Intrinsic self-correction often fails without external feedback [10], works
+best with reliable feedback [12], and depends on feedback quality in code [26] and in time-series agents [46].
+Agents can also learn when to ask an expert [41] or a patient [7]. We add stage-wise recovery evidence across
+benchmarks, and show that when knowledge is missing, evolving skills from the agent’s own experience cannot
+repair the failure: the agent guesses, so the missing information must come from outside that experience.
+Allocation and failure diagnosis.
+LLM routers choose which model answers a query [5, 9, 27], or reweight
+a model ensemble over several turns [3], and compute-optimal scaling allocates test-time computation by
+difficulty [34]; we instead fix the model and choose which intervention to apply. Prior work diagnoses
+why agent systems fail [4], when a failure can be caught [47], and whether a change to an agent is safe to
+deploy [48]; we test whether such diagnoses select the fix, and compare per-task with per-benchmark choice:
+switching models per benchmark from a small labeled pilot beats always using the stronger model, at lower
+cost.
+9. Conclusion
+We asked when an agent intervention helps and which failure it repairs, using a matched factorial study that
+changes one axis at a time over nine benchmarks and four models. The answer is conditional but not arbitrary.
+No configuration is best everywhere, and interventions interact rather than add. The failure left by the current
+system points to the axis with room to help, and feedback repairs mainly failures that leave a visible signal.
+Skills evolved from the agent’s own experience stall unless guidance or information comes from outside that
+experience. Finally, the choice of intervention pays off per benchmark rather than per task: a small labeled
+pilot that keeps the stronger model only where it helps beats always using that model, at lower cost.
+How to judge an intervention.
+The same skill can be worth 66 points or 2, and the same feedback can
+repair a failure on one benchmark and none on another. An intervention should therefore be judged not by its
+average gain, but by which failure it repairs and under which configuration. Self-evolving methods should be
+compared against a short human-written skill and tested beyond the model they were built on, and an agent
+Which Failure Does an Intervention Repair?
+13
+that learns from its own experience should also learn when that experience is insufficient and where to look
+[1, 29, 30, 36].
+Contributions.
+Beyond the four findings, this work contributes:
+• A matched factorial protocol that changes one intervention at a time on the same task instances and repeats,
+so every reported gain is paired and attributed to one axis (Section 2).
+• A failure-to-fix analysis: failure labels frozen before any matched outcome is inspected, validated by an
+independent judge and an author check, and replayed under each axis (Section 4).
+• A diagnostic checklist that turns the findings into questions a practitioner can ask of a system’s residual
+failures before choosing an intervention (Figure 6).
+• Reusable assets: the instance-level outcome ledger for all trajectories, the frozen skill artifacts with their
+hashes, the frozen failure labels with the validation sample, the split identifiers, and the scripts that regenerate
+every table and figure. A new intervention can be run on the same instances and compared, pair by pair,
+with every existing cell, without re-running the matrix.
+Reproducibility Statement
+All runs use seed 42 and temperature 0, with thinking disabled for Qwen3.5-9B. Appendix A specifies the
+design matrix, the per-benchmark implementation of each harness level, the budget ceilings, the native
+success thresholds, the execution ledger, and the statistical methods. Appendix A.3 records benchmark
+sources, sample counts, split identifiers, and the train, method-validation, harness-validation, and test partition.
+Appendix B records skill provenance and split isolation, and Appendix D.4 gives the failure taxonomy, label
+sources, and label validation. The code, split identifiers, and frozen skill artifacts with their hashes are
+available at https://github.com/Zihan-Zoe/same-skill-different-harness; the instance-level
+outcome ledger and failure labels are available at https://huggingface.co/datasets/Zihan-Zoe/
+same-skill-different-harness. Benchmark payloads are obtained from their public releases with the
+scripts provided there.
+Ethics Statement
+This work evaluates existing language models on public benchmarks and collects no human-subject or
+personal data; the SOP suites describe operational procedures rather than personal records. We report null
+and negative results, including that most failures are beyond every tested action, that evolved skills can break a
+working system when moved to another model, and that the tested routing and escalation policies do not beat
+a fixed configuration. The frozen skills derive from one model’s trajectories, so reusing them elsewhere may
+transfer that model’s idiosyncrasies. Capability-boundary estimates are specific to the tested configurations
+and should not be read as evidence that any failure is intrinsically unfixable.
+AI Use Statement
+Language models are the object of study: every evaluated configuration is a model execution, the Direct,
+SkillOpt, and Trace2Skill skills are model-generated, GPT-6-sol serves as an independent judge for label
+validation, and an LLM assistant proposed labels that an author reviewed in the label check. The authors also
+used AI assistants for code implementation, prose editing, and checking numerical consistency. All reported
+numbers were verified against the saved run artifacts, and the authors take responsibility for the content.
+Which Failure Does an Intervention Repair?
+14
+References
+[1] Akari Asai, Zeqiu Wu, Yizhong Wang, Avirup Sil, and Hannaneh Hajishirzi. Self-rag: Learning
+to retrieve, generate, and critique through self-reflection. In International Conference on Learning
+Representations, 2024.
+[2] Monojit Banerjee, Zhujun Lan, and Defu Cao. CRM-Agent-Bench: Benchmarking tool-using agents in
+stateful enterprise environments. arXiv:2610.32004, October 2026. URL https://arxiv.org/abs/
+2610.32004.
+[3] Defu Cao, Michael Gee, Jinbo Liu, Hengxuan Wang, Wei Yang, Rui Wang, and Yan Liu. Conversational
+time series foundation models: Towards explainable and effective forecasting. arXiv:2512.16022,
+December 2025. URL https://arxiv.org/abs/2512.16022.
+[4] Mert Cemri, Melissa Z Pan, Shuyi Yang, Lakshya A Agrawal, Bhavya Chopra, Rishabh Tiwari, Kurt
+Keutzer, Aditya Parameswaran, Dan Klein, Kannan Ramchandran, et al. Why do multi-agent llm
+systems fail? Advances in Neural Information Processing Systems, 38, 2026.
+[5] Lingjiao Chen, Matei Zaharia, and James Zou. Frugalgpt: How to use large language models while
+reducing cost and improving performance. arXiv preprint arXiv:2305.05176, 2023.
+[6] Kexin Ding, Yang Zhou, Can Jin, Feng Tong, Mu Zhou, and Dimitris N. Metaxas. Agent skill evaluation
+and evolution: Frameworks and benchmarks. arXiv preprint arXiv:2606.11435, 2026.
+[7] Yicheng Gao, Xiaolin Zhou, Yahan Li, Yue Zhao, and Ruishan Liu. MedExAgent: Training LLM
+agents to ask, examine, and diagnose in noisy clinical environments. arXiv:2605.07058, May 2026.
+URL https://arxiv.org/abs/2605.07058.
+[8] Linyang He, Qiyao Yu, Hanze Dong, Baohao Liao, Xinxing Xu, Micah Goldblum, Jiang Bian, and
+Nima Mesgarani. Livemathematicianbench: A live benchmark for mathematician-level reasoning with
+proof sketches. arXiv preprint arXiv:2604.01754, 2026.
+[9] Qitian Jason Hu, Jacob Bieker, Xiuyu Li, Nan Jiang, Benjamin Keigwin, Gaurav Ranganath, Kurt
+Keutzer, and Shriyash Kaustubh Upadhyay. Routerbench: A benchmark for multi-llm routing system.
+arXiv preprint arXiv:2403.12031, 2024.
+[10] Jie Huang, Xinyun Chen, Swaroop Mishra, Huaixiu Steven Zheng, Adams Wei Yu, Xinying Song, and
+Denny Zhou. Large language models cannot self-correct reasoning yet. In International Conference on
+Learning Representations, 2024.
+[11] Yue Huang, Wenjie Wang, Han Bao, Yuchen Ma, Xiaonan Luo, Yi Nian, Haomin Zhuang, Zheyuan
+Liu, Yue Zhao, and Xiangliang Zhang. MemoHarness: Agent harnesses that learn from experience.
+arXiv:2607.14159, July 2026. URL https://arxiv.org/abs/2607.14159.
+[12] Ryo Kamoi, Yusen Zhang, Nan Zhang, Jiawei Han, and Rui Zhang. When can LLMs actually correct
+their own mistakes? a critical survey of self-correction of LLMs. Transactions of the Association for
+Computational Linguistics, 12, 2024.
+[13] Sayash Kapoor et al. Holistic agent leaderboard: The missing infrastructure for AI agent evaluation. In
+International Conference on Learning Representations, 2026.
+Which Failure Does an Intervention Repair?
+15
+[14] Haoming Li, Defu Cao, Xu Hu, Yingtao Luo, Yiyang Wang, Xianghe Xu, Jiashu He, Wanting Jiang,
+Yifan Zhang, Yunhan Zhao, Siyang Wu, Chen Yang, Haixin Wang, Zheyuan Deng, Taoran Li, Jingwen
+Zhang, Zhejian Peng, Shushu Liang, Yue Zhao, Bingzhe Li, Feng Chen, Yifan Wang, Jintao Huang, Yijun
+Wang, Yuexing Hao, and Xiaomin Li. PersonaCUABench: Benchmarking computer-use agents serving
+diverse personas. arXiv:2610.22990, October 2026. URL https://arxiv.org/abs/2610.22990.
+[15] Shawn Li and Yue Zhao. The autonomy tax: Defense training breaks LLM agents. In Proceedings of
+the 2026 Conference on Empirical Methods in Natural Language Processing, 2026.
+[16] Shawn Li, Chenxiao Yu, Zhiyu Ni, Hao Li, Charith Peris, Chaowei Xiao, and Yue Zhao. Defenses
+against prompt attacks learn surface heuristics. In Proceedings of the 64th Annual Meeting of the
+Association for Computational Linguistics, 2026.
+[17] Shawn Li, Chenxiao Yu, Han Wang, Wei Yang, Ryan Rossi, Franck Dernoncourt, Xiyang Hu, Philip
+Yu, Chaowei Xiao, Huan Zhang, and Yue Zhao. FORTIS: Benchmarking over-privilege in agent skills.
+arXiv:2605.09163, 2026. URL https://arxiv.org/abs/2605.09163.
+[18] Xiangyi Li, Wenbo Chen, Yimin Liu, Shenghan Zheng, Xiaokun Chen, Yifeng He, Yubo Li, et al. Skills-
+bench: Benchmarking how well agent skills work across diverse tasks. arXiv preprint arXiv:2602.12670,
+2026.
+[19] Zekun Li, Shinda Huang, Jiangtian Wang, Nathan Zhang, Antonis Antoniades, Wenyue Hua, Kaijie Zhu,
+Sirui Zeng, Chi Wang, William Yang Wang, et al. Sopbench: Evaluating language agents at following
+standard operating procedures and constraints. arXiv preprint arXiv:2503.08669, 2025.
+[20] Xiao Liu, Hao Yu, Hanchen Zhang, Yifan Xu, Xuanyu Lei, Hanyu Lai, Yu Gu, Hangliang Ding, Kaiwen
+Men, Kejuan Yang, et al. Agentbench: Evaluating llms as agents. In International Conference on
+Learning Representations, volume 2024, pages 52989–53046, 2024.
+[21] Chang Ma, Junlei Zhang, Zhihao Zhu, Cheng Yang, Yujiu Yang, Yaohui Jin, Zhenzhong Lan, Lingpeng
+Kong, and Junxian He. Agentboard: An analytical evaluation board of multi-turn llm agents. Advances
+in neural information processing systems, 37:74325–74362, 2024.
+[22] Zeyao Ma, Bohan Zhang, Jing Zhang, Jifan Yu, Xiaokang Zhang, Xiaohan Zhang, Sijia Luo, Xi Wang,
+and Jie Tang. Spreadsheetbench: Towards challenging real world spreadsheet manipulation. Advances
+in Neural Information Processing Systems, 37:94871–94908, 2024.
+[23] Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah Wiegreffe, Uri
+Alon, Nouha Dziri, Shrimai Prabhumoye, Yiming Yang, et al. Self-refine: Iterative refinement with
+self-feedback. Advances in neural information processing systems, 36:46534–46594, 2023.
+[24] Subhrangshu Nandi, Arghya Datta, Rohith Nama, Udita Patel, Nikhil Vichare, Indranil Bhattacharya,
+Shivam Asija, Arushi Gupta, Giuseppe Carenini, Jing Xu, et al. Sop-bench: Complex industrial sops for
+evaluating llm agents. In Proceedings of the 32nd ACM SIGKDD Conference on Knowledge Discovery
+and Data Mining V. 2, pages 9604–9615, 2026.
+[25] Jingwei Ni, Yihao Liu, Xinpeng Liu, Yutao Sun, Mengyu Zhou, Pengyu Cheng, Dexin Wang, Erchao
+Zhao, Xiaoxi Jiang, and Guanjun Jiang. Trace2skill: Distill trajectory-local lessons into transferable
+agent skills. arXiv preprint arXiv:2603.25158, 2026.
+Which Failure Does an Intervention Repair?
+16
+[26] Theo X. Olausson, Jeevana Priya Inala, Chenglong Wang, Jianfeng Gao, and Armando Solar-Lezama. Is
+self-repair a silver bullet for code generation? In International Conference on Learning Representations,
+2024.
+[27] Isaac Ong, Amjad Almahairi, Vincent Wu, Wei-Lin Chiang, Tianhao Wu, Joseph E. Gonzalez, M. Waleed
+Kadous, and Ion Stoica. Routellm: Learning to route llms from preference data. In International
+Conference on Learning Representations, 2025.
+[28] Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. Squad: 100,000+ questions for
+machine comprehension of text. In Proceedings of the 2016 conference on empirical methods in natural
+language processing, pages 2383–2392, 2016.
+[29] Allen Z. Ren, Anushri Dixit, Alexandra Bodrova, Sumeet Singh, Stephen Tu, Noah Brown, Peng Xu,
+Leila Takayama, Fei Xia, Jake Varley, Zhenjia Xu, Dorsa Sadigh, Andy Zeng, and Anirudha Majumdar.
+Robots that ask for help: Uncertainty alignment for large language model planners. In Conference on
+Robot Learning, pages 661–682, 2023.
+[30] Timo Schick, Jane Dwivedi-Yu, Roberto Dessì, Roberta Raileanu, Maria Lomeli, Eric Hambro, Luke
+Zettlemoyer, Nicola Cancedda, and Thomas Scialom. Toolformer: Language models can teach
+themselves to use tools. In Advances in Neural Information Processing Systems, 2023.
+[31] Tianming Sha, Yue Zhao, Lichao Sun, and Yushun Dong. SkillCenter: A large-scale source-grounded
+skill library for autonomous AI agents. arXiv:2607.07676, July 2026. URL https://arxiv.org/
+abs/2607.07676.
+[32] Maksim Shaposhnikov et al. A framework for evaluating agentic skills at scale. arXiv preprint
+arXiv:2606.17819, 2026.
+[33] Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik Narasimhan, and Shunyu Yao. Reflexion:
+Language agents with verbal reinforcement learning. Advances in neural information processing systems,
+36:8634–8652, 2023.
+[34] Charlie Snell, Jaehoon Lee, Kelvin Xu, and Aviral Kumar. Scaling llm test-time compute optimally
+can be more effective than scaling parameters for reasoning. In International Conference on Learning
+Representations, volume 2025, pages 10131–10165, 2025.
+[35] Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Mandlekar, Chaowei Xiao, Yuke Zhu, Linxi Fan, and
+Anima Anandkumar. Voyager: An open-ended embodied agent with large language models. arXiv
+preprint arXiv:2305.16291, 2023.
+[36] Xingyao Wang, Zihan Wang, Jiateng Liu, Yangyi Chen, Lifan Yuan, Hao Peng, and Heng Ji. Mint:
+Evaluating llms in multi-turn interaction with tools and language feedback. In International Conference
+on Learning Representations, 2024.
+[37] Jason Wei, Nguyen Karina, Hyung Won Chung, Yunxin Joy Jiao, Spencer Papay, Amelia Glaese, John
+Schulman, and William Fedus. Measuring short-form factuality in large language models. arXiv preprint
+arXiv:2411.04368, 2024.
+Which Failure Does an Intervention Repair?
+17
+[38] Wang Wei, Tiankai Yang, Samyadeep Basu, Hongjie Chen, Yue Zhao, Zhengzhong Tu, Xiyang Hu,
+Franck Dernoncourt, Ryan A. Rossi, and Hoda Eldardiry. Beyond top-𝑘skill retrieval: Diversity-aware
+skill routing for LLM agents. arXiv:2609.05824, September 2026. URL https://arxiv.org/abs/
+2609.05824.
+[39] Muyan Weng, Defu Cao, Wei Yang, Yashaswi Sharma, and Yan Liu. TemporalBench: A benchmark for
+evaluating LLM-based agents on contextual and event-informed time series tasks. In Proceedings of the
+32nd ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2, pages 9997–10008.
+ACM, August 2026. doi: 10.1145/3770855.3817485. URL https://doi.org/10.1145/3770855.
+3817485.
+[40] John Yang, Carlos Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan, and
+Ofir Press. Swe-agent: Agent-computer interfaces enable automated software engineering. Advances in
+Neural Information Processing Systems, 37:50528–50652, 2024.
+[41] Wei Yang, Defu Cao, Jiacheng Pang, Muyan Weng, and Yan Liu. Adaptive collaboration with humans:
+Metacognitive policy optimization for multi-agent LLMs with continual learning. In The Fourteenth
+International Conference on Learning Representations, 2026. URL https://openreview.net/
+forum?id=IKVUB9Exuc.
+[42] Yifan Yang, Ziyang Gong, Weiquan Huang, Qihao Yang, Ziwei Zhou, Zisu Huang, Yan Li, Xuemei
+Gao, Qi Dai, Bei Liu, et al. Skillopt: Executive strategy for self-evolving agent skills. arXiv preprint
+arXiv:2605.23904, 2026.
+[43] Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William Cohen, Ruslan Salakhutdinov, and
+Christopher D Manning. Hotpotqa: A dataset for diverse, explainable multi-hop question answering.
+In Proceedings of the 2018 conference on empirical methods in natural language processing, pages
+2369–2380, 2018.
+[44] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. React:
+Synergizing reasoning and acting in language models. arXiv preprint arXiv:2210.03629, 2022.
+[45] Shunyu Yao, Noah Shinn, Pedram Razavi, and Karthik Narasimhan. 𝜏-bench: A benchmark for
+tool-agent-user interaction in real-world domains. arXiv preprint arXiv:2406.12045, 2024.
+[46] Wen Ye, Wei Yang, Defu Cao, Yizhou Zhang, Lumingyuan Tang, Jie Cai, and Yan Liu. TS-Reasoner:
+Domain-oriented time series inference agents for reasoning and automated analysis. Transactions on Ma-
+chine Learning Research, March 2026. URL https://openreview.net/forum?id=yhy7Vigjcf.
+[47] Yue Zhao, Mengyuan Li, Ruolin Li, Prince Zizhuang Wang, Shuli Jiang, Linsey Pang, Xiongye Xiao,
+and Xiyang Hu. CatchBench: When can an agent failure be caught? arXiv:2608.22808, August 2026.
+URL https://arxiv.org/abs/2608.22808.
+[48] Yue Zhao, Zixiang Xu, Angela Huyue Zhang, S. Alex Yang, and Xiyang Hu. agent-risk: Risk assessment
+for changes to AI agents. arXiv:2610.16280, October 2026. URL https://arxiv.org/abs/2610.
+16280.
+[49] Shanshan Zhong, Yi Lu, Leonardo F. R. Ribeiro, et al. Skilllearnbench: Benchmarking continual
+learning methods for agent skill generation on real-world tasks. arXiv preprint arXiv:2604.20087, 2026.
+Which Failure Does an Intervention Repair?
+18
+[50] Terry Yue Zhuo, Minh Chien Vu, Jenny Chim, Han Hu, Wenhao Yu, Ratnadira Widyasari, Imam
+Nur Bani Yusuf, Haolan Zhan, Junda He, Indraneil Paul, et al. Bigcodebench: Benchmarking code
+generation with diverse function calls and complex instructions. In International Conference on Learning
+Representations, volume 2025, pages 66602–66656, 2025.
+Which Failure Does an Intervention Repair?
+19
+Figure 7. Skill construction pathways. Direct synthesizes a procedure from prior knowledge without rollout evidence;
+SkillOpt optimizes a procedure using scored outcomes; and Trace2Skill distills a reusable procedure from execution
+trajectories.
+A. Experimental Details and Measurement Definitions
+Design Matrix.
+We organize the matched study as 𝑇× 𝑀× 𝑆× 𝐻× 𝐵, use three repeats per available cell,
+and hold task instances, frozen Skill artifacts, and evaluators fixed. Figure 2 summarizes the matrix; the
+remainder of this section reports the intervention definitions, task-property annotations, execution ledger,
+protocol details, and uncertainty calibration.
+A.1 Intervention Axes
+A.1.1
+Model (𝑀)
+Table 6. Model axis. Qwen3.5-9B also constructs every Direct, SkillOpt, and Trace2Skill artifact, so the API
+models test whether a frozen skill transfers to stronger targets.
+Model
+Access
+Role
+Qwen3.5-9B
+Local server
+Target; skill constructor; root-label judge
+Claude Sonnet 4.6
+API
+Target
+Claude Sonnet 5
+API
+Target
+GPT-5.6-sol
+API
+Target
+A.1.2
+Skill (𝑆)
+Table 7 states what each condition isolates, and Figure 7 shows the construction pathways. Tables 8–10 give
+the construction settings, the Direct inputs and prompt, and the Trace2Skill validation-gate outcomes.
+The shared Direct prompt reads: “Create one concise, reusable domain skill in Markdown from the
+frozen training catalog below. Do not solve or enumerate individual examples. Synthesize general procedures,
+checks, output discipline, and common failure avoidance. This is a single Direct-Synthesis call: no rollout,
+Which Failure Does an Intervention Repair?
+20
+Table 7. Skill construction conditions. The Outcome feedback column indicates whether scored outcomes directly drive
+optimization; Trace2Skill distills execution experience rather than primarily optimizing a procedure against validation
+scores. All constructed Skill artifacts are frozen before downstream evaluation. All constructed artifacts are built by
+Qwen3.5-9B on the training split (Table 8). All frozen artifacts are transferred unchanged across target Models.
+Condition
+Rollout
+evidence
+Outcome feedback
+Construction
+What it isolates
+NoSkill
+No
+No
+None
+Base model + harness capability
+Direct
+No
+No
+One-shot synthesis
+Value of prior-only procedural guidance
+SkillOpt
+Yes
+Yes
+Iterative optimization
+Value of outcome-guided skill learning
+Trace2Skill
+Yes
+Not primarily
+optimization-driven
+Trajectory distillation
+Value of experience-derived reusable procedures
+Table 8. Skill construction settings. All constructed skills are frozen before evaluation and transferred unchanged to
+every Model.
+Condition
+Constructor
+Construction input
+Selection
+Direct
+Qwen3.5-9B, one call (temperature 0,
+thinking disabled, seed 42)
+Frozen catalog of training items only
+(Table 9)
+None: no rollouts, feedback, or validation gate
+SkillOpt
+Qwen3.5-9B as rollout model and opti-
+mizer
+Scored training rollouts
+Step patches gated on method validation
+Trace2Skill
+Qwen3.5-9B as rollout model, error/suc-
+cess analyst, and merge model
+Successful and failed training trajec-
+tories
+Kept only if it strictly beats its human-written
+initial skill on method validation (Table 10)
+Table 9. Direct construction input. No validation, Harness-validation, or test item enters any catalog, and no gold
+workbook enters the Spreadsheet catalog.
+Benchmark
+Catalog of training items
+SimpleQA, SQuAD, Hotpot
+Question, context or evidence where applicable, and reference answer
+Amazon SOP
+Training items, with the official SOP text appended to the prompt
+Spreadsheet
+Instruction and task type of the 80 training items
+LiveMath, UCSB SOP
+Training items, with a benchmark-specific variant of the prompt
+execution feedback, validation gate, retrieval, or later update. Return only the Markdown skill.” Spreadsheet,
+LiveMath, and UCSB SOP use benchmark-specific variants of the same instruction; all prompts are included
+in the released code.
+Table 10. Trace2Skill validation gate. Scores are on the small method-validation split (0–1). The evolved candidate is
+kept only if it strictly beats its initial skill, a short human-written skill of 17–85 words; otherwise the frozen artifact is
+that initial skill. The Hotpot gate uses the FullWiki view.
+Benchmark
+Initial skill
+Evolved candidate
+Frozen artifact
+UCSB SOP
+0.40
+0.35
+Initial skill
+Hotpot
+0.55
+0.50
+Initial skill
+SQuAD
+0.80
+0.75
+Initial skill
+Amazon SOP
+0.00
+0.00
+Initial skill
+SimpleQA
+0.10
+0.10
+Initial skill
+Spreadsheet
+–
+–
+Evolved
+LiveMath
+0.30
+0.80
+Evolved
+Spreadsheet has no method-validation scores because it follows the original Trace2Skill design, which
+Which Failure Does an Intervention Repair?
+21
+Table 11. Harness implementation per benchmark. No level exposes evaluator outcomes or gold answers; a privileged
+diagnostic branch that does is excluded from every analysis. Ceilings are those of the Budget axis (Table 13).
+Benchmark
+H0
+H1
+H2
+H3
+Ceilings that bind
+SQuAD, Hotpot
+Context,
+Sim-
+pleQA
+Benchmark
+instruction
+and question (plus pas-
+sages, if any), skill ap-
+pended; no answer for-
+mat, so the whole re-
+sponse is scored
+Fixed
+skill
+package
+block;
+<answer> con-
+tract:
+shortest
+span
+(SQuAD, Hotpot) or a
+concise answer with an
+explicit “I don’t know”
+option (SimpleQA)
+Fixed re-ask, only when
+no valid <answer> field
+is found; at most three re-
+asks; no correctness sig-
+nal
+One fixed outcome-blind
+reflection after H2; the
+revision replaces the an-
+swer only if it parses
+Tokens
+per
+call;
+turns cap only the
+re-asks; per-request
+timeout
+LiveMath
+System prompt already
+requires one choice la-
+bel in <answer> at every
+level; skill appended
+Same prompt; skill in the
+fixed package block
+Re-ask when the parsed
+label is not a valid choice
+(at most three)
+One outcome-blind re-
+flection, if turns remain
+Tokens; turns cap
+re-asks
+Spreadsheet
+One
+code
+generation
+from the raw skill pack-
+age
+Same, with the standard-
+ized package
+Generated code is exe-
+cuted and the execution
+error is fed back (up to
+three turns by default)
+One reflection over the
+code plus an output pre-
+view or the execution er-
+ror
+Tokens, turns, time-
+out
+UCSB SOP
+Official tool environment,
+run once, raw package
+Standardized
+package
+text
+Native tool errors re-
+turned, with up to three
+recovery attempts
+One trajectory reflection,
+then a replay from reset
+Tokens, turns, time-
+out
+Amazon SOP
+Strict action loop; the first
+invalid action ends the
+episode
+Standardized package
+Rejected or failed actions
+fed back, with up to three
+recoveries
+Reflection, then a replay
+from reset
+Tokens, turns, time-
+out
+Hotpot FullWiki
+Retrieval-tool
+protocol
+and <answer> required
+at every level; tool errors
+appear only as “Tool ac-
+tion failed.”
+Standardized package
+The actual tool exception
+text (e.g., unknown title),
+plus up to three re-asks
+for a missing final answer
+One reflection
+Tokens, turns, time-
+out; tool-call and
+total-call caps bind
+at Low
+uses the evolved skill directly.
+A.1.3
+Harness (𝐻)
+A Harness changes the information and actions available during execution rather than supplying a reusable
+task policy. Table 1 defines the four levels; Table 11 gives their implementation on every benchmark. H1
+targets interface and answer-contract compatibility, whereas H2 jointly changes failure observability and the
+opportunity to act on it, so an H2 gain cannot be attributed separately to error exposure or retry. H3 tests
+whether one additional outcome-blind revision improves a completed response or trajectory.
+On single-turn QA, H1 adds the answer interface, H2 re-asks only when that interface is not satisfied,
+and H3 always adds one revision pass that can change the answer. On SQuAD, for example, the H2
+message is: “The answer interface was empty or invalid. Return one concise context-supported span inside
+<answer>...</answer>.”
+A.1.4
+Budget (𝐵)
+Low, Medium, and High ceilings are crossed only with H1 and H2; H0–H3 are also evaluated under each
+benchmark’s historical Default configuration, which is not relabeled Medium. The sweep jointly raises
+completion-token, turn, and timeout ceilings (Table 12), so its effects cannot be attributed to tokens alone;
+these are resource allowances, not observed consumption or reasoning-effort settings. Historical UCSB Low
+restricts workflow feasibility; the separately recorded protocol-preserving corrected Low reduces only the
+token cap and retains its reference turns, tools, and timeout, so the two endpoints are not interchangeable.
+Which Failure Does an Intervention Repair?
+22
+Table 12. Nominal resource ceilings in the Low/Medium/High sweep.
+Budget
+Completion tokens
+Turns
+Timeout (s)
+Low
+4,096
+3
+120
+Medium
+16,384
+30
+360
+High
+32,768
+60
+720
+Table 13. How the Budget ceilings bind on single-turn QA (SQuAD, Hotpot Context, SimpleQA). This matches their
+near-zero Budget envelopes.
+Ceiling
+Effect on single-turn QA
+Completion tokens
+Applies to every call
+Turns
+Caps only the number of H2 re-asks (two at Low, three otherwise)
+Timeout
+Per-request client timeout
+Matched intervention and root-cause protocol.
+For each intervention, we compare matched task-instance–
+model configurations while changing one axis and holding the rest of the execution condition fixed. For the
+failure analysis, we assign 2,225 failed source executions to eight root-cause categories using the earliest
+decisive cause supported by the trajectory; Table 33 defines those categories. The source label is frozen
+before matched target outcomes are inspected. Benchmark-specific deterministic checks support the label
+when possible; cases requiring additional interpretation use an AgentRx-inspired constraint-grounded judge.
+Two properties of this labeling limit what it can support. The judge is Qwen3.5-9B, which is also one of the
+four evaluated models and the model whose training executions produced every SkillOpt and Trace2Skill
+artifact, so on one quarter of the matrix it attributes causes to its own failures. Only the 305 LiveMath labels
+come from this judge (Appendix D.4.1), and an independent judge does not reproduce them, so LiveMath is
+excluded from every root-conditioned analysis; Appendix D.4.2 reports the independent-judge and author
+validations of the remaining labels. We therefore treat model-assisted labels as hypotheses throughout and
+mark them as such in every table; Section D.4 gives the definitions and the evidence boundary.
+Measurement validity.
+An unchanged-configuration repeat comparison (A/A) compares repeated executions
+of the same task instance to measure variation without an intervention. Noise-qualified improvement must
+exceed the corresponding A/A tolerance, whereas success requires reaching the benchmark’s native success
+threshold. Section A.6 distinguishes these criteria and documents label coverage, budget limits, and the
+calibration status of the reported descriptive results.
+A.2 Per-Benchmark Capabilities
+Table 14 reproduces the compact benchmark-property summary here for local reference. These columns are
+human-authored design annotations used to diversify benchmark selection before any execution; they are
+not trajectory-derived root labels and enter no root-cause analysis, so the Expected bottleneck and Expected
+intervention entries can be read against the measured results without circularity. Table 15 lists the primary
+capability each benchmark exercises.
+A.3 Benchmark Samples and Frozen Splits
+Table 16 reports every sample used for Skill construction, method selection, Harness qualification, and final
+evaluation. Method validation selects or accepts Skill artifacts; Harness validation qualifies execution code
+Which Failure Does an Intervention Repair?
+23
+Table 14. Human-authored descriptive task properties and task-structure intervention hypotheses used to diversify
+benchmark selection. These annotations are not trajectory-derived root labels and are not used as evidence in the
+root-cause analysis. Proc. = procedural; Fb. = feedback; Med. = medium. “Expected intervention” records a design
+hypothesis, not an observed winner.
+Benchmark
+Proc.
+Tool/ Horizon
+Fb.
+Fb.
+Expected bottleneck
+Expected intervention
+demand
+state
+demand avail.
+Spreadsheet
+Med.
+High
+Med.
+High
+High
+Execution/tool
+H2; H3
+LiveMath
+Low
+Low
+Med.
+Low
+Low
+Reasoning/decision rule
+Skill; Model
+UCSB SOP
+High
+High
+Med.
+High
+High
+Procedural
+Skill; H2
+Amazon SOP
+High
+High
+High
+High
+High
+Execution/tool; horizon
+H2; H3; Budget
+SimpleQA
+Low
+Low
+Low
+Low
+Low
+Factual knowledge/recall
+Model
+SQuAD
+Low
+Low
+Low
+Low
+High
+Evaluation/answer contract
+H1
+Hotpot Context
+Low
+Low
+Med.
+Low
+Med. Evaluation/answer contract
+H1
+Hotpot FullWiki
+Med.
+High
+High
+High
+Med. Horizon/termination
+Skill; H2; Budget
+Table 15. Primary capability exercised by each benchmark.
+Benchmark
+Primary capability
+SpreadsheetBench [22]
+multi-step, state-changing spreadsheet edits issued through a tool; stresses execution and tool-use
+reliability under an evolving workbook state
+LiveMathematicianBench [8]
+recent multiple-choice mathematical reasoning; stresses reasoning together with a reusable
+answer-selection regularity, namely a recurring meta-option that is systematically correct when
+present
+UCSB SOPBench [19]
+long, constraint-sensitive standard operating procedures executed against state; stresses procedural
+compliance, step ordering, and constraint verification
+Amazon SOP [24]
+a long, state-changing inspection workflow with many tool calls; stresses execution reliability and
+path feasibility over a long horizon
+SimpleQA [37]
+short-form factual questions with no supplied evidence; stresses parametric factual recall and
+calibrated abstention
+SQuAD [28]
+extractive question answering with the evidence passage supplied; stresses answer-contract and
+interface compliance rather than retrieval
+HotpotQA, provided-context [43]
+multi-hop questions with gold and distractor paragraphs supplied; stresses multi-hop evidence
+integration under a fixed answer contract
+HotpotQA, full-wiki [43]
+the same questions with only a frozen Wikipedia index; adds retrieval-policy, grounding, and
+horizon demands on top of evidence integration
+BigCodeBench-Hard [50]
+program synthesis executed against held-out tests; stresses code generation with executable
+feedback.; appendix-only, since its evaluator environment is not fully comparable across Models
+Which Failure Does an Intervention Repair?
+24
+Table 16. Benchmark sample and split accounting. Used is the number of distinct task instances assigned to the
+four experimental roles, before multiplying by Models, Skills, Harnesses, Budgets, or repeats. Hotpot Context and
+FullWiki are two execution settings over the same UID split and are therefore listed separately but do not represent
+disjoint questions. All project-defined sampling uses seed 42. For SQuAD and HotpotQA, the two source-pool numbers
+denote the official training and development/validation pools. Amazon has 12 additional audit-reserve examples that are
+excluded from the four experimental roles. BigCodeBench is appendix-only because its evaluator environment is not
+fully comparable across Models.
+Benchmark
+Source pool
+Train
+Method val.
+Harness val.
+Test
+Used
+SpreadsheetBench
+400
+80
+24
+16
+280
+400
+LiveMathematicianBench
+177
+35
+10
+8
+124
+177
+UCSB SOP
+830
+70
+20
+15
+175
+280
+Amazon SOP
+112
+30
+10
+10
+50
+100
+SimpleQA
+4,326
+70
+20
+15
+300
+405
+SQuAD
+87,599+10,570
+70
+20
+15
+300
+405
+Hotpot Context
+90,447+7,405
+70
+20
+15
+300
+405
+Hotpot FullWiki
+90,447+7,405
+70
+20
+15
+300
+405
+BigCodeBench-Hard
+148
+70
+20
+15
+43
+148
+and interfaces without selecting Skill content; the locked test split is used only for final evaluation. We provide
+machine-readable split_manifest.json files and ordered ids.json files for every role, including the
+split seed, source revision, and SHA-256 hashes. Where redistribution is permitted, the archive also provides
+the corresponding items.json. These files reproduce the exact task-instance membership and ordering used
+in the experiments and permit direct overlap checks across roles.
+SpreadsheetBench.
+We use the verified 400-instance release at the frozen source revision. Its 80/40/280
+source train/validation/test partition is preserved, with the 40 validation instances divided into 24 method-
+validation and 16 Harness-validation instances. The 280-instance test set remains locked. Spreadsheet skill
+provenance is described in Section B.
+LiveMathematicianBench.
+We deterministically partition the 177 questions from four monthly releases
+with a 2:1:7 train/validation/test ratio and seed 42, yielding 35/18/124 task instances. The 18 validation
+questions are divided in source order into ten method-validation and eight Harness-validation instances.
+UCSB SOP.
+From the 830 released SOPBench instances, we freeze 280 examples using deterministic
+balancing over domain, path length, constraint complexity, tool-call demand, outcome type, and SOP branch.
+The split contains 70 training, 35 validation, and 175 locked test examples, with 25 test examples from each
+of seven domains. The validation set is partitioned into 20 method-validation and 15 Harness-validation
+examples.
+Amazon SOP.
+The aircraft-inspection configuration contains 112 released examples. Because the official
+release is test-only, we define project roles with seed 42: 30 training, ten method-validation, ten Harness-
+validation, and 50 test examples. The remaining 12 form an audit reserve and are not included in the factorial
+evaluation.
+SimpleQA.
+The official release contains 4,326 test-only questions. We use seed 42 and stratify by topic and
+answer type to select 405 disjoint examples: 70 training, 20 method-validation, 15 Harness-validation, and
+300 locked test questions. The remaining 3,921 questions are not used.
+Which Failure Does an Intervention Repair?
+25
+SQuAD.
+Training and validation roles are sampled from the 87,599-question official training set, using
+one question per development article and stratification by question type and answer-length bucket. The
+70/20/15 training, method-validation, and Harness-validation examples are article-disjoint. The 300 locked
+test questions come from the 10,570-question official development set and cover all 48 development articles.
+Hotpot Context.
+We sample 405 question UIDs with seed 42 from the official distractor configuration:
+70 training, 20 method-validation, 15 Harness-validation, and 300 test questions. This setting supplies the
+official gold and distractor paragraphs to the agent.
+Hotpot FullWiki.
+FullWiki reuses exactly the same 405 UIDs and role assignments as Hotpot Context, but
+supplies only the question and permits retrieval from a frozen local 2017 Wikipedia index; gold titles are not
+used to construct that index. Exact UID pairing makes differences between the two settings attributable to
+evidence access rather than question sampling.
+BigCodeBench.
+We use all 148 task instances in BigCodeBench-Hard v0.1.4 and define disjoint roles of
+70/20/15/43 with seed 42. Agent-visible prompts and evaluator-private solutions/tests are stored separately.
+BigCodeBench is retained as appendix evidence because its evaluator environment is not fully comparable
+across Models.
+Evaluation and aggregation.
+Every benchmark retains its native evaluator and success semantics. Native
+scores are never pooled directly across benchmarks; cross-benchmark summaries use equal-weight macro
+averaging so that large test sets do not dominate. Exact evaluator versions and instance UIDs are tied to the
+released split manifests and execution ledger.
+A.4 Execution ledger
+Table 17 states the nominal size of the full nine-benchmark study. The eight primary comparable benchmarks
+contribute 1,829 test instances, and appendix-only BigCode contributes 43, for 1,872 test instances in total.
+A small number of cells are unavailable rather than executed, most notably the protocol-preserving Low
+endpoints for the three API models on UCSB SOP, so the realized total is slightly below the nominal one.
+A.5 Evaluation Metrics and Statistical Abbreviations
+We distinguish benchmark performance, matched intervention response, success, interaction, predictive
+discrimination, and routing cost. Let 𝑌𝑖(𝑐) ∈[0, 1] be the native evaluator outcome for task instance 𝑖under
+configuration 𝑐; tables and figures report 100𝑌unless stated otherwise. A cell mean averages 𝑌𝑖(𝑐) over its
+task instances and three repeated executions. A matched intervention change is
+Δ𝑖,𝑎= 𝑌𝑖(𝑐+ 𝑎) −𝑌𝑖(𝑐),
+(1)
+where the task instance and all axes other than intervention 𝑎are held fixed. Positive observed change, change
+exceeding execution noise, and crossing the benchmark’s success threshold are separate events; Section A.6
+defines the latter two and states their calibration status.
+For matched marginal summaries, let ¯𝑌𝑠, ¯𝑌ℎ, ¯𝑌𝑏, and ¯𝑌𝑚denote balanced marginal means. We report four
+Which Failure Does an Intervention Repair?
+26
+Table 17. Nominal execution ledger over all nine benchmarks (1,872 test instances). BigCode is retained as appendix-
+only evidence; derived main-analysis cohorts use the eight comparable benchmarks. 𝑎Four Models × four Skills ×
+H0–H3 × three repeats. 𝑏Four Models × four Skills × H1/H2 × three Budgets × three repeats. The same formulas
+include the 43 BigCode test instances in the nominal nine-benchmark count; BigCode remains excluded from primary
+comparative analyses because its evaluator environment is not fully comparable across models. Qwen3.5-9B was served
+locally, so its executions have no per-token API price and no comparable latency or dollar ledger. Wall-clock and
+accelerator hours were not logged uniformly across the campaign and we do not report them.
+Quantity
+Count
+Primary comparable test instances
+1,829
+BigCode appendix test instances
+43
+All test instances
+1,872
+Default matrix executions𝑎
+359,424
+Budget sweep executions𝑏
+539,136
+Total nominal agent executions
+898,560
+Matched H1→H2 pairs at Default
+87,792
+Matched Skill×Harness interaction units
+21,948
+Repeat-1 common-support source failures
+3,939
+Root-labeled source failures
+2,225
+within-axis observed envelopes, each clipped at zero and each defined against its own reference cell:
+Δ+
+𝑆= max
+
+0,
+max
+𝑠≠NoSkill
+¯𝑌𝑠−¯𝑌NoSkill
+
+,
+Δ+
+𝐻= max
+
+0,
+max
+ℎ∈{𝐻1,𝐻2,𝐻3}
+¯𝑌ℎ−¯𝑌𝐻0
+
+,
+Δ+
+𝐵= max
+
+0,
+max
+𝑏∈{Low,Medium,High}
+¯𝑌𝑏−¯𝑌Low
+
+,
+Δ𝑀= max
+𝑚
+¯𝑌𝑚−min
+𝑚
+¯𝑌𝑚.
+(2)
+Each envelope is a maximum over a different candidate set and is therefore selection-biased; the four values
+are descriptive within-axis summaries rather than directly comparable treatment effects. Δ𝑀is a best-to-worst
+span because no Model is a natural baseline. For Skill × Harness, the matched interaction contrast is
+𝐼𝑆,𝐻= [𝑌(𝑆, 𝐻2) −𝑌(0, 𝐻2)] −[𝑌(𝑆, 𝐻1) −𝑌(0, 𝐻1)] .
+(3)
+A/A denotes an unchanged-configuration repeat comparison; API, application programming interface;
+AUPRC, area under the precision–recall curve; AUROC, area under the receiver-operating-characteristic
+curve; BH, Benjamini–Hochberg; CI, confidence interval; LOO, leave-one-cell-out; LOBO, leave-one-
+benchmark-out; OOF, out-of-fold; PRESS, prediction sum of squares; SD, standard deviation; SOP, standard
+operating procedure; and UID, unique identifier. The abbreviation pp denotes percentage points, and NA or
+N/A denotes unavailable or not applicable as specified by the table.
+Table 18 collects the remaining metrics used in the main text and detailed analyses. These definitions fix
+the denominator and interpretation of each quantity; they do not turn descriptive matched comparisons into
+randomized causal effects.
+Abbreviations.
+Which Failure Does an Intervention Repair?
+27
+Table 18. Evaluation metrics used throughout the paper. Native outcomes are displayed as percentages unless noted
+otherwise.
+Metric
+Definition
+Interpretation boundary
+Native performance
+Benchmark-native evaluator outcome 𝑌𝑖(𝑐); a cell
+mean averages task instances and three repeats.
+Native scores are combined across benchmarks only by equal-
+weight macro averaging.
+Matched change
+Δ𝑖,𝑎= 𝑌𝑖(𝑐+ 𝑎) −𝑌𝑖(𝑐) with the task instance
+and non-target axes fixed.
+An observed positive change is not automatically larger than
+execution noise.
+Within-axis envelope
+Δ+
+𝑆, Δ+
+𝐻, Δ+
+𝐵, or Δ𝑀in Eq. 2.
+A selected maximum or span, not an unbiased effect or an
+action-count-matched ranking.
+Skill–Harness interaction
+Difference-in-differences 𝐼𝑆,𝐻in Eq. 3.
+The four named patterns use a prespecified five-point descriptive
+tolerance; they are not A/A-calibrated significance tests.
+Intervention opportunity
+Fraction of failed source task instances with a
+strictly positive matched target change; standard-
+ized summaries give equal weight to the candidate
+actions being compared.
+Measures observed rescue opportunity, not noise-qualified
+improvement or deployable predictability.
+Success crossing
+Target outcome reaches the benchmark-native
+threshold 𝜏𝑏after a failed source outcome.
+Partial score improvement need not constitute success.
+Rescue, preservation, regres-
+sion, persistent failure
+Matched binary transitions 0 →1, 1 →1, 1 →0,
+and 0→0, respectively. Net gain is rescues minus
+regressions over all matched units.
+Rescue must be interpreted jointly with preservation and re-
+gression.
+Predictive fit and discrimina-
+tion
+𝑅2 is the coefficient of determination under LOO
+held-cell reconstruction; AUPRC and AUROC mea-
+sure ranking performance, and log loss evaluates
+probabilistic predictions.
+Grouped or leave-one-benchmark-out splits are used where
+stated; none is a causal estimand.
+Routing quality and cost
+Equal-weight macro performance and mean full-
+chain tokens, including required probes and restarts.
+One policy strictly dominates another if it has higher
+quality and lower cost.
+The Observed Oracle uses matched outcomes and measures
+headroom rather than deployable performance.
+Uncertainty
+Task-instance/UID cluster bootstrap confidence in-
+tervals preserve all configurations for a resampled
+instance; paired sign-flip or stratified permutation
+tests are used where specified.
+Sampling uncertainty does not substitute for A/A execution-
+noise calibration.
+Table 19. Root-cause composition of the 1,920 labeled NoSkill+H1+Medium source failures. Column order follows
+the taxonomy: Procedural, Reasoning, Execution/tool, State/grounding, Horizon/termination, Factual knowledge/recall,
+Abstention/calibration, Evaluation/answer contract. Labeled 𝑛is the benchmark denominator and sums to the same
+1,920 source failures reported in Table 34. LiveMath (305 judge labels) is excluded from root-conditioned analyses.
+∗Deterministic answer-rule hypotheses on SimpleQA, validated by an independent judge (𝜅= 0.77) and an author check;
+Appendix D.4 describes the judge and its evidence boundary. Hotpot Context and Hotpot FullWiki have one and ten
+labeled failures here, so their composition explains nothing about their benchmark-wide results.
+Benchmark
+𝑛
+Proc.
+Reas.
+Exec.
+State
+Horiz.
+Fact.
+Abst.
+Contr.
+Spreadsheet
+588
+0.00
+0.00
+99.83
+0.00
+0.17
+0.00
+0.00
+0.00
+UCSB SOP
+266
+78.57
+0.00
+7.52
+13.91
+0.00
+0.00
+0.00
+0.00
+Amazon
+113
+0.00
+0.00
+100.00
+0.00
+0.00
+0.00
+0.00
+0.00
+SimpleQA
+783
+0.00
+0.00
+0.00
+0.00
+0.00
+74.84∗
+24.78∗
+0.38
+SQuAD
+159
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+100.00
+Hotpot Context
+1
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+0.00
+100.00
+Hotpot FullWiki
+10
+0.00
+0.00
+100.00
+0.00
+0.00
+0.00
+0.00
+0.00
+A.6 Measurement validity and operational thresholds
+A.6.1
+Measurement Floors and Answer-Contract Effects
+Before interpreting any axis mechanistically we isolate a confound that inflates the largest contrasts in the
+matrix. Of the 512 Default cells, 16 sit at a native-score floor below 2.0 on the 0–100 scale, and their
+Which Failure Does an Intervention Repair?
+28
+distribution is not uniform (Table 20). Twelve occur at H0, the one level supplying no standardized output
+or tool interface; the other four are all on Amazon SOP, where Direct on Qwen3.5-9B returns exactly 1.7
+at each of H0–H3. A score identical to one decimal across four harness levels is one reproducible failure
+signature, not four graded outcomes.
+Table 20. Native-score floor cells in the 512-cell Default matrix, defined as a three-repeat mean below 2.0 on the 0–100
+scale. Δ+
+𝐻is that benchmark’s harness envelope from Table 4. Spreadsheet, LiveMath, UCSB SOP, and SimpleQA
+contain no floor cells and are omitted. The three benchmarks with the largest harness envelopes are exactly the three
+with the most floor cells. We therefore do not read those envelopes as evidence that execution support repairs residual
+reasoning or planning failures.
+Benchmark
+Floor cells
+At H0
+Configurations at floor
+Δ+
+𝐻
+Amazon SOP
+6
+2
+Qwen+Direct at H0–H3; Sonnet 5+Direct at H1; Sonnet 5+SkillOpt at H0
+48.03
+SQuAD
+3
+3
+Sonnet 4.6+NoSkill; Sonnet 4.6+SkillOpt; Sonnet 5+NoSkill
+44.34
+Hotpot Context
+6
+6
+Qwen+SkillOpt; Sonnet 4.6+NoSkill/SkillOpt/Trace2Skill; Sonnet 5+SkillOpt;
+GPT-5.6-sol+SkillOpt
+48.18
+Hotpot FullWiki
+1
+1
+Qwen+Direct
+3.92
+Two consequences follow. First, the three largest harness envelopes in Table 4, Amazon SOP at 48.03,
+Hotpot Context at 48.18, and SQuAD at 44.34, belong to exactly the three benchmarks carrying the most
+floor cells. For SQuAD and Hotpot Context every floor cell is at H0, and SQuAD’s labeled failures are
+100% Evaluation/answer contract (Table 19). The parsimonious reading is that H0 leaves the answer contract
+unspecified, so the native scorer credits little and H0→H1 largely purchases a satisfiable answer format. That is
+a real effect but a claim about contract specification rather than about executable feedback repairing a residual
+bottleneck, so we label these contrasts contract-level and exclude them from mechanism-level interpretation.
+Second, a Skill can collapse a working configuration to the floor: on Hotpot Context, GPT-5.6-sol with
+SkillOpt scores 0.0/13.6/12.2/12.2 across H0–H3 against 22.6/62.0/61.9/61.3 for NoSkill, a persistent deficit
+near 49 points more consistent with the skill overriding the answer contract than with graded interference.
+Separating a format or schema violation from a capability failure requires re-scoring the saved trajectories
+under a contract-relaxed evaluator, which Appendix A.6.2 does. It confirms that the SQuAD and Hotpot
+Context envelopes are almost entirely answer-contract compliance, whereas about half of the Amazon SOP
+envelope is substantive repair. The two Amazon SOP interaction examples in Table 30, marked § there,
+remain floor-adjacent illustrations rather than calibrated magnitudes.
+A.6.2
+Relaxed Rescoring of Answer-Format Effects
+We re-score saved trajectories with relaxed evaluators fixed before rescoring; no new rollouts are run. For
+SQuAD and Hotpot Context, we re-score all 115,200 trajectories (Default budget, H0–H3, four Models ×
+four Skills × three repeats) with the official SQuAD answer normalization. Each rule credits a run if any of
+these candidates passes: the native extracted answer, the last <answer> span, the whole final response, the
+text after an “Answer:” marker, or the last line. For Amazon SOP, we re-score all 9,600 executions with a
+field-level parser. Re-scoring with the native rules reproduces the paper’s numbers exactly.
+Answer content present credits a response that contains a gold answer and is at most 100 tokens long.
+Already at H0, 93.2% (SQuAD) and 76.8% (Hotpot Context) of responses contain a correct answer, and
+89.2% and 73.6% of the native H0 failures do. Judged on content, the harness adds 2.12 and 0.00 points, so
+these envelopes are answer-contract compliance rather than execution repair: H0 answers usually wrap the
+gold span in a longer phrase, which H1’s short-answer contract removes. H1→H2 is interface-level as well:
+Which Failure Does an Intervention Repair?
+29
+Table 21. Relaxed rescoring of SQuAD and Hotpot Context: harness marginals on a 0–100 scale, averaged equally over
+Models and Skills.
+Benchmark
+Scoring
+H0
+H1
+H2
+H3
+Δ+
+𝐻
+Floor cells
+SQuAD
+Native EM
+36.65 76.17 80.31 80.99 44.34
+3
+Extraction-tolerant EM
+36.66 80.56 80.33 81.01 44.35
+3
+Gold span, ≤3× gold length 53.17 91.49 91.35 91.45 38.32
+0
+Token F1
+60.40 91.43 91.25 91.64 31.24
+0
+Answer content present
+93.17 94.62 94.47 95.29
+2.12
+0
+Hotpot Context Native EM
+12.17 58.90 58.99 60.35 48.18
+6
+Extraction-tolerant EM
+15.29 58.92 59.01 60.35 45.06
+3
+Gold span, ≤3× gold length 22.77 65.46 65.69 67.33 44.56
+1
+Token F1
+34.65 74.36 74.57 76.01 41.37
+0
+Answer content present
+76.82 73.95 74.24 76.79
+0.00
+0
+on SQuAD, its native +4.14 gain becomes −0.24 once answers given without tags are extracted. Under the
+content rule, all floor cells of both benchmarks leave the floor.
+Manual check. We inspected 30 random native-fail →relaxed-pass flips per benchmark and rule.
+Weighted by stratum size, the content rule’s credit is correct for 91.7–96.8% of flips on SQuAD and
+94.3–95.2% on Hotpot Context (the lower bound counts over-inclusive or self-contradicting answers as
+wrong), and the gold-span rule’s credit for 93.3–100% and 96.7–100%. The content rule therefore slightly
+overstates the format share.
+Cross-model transfer case. On Hotpot Context, GPT-5.6-sol scores 62.0 at H1 without a skill but 13.6
+with the SkillOpt skill optimized on Qwen3.5-9B, because the skill makes the model place an “Extracted
+Facts / Verification” worksheet in its answer field. Under the content rule, a correct answer is still present in
+74.1% of its responses with the skill, against 76.8% without.
+Table 22. Composition of Amazon SOP’s H1→H2 gain, by why each H1 run failed. The field-level parser normalizes
+case, whitespace, underscores, and hyphens and accepts JSON or key–value text, but never relaxes whether the action or
+its values are correct. It leaves Δ+
+𝐻almost unchanged (48.03 to 46.33) and H1→H2 at +41.70 (native +42.24).
+Reason the H1 run failed
+Share of H1 failures
+Share of H1→H2 gain
+Purely cosmetic formatting
+1.6%
+2.0%
+Submitted before collecting required tool observations
+31.9%
+41.0%
+Wrong tool-argument values
+16.5%
+9.2%
+Wrong final values
+2.8%
+1.9%
+Answer-schema mismatch, e.g. extra fields (unclassified)
+39.6%
+38.2%
+Other: parseable but still wrong, or ambiguous output
+7.6%
+8.1%
+About half of Amazon SOP’s harness gain (52%) is clearly substantive repair, at most about 40% is
+answer-schema compliance, and about 2% is surface formatting; the schema-mismatch runs could be either,
+so we assign them to neither side. Two of Amazon’s six floor cells leave the floor under relaxed parsing.
+Because H0 and H1 stop at the first invalid action, offline rescoring cannot recover what the agent would have
+done next.
+A/A and improvement.
+All scores below are on the native [0, 1] scale. An A/A comparison changes neither
+task instance nor configuration: for two executions 𝑟≠𝑟′, define 𝐷𝐴𝐴
+𝑖,𝑐= 𝑌(𝑟)
+𝑖
+(𝑐) −𝑌(𝑟′)
+𝑖
+(𝑐). For a calibrated
+analysis at the task-instance level, define the benchmark tolerance as 𝛿𝑏= 𝑄0.95(|𝐷𝐴𝐴
+𝑖,𝑐|) using matched
+repeated executions from a prespecified, configuration-matched calibration set. A repeat-averaged contrast
+requires an A/A distribution of repeat-averaged differences with the same repeat count; a benchmark-average
+Which Failure Does an Intervention Repair?
+30
+noise floor must not be substituted for a task-instance tolerance. Calibration should precede inspecting
+intervention contrasts. The noise-qualified improvement event and success-crossing event are distinct:
+𝐼𝑖,𝑎= 1[𝑌𝑖(𝑎) −𝑌𝑖(𝑐) > 𝛿𝑏] ,
+𝐾𝑖,𝑎= 1[𝑌𝑖(𝑎) ≥𝜏𝑏] .
+(4)
+For binary single-execution scores, observed improvement is exactly 0 →1. This is not automatically
+evidence beyond execution noise: if the task-instance A/A quantile equals 1, a single binary contrast cannot
+clear it and repeated evidence is required. For fractional Amazon scores, any positive difference is only an
+observed gain; a noise-qualified gain must clear the calibrated fractional-score tolerance.
+Calibration status.
+The current opportunity tables report observed positive changes, not A/A-qualified gains.
+The saved historical A/A analyses concern behavioral metrics and do not provide a matched performance
+tolerance for this common-support cohort. Accordingly, numerical 𝛿𝑏values remain uncalibrated for
+Spreadsheet, LiveMath, UCSB SOP, Amazon SOP, SimpleQA, SQuAD, Hotpot Context, and Hotpot
+FullWiki; no value is imputed as zero. Equation 4 specifies the calibration criterion and does not retroactively
+certify the reported counts. Bootstrap confidence intervals quantify sampling uncertainty but do not replace
+an execution-noise calibration.
+Repeat design.
+We use three repeated executions per cell to capture material execution-level nondeterminism.
+In a controlled Spreadsheet H2 diagnostic comprising 3,360 trajectories (two Skill arms × three request seeds
+× three repeats × 280 task instances), the paired Skill effect had a pooled within-seed repeat SD of 2.26
+points and an estimated request-seed SD of 1.56 points; fixed-seed repeat variation accounted for 68% of the
+estimated variance. This diagnostic is limited to one benchmark and two Skill arms, so it motivates repeated
+execution but does not establish a universal variance decomposition.
+Interaction tolerance.
+The reported four-pattern prevalence uses a fixed descriptive tolerance 𝜖= 0.05
+(five native-score points) applied to repeat-averaged four-cell contrasts. This threshold was not estimated
+from A/A. A noise-qualified interaction analysis would additionally require a matched null for the four-cell
+interaction contrast, not merely reuse a two-cell improvement tolerance. The existing prevalence therefore
+characterizes thresholded response patterns rather than effects certified to exceed A/A noise.
+Label coverage and success.
+The repeat-1 common-support cohort contains 3,939 source failures; 2,225
+have assigned labels (56.5%) and 1,714 remain unassigned (43.5%). Root-conditioned percentages describe
+the assigned subset. Evidence-backed labels and model-assisted hypotheses retain their distinct status.
+Capability crossings use 𝜏𝑏= 1 for all eight benchmarks: binary task instances must pass their native scorer,
+and Amazon must attain full field accuracy. Implementations allow 10−9 numerical slack at 1. Partial
+Amazon improvements need not cross this strict full-success threshold. BigCode is excluded from this
+common-support analysis.
+B. Skill Provenance, Split Isolation, and Transfer Sensitivity
+Construction and selection.
+NoSkill supplies no learned artifact. Direct synthesizes a procedure once from
+a frozen catalog, without rollout collection or a validation gate. SkillOpt uses training rollouts for iterative
+edits, and locally generated Trace2Skill distills training-trajectory lessons under its recorded method-validation
+procedure. The protocol reserves method validation for skill selection and separates harness qualification,
+which qualifies execution code and interfaces rather than selecting skill content. Frozen packages are reused
+Which Failure Does an Intervention Repair?
+31
+unchanged across target models instead of regenerated for each target. Holding the artifact fixed does not
+remove its potential alignment to the construction model.
+UID and artifact evidence.
+The anonymized supplementary archive contains a provenance inventory
+recording exact archived UIDs, split-file hashes, within-directory overlap checks, and saved freeze declarations,
+together with the cross-model artifact bundle from which every frozen skill package is imported. UCSB
+training and test UIDs come from the archived 280-item SOP split, whose original validation set is partitioned
+into method and harness validation. LiveMath uses the archived ten-item method-validation split; Hotpot
+stores its Context and FullWiki views beneath a common split root. The protocol excludes test instances from
+generation, selection, patching, and acceptance. Disjoint UID lists and saved freeze declarations support
+this rule but are not a complete audit of every historical generation call. Hash-freezing specifies unchanged
+cross-model import; the inventory does not independently compare artifact bytes in every provider execution.
+Spreadsheet.
+SkillOpt and Trace2Skill both use the 80 training and 24 method-validation items.
+Trace2Skill starts from the authors’ released initial skill bundle and runs the full evolution locally with
+Qwen3.5-9B on these items (seed 42); the evolved xlsx/SKILL.md is the frozen artifact, and the two released
+reference skills are carried over unchanged. The Direct catalog contains only the 80 training items: an
+archived validation manifest lists 80 training plus 24 method-validation items, but the frozen generation
+record and the prompt contain only the training items. The archived provenance records freeze entrypoints
+and package hashes before evaluation.
+Qwen-excluded sensitivity.
+We retain Sonnet 4.6, Sonnet 5, and GPT-5.6-sol on the same task instances
+and frozen artifacts. Skill gains average matched NoSkill contrasts over H0–H3 at Default and over retained
+models. Interaction prevalence retains the original H1/H2 classifier, three-repeat means, 𝜖= 0.05, and equal
+benchmark weights. BigCode is excluded. Intervals use 2,000 instance-UID cluster bootstrap draws with
+seed 42, preserving all configurations per sampled task instance. Removing Qwen reduces interaction units
+from 21,948 to 16,461. No new model executions are used.
+FullWiki, SQuAD, LiveMath, and UCSB retain positive gains for their responsive skills (Table 23).
+LiveMath’s Trace2Skill gain contracts from +8.15 to +3.99 points. Amazon also changes: its marginal
+SkillOpt gain moves from −0.09 to +3.01 points, illustrating dependence on model composition. All four
+named patterns persist with lower combined macro prevalence. These results establish transfer to the tested
+API targets, not construction-model neutrality or a causal explanation of alignment. Intervals reflect task
+sampling, not sampling of model families.
+C. Self-Evolved Skill Experiments
+This section gives the designs and full results of the four experiments behind Section 5. Unless stated
+otherwise, skills are evaluated on the locked test split with the paper’s protocol (Default budget, H0–H3, three
+repeats, the paper’s evaluators), and intervals are paired task-cluster bootstrap 95% intervals (2,000 draws,
+seed 42).
+C.1 Stronger Constructor
+Design. We rebuild SkillOpt and Trace2Skill on UCSB SOP, a procedure task, and on SimpleQA, the
+missing-information control, with GPT-5.6-sol replacing Qwen3.5-9B throughout construction: GPT-5.6-sol
+is the rollout model, the optimizer or analyst, and, on SimpleQA, the construction-time grader. Training
+and method-validation data, initial skills, hyperparameters, and validation gates are unchanged. Both
+Which Failure Does an Intervention Repair?
+32
+Table 23. Skill transfer sensitivity at Default, averaged over H0–H3. Gains are paired against NoSkill; API-only
+excludes Qwen. Intervals resample task UIDs within benchmark (2,000 draws), retaining all models and harnesses for
+each task.
+Benchmark
+Skill
+Four-model gain (pp)
+API-only gain [95% CI] (pp)
+Amazon
+Direct
+-13.29
++2.20 [+0.33, +4.09]
+Amazon
+SkillOpt
+-0.09
++3.01 [+1.71, +4.25]
+Amazon
+Trace2Skill
+-2.92
+-0.25 [-1.70, +1.15]
+Hotpot Context
+Direct
++1.63
++2.75 [+1.92, +3.65]
+Hotpot Context
+SkillOpt
+-13.48
+-14.26 [-15.64, -12.81]
+Hotpot Context
+Trace2Skill
++1.71
++1.75 [+1.06, +2.44]
+Hotpot FullWiki
+Direct
+-3.02
+-0.68 [-1.99, +0.61]
+Hotpot FullWiki
+SkillOpt
+-4.67
+-7.21 [-8.75, -5.75]
+Hotpot FullWiki
+Trace2Skill
++10.58
++10.93 [+9.17, +12.61]
+LiveMath
+Direct
+-1.50
+-1.16 [-3.07, +0.83]
+LiveMath
+SkillOpt
++2.20
++1.14 [-1.52, +3.79]
+LiveMath
+Trace2Skill
++8.15
++3.99 [+1.07, +6.83]
+SQuAD
+Direct
++12.26
++10.50 [+9.02, +11.88]
+SQuAD
+SkillOpt
++6.86
++4.49 [+3.30, +5.65]
+SQuAD
+Trace2Skill
++17.13
++15.61 [+14.19, +17.10]
+SimpleQA
+Direct
+-1.83
+-2.56 [-3.81, -1.31]
+SimpleQA
+SkillOpt
++0.12
+-0.20 [-1.07, +0.65]
+SimpleQA
+Trace2Skill
+-0.12
+-0.28 [-0.96, +0.45]
+Spreadsheet
+Direct
+-1.64
+-2.85 [-3.81, -1.86]
+Spreadsheet
+SkillOpt
+-4.87
+-5.58 [-6.84, -4.37]
+Spreadsheet
+Trace2Skill
+-6.23
+-7.49 [-9.00, -5.91]
+UCSB SOP
+Direct
+-0.04
+-1.02 [-2.38, +0.25]
+UCSB SOP
+SkillOpt
++5.55
++3.59 [+2.16, +5.05]
+UCSB SOP
+Trace2Skill
++1.89
+-0.17 [-1.16, +0.86]
+Table 24. Interaction prevalence with and without Qwen. Original H1/H2 rules, 𝜖= 0.05, complete three-repeat cells,
+and benchmark-equal weighting are retained.
+Regime
+Four models (%)
+API only [95% CI] (%)
+Absorption
+3.77
+2.79 [2.28, 3.31]
+Activation
+2.35
+2.02 [1.65, 2.46]
+Complementarity
+1.48
+1.27 [0.90, 1.70]
+Interference
+6.46
+5.13 [4.59, 5.67]
+GPT-5.6-sol-built Trace2Skill candidates pass their gates; the SkillOpt artifacts were not revalidated. The
+frozen skills are evaluated on Qwen3.5-9B (UCSB SOP 175 tasks, SimpleQA 300). On both benchmarks
+the Qwen-built Trace2Skill artifact is the human-written seed, because its evolved candidate was rejected
+(Table 10).
+Results. Table 25. On UCSB SOP, the GPT-5.6-sol-built Trace2Skill skill beats the human-written seed,
+which the Qwen-built candidate could not, whereas the GPT-5.6-sol-built SkillOpt skill is worse than its
+Qwen-built version. Neither changes SimpleQA. On SimpleQA, 3,596 (SkillOpt) and 3,592 (Trace2Skill)
+of 3,600 cells completed; the missing cells are failed requests.
+Which Failure Does an Intervention Repair?
+33
+Table 25. Stronger constructor: mean scores and paired differences on Qwen3.5-9B.
+UCSB SOP
+SimpleQA
+NoSkill
+53.90
+6.33
+Human-written seed
+62.00
+6.75
+SkillOpt (Qwen-built)
+65.33
+7.47
+SkillOpt (GPT-5.6-sol-built)
+59.29
+7.42
+Trace2Skill (GPT-5.6-sol-built)
+67.38
+6.85
+GPT Trace2Skill −seed
++5.38 [+1.71, +9.14]
++0.09 [−1.87, +1.97]
+GPT SkillOpt −Qwen SkillOpt
+−6.05 [−10.24, −1.90]
+−0.06 [−1.86, +1.58]
+GPT SkillOpt −seed
+−2.71 [−5.33, −0.10]
+–
+GPT Trace2Skill −NoSkill
++13.48 [+9.76, +17.57]
++0.61 [−1.58, +2.69]
+GPT SkillOpt −NoSkill
++5.38 [+1.81, +9.14]
++0.75 [−1.17, +2.75]
+C.2 Same Constructor, Different Procedure
+Design. All artifacts are built by Qwen3.5-9B: Direct by a single call, SkillOpt by iterative optimization
+from scored outcomes, and Trace2Skill by evolution from trajectories (a genuinely evolved artifact only on
+Spreadsheet and LiveMath). Holding the constructor fixed isolates the procedure. Scores are averaged over
+all four target Models.
+Results. Table 26. Direct beats SkillOpt on four of eight benchmarks, and SkillOpt falls below
+NoSkill on Hotpot Context, Hotpot FullWiki, and Spreadsheet. Iteration helps on the procedure-heavy
+tool tasks (UCSB SOP and Amazon SOP). Against the evolved Trace2Skill artifact, Direct is better on
+Spreadsheet (+4.59 [+3.47, +5.73]) and worse on LiveMath (−9.64 [−13.05, −6.35]), where the evolved skill
+carries the meta-option shortcut. Each method has one construction seed, so these compare single artifacts,
+not method distributions.
+Table 26. Same Qwen3.5-9B constructor, different procedure, averaged over Models.
+Benchmark
+NoSkill
+Direct
+SkillOpt
+Direct −SkillOpt
+Hotpot Context
+50.14
+51.77
+36.66
++15.11 [+13.51, +16.73]
+SQuAD
+59.47
+71.73
+66.33
++5.40 [+4.13, +6.69]
+Spreadsheet
+34.78
+33.15
+29.91
++3.24 [+2.31, +4.15]
+Hotpot FullWiki
+27.31
+24.28
+22.63
++1.65 [+0.44, +2.83]
+SimpleQA
+33.98
+32.15
+34.10
+−1.96 [−2.92, −0.90]
+LiveMath
+39.05
+37.55
+41.25
+−3.70 [−6.37, −1.06]
+UCSB SOP
+62.45
+62.42
+68.00
+−5.58 [−7.25, −3.93]
+Amazon SOP
+67.43
+54.14
+67.35
+−13.20 [−14.67, −11.88]
+C.3 Rejected Trace2Skill Candidates
+Design. On the benchmarks where Trace2Skill’s evolved candidate failed its validation gate, the frozen
+artifact is the human-written seed. We run the rejected candidates themselves on the locked test split with
+Qwen3.5-9B, which tests the distillation step separately from the gate. The seed arm is the paper’s frozen
+Trace2Skill arm, read unchanged. Scores use each benchmark’s master-table metric (SimpleQA accuracy,
+SQuAD and Hotpot F1, Amazon SOP field accuracy, UCSB SOP success); for SQuAD we also report exact
+match.
+Which Failure Does an Intervention Repair?
+34
+Results. Table 27. The rejected candidate is significantly worse than its seed on UCSB SOP and on
+SQuAD exact match and indistinguishable from it on Amazon SOP, Hotpot Context, and SimpleQA, so
+on these benchmarks distillation did not produce a better skill than the few-line seed. On Hotpot FullWiki,
+the candidate is better; its gate was decided on 20 method-validation items (0.55 versus 0.50), so the small
+validation set rejected a better candidate. On SimpleQA, 3,594 of 3,600 matched cells completed.
+Table 27. Rejected Trace2Skill candidates against their human-written seeds on Qwen3.5-9B. Gate: method-validation
+score of seed / candidate.
+Benchmark
+Gate
+Tasks
+Seed
+Candidate
+Candidate −Seed
+UCSB SOP
+0.40 / 0.35
+175
+62.00
+49.19
+−12.81 [−17.76, −8.19]
+Amazon SOP
+0.00 / 0.00
+50
+50.52
+45.38
+−5.14 [−16.00, +5.24]
+Hotpot Context
+0.55 / 0.50
+300
+63.69
+61.94
+−1.75 [−3.46, +0.05]
+SimpleQA
+0.10 / 0.10
+300
+6.75
+6.34
+−0.41 [−2.00, +1.22]
+SQuAD (F1)
+0.80 / 0.75
+300
+83.39
+85.43
++2.04 [−0.18, +4.29]
+SQuAD (exact match)
+300
+72.97
+67.03
+−5.94 [−9.78, −2.11]
+Hotpot FullWiki
+0.55 / 0.50
+300
+48.95
+60.57
++11.62 [+8.11, +15.16]
+C.4 SimpleQA Knowledge Access
+Design. If the bottleneck on SimpleQA is missing information, a skill built from the agent’s own data should
+not help, a skill can at most make the model recognize the gap, and supplying the information should move
+the score. We run Qwen3.5-9B under the paper’s H1 protocol (no browsing, skill in the fixed package block,
+answer in <answer> with an “I don’t know” option) on the 300 locked test items, with one repeat, temperature
+0, seed 42, and the paper’s SimpleQA grader. Only the skill changes, plus one knowledge-access turn in two
+arms (Table 28). The search corpus contains, for each item, the source pages cited in its SimpleQA metadata
+(293 of 300 items have text), split into 120-word chunks and retrieved with BM25. It therefore measures what
+happens once the information is available, not the quality of open web search, and the external-knowledge
+skill is an upper bound rather than a valid construction method. Δ is a paired item-bootstrap interval against
+NoSkill.
+Results. A skill built from the agent’s own data does not help. The knowledge-boundary skill replaces
+most wrong answers with explicit requests but cannot raise accuracy on its own. The same skill with search
+on request reaches 60.0%, a gain comparable to switching to a stronger model in the matrix (Δ𝑀= 60.85).
+Knowledge written into a static skill helps only in proportion to what fits: it reaches 43.3% at full prompt
+budget and 13.0% at the size of the own-data skill. Only Qwen3.5-9B is tested, with one repeat and the
+paper’s Qwen3.5-9B grader.
+D. Detailed Analyses for the Results
+This section mirrors the order of Sections 3 and 4. It first documents the full factorial response surface and
+the two observations derived from it, then provides the detailed estimands, empirical evidence, uncertainty
+analyses, and interpretation boundaries for RQ1–RQ5.
+D.1 No Universally Optimal Agent Configuration
+D.1.1
+Detailed Evidence for Context-Dependent Rankings
+The absence of a context-free winner is first visible along the Model axis. Among the 32 Benchmark×Skill
+rows of the Default matrix, 30 have a unique best Model, distributed 12/10/6/2 across GPT-5.6-sol, Sonnet
+Which Failure Does an Intervention Repair?
+35
+Table 28. SimpleQA knowledge-access arms (Qwen3.5-9B, H1, 300 test items).
+Arm
+Skill and knowledge access
+Acc. Δ vs. NoSkill
+Wrong
+NoSkill
+None
+5.0 –
+263
+Own-data facts
+The 90 training and method-validation questions
+with their answers (disjoint from test)
+6.3 +1.3 [−1.3, +3.7]
+251
+Knowledge boundary
+Human-written: answer only facts you recall; other-
+wise answer “I don’t know” and state a search query
+2.0 −3.0 [−5.3, −1.0]
+45
++ search on request
+One search turn returns the top-3 passages when the
+model requests it
+60.0 +55.0 [+49.0, +60.7]
+54
+NoSkill + search always The top-3 passages are always given with the question 72.0 +67.0 [+61.0, +72.7]
+34
+External-knowledge skill
+292 notes from the items’ source pages, no questions
+or answers (upper bound)
+43.3 +38.3 [+32.7, +44.0]
+96
+skill-sized
+The same notes cut to the size of the own-data skill 13.0 +8.0 [+4.0, +12.7]
+44
+4.6, Sonnet 5, and Qwen3.5-9B, respectively. These are not merely near-tie reversals: Sonnet 4.6 reaches the
+benchmark-wide maximum on Spreadsheet at 53.1 but ranks last on LiveMath at 37.1, whereas GPT-5.6-sol
+reaches 69.4 on SimpleQA but ranks last on Hotpot FullWiki at 32.6, behind Sonnet 5 at 45.0. Figure 3a
+visualizes the SQuAD+NoSkill reversal under changing Harness support.
+The other intervention axes exhibit the same conditionality. After balanced marginalization, Trace2Skill
+contributes to positive Skill envelopes on Hotpot FullWiki (Δ+
+𝑆= 10.58 points) and LiveMath (8.15), whereas
+no fixed alternative Skill outperforms NoSkill on Spreadsheet or Amazon SOP (Δ+
+𝑆= 0 for both). Harness
+effects are large on Amazon SOP and on the answer-interface-sensitive SQuAD and Hotpot Context, but are
+nearly flat on LiveMath and SimpleQA; Appendix A.6.1 shows that the largest of these contrasts also contain
+floor and answer-contract effects. Budget exhibits an even sharper task boundary: Amazon SOP improves
+dramatically when Low is replaced by a feasible Medium or High resource ceiling because Low does not
+provide enough turns or wall-clock time to complete its long tool workflow (Δ+
+𝐵= 81.13), whereas SimpleQA
+is essentially saturated (Δ+
+𝐵= 0.10). Thus, stronger Skills, richer Harnesses, and larger Budgets can each
+improve performance, have little effect, or reduce performance depending on the task and the components
+already present. Figure 3b contrasts three representative task profiles.
+The same contrast can appear within a single Benchmark×Model block. A floor-free example is Qwen3.5-
+9B on Spreadsheet. Moving from H1 to H2 raises NoSkill from 9.3 to 24.9, Direct from 13.3 to 28.6,
+SkillOpt from 9.3 to 22.5, and Trace2Skill from 10.1 to 22.7, showing a consistent execution-support
+gain. Skill effects remain conditional: Direct exceeds NoSkill at H0 and H1, but NoSkill is strongest at
+H3 (30.4 versus 28.8, 26.2, and 25.1 for Direct, SkillOpt, and Trace2Skill). Figure 3c visualizes the
+complete 4 × 4 block.
+D.2 Within-Benchmark Response Heterogeneity
+A benchmark mean compresses distinct transitions at the task-instance level into one number:
+E[Δ] = 𝑝rescue E[Δ | rescue] + 𝑝neutral E[Δ | neutral] + 𝑝regression E[Δ | regression].
+(5)
+Figure 3d illustrates this compression directly. Under the frozen post-hoc LiveMath partition, Trace2Skill
+versus NoSkill changes Sonnet 5 performance by +6.60 points on 53 meta-option instances and −4.93 points
+on 71 non-meta instances; the weighted whole-benchmark contrast averaged over H0–H3 is approximately
+zero. Because the partition was defined after Skill selection and evaluation, this is descriptive subgroup
+evidence rather than a preregistered causal contrast. Table 29 provides four additional matched-unit views.
+Which Failure Does an Intervention Repair?
+36
+Table 29. Direct empirical support for within-benchmark response heterogeneity. Skill×Harness percentages are
+benchmark-equal prevalence estimates under a prespecified five-point descriptive threshold. H1→H2 entries are pooled
+matched transition counts for the seven binary-outcome benchmarks; conditional rates divide rescues by H1 failures and
+regressions by H1 successes. Full benchmark distributions and uncertainty are reported in Appendix Table 40. These
+are descriptive matched outcomes. The LiveMath partition is frozen but post hoc; the interaction labels depend on an
+uncalibrated five-point tolerance; and the H1/H2 executions are matched replays rather than randomized prospective
+continuations.
+Matched analysis
+Population
+Empirical composition
+Skill×Harness
+21,948
+task-
+instance–model–
+alternative-Skill
+units
+Weak/neutral 85.94%; Absorption 3.77%; Activation 2.35%; Com-
+plementarity 1.48%; Interference 6.46%.
+H1→H2
+85,392
+binary-
+outcome
+execu-
+tions
+Rescue 3,886 (8.54% of H1 failures); Preserve 37,568; Regression
+2,340 (5.86% of H1 successes); Persistent failure 41,598.
+LiveMath Skill sub-
+group
+124 Sonnet 5 task
+instances, averaged
+over Default H0–
+H3 and three re-
+peats
+Trace2Skill minus NoSkill: meta-option +6.60 points (53 in-
+stances); non-meta −4.93 points (71 instances); all instances, aver-
+aged over H0–H3, 0.00 points.
+Amazon H1→H2
+2,400
+fractional-
+score executions
+Improve 1,070; unchanged 1,322; degrade 8; mean change +42.24
+points.
+Across 21,948 Skill×Harness units, 85.94% are weak or neutral under the prespecified five-point rule, while
+the remainder separates into absorption, activation, complementarity, and interference. On Amazon SOP,
+1,070 of 2,400 fractional-score executions improve, 1,322 remain unchanged, and eight degrade. Thus, a
+positive or near-zero benchmark mean can conceal substantial and opposing changes at the task-instance level.
+D.2.1
+LiveMath Meta-Option Diagnostic
+The frozen post-hoc partition marks an item as meta when it contains the recurring meta option; 53 of the
+124 test items meet this rule. The frozen SkillOpt and Trace2Skill documents explicitly call attention to
+this choice, but differ in when they recommend selecting it. For Qwen3.5-9B, averaging three repeats over
+Default H0–H3, Trace2Skill scores 71.5% versus 11.2% for NoSkill on meta items, but 43.7% versus
+52.7% on the 71 non-meta items. The subgroup was defined after skill selection and evaluation, so this is a
+descriptive interaction; no ablation isolates the meta-option instruction from the rest of either Skill.
+D.3 How Interventions Interact
+Fitting procedure and test.
+We fit categorical response surfaces separately within each benchmark after
+min–max normalization. The additive specification contains Model, Skill, and Harness main effects; the
+interaction specification additionally contains all Model×Skill, Model×Harness, and Skill×Harness terms.
+We evaluate both with PRESS leave-one-cell-out prediction over the 64 Default-budget cells per benchmark.
+The interaction specification increases mean LOO 𝑅2 from 0.729 to 0.812, with a mean paired increase of
+0.083 and improvement on seven of eight benchmarks (Figure 8). An exact one-sided sign-flip test over the
+eight benchmark-level 𝑅2 differences gives 𝑝= 0.0078. This test supports non-additive context dependence
+within the observed benchmark surfaces; it does not establish generalization to unseen benchmarks or identify
+Which Failure Does an Intervention Repair?
+37
+residual failure as its cause.
+Spreadsheet
+LiveMath
+UCSB SOP
+Amazon
+SimpleQA
+SQuAD
+Hotpot Context
+Hotpot FullWiki
+0.0
+0.5
+1.0
+Leave-one-cell-out R2
+0.80
+0.81
+0.74
+0.68
+0.99
+0.57
+0.75
+0.50
+0.96
+0.94
+0.75
+0.70
+0.99
+0.63
+0.89
+0.63
+Additive
+Pairwise
+Figure 8. Leave-one-cell-out 𝑅2 of additive and pairwise-interaction models, fitted within each benchmark over the 64
+Default-budget cells.
+For matched four-cell Skill×Harness comparisons, let 𝑌00 = 𝑌(NoSkill, 𝐻1), 𝑌10 = 𝑌(𝑠, 𝐻1), 𝑌01 =
+𝑌(NoSkill, 𝐻2), and 𝑌11 = 𝑌(𝑠, 𝐻2), with 𝐼𝑆×𝐻= 𝑌11 −𝑌10 −𝑌01 + 𝑌00. Using the fixed descriptive
+native-score tolerance 𝜖= 0.05 specified in Appendix A.6, Absorption occurs when both interventions help
+but their joint result stays within tolerance of the stronger one; Activation when neither alone clears tolerance
+but the combination does; Complementarity when the joint result exceeds the stronger individual intervention
+with positive interaction residual; and Interference when the combination underperforms a useful individual
+intervention.
+Interaction patterns are recurrent but sparse.
+Across 21,948 matched task-instance–model–alternative-
+Skill units, Absorption accounts for 3.77%, Activation 2.35%, Complementarity 1.48%, and Interference
+6.46% under benchmark-equal weighting. The four named patterns cover 14.06% in total; the remaining
+85.94% are weak, neutral, or outside the prespecified definitions. An interaction therefore exists only in a
+minority of matched units, but its sign changes systematically enough to reject a uniformly additive view of
+external support.
+The empirical taxonomy uses the same four H1/H2 cells for each task instance and Model. Absorption
+means both interventions help but their combination stays near the stronger one; activation means neither
+alone clears the fixed improvement tolerance while their combination does; complementarity means the
+combination exceeds the stronger individual intervention with a positive interaction residual; and interference
+means stacking reduces the benefit of a useful intervention. The exact five-point rules use the matched
+four-cell contrast defined above. Table 30 reports representative panels averaged over all task instances from
+the frozen Default matrix.
+Absorption arises when both components address the same bottleneck.
+On Qwen3.5-9B SQuAD,
+SkillOpt gains 40.4 points over NoSkill at H1, but its incremental gain contracts to −1.0 point at H2. A
+consistent explanation is that the Skill and stronger Harness both help satisfy the answer procedure or contract;
+once H2 has removed that bottleneck, the Skill has little residual opportunity. This is descriptive overlap
+rather than an identified mediator, especially because SQuAD contains answer-contract floor effects.
+Activation and complementarity arise when components address different bottlenecks.
+On Qwen3.5-9B
+Hotpot FullWiki, neither SkillOpt alone nor H2 alone improves the H1 reference by five points, but the
+Which Failure Does an Intervention Repair?
+38
+Table 30. Recurring Skill–Harness patterns using all task instances at Default budget in Table 2. Every raw H0–H2
+score is copied from the corresponding Benchmark–Model–Skill cell of Table 2; Skill gains and 𝐼(𝐻2 | 𝐻1) are
+computed from the displayed one-decimal means. These four patterns are illustrated at the panel-mean level, whereas
+population prevalence is classified per task-instance–model unit. Model superscripts: † Qwen3.5-9B; ‡ Sonnet 5. § One
+endpoint of the contrast is a native-score floor cell (Appendix A.6.1); the pattern label is qualitative and the magnitude
+is not a calibrated interaction estimate. Blue/red bold highlights selected favorable/unfavorable outcomes and contrasts;
+it does not indicate statistical significance, and no cell in this table carries a standard error. H0 provides context; the
+pattern rule uses H1/H2 with a five-point descriptive threshold that was chosen a priori and not derived from A/A
+variation. Outcome-selected subset illustrations use different denominators and appear separately in Appendix Figure 9.
+Pattern
+Benchmark
+Skill/contrast
+H0
+H1
+H2
+𝐼(𝐻2 | 𝐻1)
+Absorption†
+SQuAD
+NoSkill
+10.7
+36.6
+78.6
+SkillOpt
+29.0
+77.0
+77.6
+Skill gain
++18.3
++40.4
+−1.0
+−41.4
+Activation†
+Hotpot FullWiki
+NoSkill
+24.2
+25.9
+26.8
+SkillOpt
+21.1
+24.0
+34.9
+Skill gain
+−3.1
+−1.9
++8.1
++10.0
+Complementarity‡§
+Amazon SOP
+NoSkill
+2.6
+4.2
+58.9
+Direct
+2.6
+1.7
+85.7
+Skill gain
+0.0
+−2.5
++26.8
++29.3
+Interference†§
+Amazon SOP
+NoSkill
+28.3
+33.9
+88.6
+Direct
+1.7
+1.7
+1.7
+Skill gain
+−26.6
+−32.2
+−86.9
+−54.7
+combination gains 9.0 points. The pattern is consistent with a division of labor: the Skill supplies a reusable
+search policy, while the Harness supplies the execution support needed to carry it out. The Sonnet 5 Amazon
+example is an even larger complementarity pattern, but one endpoint lies at the native-score floor; it is retained
+as a qualitative illustration rather than a calibrated magnitude.
+Interference arises when stronger execution preserves a mismatched policy.
+On Qwen3.5-9B Amazon
+SOP, H2 raises NoSkill from 33.9 to 88.6, whereas Direct remains at 1.7 under H0–H3. The result
+is consistent with a mismatched Skill steering the system toward a bad policy that additional execution
+support does not undo. Because the 1.7 endpoint is an instrument floor, this row establishes catastrophic
+incompatibility within the tested configuration but does not quantify a general causal interaction.
+The interaction sign follows the residual bottleneck.
+The sign of an interaction depends on what failure
+remains after the first intervention is applied. If the first component removes the bottleneck targeted by the
+second, incremental value is absorbed; if it exposes a different bottleneck that the second can repair, the pair
+activates or becomes complementary; if it imposes a mismatched policy that the second component executes
+or preserves, the pair can interfere. The API-model subset appears in Table 24.
+D.4 Which Interventions Help Under Which Failure
+We assign the earliest decisive error supported by the saved trajectory to one of the eight categories in Table 33.
+Every label comes from that trajectory alone. The human-authored task properties of Table 14, including their
+Which Failure Does an Intervention Repair?
+39
+Figure 9. Outcome-selected task-instance–model subset examples of the four matched Skill × Harness interaction
+patterns. Each panel compares the same task instances under NoSkill and an alternative skill across H1 and H2. These
+conditional subset means differ from the Table 30 panel means over all task instances.
+expected bottlenecks, are never used as evidence here, so the agreement between a benchmark’s expected
+bottleneck and its measured root composition is a result rather than an assumption. A label is evidence-backed
+when a logged event or evaluator record localizes the error. When deterministic evidence does not determine
+the category, a fixed Qwen3.5-9B judge supplies an AgentRx-inspired, constraint-based causal hypothesis.
+Model-assisted and answer-level hypotheses remain marked separately from deterministic labels. Composition
+analyses normalize the 2,225 labeled source failures within each benchmark. Every root-conditioned analysis
+excludes LiveMath, whose 305 judge labels an independent judge does not reproduce (see below), leaving
+1,920 labeled failures.
+D.4.1
+Root Labeling and Evidence Tiers
+Each source failure receives one primary label from the taxonomy in Table 33, frozen before any matched
+outcome is loaded. Table 31 gives the evidence behind each label. Only the 305 LiveMath labels come from
+the Qwen3.5-9B judge; the other 1,920 come from logged errors, evaluator records, or deterministic answer
+rules. Before any execution, each benchmark’s expected bottleneck was annotated by hand (Table 14); these
+annotations are never used as labeling evidence.
+Table 31. Evidence tiers of the 2,225 root labels.
+Evidence
+Labels Benchmarks
+Logged runtime or artifact error, localized
+to its decisive step
+585 Spreadsheet
+Evaluator flag, rejected action, tool er-
+ror, or answer-contract violation, not step-
+localized
+555 UCSB SOP 266, SQuAD 159, Amazon 113, FullWiki 10, other 7
+Deterministic answer rule (wrong answer
+→Factual; explicit refusal →Abstention)
+780 SimpleQA
+Qwen3.5-9B judge hypothesis
+305 LiveMath
+Total
+2,225
+Coverage and missingness.
+The repeat-1 common-support cohort holds 3,939 source failures and 2,225
+receive labels, so 1,714 are unassigned. The missingness is concentrated rather than random, and the two
+Which Failure Does an Intervention Repair?
+40
+Hotpot views account for the large majority of it, which is why their one and ten labeled failures cannot
+explain their benchmark-wide behavior. We therefore report root-conditioned quantities on the assigned
+subset only and provide no weighted bound for the unassigned remainder. A stratified audit of the unassigned
+cases, followed by inverse-probability weighting or a worst-case missingness bound, is required before any
+root-conditioned percentage can be read as a property of the full failure population. Of the 1,714 unassigned
+failures, 1,300 are in the two Hotpot views, 214 in SQuAD, and 171 in Spreadsheet. They also respond less to
+the same actions: H2 rescues 5.4% of them versus 16.8% of the labeled failures, and a model change 19.4%
+versus 30.7%. A later pass of the same Qwen3.5-9B judge over all 1,714 proposes a label for 1,351 of them
+(raising coverage from 56.5% to 90.8%), dominated by Factual knowledge on Hotpot FullWiki (790 of 864)
+and answer contract on SQuAD (165) and Hotpot Context (162). A spot check found questionable FullWiki
+Factual labels, so these unvalidated candidates enter no reported table.
+D.4.2
+Label Validation
+Independent judge. GPT-6-sol, which is not an evaluated model, relabeled all 305 Qwen-judged LiveMath
+labels and all 780 rule-based SimpleQA labels, blind to the original labels. It received exactly the original
+requests (system prompt, evidence, output schema); only the model changed. Three deviations were necessary:
+the provider’s default temperature was used because GPT-6-sol does not accept temperature 0; the output limit
+was raised because reasoning tokens count toward it; and on SimpleQA the Abstention category was also
+admitted for a plain “I don’t know” (194 cases), which the original phrase filter missed. All 1,085 judgments
+were returned and valid. Table 32a gives the agreement. On LiveMath, answer-only failures leave nothing to
+diagnose, so both judges default to Reasoning, and on failures with a trace the answer choices differ only in
+fine conditions of research-level theorem statements, so misreading the statement cannot be separated from
+faulty inference. We therefore exclude LiveMath from every root-conditioned analysis.
+Author verification. An author verified a stratified random sample of 200 labels (seed 42, LiveMath
+excluded), with the strata and a test fixed before labeling. An LLM assistant proposed each root blind to the
+original label, and the author reviewed each proposal before the original label was revealed; all 200 proposals
+were accepted. Table 32b gives the agreement. SimpleQA labels are confirmed (119 of 120; 𝜅= 0.98; the
+prespecified test of accuracy ≤0.80 gives 𝑝= 7.3 × 10−11). The evidence-linked labels agree less on the
+exact root (𝜅= 0.33), mostly because Execution labels are reassigned to Procedural or answer contract on
+Amazon SOP and Hotpot FullWiki, or judged undetermined on Spreadsheet. At the level of the intervention
+axis, which is what the root-aligned contrast uses, 51 of the 63 determinable evidence-linked cases (81%) map
+to the same axis. Evidence-linked labels are therefore validated at the level of the intervention axis, not of the
+fine root. Because one author verified proposals from a single assistant, this check is not an independent
+multi-annotator study; a formal multi-annotator study of the decisive step remains future work.
+Propagating the label errors. We redraw every label from the confusion matrix observed in its stratum
+(Dirichlet(1)-smoothed per benchmark) and recompute the root-aligned contrasts 2,000 times. Execution→H2
+is +9.89 [+6.45, +13.23] and Capability→Model +34.8 [+22.8, +46.9], both positive in every draw (observed
++9.58 and +64.54).
+D.4.3
+Root-Conditioned Intervention Opportunity
+Failure type provides partial, but not universal, information about intervention opportunity.
+The
+factorial surface and interaction patterns establish that intervention value changes with the failure left by the
+surrounding configuration, but they do not identify that failure directly. If the residual-failure hypothesis
+Which Failure Does an Intervention Repair?
+41
+Table 32. Root-label validation. (a) Independent GPT-6-sol judge; 𝜅with 95% task-cluster bootstrap intervals. (b)
+Author verification by stratum; accuracy with 95% Wilson intervals.
+(a)
+Labels
+𝑛Agreement (%) 𝜅
+SimpleQA (answer rule) 780
+89.9 0.77 [0.73, 0.81]
+LiveMath (Qwen judge) 305
+73.1 0.08 [−0.01, 0.18]
+answer only
+125
+90.4 0.00
+with reasoning trace
+180
+61.1 0.05
+(b)
+Stratum (population)
+𝑛Agree Accuracy (%)
+SimpleQA answer rule (780)
+120
+119 99.2 [95.4, 99.9]
+SQuAD evidence-linked (159)
+15
+15 100 [79.6, 100]
+UCSB SOP evidence-linked (266)
+20
+12 60.0 [38.7, 78.1]
+Spreadsheet localized (585)
+20
+7 35.0 [18.1, 56.7]
+Amazon SOP evidence-linked (113)
+15
+3 20.0 [7.0, 45.2]
+Hotpot FullWiki evidence-linked (10)
+10
+0 0 [0, 27.8]
+All
+200
+156 78.0 [71.8, 83.2]
+Table 33. Domain-general root-cause taxonomy. Each failed trajectory receives one primary label corresponding to its
+earliest decisive error; later symptoms may be retained as secondary evidence.
+Root cause
+Operational definition
+Procedural
+The required information is available, but the trajectory violates a mandatory step,
+ordering constraint, schema, or task rule.
+Reasoning
+The relevant facts or state are available, but the plan, calculation, inference, or final
+conclusion is incorrect.
+Execution/tool
+The intended action is plausible, but a tool call, API invocation, program, syntax, or
+runtime operation fails.
+State/grounding
+The trajectory acts on the wrong entity, document, cell, evidence item, or environment
+state.
+Horizon/termination
+No earlier decisive error is found, but the trajectory stops too early, loops, or exhausts
+its turn, token, or time allowance.
+Factual knowledge/recall
+The required fact is neither supplied by the task nor correctly recalled, and no earlier
+procedural, reasoning, execution, or grounding error explains the failure.
+Abstention/calibration
+The model explicitly declines or withholds an answer despite the task requiring one.
+Evaluation/answer
+con-
+tract
+The substantive answer may be available, but the submitted answer violates the evaluator-
+visible answer contract or cannot be credited under it.
+is correct, a trajectory-level root label should provide information about intervention opportunity beyond
+benchmark identity. We therefore freeze each source trajectory before inspecting matched target outcomes,
+assign its earliest supported failure label, and test that incremental association.
+Freeze the failure before testing its response.
+We fix the NoSkill+H1+Medium source condition and
+assign the earliest decisive error supported by each failed trajectory before inspecting any matched target
+outcome. The eight labels are Procedural, Reasoning, Execution/tool, State/grounding, Horizon/termination,
+Which Failure Does an Intervention Repair?
+42
+Table 34. Pooled descriptive root cause and action-count-standardized matched intervention opportunity. Skill and
+Model average candidate-specific improvement indicators over three actions; H2 and High budget each test one action.
+Columns are overlapping improvement opportunities rather than mutually exclusive outcomes, so rows need not sum
+to 100%. Improvement is a strictly positive matched native-score change (𝛿𝑏= 0), preserving the original estimand.
+Each axis has total weight one despite different candidate counts. Bold marks the largest standardized opportunity in
+each row; underlining marks the second largest. †The single Horizon case is descriptive. LiveMath is excluded (1,920
+labeled failures).
+H1 root cause
+Failures
+Skill avg.
+H2
+High budget
+Model avg.
+Procedural
+209
+12.4%
+6.7%
+3.3%
+23.1%
+Execution/tool
+730
+5.0%
+20.8%
+4.0%
+26.6%
+State/grounding
+37
+41.4%
+8.1%
+10.8%
+73.0%
+Horizon/termination†
+1
+33.3%
+0.0%
+0.0%
+100.0%
+Factual knowledge/recall
+586
+7.8%
+6.7%
+6.3%
+30.1%
+Abstention/calibration
+194
+2.7%
+2.1%
+2.6%
+16.2%
+Evaluation/answer contract
+163
+63.0%
+77.3%
+1.8%
+76.7%
+Factual knowledge/recall, Abstention/calibration, and Evaluation/answer contract, defined in Appendix
+Table 33 and distributed over the 2,225 labeled failures in Table 19. That distribution is the central obstacle to
+interpreting roots: six of eight benchmarks are effectively dominated by one root, with UCSB SOP 78.57%
+Procedural, Spreadsheet and Amazon predominantly Execution/tool, SQuAD entirely Evaluation/answer
+contract, and SimpleQA 74.84% Factual with 24.78% Abstention. Only LiveMath, SimpleQA, and UCSB
+SOP provide the within-benchmark overlap used below. Root and benchmark are therefore strongly associated
+by construction, and the Reasoning, State, Factual, and Abstention assignments are model-assisted hypotheses
+rather than deterministic labels.
+Link each source root to matched intervention opportunity.
+For each labeled failure we ask whether
+changing one axis improves that same task instance. Table 34 averages candidate-specific positive-change
+indicators over the three Skill and three Model alternatives, with H2 and High Budget each testing one action.
+Contract-labeled SQuAD failures respond to H2 in 77.3% of cases, and SimpleQA’s factual-recall failures
+respond to a Model change in 30.1% against 6.7% for H2. The Model column is the largest entry in six of the
+seven rows, including Procedural, where the Skill average is 12.4% against 23.1% for Model; among actions
+that keep the model fixed, however, Skill is the largest for Procedural failures (12.4% against 6.7% for H2). A
+root label can thus suggest an axis without identifying the best action.
+Because root and benchmark are strongly associated, the pooled rows alone cannot show that the label adds
+information beyond benchmark membership. We therefore use the within-benchmark overlap of SimpleQA
+and UCSB SOP (1,046 failures; LiveMath excluded). A benchmark- and source-model-stratified permutation
+test finds a root × intervention association (𝑝= 0.0002). In grouped out-of-fold prediction, adding Root to
+Benchmark+Model reduces log loss by 0.0096 (95% CI [+0.0020,+0.0170]) and improves AUPRC by 6.99
+points ([+3.48,+10.72]), but not AUROC (+0.81 [−0.67,+2.29]). Failure labels therefore carry information
+beyond benchmark identity where several roots occur within a benchmark, but they do not yet predict,
+independently of the benchmark, which intervention will help.
+A separate outcome-blind root-to-action mapping gives the same qualified picture. H2 is comparatively
+responsive for Execution/tool, State/grounding, and Evaluation/answer contract failures (+9.58 points over
+Which Failure Does an Intervention Repair?
+43
+Figure 10. Complete action profile behind the compact root-aligned contrast, without LiveMath. Every panel shows
+the failed source, same-configuration rerun, Trace2Skill, H2, High budget, and GPT-5.6-sol target performance. The
+outlined bar is the action fixed by the semantic mapping; a high non-aligned mean can therefore be traced to its individual
+action.
+the non-aligned mean, 95% CI [+4.77,+13.93]), and a Model change for Factual knowledge/recall and
+Abstention/calibration failures (+64.54 [+58.68,+70.16], SimpleQA). Among actions that keep the model
+fixed, the mapped action is the strongest in every row, including Procedural→Skill (one benchmark); a
+stronger model still rescues more (Appendix D.4.4).
+D.4.4
+Frozen Root-Aligned Intervention Contrast
+Table 35. Execution failures (428, six benchmarks, LiveMath excluded): the mapped H2 action against the best action
+that keeps Qwen3.5-9B (rerun, Skill, H2, or High budget) and against the stronger model. Success rates in %; 95%
+paired task-cluster bootstrap intervals.
+H2
+Best same-model (Skill) H2 −best same-model
+Stronger model
+H2 −model
+33.50
+18.41 +15.09 [+7.98, +21.48]
+48.18
+−14.67 [−25.48, −6.62]
+The outcome-blind mapping fixes Procedural→Skill, Execution/tool/State/answer contract→H2, and
+Reasoning/Factual knowledge/Abstention→Model before loading matched target outcomes. Figure 5 and
+Table 36 show the compact contrast on 748 Qwen NoSkill+H1+Medium repeat-1 failures with complete
+targets (LiveMath excluded).
+The H2 and Model mappings exceed the non-aligned three-axis mean;
+Procedural→Skill does not, because that mean includes a stronger model, but Skill is the strongest action that
+keeps the model fixed. The H2 mapping does not exceed the stronger model, and capability now rests on
+SimpleQA alone. Figure 10 exposes each action. The reconstruction uses existing target executions and is
+descriptive rather than prospective randomized intervention.
+D.5 When Feedback Becomes Recovery
+Usable evidence is associated with recovery, but logged observability is not sufficient.
+H1→H2 provides
+a concrete test of when feedback becomes repair. Mechanistically, H2 can help only if the failure is exposed
+to the model, the resulting signal identifies a legal corrective action, and the error can be repaired locally
+without restarting the whole solution:
+exposure −→repair −→preservation.
+Which Failure Does an Intervention Repair?
+44
+Table 36. Compact root-aligned intervention contrast. 𝑛/𝐵gives source failures and contributing benchmarks. The
+non-aligned column averages the other three active intervention axes. Horizon/termination is omitted because its
+single source case cannot support a pattern-level preset. Source: Qwen3.5-9B + NoSkill + H1 + Medium, repeat
+1. Same-configuration rerun is kept separate from the three-axis non-aligned mean. High remains an action-level
+comparison but is not assigned a root pattern.
+Failure pattern
+𝑛/𝐵
+Source
+Non-aln.
+Root-aligned action
+Aligned−mean [95% CI]
+Proc.→Skill
+53/1
+0.00
+16.98
+Skill: 20.75
++3.77 [−5.66,+14.47]
+Exec./interface→H2
+428/6
+1.15
+23.92
+H2: 33.50
++9.58 [+4.77,+13.93]
+Capability→Model
+267/1
+0.00
+1.00
+GPT-5.6-sol: 65.54
++64.54 [+58.68,+70.16]
+Table 37. Complete performance table for the frozen root-aligned intervention contrast. Scores are paired within task
+and benchmark-equal aggregated. “Strongest other” is reported to distinguish a taxonomy-aligned signal from empirical
+action optimality. Performance values are percentages; blue bold values mark the intervention fixed by the root-to-axis
+mapping. 𝐵is the number of contributing benchmarks. LiveMath is excluded. Bootstrap 𝑝values (5,000 draws) are
+.4560, .0000, and .0000 in row order; the corresponding BH 𝑞values are shown in the final column. Horizon/termination
+is excluded because 𝑛= 1 cannot support a pattern-level preset.
+(a) Per-action performance
+Failure pattern
+𝑛
+𝐵
+Source
+Rerun
+Skill
+H2
+High
+Model
+Proc.→Skill
+53
+1
+0.00
+9.43
+20.75
+9.43
+3.77
+37.74
+Exec./interface→H2
+428
+6
+1.15
+4.34
+18.41
+33.50
+5.17
+48.18
+Capability→Model
+267
+1
+0.00
+0.37
+1.50
+0.37
+1.12
+65.54
+(b) Aligned-versus-alternative contrasts
+Failure pattern
+Other mean
+Aligned−mean [95% CI]
+Strongest other
+Aligned−strongest
+BH 𝑞
+Proc.→Skill
+16.98
++3.77 [−5.66,+14.47]
+Model 37.74
+−16.98
+.4560
+Exec./interface→H2
+23.92
++9.58 [+4.77,+13.93]
+Model 48.18
+−14.67
+.0000
+Capability→Model
+1.00
++64.54 [+58.68,+70.16]
+Skill 1.50
++64.04
+.0000
+Table 38. Available cost fields for the frozen root-aligned contrast. Missing values mean that comparable full-chain
+telemetry was unavailable; they are not treated as zero. 𝑎A reproducible $1 per million accounted-token scenario, not an
+invoice. 𝑏Actual provider attribution is available only when GPT-5.6-sol is the aligned target; it excludes the local-Qwen
+source cost. Qwen latency and actual dollar cost were not logged comparably.
+Failure pattern
+Aligned tokens
+Other-axis tokens
+Aligned USD𝑎
+Provider USD / latency𝑏
+Proc.→Skill
+NA
+NA
+NA
+NA
+Exec./interface→H2
+21,966.28
+19,107.73
+$0.021966
+NA
+Capability→Model
+4,380.55
+6,903.82
+$0.004381
+$0.017542 / 15.80 s
+We operationalize the first two stages using whether an H1 failure is logged as model-visible, actionable, and
+locally correctable. These telemetry fields are imperfect proxies: absence of a logged visible failure does not
+establish that no usable signal existed.
+Among H1 failures satisfying all three recorded conditions, H2 rescues 23.4% (327/1,397), compared
+with 9.5% (1,009/10,592) when no visible failure is logged. The pooled difference is consistent with the
+Which Failure Does an Intervention Repair?
+45
+Visible + actionable
++ local
+No visible failure
+logged
+0
+10
+20
+30
+H1 failure → H2 success (%)
+23.4%
+327/1,397
+9.5%
+1,009/10,592
+A. Pooled evidence association
+Hotpot
+FullWiki
+Spreadsheet
+SQuAD
+0
+10
+20
+30
+27.1%
+322/1,187
+1.3%
+2/149
+0.0%
+0/12
+B. Benchmark-conditioned conversion
+Figure 11. H1→H2 rescue conditional on evidence recorded in the failed H1 trajectory. (a) Pooled binary failures with
+visible, actionable, locally correctable evidence have a higher rescue rate than failures with no visible signal logged. (b)
+The same evidence pattern converts very differently across benchmarks, and Hotpot FullWiki supplies 85.0% of the
+pooled exposed-failure denominator. Whiskers are 95% instance-UID cluster-bootstrap intervals; the interval is omitted
+for SQuAD because none of its 12 cases is rescued. “No visible failure logged” describes available telemetry rather than
+proving that no usable signal existed.
+observability hypothesis, but it is dominated by one benchmark. Hotpot FullWiki supplies 1,187 of the 1,397
+exposed failures (85.0% of the denominator) and rescues 27.1% of them, whereas Spreadsheet rescues only 2
+of 149 (1.3%) and SQuAD 0 of 12 (Figure 11). The pooled 23.4% is therefore largely a weighted restatement
+of the retrieval case rather than evidence of a portable exposure-to-repair mechanism. Logged observability is
+associated with recovery, but it is not sufficient; its necessity also remains unproven because the logs may
+miss usable evidence.
+Rescue alone is insufficient.
+A recovery intervention must repair failed executions without destroying
+executions that were already correct. We therefore report both
+RescueRate = 𝑃(𝑌𝐻2 = 1 | 𝑌𝐻1 = 0)
+and
+RegressionRate = 𝑃(𝑌𝐻2 = 0 | 𝑌𝐻1 = 1),
+with
+NetGain = 𝑃(𝑌𝐻1 = 0,𝑌𝐻2 = 1) −𝑃(𝑌𝐻1 = 1,𝑌𝐻2 = 0)
+over the full matched population. A successful repair that is overwritten later in the trajectory fails the
+preservation stage. H2 produces both rescues and recovery-induced regressions, so its utility is determined by
+the complete exposure–repair–preservation pathway rather than rescue alone (Figure 11 and Table 40).
+A retrospective Qwen pre-H2 predictor attains AUROC 0.945 against 0.796 for benchmark identity, but
+this does not establish a deployable recoverability signal. Its features aggregate repeated H0 and H1 history
+for the same task instance while its label is whether H2 rescues that instance, so it has partial access to how
+the instance behaves under repetition and the gap to a single-trajectory predictor is unmeasured. It is an upper
+bound contaminated by task-instance identity information (Figure 12).
+For matched H1→H2 transitions, let 𝑍= 1 indicate audited model-visible feedback/recovery exposure.
+For binary outcomes,
+𝜇(𝐻2) −𝜇(𝐻1) = Pr(𝑌1 = 0,𝑌2 = 1, 𝑍= 1)
+(6)
++ Pr(𝑌1 = 0,𝑌2 = 1, 𝑍= 0) −Pr(𝑌1 = 1,𝑌2 = 0),
+(7)
+corresponding to exposed gain, unexposed gain, and recovery-induced regression.
+Which Failure Does an Intervention Repair?
+46
+Table 39. Action-set Oracle opportunity on the same 1,920 repeat-1 source failures (LiveMath excluded) as Table 34.
+Skill and Model count a source as improved when any of three tested actions improves it; H2 and High budget each test
+one action. Candidate counts differ, so columns quantify action-set headroom and must not be used to rank intervention
+axes. A source counts as improved when any tested action on that axis improves it; Skill and Model each test three
+actions while H2 and High budget test one. These are overlapping retrospective action-set opportunities, not causal
+effects or router accuracy. †The single Horizon case is descriptive.
+H1 root cause
+Failures
+Skill (any)
+H2
+High budget
+Model (any)
+Procedural
+209
+20.6% (43)
+6.7% (14)
+3.3% (7)
+40.7% (85)
+Execution/tool
+730
+11.2% (82)
+20.8% (152)
+4.0% (29)
+47.0% (343)
+State/grounding
+37
+64.9% (24)
+8.1% (3)
+10.8% (4)
+89.2% (33)
+Horizon/termination†
+1
+1/1
+0/1
+0/1
+1/1
+Factual knowledge/recall
+586
+14.0% (82)
+6.7% (39)
+6.3% (37)
+58.7% (344)
+Abstention/calibration
+194
+6.7% (13)
+2.1% (4)
+2.6% (5)
+40.2% (78)
+Evaluation/answer contract
+163
+81.6% (133)
+77.3% (126)
+1.8% (3)
+91.4% (149)
+Table 40. Matched H1→H2 transitions at Default budget for binary-outcome benchmarks. Rescue and regression rates
+condition on H1 failure and H1 success, respectively; Net gain is (𝑁0→1 −𝑁1→0)/𝑁. Amazon uses a fractional metric
+and is not dichotomized: among 2,400 matched executions, 1,070 improve, 1,322 are unchanged, eight degrade, and
+mean performance rises from 40.47 to 82.71 (+42.24 points).
+Benchmark
+𝑁
+Rescue
+Preserve
+Regr.
+Persist.
+Rescue %
+Regr. %
+Net
+Spreadsheet
+13,440
+1,046
+3,514
+401
+8,479
+10.98%
+10.24%
++4.80 pp
+LiveMath
+5,952
+410
+2,050
+442
+3,050
+11.85%
+17.74%
+−0.54 pp
+UCSB SOP
+8,400
+265
+5,143
+249
+2,743
+8.81%
+4.62%
++0.19 pp
+SimpleQA
+14,400
+365
+4,366
+396
+9,273
+3.79%
+8.32%
+−0.22 pp
+SQuAD
+14,400
+736
+10,828
+140
+2,696
+21.45%
+1.28%
++4.14 pp
+Hotpot Context
+14,400
+294
+8,201
+280
+5,625
+4.97%
+3.30%
++0.10 pp
+Hotpot FullWiki
+14,400
+770
+3,466
+432
+9,732
+7.33%
+11.08%
++2.35 pp
+Interpretation boundary.
+The taxonomy localizes the earliest supported source error, whereas the matched
+target outcomes indicate whether a tested intervention subsequently improves that case. The association does
+not establish that the named root cause is the sole causal mediator, and labels produced from answer-only or
+model-assisted evidence remain hypotheses. The transition analysis likewise describes replayed matched
+executions; it does not constitute prospective continuation from one shared H1 state.
+D.6 What Capability Boundaries Remain
+For failed task instance𝑖under source configuration 𝑐, let A𝑖,𝐽be the available actions on axis 𝐽∈{𝑆, 𝐻, 𝐵, 𝑀}
+and 𝜏𝑖the benchmark-native success criterion. To equalize candidate count, one action is selected uniformly
+per axis and the crossing set is
+𝑎𝑖,𝐽∼Unif(A𝑖,𝐽),
+B𝑖(a𝑖) =
+
+𝐽: 𝑌𝑖(𝑐, 𝑎𝑖,𝐽) ≥𝜏𝑖
+	
+.
+(8)
+We enumerate all 3 × 3 Skill–Model pairs exactly; H2 and High budget are singleton actions. Reported
+boundary prevalence is the uniform expectation over these one-action-per-axis comparisons. If B𝑖is empty, no
+selected intervention reaches success; if several axes cross, deployment cost is required to identify the cheapest
+successful action in the full action set. The boundary is therefore empirical and configuration-dependent
+rather than an intrinsic hierarchy among intervention classes.
+Which Failure Does an Intervention Repair?
+47
+E. Skill–Harness Regimes, Recovery Pathways, and Pre-Recovery Diagnosis
+Regime prevalence over the full matrix.
+Table 41 classifies every Default-budget skill–model–benchmark
+combination (8 benchmarks × 4 models × 3 skills = 96) by its skill gain over NoSkill at H0 (𝑔0) and at H2
+(𝑔2), using the five-point descriptive tolerance 𝜖of Appendix A.6 on the repeat-averaged cells of Table 2.
+Absorbed: 𝑔0 ≥𝜖, 𝑔2 ≤𝑔0 −𝜖, and 𝑔2 > −𝜖. Reversed: 𝑔0 ≥𝜖and 𝑔2 ≤−𝜖. Preserved: 𝑔0 ≥𝜖and
+|𝑔2 −𝑔0| < 𝜖. Rescued: 𝑔0 ≤−𝜖, 𝑔2 −𝑔0 ≥𝜖, and 𝑔2 > −𝜖. Persistent harm: 𝑔0 ≤−𝜖and not rescued.
+Emerging gain or harm: |𝑔0| < 𝜖and 𝑔2 ≥𝜖or 𝑔2 ≤−𝜖. No material effect: |𝑔0| < 𝜖and |𝑔2| < 𝜖. No
+combination is amplified (𝑔0 ≥𝜖, 𝑔2 ≥𝑔0 + 𝜖). The six representative cells of Table 3 receive the regime
+named there. All 18 absorbed combinations lie on SQuAD, Hotpot Context, and Amazon SOP, the three
+benchmarks with native-score floor cells (Appendix A.6.1). Of the four rescued combinations, the two of
+Qwen3.5-9B remove penalties of 19.5 and 22.8 points, whereas the two of Sonnet 4.6 remove penalties of 5.6
+points. These counts are thresholded descriptions of cell means, not effects certified against A/A noise.
+Table 41. Skill–harness regime of every Default-budget skill–model–benchmark combination (counts; H0 versus H2,
+𝜖= 5 points).
+Regime
+Qwen3.5-9B
+Sonnet 4.6
+Sonnet 5
+GPT-5.6-sol
+All
+Absorbed
+4
+4
+6
+4
+18
+Preserved
+5
+2
+1
+4
+12
+Rescued
+2
+2
+0
+0
+4
+Persistent harm
+3
+3
+3
+2
+11
+Reversed
+0
+1
+0
+0
+1
+Emerging harm
+0
+1
+1
+0
+2
+Emerging gain
+1
+0
+1
+1
+3
+No material effect
+9
+11
+12
+13
+45
+Total
+24
+24
+24
+24
+96
+Answer format versus content.
+Table 42 re-scores the Qwen3.5-9B trajectories on SQuAD and Hotpot
+Context with a check that credits a response of at most 100 words containing a gold answer. On SQuAD the
+content check is near 95 in every cell, so the native Harness and Skill effects there are almost entirely answer
+format. On Hotpot Context, the SkillOpt penalty at H1 and H2 remains under the content check (−14.5 and
+−11.8 against NoSkill), so that penalty is substantive.
+Table 42. Qwen3.5-9B native exact match versus the answer-content check on the same saved trajectories (0–100 scale,
+Default budget).
+Native exact match
+Answer content present
+Benchmark
+Skill
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+SQuAD
+NoSkill
+10.7
+36.6
+78.6
+79.3
+96.1
+95.7
+95.0
+95.3
+Direct
+46.7
+76.4
+75.9
+76.3
+95.2
+96.4
+96.8
+96.2
+SkillOpt
+29.0
+77.0
+77.6
+77.4
+95.3
+95.0
+95.0
+95.0
+Trace2Skill
+76.9
+55.0
+80.8
+79.2
+96.6
+96.3
+95.3
+94.7
+Hotpot Context
+NoSkill
+18.6
+59.3
+59.7
+58.6
+74.0
+66.1
+66.4
+65.8
+Direct
+21.3
+55.2
+55.3
+57.3
+68.8
+64.6
+64.7
+66.9
+SkillOpt
+0.0
+44.0
+47.9
+59.7
+70.0
+51.6
+54.6
+69.4
+Trace2Skill
+26.2
+58.4
+58.6
+59.2
+73.7
+64.3
+64.3
+65.3
+Which Failure Does an Intervention Repair?
+48
+Cross-model regimes.
+Table 43 reports the same regime cells for all four models, computed from Table 2.
+Table 43. Skill gain over NoSkill within each Harness (points) for the regime cells of Table 3, across the four Models
+at Default budget. Values are differences of one-decimal cell means.
+Qwen3.5-9B
+Sonnet 4.6
+Sonnet 5
+GPT-5.6-sol
+Regime
+Benchmark
+Skill
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+H0
+H1
+H2
+H3
+Absorption
+SQuAD
+Trace2Skill
+66.2
+18.4
+2.2 -0.1 16.1
+1.3
+1.3
+0.9
+67.5
+1.0
+1.6
+1.3
+48.9
+17.2
+17.7
+12.8
+SQuAD
+Direct
+36.0
+39.8
+-2.7 -3.0 42.4 -5.0 -5.3 -4.3
+35.8 -0.8 -0.7 -2.0
+35.4
+10.2
+11.3
+8.9
+SQuAD
+SkillOpt
+18.3
+40.4
+-1.0 -1.9
+0.0 -3.0 -3.5 -3.7
+48.5 -2.9 -2.1 -4.7
+25.8
+0.4
+1.0
+-1.7
+Penalty rescue FullWiki
+Direct
+-22.8 -22.0
+1.6
+2.9 -2.4 -4.3 -2.6 -3.1
+-3.9 -4.2 -3.5 -5.8
+6.2
+4.6
+4.1
+6.9
+FullWiki
+SkillOpt
+-3.1
+-1.9
+8.1
+8.7 -9.3 -9.7 -8.3 -7.2 -11.0 -6.9 -7.7 -8.8
+-5.8
+-2.6
+-6.0
+-3.1
+Amazon SOP SkillOpt
+-19.5 -27.2
+6.2
+3.1 17.3 17.3
+0.0
+0.4
+-0.9
+4.8
+2.6 -7.8
+0.6
+1.4
+0.0
+0.3
+Context
+SkillOpt
+-18.6 -15.3 -11.8
+1.1
+0.0
+2.0
+2.2
+0.8
+-3.4 -0.4 -1.6 -0.9 -22.6 -48.4 -49.7 -49.1
+Preservation
+FullWiki
+Trace2Skill
+8.5
+8.2
+9.2 12.2 14.9 11.2 12.4 11.6
+10.0 14.1 11.9
+8.7
+10.6
+7.5
+9.5
+9.0
+UCSB SOP
+SkillOpt
+13.5
+15.3
+13.3
+3.7
+5.7
+7.0
+5.7
+4.9
+1.9
+1.9
+2.6
+3.4
+2.7
+3.8
+1.3
+1.9
+UCSB SOP
+Trace2Skill
+9.3
+10.9
+9.3
+2.9 -2.8 -2.7
+0.4
+2.7
+-1.6
+0.2 -1.7 -0.2
+1.9
+1.0
+0.9
+-0.2
+Recovery pathway.
+Table 44 reports the Qwen3.5-9B H2 telemetry behind Section 4. Exposure is the share
+of executions with an audited model-visible recovery signal; each later rate uses the preceding stage as its
+denominator, and a dash denotes an unreached stage.
+Signal coding.
+Each Qwen3.5-9B H1 failure is coded from its own H1 trajectory, before and independently
+of the H2 outcome: an interface or contract violation (missing answer tag, premature or rejected final
+submission), a runtime or tool error (execution error, invalid action, or tool-parameter error), or no error
+signal (a wrong answer that raises nothing). Rescue is H2 success in the same instance, Skill, and repeat.
+Pre-recovery diagnosis.
+Among the 5,003 Qwen3.5-9B instance–Skill views that fail at H1 in a majority of
+the three repeats, 14.1% succeed at H2 in a majority. A gradient-boosted classifier on H0 and H1 behavior
+(outcome summaries, token and turn counts, tool use, premature submission, and the modal H1 failure type),
+evaluated by five-fold cross-validation grouped by instance, ranks them with AUROC 0.945 and AUPRC
+0.772, against 0.796 and 0.376 for benchmark identity alone (Figure 12; Table 46). Table 47 replays escalation
+policies over all 7,488 views. Probe-first policies run H1, observe its outcome, and escalate only failures, so
+their cost includes the probe; regressions are H1 successes lost at H2 per 100 views, and tokens cover the
+benchmarks with token telemetry. The predictor scores in the replay come from a re-run of the same pipeline
+(AUROC 0.944, AUPRC 0.756). Because the replay reuses the repeats that define the label, its figures are
+retrospective upper bounds.
+Which Failure Does an Intervention Repair?
+49
+Table 44. H2 failure-to-recovery diagnostics, pooled over three repeats (%). The table distinguishes exposure, response,
+local correction, and final task recovery rather than treating them as a single repair event.
+Benchmark
+Skill
+Exposure
+Response|exposure
+Local repair|response
+Success|response
+H2−H1
+SQuAD
+NoSkill
+52.9
+100.0
+100.0
+78.2
++42.0
+Direct
+0.3
+100.0
+0.0
+0.0
+-0.6
+SkillOpt
+0.0
+–
+–
+–
++0.6
+Trace2Skill
+32.7
+100.0
+99.3
+72.4
++25.8
+BigCode
+NoSkill
+69.8
+100.0
+0.0
+0.0
++0.8
+Direct
+73.6
+100.0
+1.1
+1.1
++0.8
+SkillOpt
+71.3
+100.0
+1.1
+1.1
++1.6
+Trace2Skill
+76.0
+100.0
+2.0
+2.0
++1.6
+Spreadsheet
+NoSkill
+73.2
+100.0
+65.2
+22.3
++15.6
+Direct
+67.3
+100.0
+66.7
+23.4
++15.2
+SkillOpt
+77.0
+100.0
+65.1
+19.3
++13.2
+Trace2Skill
+69.0
+100.0
+65.5
+17.9
++12.6
+Table 45. H2 rescue rate (%) of H1 failures by the signal in the H1 trajectory. The last column is the within-benchmark
+difference between failures with and without a signal, with a 95% task-cluster bootstrap interval.
+With a signal
+No signal
+Benchmark
+𝑛
+Rescued
+𝑛
+Rescued
+Difference [95% CI]
+SQuAD
+798
+76.9
+597
+1.3
++75.6 [+69.0, +82.1]
+Hotpot Context
+52
+63.5
+1,595
+1.8
++61.6 [+39.6, +82.2]
+Hotpot FullWiki
+1,430
+24.2
+1,379
+1.5
++22.7 [+18.5, +27.0]
+Spreadsheet
+2,362
+21.5
+645
+17.4
++4.1 [+0.0, +8.1]
+UCSB SOP
+25
+4.0
+832
+10.6
+−6.6 [−13.0, +3.3]
+BigCode
+377
+3.2
+–
+–
+–
+AUROC
+AUPRC
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Grouped out-of-fold score
+0.796
+0.376
+0.945
+0.772
+n = 5,003 H1-failing views
+(a) Aggregate prediction
+Benchmark identity only
+Full pre-H2 predictor
+0.5
+0.6
+0.7
+0.8
+0.9
+1.0
+Within-benchmark AUROC
+Hotpot Context
+BigCode
+AmazonSOP
+SQuAD
+Hotpot FullWiki
+UCSB SOP
+Spreadsheet
+LiveMath-meta
+LiveMath-non-meta
+0.984
+0.978
+0.960
+0.958
+0.909
+0.886
+0.802
+0.799
+0.725
+chance
+(b) Per-benchmark OOF slices
+Figure 12. Grouped out-of-fold prediction of H2 rescue among Qwen3.5-9B H1 failures. (a) Pre-H2 behavior
+outperforms benchmark identity. (b) Within-benchmark AUROC.
+Which Failure Does an Intervention Repair?
+50
+Table 46. Grouped out-of-fold H2-rescuability prediction. Base rate is the positive-label prevalence. Per-benchmark
+rows use the full gradient-boosted predictor; SimpleQA has no positive cases, so ranking metrics are undefined.
+Scope
+Predictor
+𝑛
+Base rate
+AUROC
+AUPRC
+All
+Full pre-H2 predictor
+5,003
+0.141
+0.945
+0.772
+All
+Benchmark identity only
+5,003
+0.141
+0.796
+0.376
+AmazonSOP
+Full pre-H2 predictor
+179
+0.575
+0.960
+0.956
+BigCode
+Full pre-H2 predictor
+126
+0.024
+0.978
+0.421
+Hotpot Context
+Full pre-H2 predictor
+548
+0.036
+0.984
+0.761
+Hotpot FullWiki
+Full pre-H2 predictor
+941
+0.131
+0.909
+0.608
+LiveMath-meta
+Full pre-H2 predictor
+145
+0.110
+0.799
+0.365
+LiveMath-non-meta
+Full pre-H2 predictor
+151
+0.172
+0.725
+0.311
+SQuAD
+Full pre-H2 predictor
+463
+0.438
+0.958
+0.927
+Spreadsheet
+Full pre-H2 predictor
+1,036
+0.181
+0.802
+0.469
+UCSB SOP
+Full pre-H2 predictor
+286
+0.091
+0.886
+0.512
+SimpleQA
+Full pre-H2 predictor
+1,128
+0.000
+–
+–
+Table 47. Offline replay of escalation policies over 7,488 Qwen3.5-9B task–method views.
+Policy
+Escalated (%)
+Accuracy (%)
+Regressions
+Tokens
+Always H1
+0.0
+33.71
+0.00
+3,190
+Always H2 (no probe)
+100.0
+41.60
+2.20
+3,729
+Escalate every H1 failure
+66.8
+42.13
+0.87
+6,267
+Predictor top 10% of H1 failures
+6.7
+38.45
+0.16
+3,944
+Random 10% of H1 failures
+6.7
+34.55
+0.09
+3,498
+Predictor top 20% of H1 failures
+13.4
+40.02
+0.74
+4,389
+Random 20% of H1 failures
+13.4
+35.39
+0.17
+3,810
+Predictor top 30% of H1 failures
+20.0
+41.13
+0.87
+4,719
+Random 30% of H1 failures
+20.0
+36.24
+0.26
+4,112
+Predictor top 50% of H1 failures
+33.4
+42.01
+0.87
+5,661
+Random 50% of H1 failures
+33.4
+37.92
+0.44
+4,730
+Oracle (escalate rescuable H1 failures)
+9.4
+41.46
+0.13
+4,022
+Oracle (escalate any view where H2 > H1)
+14.4
+43.12
+0.13
+4,241
+Which Failure Does an Intervention Repair?
+51
+F. Routing Intervention Choice
+F.1 Direct Routing
+Every router has two stages. Stage A is the predictor: for each task and candidate action, a ridge regression
+predicts whether the action beats the reference (Trace2Skill+H2 at Default budget), using only inputs
+available before the outcome, under nested leave-one-benchmark-family-out cross-validation. Stage B picks
+the action with the highest predicted gain, and its outcome and full call-chain token cost are replayed from the
+saved runs.
+The capability boundaries in Section D.6 leave headroom wherever several actions succeed. Whether that
+headroom is usable depends on choosing the right action in advance, without first paying a probe to find out.
+Table 48 compares five policies that must choose from the task text alone, under held-family historical replay.
+Trace H1 and Trace H2 apply one harness level to every instance without routing. The Text+action Router
+predicts the action directly from task text, whereas Text→root→action first predicts a root cause and then
+maps that label to an action. The Observed per-instance Oracle picks the best action using matched outcomes
+and is an unattainable reference. Every policy acts on Qwen3.5-9B, so ranking by mean full-chain tokens
+ranks by cost.
+Table 48. Direct routing without a paid H1 probe under held-family historical replay. The Observed per-instance Oracle
+is an unattainable reference using matched outcomes. The cross-repeat Oracle picks the action on one repeat and scores
+it on the other two.
+Policy
+Performance
+Mean full-chain tokens
+Trace H1
+38.99%
+2,853.51
+Trace H2 reference
+45.29%
+4,070.32
+Text+action Router
+39.42%
+3,620.89
+Text→root→action
+40.10%
+4,264.12
+Observed per-instance Oracle
+58.12%
+2,084.54
+Cross-repeat Oracle
+49.24%
+2,359
+Predicting the root cause first helps slightly, 40.10% against 39.42%, but that difference is not statistically
+resolved. Both routers stay below the Trace H2 reference of 45.29%, so no deployable router is yet established,
+while the Oracle reaches 58.12%, or 49.24% when the action is picked on one repeat and scored on the other
+two. That gap makes intervention selection a value-of-information problem: acquiring the signal can consume
+the benefit of acting on it.
+F.2 Recovery Routing
+Table 49. Recovery routing under held-family historical replay. Full-chain token means charge the H1 probe and
+selected H2 restarts.
+Policy
+Performance
+Mean full-chain tokens
+Always H1
+37.17%
+5,334.19
+Always H2
+51.01%
+10,243.14
+H1-conditioned router
+49.25%
+13,677.49
+Observed H1/H2 Oracle
+54.20%
+11,374.29
+The recovery setting purchases one H1 execution and decides whether to keep it or restart with H2; the
+Which Failure Does an Intervention Repair?
+52
+direct setting avoids that probe and chooses among tested Qwen configurations from task text. The first
+exposes an information-acquisition cost, while the second exposes an identifiability limit. All comparisons
+use complete recorded call-chain token accounting, including probes and restarts.
+F.3 Routing Results and Interpretation
+Routing headroom exists, but deployable signals do not yet realize it.
+Section 4 shows why routing could
+matter: some failures admit several successful axes with different costs, while others require a particular
+intervention. An Observed per-instance Oracle verifies that this heterogeneity contains substantial quality–cost
+headroom. On the direct action set, it reaches 58.12% with 2,085 mean full-chain tokens, compared with
+45.29% and 4,070 tokens for the Trace H2 reference. Thus, a policy that knew the matched outcomes could
+be both more accurate and cheaper. The Oracle obtains that advantage by reading the target outcomes it is
+supposed to predict, however, and is therefore an unattainable boundary rather than a deployable policy. Part
+of its gap is also selection on noise, because it picks and scores the action on the same runs. Picking the
+action on one repeat and scoring it on the other two leaves +3.95 points [+1.58, +6.36] over the reference
+(49.24% versus 45.29%), which is our main estimate of direct-routing headroom.
+The tested deployment-valid information paths do not realize this headroom. The H1-conditioned router
+pays for an H1 probe before deciding whether to keep H1 or restart H2. It reaches 49.25% with 13,677 mean
+full-chain tokens, whereas Always H2 reaches 51.01% with 10,243 tokens. This router has both lower quality
+and higher cost and is therefore strictly dominated. Direct text-conditioned routing avoids the probe, but the
+Text+action Router reaches only 39.42%, and Text→root→action reaches 40.10%, both below the 45.29%
+Trace H2 reference. The latter also spends 4,264 tokens against 4,070 for Trace H2.
+The result is a negative deployment finding rather than evidence that routing has no value: routing
+headroom exists, but none of the tested lightweight deployable routing policies achieves a quality–cost Pareto
+improvement. In the terms of Section 4,
+failure information ⇏a cheap deployable decision signal.
+These experiments are frozen historical replays rather than live prospective executions, and their money
+and latency ledgers remain incomplete. We therefore make no positive routing claim. Instead, the gap
+between the Observed Oracle and learned policies identifies the remaining problem: intervention selection is
+a value-of-information problem in which acquiring the signal can consume the benefit of acting on it.
+F.4 Online Escalation Policies
+Both studies replay existing Default-budget test records: every configuration was already run on the same
+task instances and repeats, so a policy “runs” a configuration by reading its record. Rules, metrics, and
+success criteria were preregistered before any outcome was computed. Scores reproduce the matrix cells
+within 0.05 points on LiveMath, SimpleQA (common Qwen grader), SQuAD, Hotpot Context, and Hotpot
+FullWiki; Amazon SOP is excluded because its per-record API-model scores do not reproduce the matrix, and
+Spreadsheet and UCSB SOP lack token telemetry. Cost is total tokens priced at the provider audit’s mean rate
+($4.29, $3.05, and $4.28 per million tokens for Sonnet 4.6, Sonnet 5, and GPT-5.6-sol); local Qwen3.5-9B
+runs are priced at zero, and the cost of labeling pilot tasks is not included.
+Per-task signal cascade.
+Qwen3.5-9B+Trace2Skill+H2 runs first; if its trajectory ends with a logged
+error, no answer or an invalid final action, an unresolved tool error, an abstention, or a short-answer violation
+(more than 20 words on SQuAD or Hotpot), the same skill is run at H2 on the stronger model and its answer
+is returned. Table 50 reports the result. The rule is precise (98–100% of escalated tasks were Qwen failures)
+Which Failure Does an Intervention Repair?
+53
+but catches 11% of Qwen3.5-9B’s failures, none on LiveMath; among the caught failures the stronger model
+repairs only 22–23%, fewer than among the missed ones (32–45%), because the signal selects hard items
+such as SimpleQA abstentions. The cascade beats random escalation at the same rate for the two Sonnet
+targets but fails the preregistered criterion.
+Table 50. Per-task signal cascade (Trace2Skill, H2; macro score over five benchmarks). Random escalates at the
+cascade’s per-benchmark rate; the oracle escalates exactly the Qwen3.5-9B failures and needs gold labels. CI: 95%
+task-cluster bootstrap of cascade minus Qwen3.5-9B. Cost in USD per 1,000 tasks.
+Target
+Qwen
+Target
+Cascade
+Random
+Oracle
+Cascade −Qwen
+Cost (cascade / target)
+Sonnet 4.6
+47.5
+51.9
+48.7
+48.0
+63.1
+[+0.7, +1.8]
+2.01 / 13.59
+Sonnet 5
+47.5
+52.8
+48.7
+48.1
+64.1
+[+0.8, +1.8]
+0.47 / 9.77
+GPT-5.6-sol
+47.5
+60.0
+48.6
+48.3
+70.4
+[+0.7, +1.7]
+0.45 / 8.19
+Benchmark-level labeled pilot.
+For each benchmark with everything else fixed, both the default and the
+alternative configuration run on the first 𝑘tasks of a random order, and the whole benchmark switches to the
+alternative if its pilot score exceeds the default’s by at least 𝛿; every task receives the committed configuration’s
+answer, and the pilot pays for both. Results average 200 random orders and all units of a decision (Table 51).
+H1 versus H2 leaves nothing to learn, since H2 rarely costs more and never scores lower by five points. H2
+versus H3 meets the preregistered criterion only narrowly. The model decision gains most: the stronger model
+is the better choice in only 11–16 of 20 units, and a 20-task pilot recovers most of the oracle’s advantage over
+always switching. With 𝑘= 50 the gap to the oracle falls to 0.2–0.4 points for every decision, at a higher pilot
+cost.
+Table 51.
+Benchmark-level labeled pilot with 𝑘= 20 tasks (macro score / USD per 1,000 tasks).
+Units:
+model×skill×benchmark for the harness decisions, skill×benchmark for the model decisions.
+Decision
+Units
+Always default
+Always alternative
+Pilot, 𝛿= 0
+Pilot, 𝛿= 5
+Oracle
+H1 →H2
+80
+47.4 / 6.63
+48.6 / 6.76
+48.8 / 7.40
+48.7 / 7.34
+49.0 / 6.72
+H2 →H3
+80
+48.6 / 6.76
+49.1 / 12.64
+49.2 / 11.29
+49.0 / 9.17
+49.7 / 10.24
+Qwen →Sonnet 4.6
+20
+42.3 / 0.00
+48.6 / 9.44
+50.4 / 5.50
+49.9 / 4.42
+51.1 / 4.47
+Qwen →Sonnet 5
+20
+42.3 / 0.00
+49.9 / 9.29
+50.8 / 5.71
+50.2 / 4.42
+51.7 / 4.70
+Qwen →GPT-5.6-sol
+20
+42.3 / 0.00
+53.5 / 8.32
+57.4 / 5.31
+57.3 / 4.38
+58.1 / 4.89
+G. Benchmark Case Studies
+This section reads the factorial results benchmark by benchmark. Task properties are the human-authored
+design annotations in Table 14; trajectory roots use the eight operational definitions in Table 33. Root
+frequencies refer only to the 2,225 labeled NoSkill+H1+Medium source failures in Table 19; they are not
+benchmark labels, and the Hotpot estimates are too sparse for benchmark-wide interpretation. “Best” denotes
+the largest observed three-repeat mean in the Default-budget matrix (Table 2). It is descriptive selection over
+observed cells rather than a prospective policy.
+G.1 SpreadsheetBench
+Context, properties, and failures.
+SpreadsheetBench requires stateful edits through a spreadsheet tool.
+We therefore annotate high tool/state interaction and feedback demand, with Execution/tool as the expected
+Which Failure Does an Intervention Repair?
+54
+bottleneck. The observed source labels agree: 587 of 588 labeled failures are Execution/tool, with one
+Horizon/termination case. This unusually concentrated composition supports an execution interpretation for
+this source condition, although it does not imply that every configuration fails for the same reason.
+Best observed configuration and mechanism.
+The best Default cell is Sonnet 4.6+NoSkill+H3 at 53.1.
+The same Model rises from 48.6 at H0 to 49.2/51.1/53.1 under H1/H2/H3, while every supplied Skill lowers
+its H3 score. Qwen shows a larger execution-support response: NoSkill rises from 9.3 at H1 to 24.9 at H2
+and 30.4 at H3. The pattern is consistent with feedback, bounded repair, and revision addressing runtime
+failures, while a frozen procedure can distract from the current workbook state.
+Takeaway. Stateful spreadsheet work is primarily execution-limited in this matrix. A capable Model with
+observable execution and revision is more useful than an additional frozen procedure, and Skill injection
+should be treated as a possible source of interference.
+G.2 LiveMathematicianBench
+Context, properties, and failures.
+LiveMath is a multiple-choice mathematical reasoning task with low tool
+demand and a recurring meta-option. Its source labels are 73.44% Reasoning and 26.23% State/grounding,
+both model-assisted hypotheses, plus 0.33% Procedural. The post-hoc meta-option partition in Appendix D.2.1
+shows that a reusable answer-selection regularity exists inside the benchmark but does not cover all instances.
+Best observed configuration and mechanism.
+The best Default cell is GPT-5.6-sol+Trace2Skill+H1
+at 62.1. For GPT-5.6-sol, Trace2Skill scores 61.6/62.1/57.8/60.5 across H0–H3; for Qwen it scores
+53.2/58.1/56.5/54.6, far above Qwen+NoSkill at 34.1/34.9/34.4/36.3. In contrast, additional Harness support
+is flat or non-monotone, and Sonnet 5+Trace2Skill declines from 40.6 at H0 to 35.5 at H3. The benefit
+is therefore better explained by a reusable decision procedure plus model competence than by execution
+recovery.
+Takeaway. LiveMath rewards a reusable but narrow decision regularity. Trace-derived procedures help
+broadly across observed contexts, yet subgroup reversal shows why the Skill should not be interpreted as a
+general increase in mathematical capability.
+G.3 UCSB SOPBench
+Context, properties, and failures.
+UCSB SOPBench requires following long, constraint-sensitive standard
+operating procedures while interacting with state. We annotate high procedural and tool demand. Among
+labeled source failures, 78.57% are Procedural, 13.91% State/grounding, and 7.52% Execution/tool, giving
+the most direct root-level support for a procedure-oriented Skill hypothesis.
+Best observed configuration and mechanism.
+The best Default cell is GPT-5.6-sol+SkillOpt+H1 at
+73.1, narrowly above H0 at 72.6; H2 and H3 fall to 71.6 and 70.3. Qwen shows the same Skill preference:
+SkillOpt reaches 66.3 at H0/H1 versus 52.8/51.0 for NoSkill. Outcome-guided optimization can encode
+ordering and verification constraints, whereas additional recovery or reflection is not uniformly useful once
+that policy is supplied.
+Takeaway. For procedure- and constraint-heavy SOP execution, an outcome-optimized reusable procedure
+is the stable first intervention. Harness choice remains model-dependent and stronger recovery is not
+automatically better after the procedure is supplied.
+Which Failure Does an Intervention Repair?
+55
+G.4 Amazon SOP
+Context, properties, and failures.
+Amazon SOP is a long, state-changing inspection workflow with high
+procedure, tool, horizon, and feedback demand. All 113 labeled source failures are Execution/tool. Horizon
+is nevertheless a task-level design hypothesis rather than an observed root conclusion, because the frozen
+Medium-budget source cohort contains almost no labeled Horizon/termination failures.
+Best observed configurations and mechanism.
+The Default ceiling is 100.0 and is non-unique. It is reached
+by Sonnet 4.6+NoSkill+H2, all four Harnesses with Sonnet 4.6+SkillOpt, Sonnet 4.6+Trace2Skill+H2,
+GPT-5.6-sol+NoSkill+H2, and GPT-5.6-sol+SkillOpt+H2. The decisive transition is often execution
+feasibility: Qwen+NoSkill rises 33.9→88.6 from H1 to H2, and GPT-5.6-sol+NoSkill rises 57.1→100.0. A
+mismatched Skill can instead collapse the path: Qwen+Direct remains at 1.7 across H0–H3. The Low-to-best
+Budget envelope is 81.13 points, consistent with a long workflow crossing a completion threshold rather than
+smooth scaling.
+Takeaway. Amazon SOP is governed by path feasibility and execution reliability. H2 or sufficient Budget
+can unlock completion, but a mismatched procedure can prevent that path entirely; after feasibility is reached,
+several configurations saturate at the ceiling.
+G.5 SimpleQA
+Context, properties, and failures.
+SimpleQA asks for short factual answers without supplied evidence
+or meaningful tool interaction. The labeled source failures are 74.84% Factual knowledge/recall, 24.78%
+Abstention/calibration, and 0.38% Evaluation/answer contract; the first two categories are model-assisted
+hypotheses. This composition aligns with a Model intervention more directly than with a procedural or
+execution intervention.
+Best observed configuration and mechanism.
+The best Default cell is GPT-5.6-sol+NoSkill+H0 at 69.4.
+GPT-5.6-sol remains near this level under H1–H3 (67.8/68.0/68.8), whereas Qwen+NoSkill is 10.7 at H0
+and 4.7 at H2. Neither execution feedback nor a frozen procedure supplies a fact absent from the task and
+not recalled by the Model. The within-axis Model span is 60.85 points, compared with Skill, Harness, and
+Budget envelopes of 0.13, 0.00, and 0.10.
+Takeaway. When the missing resource is factual recall, changing the Model dominates procedural and
+execution support. SimpleQA is the clearest case in which additional Harness, Skill, or Budget mostly adds
+cost without supplying the missing information.
+G.6 SQuAD
+Context, properties, and failures.
+SQuAD supplies the evidence passage, so the primary challenge in this
+setup is returning a creditable answer through the expected interface. All 159 labeled source failures are
+Evaluation/answer contract. This is strong evidence for the audited source condition, but the native-score
+floor analysis in Appendix A.6.1 means large H0→H1 gains should be read as contract specification rather
+than reasoning recovery.
+Best observed configuration and mechanism.
+The best Default cell is Sonnet 5+Trace2Skill+H1 at 91.0,
+followed closely by H2/H3 at 90.6/90.7. The interface transition is large: Qwen+NoSkill rises 10.7→36.6
+from H0 to H1 and then 78.6/79.3 under H2/H3, while Sonnet 4.6+NoSkill rises from the 0.0 floor to 85.4 at
+Which Failure Does an Intervention Repair?
+56
+H1. A Skill can partially supply an extraction/answer procedure at H0, but once the Harness specifies the
+contract its incremental value is often absorbed.
+Takeaway. SQuAD primarily tests whether the system exposes and satisfies the answer contract. H1
+removes a measurement/interface bottleneck; after that transition, additional execution support or Skill often
+has little incremental value.
+G.7 HotpotQA Context
+Context, properties, and failures.
+Hotpot Context supplies gold and distractor paragraphs, reducing
+retrieval demand while retaining multi-hop evidence integration. We annotate Evaluation/answer contract
+as the expected bottleneck. Only one source failure is labeled, also as Evaluation/answer contract, so root
+composition cannot explain the benchmark; this is a coverage limitation rather than confirming evidence.
+Best observed configuration and mechanism.
+The best Default cell is Sonnet 4.6+Direct+H3 at 69.2.
+The main transition is H0→H1: that configuration rises 16.6→66.8, and Sonnet 4.6+NoSkill rises 0.0→66.2.
+Later Harness levels add little. Skill compatibility remains important: GPT-5.6-sol+SkillOpt stays at
+0.0/13.6/12.2/12.2, compared with 29.7/64.6/64.3/60.9 for Direct. The former is consistent with a supplied
+policy overriding the answer contract, not with a graded loss of reasoning ability.
+Takeaway. When evidence is already provided, interface compatibility dominates retrieval support. H1
+captures most of the observed gain, and an incompatible Skill can erase it; the sparse root labels do not
+support a benchmark-wide mechanistic claim.
+G.8 HotpotQA FullWiki
+Context, properties, and failures.
+Hotpot FullWiki uses the same question UIDs as Context but removes
+the supplied passages and permits retrieval from a frozen Wikipedia index. This creates multi-hop search,
+grounding, execution, and horizon demands. All ten labeled source failures are Execution/tool, but ten labels
+are far too few to characterize the benchmark because missingness is concentrated in the Hotpot views.
+Best observed configuration and mechanism.
+The best Default cell is Sonnet 5+Trace2Skill+H1 at 45.0,
+compared with 30.9 for Sonnet 5+NoSkill at H1. Qwen reveals the interaction mechanism: Direct rises
+from 3.9 at H1 to 28.4 at H2, SkillOpt from 24.0 to 34.9, and Trace2Skill from 34.1 to 36.0. A reusable
+retrieval policy supplies what to search and how to integrate evidence; executable observations and recovery
+determine whether weaker configurations can carry out that policy. The strongest cell nevertheless uses H1,
+showing that more recovery is not universally necessary once Model and Skill are well matched.
+Takeaway. FullWiki couples a reusable multi-hop retrieval policy with the ability to execute it. Trace2Skill
+is the stable Skill choice in the observed matrix, while Harness support is most valuable when the current
+Model–Skill pair cannot reliably realize that policy.
+G.9 BigCodeBench
+Context, properties, and evidence boundary.
+BigCodeBench-Hard requires program synthesis and
+execution against evaluator-private tests. We annotate medium procedural and horizon demand, high tool
+interaction and feedback demand, and Execution/tool as the expected bottleneck. We use all 148 available
+instances across frozen construction, validation, qualification, and test roles (Table 16).
+Which Failure Does an Intervention Repair?
+57
+Why no comparable winner is reported.
+BigCode is retained as supporting appendix evidence because
+its evaluator environment is not fully comparable across Models. It is therefore excluded from the 512-cell
+Table 2 and the root-conditioned common-support cohort. Reporting a cross-model “best intervention
+combination” from those analyses would silently mix evaluator differences with intervention effects.
+Interpretation.
+The task structure motivates executable feedback and Model capability as hypotheses, but
+the present evidence cannot distinguish them on the same matched scale used for the other eight benchmarks.
+A valid case analysis requires rerunning every Model under one frozen execution image, scorer, dependency
+set, timeout policy, and task split, followed by the same three-repeat factorial and root-label protocol.
+Takeaway. Code execution is a plausible feedback-sensitive setting, but evaluator comparability is a
+prerequisite for attributing gains to Model, Skill, Harness, or Budget. BigCode remains supporting evidence
+rather than a ninth point in the comparative mechanism claims.
+G.10 Cross-Case Synthesis
+The cases separate four recurring structures without turning them into universal rules: missing factual
+knowledge favors Model changes; reusable decision, SOP, or retrieval regularities can favor Skills; observable
+runtime or answer-contract failures can favor Harness support; and long workflows can cross a Budget feasibility
+threshold. The categorical and boundary analyses show why these relations remain conditional. The mean-
+optimal observed configuration across the eight normalized benchmarks is GPT-5.6-sol+Trace2Skill+H2
+(mean 0.8515), whereas the maximin configuration is GPT-5.6-sol+Trace2Skill+H3 (worst-benchmark
+score 0.6301, mean 0.8439). Relative to H2, the latter sacrifices 0.0076 mean performance for a 0.0417
+increase in the worst-benchmark floor. Objective choice therefore remains part of intervention choice, even
+after the benchmark context is known.
+Takeaway. Across cases, intervention value follows the bottleneck that remains in the current configura-
+tion. Benchmark identity narrows the plausible mechanism, but task-instance heterogeneity, component
+interactions, and measurement boundaries prevent a context-free intervention rule.

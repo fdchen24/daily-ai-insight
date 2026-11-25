@@ -1,0 +1,108 @@
+{
+  "title_zh": "Feedback Shortcut：面向潜在反馈 Transformer 的投机解码",
+  "affiliations": [
+    "Institute of Foundation Models",
+    "USC",
+    "CMU"
+  ],
+  "scores": {
+    "research_value": 78,
+    "research_value_reason": "解决 latent feedback Transformer 无法使用投机解码这一实际部署障碍，问题真实且直接影响 serving 成本，但受益面限于该架构族。",
+    "novelty": 74,
+    "novelty_reason": "把「只训练轻量映射把 MTP 状态变成反馈替身」与「在验证下一批草稿时流水线纠错」组合起来，区别于 NextLat 直接回归下一层状态并改动模型本身。",
+    "technical_depth": 85,
+    "technical_depth_reason": "把质量差距分解为 ceiling drop 与 approximation error，并做了四种替身、两个尺度、三个 seed、下游任务、自由生成 KL 与 batch size 扫描的完整对照。"
+  },
+  "reading": {
+    "why_read": "提出 Feedback Shortcut，用轻量投影把 MTP 头状态对齐成反馈替身，并在验证下一批草稿的同一次调用里流水线纠错，使 latent feedback Transformer 保持精确解码质量的同时获得 2.4-2.8 倍解码加速。",
+    "task": "latent feedback Transformer 把每个位置的顶层隐状态回灌进下一位置的输入，同内存下质量优于标准 Transformer。代价是 $u_t$ 依赖 $h_{t-1}$：训练只能用定点迭代近似，投机解码更是直接失效——标准 SD 靠一次前向并行验证 K 个草稿，而草稿位置需要的正是同一次调用里尚未算出的前一位状态，只能退回替身，质量与加速二选一。",
+    "findings": [
+      {
+        "point": "验证调用内拿不到所需状态",
+        "detail": "草稿位置 $s+1+k$ 的输入依赖前一位的顶层状态 $h_{s+k}$，而它正是在同一次前向里被算出的，并行验证只能读替身 $a_{s+k}$，从这一步起就偏离精确解码。"
+      },
+      {
+        "point": "替身设计在质量上限与近似误差之间两难",
+        "detail": "zeros 与未训练的 MTP 状态不改模型、保住上限，但单次调用误差大；in-place 让模型训练时适配替身，误差最小却拉低上限；state alignment 只训练映射，单次误差仅 $1.7\\times10^{-3}$ BPB 而上限不变。"
+      },
+      {
+        "point": "误差会跨调用累积",
+        "detail": "由替身算出的状态被写入 cache 并被后续调用继续读取，作者指出未纠正时近似误差会超过单次调用误差，并在长生成上进一步放大。"
+      }
+    ],
+    "method": "对替身的要求是既保住上限又压低误差：state alignment 训练一个轻量映射 $P$（线性 skip 加初始化为恒等的 MLP），用 smooth $\\ell_1$ 把 MTP 头状态 $g_{t,k}$ 拉向定点迭代第二遍实际读到的 $h^{(1)}_{t+k}$，只训练 $P$、不动骨干与 MTP 头，因此精确解码上限不变，训练算力只多约 2%；与 zeros、未训练 MTP 状态、in-place 替换三种替代方案对比后选定。对误差累积：pipelined correction 在验证下一批草稿的同一次前向中纠正上一批待定位置，位置需草稿 token 命中且已纠正 $D$ 次才提交，$D=1$ 即几乎消除近似误差而调用次数不增，只维护 $(K+1)(D+1)$ 个待定位置。",
+    "results": "135M/780M 在 Paloma 上取得 0.9951/0.8287 BPB，与 latent feedback 精确解码（0.9950/0.8288）相差不到 $10^{-4}$，同时优于标准 Transformer；batch size 1 下加速 2.36/2.75 倍，接近 Transformer 的 2.49/2.93 倍，训练算力仅多约 2%。",
+    "limitations": "作者承认仍非精确解码，残余差距需更好的替身，规模只验证到 780M。高负载下 D=1 加速收窄（batch 256 约 1.7 倍），更精确的验证会拒掉部分草稿，作者建议此时退回 D=0 牺牲部分收益。"
+  },
+  "claims": [
+    {
+      "claim": "投机解码加速 2.4-2.8 倍",
+      "numbers": [
+        "2.4",
+        "2.8"
+      ],
+      "source_span": "摘要",
+      "quote": "accelerates decoding by 2.4-2.8x"
+    },
+    {
+      "claim": "135M 在 Paloma 上达到 0.9951 BPB，精确解码为 0.9950",
+      "numbers": [
+        "0.9951",
+        "0.9950"
+      ],
+      "source_span": "Table 1, 135M, row 'Feedback Shortcut (ours)'",
+      "quote": "0.9951±0.0003"
+    },
+    {
+      "claim": "780M 在 Paloma 上达到 0.8287 BPB，精确解码为 0.8288",
+      "numbers": [
+        "0.8287",
+        "0.8288"
+      ],
+      "source_span": "Table 1, 780M, row 'Feedback Shortcut (ours)'",
+      "quote": "0.8287±0.0001"
+    },
+    {
+      "claim": "batch size 1 下加速 2.36 倍（135M）与 2.75 倍（780M）",
+      "numbers": [
+        "2.36",
+        "2.75"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "it decodes 2.36 and 2.75 times faster than exact decoding"
+    },
+    {
+      "claim": "标准 Transformer 自身加速为 2.49 与 2.93 倍",
+      "numbers": [
+        "2.49",
+        "2.93"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "2.49 and 2.93 times"
+    },
+    {
+      "claim": "state alignment 只增加约 2% 训练算力",
+      "numbers": [
+        "2"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "with state alignment adding only about 2%"
+    },
+    {
+      "claim": "state alignment 的单次调用误差为 $1.7\\times10^{-3}$ BPB",
+      "numbers": [
+        "1.7"
+      ],
+      "source_span": "Table 2, row 'state alignment'",
+      "quote": "1.7±<0.1"
+    },
+    {
+      "claim": "batch size 256 时 D=1 仍比精确解码快约 1.7 倍",
+      "numbers": [
+        "1.7"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "about 1.7 times faster than exact decoding"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "title_zh": "LLaMA：开放且高效的基座语言模型",
+  "affiliations": [
+    "Meta AI"
+  ],
+  "scores": {
+    "research_value": 91,
+    "research_value_reason": "其公开数据配方、模型规模档位和 RMSNorm/SwiGLU/RoPE 组合仍是开放 LLM 训练与复现的常用基线。",
+    "novelty": 82,
+    "novelty_reason": "相对当时依赖私有语料的前沿模型，系统证明仅用公开数据也能训练出竞争力模型，但架构组件多为此前工作。",
+    "technical_depth": 88,
+    "technical_depth_reason": "技术含量在于大规模训练工程、数据过滤、长训稳定性与覆盖多任务的评测，而非提出新理论组件。"
+  },
+  "reading": {
+    "why_today": "提出 LLaMA，用仅公开数据和超常规 token 训练把 7B–65B 模型推到可对标闭源大模型的水平，并以 RMSNorm、SwiGLU、RoPE 组合固定了开放 LLM 的常见骨架；这些结构仍是今天开源模型的默认起点。",
+    "historical_context": "此前主流路线是继续放大参数，Chinchilla 指出固定算力下应让较小模型多见数据，却未把推理成本纳入目标；OPT、BLOOM 等开放模型虽公开权重，性能仍落后于闭源前沿，且前沿模型多用未公开语料。",
+    "problem_then": "核心问题是：能否只用可公开获取的数据，训练出在推理预算上更划算、又能对标闭源前沿的基座模型，并把这些权重开放给研究社区。",
+    "contributions": [
+      {
+        "point": "公开数据配方",
+        "detail": "混合 CommonCrawl、GitHub、Wikipedia、Books、ArXiv、StackExchange 等公开来源，并做去重、语言识别与质量过滤，证明不用私有语料也能训练竞争性 LLM。"
+      },
+      {
+        "point": "推理预算导向的长训",
+        "detail": "把训练 token 推到约 1.4T，并让较小模型训练超过 1T；性能随 token 增加，小模型长训换来更低部署成本。"
+      },
+      {
+        "point": "开放模型族与工程实现",
+        "detail": "采用 pre-normalization + RMSNorm、SwiGLU、RoPE 的 Transformer，配合 xformers 因果注意力与激活 checkpointing，公开全部模型权重。"
+      }
+    ],
+    "core_idea": "LLaMA 沿用 decoder-only Transformer，但把目标从“参数越多越好”改成“给定推理预算下性能最好”：用约 1.4T token 训练 7B–65B 模型，让较小模型训练超过 1T token；原文报告 LLaMA-13B 在多数基准上超过 175B 的 GPT-3。架构采用 pre-normalization + RMSNorm、SwiGLU 和 RoPE；训练用 AdamW 与 cosine 学习率，数据只用公开语料，经 CCNet 过滤、去重和 BPE 分词。目标仍是自回归 next-token 交叉熵 $\\mathcal{L}=-\\sum_t \\log p_\\theta(x_t\\mid x_{<t})$。",
+    "influence": "论文把 instruction finetuning 作为独立后续方向：LLaMA-I 65B 在 MMLU 达到 68.9，说明少量指令数据即可提升基座模型；同时公开全部模型权重与数据配方，使后续开放 LLM 研究沿“公开数据复现、小模型长训、指令微调基座”三条线展开。",
+    "modern_reading": "今天看，LLaMA 的 RMSNorm、SwiGLU、RoPE 组合几乎成了开放 LLM 的默认配置，但“公开数据即可对标闭源”的结论受数据配方与评测设置约束；原始 LLaMA 权重已被后续更大、更长训练的模型取代，复现时应把它当作开放 LLM 范式的起点而非当前最强基线。"
+  },
+  "claims": [
+    {
+      "claim": "LLaMA 模型覆盖 7B 到 65B 参数",
+      "numbers": [
+        "7",
+        "65"
+      ],
+      "source_span": "Abstract",
+      "quote": "ranging from 7B to 65B parameters"
+    },
+    {
+      "claim": "LLaMA-13B 在多数基准上超过 175B 的 GPT-3",
+      "numbers": [
+        "13",
+        "175",
+        "3"
+      ],
+      "source_span": "Abstract",
+      "quote": "LLaMA-13B outperforms GPT-3 (175B) on most benchmarks"
+    },
+    {
+      "claim": "训练数据约 1.4T tokens",
+      "numbers": [
+        "1.4"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "roughly 1.4T tokens after tokenization"
+    },
+    {
+      "claim": "7B 模型在 1T tokens 后性能仍继续提升",
+      "numbers": [
+        "7",
+        "1"
+      ],
+      "source_span": "Section 1",
+      "quote": "the performance of a 7B model continues to improve even after 1T tokens"
+    },
+    {
+      "claim": "LLaMA-I 65B 在 MMLU 上达到 68.9%",
+      "numbers": [
+        "65",
+        "68.9"
+      ],
+      "source_span": "Section 4",
+      "quote": "we reach 68.9% on MMLU. LLaMA-I (65B)"
+    }
+  ]
+}

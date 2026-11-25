@@ -1,0 +1,122 @@
+{
+  "title_zh": "La-JEPA：在隐空间做世界建模的紧凑机器人策略",
+  "affiliations": [
+    "Huawei Technologies Ltd.",
+    "University of Toronto",
+    "McGill University",
+    "Mila – Quebec Artificial Intelligence Institute"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "直接挑战“机器人策略必须继承生成式主干”这一当前主流路线，并在 LIBERO-Plus、RoboTwin 2.0 与真机上给出可检验的反例证据。",
+    "novelty": 74,
+    "novelty_reason": "训练期未来预测、V-JEPA 特征、从零 DiT 等部件多来自 Fast-WAM 与 JEPA-WAM，新意在“在预训练 JEPA 特征空间里原生训练紧凑策略”这一配置及系统的隐空间对比。",
+    "technical_depth": 87,
+    "technical_depth_reason": "留一消融带 95% 区间、三 seed、配对 McNemar 检验、延迟与参数统计口径均写明；但 full-training 的 XL 只用单 seed，部分设计研究同时变动多个变量，属 recipe 级对比。"
+  },
+  "reading": {
+    "why_read": "提出 La-JEPA，把策略 Transformer 从零训练在冻结的 V-JEPA 2.1 特征空间中，并联合预测未来特征与动作，推理时只跑动作分支，以 0.1B 级可训练参数在 LIBERO-Plus 与 RoboTwin 2.0 上超过大规模生成式主干策略。",
+    "task": "现有 world-action model 复用视频生成主干、VLA 复用 VLM 主干，策略架构与推理成本被绑在为生成而非控制设计的数亿至数十亿参数 Transformer 上；VAE 隐空间还把大量容量花在像素级重建。作者要回答两个可检验问题：策略是否必须继承生成式主干才有竞争力，从零训练的紧凑策略能否追平这些大模型。",
+    "findings": [
+      {
+        "point": "隐空间的选择比主干规模更决定控制性能",
+        "detail": "把冻结 V-JEPA 2.1 特征换成 Wan2.2 VAE latents，RoboTwin clean 掉 13.7 点、randomized 掉 28.4 点，LIBERO-Plus 掉 10.7 点；即使补上增广与 LoRA，VAE 策略也只与无这些机制的 JEPA 策略持平（68.9 对 67.3）。"
+      },
+      {
+        "point": "训练时的未来预测是塑造观测表示的正则信号，而非推理必需",
+        "detail": "去掉未来特征预测改为纯动作训练，RoboTwin clean 损失 4.8 点、LIBERO-Plus 损失 4.5 点；三个 seed 下 LIBERO-Plus 一致提升 2.12 点，逐 seed 配对检验显著。"
+      },
+      {
+        "point": "LIBERO-Plus 的指令污染使鲁棒性排名部分反映模型对乱码文本的敏感度",
+        "detail": "评测器给 10,030 个变体中的 8,493 个指令后附加扰动参数，多数变体因此同时施加两种扰动；修正后 Fast-WAM 涨 19.3 点，而 La-JEPA 只涨 3.9–6.3 点，La-JEPA 与 NowWAM 的先后顺序随之反转。"
+      }
+    ],
+    "method": "两个从零初始化的 DiT：World DiT 在 V-JEPA 2.1 ViT-L 的 tube-motion 特征上做未来特征 flow matching，Action DiT 在动作空间做同一目标，损失为两项 MSE 之和；对特征与动作分别加噪 $z^{\\tau_f}_{fut}=(1-\\tau_f)\\epsilon_f+\\tau_f z_{fut}$ 后回归速度场。attention mask 让 action token 只读观测与自身动作、不读未来 token，因此推理时丢弃未来分支、固定 $\\tau_{ctx}=0$，观测的 KV 只算一次并缓存，每步只跑 Action DiT。鲁棒性来自图像增广与最后 8 个 encoder block 的 LoRA，未来目标始终由冻结 encoder 预计算以省算力；RoboTwin 用 patch grouping、LIBERO 用 $2\\times2$ mean pooling，训练时随机丢相机与本体感知。",
+    "results": "RoboTwin 2.0 full training 下 XL（2.14B 可训练）的 clean/randomized 均值 93.7，超过 ImageWAM 的 93.4，而部署参数约为其三分之一；LIBERO-Plus 修正指令后 L 达 88.0，比 NowWAM 高 1.8 点；真机四任务平均 17.50/20，与 π0.5 的 17.25 相当。",
+    "limitations": "无具身预训练：clean-only 时 randomized RoboTwin 落后具身预训练方法且不随规模提升，作者归因于每任务约 50 条演示的数据瓶颈；真机仅单平台四任务、各 20 次 rollout，XL full-training 只用单 seed。"
+  },
+  "claims": [
+    {
+      "claim": "RoboTwin 2.0 full training 下 XL 的 clean/randomized 均值 93.7，超过 ImageWAM 的 93.4",
+      "numbers": [
+        "93.7",
+        "93.4"
+      ],
+      "source_span": "Section 5.1, XL vs ImageWAM",
+      "quote": "(93.7, against 93.4 for ImageWAM)"
+    },
+    {
+      "claim": "LIBERO-Plus 修正指令后 L 达 88.0，比 NowWAM 高 1.8 点",
+      "numbers": [
+        "88.0",
+        "1.8"
+      ],
+      "source_span": "Table 1, row 'La-JEPA L (ours)'; Section 5.2",
+      "quote": "L leads NowWAM by 1.8 points"
+    },
+    {
+      "claim": "真机四任务平均成功率 17.50/20，与 π0.5 的 17.25 相当",
+      "numbers": [
+        "17.50",
+        "17.25"
+      ],
+      "source_span": "Table 5, rows 'La-JEPA' and 'π0.5'",
+      "quote": "17.50"
+    },
+    {
+      "claim": "换成 Wan2.2 VAE latents 后 RoboTwin clean 掉 13.7 点、randomized 掉 28.4 点",
+      "numbers": [
+        "13.7",
+        "28.4"
+      ],
+      "source_span": "Section 4.1 / Table 6, row 'V-JEPA features (Wan2.2 VAE)'",
+      "quote": "VAE latents cost 13.7 points in clean and 28.4"
+    },
+    {
+      "claim": "去掉未来预测后 RoboTwin clean 掉 4.8 点、randomized 掉 2.9 点",
+      "numbers": [
+        "4.8",
+        "2.9"
+      ],
+      "source_span": "Section 4.1 / Table 6, row 'Future prediction (action only)'",
+      "quote": "Removing future prediction costs 4.8 points in clean and 2.9 in randomized RoboTwin scenes"
+    },
+    {
+      "claim": "去掉图像增广后 LIBERO-Plus 掉 13.0 点、randomized RoboTwin 掉 15.1 点",
+      "numbers": [
+        "13.0",
+        "15.1"
+      ],
+      "source_span": "Section 4.1 / Table 6, row 'Image augmentation'",
+      "quote": "removing it costs 13.0 points on LIBERO-Plus and 15.1 in randomized RoboTwin scenes"
+    },
+    {
+      "claim": "LIBERO-Plus 评测器污染 10,030 个变体中 8,493 个的指令",
+      "numbers": [
+        "8493",
+        "10030"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "corrupts the instructions of 8,493 of its 10,030 variants"
+    },
+    {
+      "claim": "修正指令后 Fast-WAM 涨 19.3 点，LeapBot-WA 涨 8.1 点，Cosmos Policy 涨 4.1 点",
+      "numbers": [
+        "19.3",
+        "8.1",
+        "4.1"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "gains 19.3 points, LeapBot-WA 8.1, and Cosmos Policy 4.1"
+    },
+    {
+      "claim": "在 JEPA-WAM 的 20 任务设定下，La-JEPA B 达 95.2% clean、56.5% randomized",
+      "numbers": [
+        "95.2",
+        "56.5"
+      ],
+      "source_span": "Table 3, bottom block",
+      "quote": "reaches 95.2% clean and 56.5% randomized success"
+    }
+  ]
+}

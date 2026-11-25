@@ -1,0 +1,146 @@
+{
+  "title_zh": "Yggdrasil：树路由循环专家用于状态追踪与快速 CPU 推理",
+  "affiliations": [
+    "Imperial College London"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "同时针对并行可训练循环的两个实打实瓶颈——离散状态追踪与单步读取全部参数带来的延迟，并在逐碱基 DNA、字节级压缩这类必须流式的场景给出可测量的收益。",
+    "novelty": 80,
+    "novelty_reason": "已有 MoE/记忆层只查输出值、input-switched affine 与 PD-SSM 只按 token 选转移；这里首次用下层状态作为路由上下文，从大专家库中检索递推转移本身，同时保留 parallel scan。",
+    "technical_depth": 82,
+    "technical_depth_reason": "给出了 token-only 非扩张层无法做条件 reset 的不可能性证明、对角层堆叠的有限状态刻画与稀疏—稠密读取分离定理，并配 3 seed、8 次贝叶斯搜索、等 active 参数与等存储两套对照及逐项消融；但主表只覆盖 ≤470k active 参数。"
+  },
+  "reading": {
+    "why_read": "提出 Yggdrasil，把每层的循环转移改为在树路由专家库中按当前 token 与下层状态检索，保持并行扫描训练，解出全部五项状态追踪任务，并把单 CPU 核单步压到微秒级。",
+    "task": "逐符号流式打分（逐碱基 DNA 建模、字节级压缩、端侧推理）无法按时间批处理，成本由 batch=1 的单步决定。Mamba-2、linear attention、DeltaNet 等并行可训练循环本已提供常数成本流式步，却暴露出两个问题：解不出 S5、A5、parity 这类离散状态任务，而且每步读全部参数，容量增长直接转化为延迟。",
+    "findings": [
+      {
+        "point": "对角转移与受限特征值的表达力不足",
+        "detail": "对角层堆叠在有限可达状态下只能实现可解群级联（Theorem 14），特征值限于 [0,1] 也追不了 parity；消融中去掉 block rotation 后 S5、A5 落到 0.016 的 chance 水平。"
+      },
+      {
+        "point": "条件 reset 需要超出当前 token 的上下文",
+        "detail": "Theorem 1 证明单个 token 索引、非扩张、可达状态有限的仿射层连记住第一个符号都做不到，所以只用 token 选转移无法实现 reset 类自动机。"
+      },
+      {
+        "point": "容量与每步延迟被绑死",
+        "detail": "dense 循环每步读全部参数，加容量即加延迟；已有 MoE 与记忆层只在输出侧查表，换成只查输出的专家在等存储下损失 0.244 bpb。"
+      }
+    ],
+    "method": "每个 routed layer 不算转移，而是从 $2^D$ 专家库中查：树路由以 $f_t^{(l)}=[e(x_t);\\nu(h_t^{(l-1)})]$ 为输入、经 $D$ 次比较选定专家，由它给出 $A_r$、token 输入、下层输入映射与 readout；地址不含本层自身过去状态，故仍为仿射递推，可按 associative scan 并行训练。转移取 block rotation 乘带符号 decay，$\\|A_r\\|_2\\le1$。训练用硬路由加 top-B 直通梯度，hierarchical residual experts 让路径节点共享梯度；推理用 8-bit kernel，每步只读一个专家，活跃权重约 100–280 KB 落在单核 L2，专家库留在 RAM。",
+    "results": "在匹配 active 参数下，enwik8 达 1.540 bpb、hg38 达 1.567 bpb，均为最低；单核单步 6.7/5.8 µs，比最快流式基线快 3.0×/3.3×；Genomic Benchmarks 八任务均值 86.0%，是唯一解出全部五项状态追踪任务的并行模型。",
+    "limitations": "容量换成存储：最大模型 681.3 MB / 146.5 MB，远大于匹配 dense 的 1.5 MB；实验仅到 470k active 参数、256 字节/1024 碱基上下文，更大规模、subword 词表与 attention 混合未验证。"
+  },
+  "claims": [
+    {
+      "claim": "enwik8 上最大模型测试 1.540 bits/byte",
+      "numbers": [
+        "1.540"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "1.540 bits per byte"
+    },
+    {
+      "claim": "同尺寸最强基线 Mamba-2 + PKM 为 1.673 bpb",
+      "numbers": [
+        "1.673"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "versus 1.673 for Mamba-2 + PKM"
+    },
+    {
+      "claim": "CPU 单步 6.7 µs，GRU 为 20.2 µs",
+      "numbers": [
+        "6.7",
+        "20.2"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "stepping in 6.7 µs versus 20.2 µs"
+    },
+    {
+      "claim": "比最快流式基线快 3.0×（enwik8）",
+      "numbers": [
+        "3.0"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "for GRU (3.0× faster)"
+    },
+    {
+      "claim": "hg38 上最大模型 1.567 bits/base，Mamba-2 + PKM 为 1.598",
+      "numbers": [
+        "1.567",
+        "1.598"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "reaches 1.567 bits per base versus 1.598 for"
+    },
+    {
+      "claim": "hg38 的 8-bit kernel 单步 5.8 µs",
+      "numbers": [
+        "5.8"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "Its 8-bit kernel steps in 5.8 µs,"
+    },
+    {
+      "claim": "比 GRU 的 18.9 µs 快 3.3×（hg38）",
+      "numbers": [
+        "3.3",
+        "18.9"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "3.3× faster than GRU at 18.9 µs"
+    },
+    {
+      "claim": "Genomic Benchmarks 八任务均值 86.0%",
+      "numbers": [
+        "86.0"
+      ],
+      "source_span": "Section 5.4",
+      "quote": "Yggdrasil averages 86.0%, outperforming both HyenaDNA"
+    },
+    {
+      "claim": "去掉 block rotation 后 S5/A5 掉到 0.016",
+      "numbers": [
+        "0.016"
+      ],
+      "source_span": "Section 5.5 / Table 9",
+      "quote": "Removing the rotations leaves S5 and A5 at 0.016, against"
+    },
+    {
+      "claim": "去掉 routed layer 递推、改为存输出在等存储下损失 0.244 bpb",
+      "numbers": [
+        "0.244"
+      ],
+      "source_span": "Section 5.5 / Table 10",
+      "quote": "costs 0.244 bits per byte at equal storage"
+    },
+    {
+      "claim": "中等与最大模型每 token 读约 100 KB 与 280 KB 的 8-bit 权重",
+      "numbers": [
+        "100",
+        "280"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "read roughly 100 and 280 KB of 8-bit weights per token"
+    },
+    {
+      "claim": "8-bit kernel 与 float 模型相差不超过 0.010 bits/token",
+      "numbers": [
+        "0.010"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "stays within 0.010 bits per token of the float model"
+    },
+    {
+      "claim": "最大模型占用 681.3 MB（enwik8）与 146.5 MB（hg38）",
+      "numbers": [
+        "681.3",
+        "146.5"
+      ],
+      "source_span": "Limitations",
+      "quote": "681.3 MB on enwik8 and 146.5 MB on hg38, which fits"
+    }
+  ]
+}

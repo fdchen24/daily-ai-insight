@@ -1,0 +1,19 @@
+{
+"2302.13971": {
+"citation_count": 30001,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7870,
+"2025": 10856
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"fetched_at": "2026-11-25T01:03:21.313101+00:00",
+"v": 2
+}
+}

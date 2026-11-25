@@ -1,0 +1,88 @@
+{
+  "title_zh": "AgentArk：将多智能体智能蒸馏进单个 LLM Agent",
+  "affiliations": [
+    "Carnegie Mellon University",
+    "William & Mary",
+    "Georgia Institute of Technology",
+    "Amazon",
+    "University of British Columbia"
+  ],
+  "scores": {
+    "research_value": 72,
+    "research_value_reason": "把多智能体辩论的推理收益从推理时前移到训练时，直指 MAS 落地的成本与错误放大问题，并用 120 组实验给出较系统的经验图谱；但输出的是经验结论而非新范式。",
+    "novelty": 52,
+    "novelty_reason": "结果级 SFT、多轨迹数据增强、PRM+GRPO 过程级蒸馏都是现有组件的组合，MAGDI、Chain-of-Agents 等已做过 MAS→单模型蒸馏，本文差异主要在系统对比与'纠错轨迹优先'的数据筛选。",
+    "technical_depth": 63,
+    "technical_depth_reason": "覆盖面很宽（ID/OOD、agent 与数据 scale、异构/多模态/多种 MAS 协议、PRM 与 PPO/GRPO 消融），但全文无误差棒与多种子，且正文结论与 Table 1a、Table 4 及附录表格多处对不上，核心论断'过程监督更强'的证据被削弱。"
+  },
+  "reading": {
+    "why_read": "提出 AgentArk，将多智能体辩论蒸馏进单个 LLM 的三级框架——推理增强 SFT、纠错轨迹数据增强、PRM+GRPO 过程感知蒸馏——使单模型以一次推理接近多智能体辩论效果，平均提升 4.8%。",
+    "task": "多智能体辩论靠多轮互评提升 LLM 推理，但推理成本随 agent 数与轮数快速增长，个体幻觉又会在密集交互中被放大成集体错误。已有蒸馏尝试只模仿最终答案或浅层交互轨迹，学不到'冲突—修正'的迭代动态；作者的试点也显示，仅用最终答案做 SFT 会在任务上过拟合。",
+    "findings": [
+      {
+        "point": "只监督最终答案学到的是表层输入输出映射",
+        "detail": "answer-only SFT 在多数设定下不升反降，数学任务上尤其明显，说明 MAS 的收益不在答案分布而在推理过程本身。"
+      },
+      {
+        "point": "MAS 的收益来自被诱导出的推理动态，而非 agent 拓扑",
+        "detail": "已有工作显示移除或扰动 agent 结构只带来边际性能下降，因此可迁移的是辩论中产生的自我纠错、交叉验证与假设修订行为。"
+      },
+      {
+        "point": "学生容量限制了可吸收的教师信号",
+        "detail": "增加辩论 agent 数量时，小模型无增益甚至下降，只有较大的学生模型持续受益；单纯扩大训练数据量同样非单调，甚至会退化。"
+      }
+    ],
+    "method": "三段式流程：$n$ 个共享骨干的 agent 辩论 $K$ 轮生成轨迹，用 Qwen2.5-72B-Instruct 校验答案并优先保留'先错后改'的纠错轨迹，再由教师抽取 $k$ 条正确但路径不同的解。蒸馏分三级：RSFT 同时监督推理链与答案；DA 在同一问题上监督多条不同解法；PAD 用两阶段课程训练对比式 PRM，再以 GRPO 的组内相对优势更新策略 $\\hat{A}_i=(R_\\phi(o_i)-\\mu_R)/\\sigma_R$。",
+    "results": "共 120 组实验：单模型平均提升 4.8%，略逊于原始辩论 MAS；增益偏向同分布（最大 30%），OOD 平均仅 1–3%；PAD 最稳，较大的学生模型在 QMSum 上 F1 由 14.94 升至 17.82。",
+    "limitations": "OOD 平均增益仅 1–3%，多数小模型提升接近噪声，且全文无误差棒与多种子；PAD 训练成本远高于 SFT。正文称 PAD 推理质量各项最高，但评估表中 DA 的步骤分解反而更高，结论需打折。"
+  },
+  "claims": [
+    {
+      "claim": "AgentArk 使单模型平均提升 4.8%，略逊于原始多智能体辩论",
+      "numbers": [
+        "4.8"
+      ],
+      "source_span": "Section 4.2 主结果",
+      "quote": "improves the performance of a single agent by 4.8%"
+    },
+    {
+      "claim": "同分布最大提升 30%、平均 4-6%；OOD 最大 7%、平均 1-3%",
+      "numbers": [
+        "30",
+        "7",
+        "4",
+        "6",
+        "1",
+        "3"
+      ],
+      "source_span": "Section 4.2 (1) ID vs. OOD",
+      "quote": "30% vs. 7% maximum improvement and 4-6% vs. 1-3% on average"
+    },
+    {
+      "claim": "Qwen3-8B 在 QMSum 上 F1 从 14.94 提升到 17.82",
+      "numbers": [
+        "14.94",
+        "17.82"
+      ],
+      "source_span": "Appendix D.1",
+      "quote": "Qwen3-8B improves its F1-Score from 14.94 to 17.82"
+    },
+    {
+      "claim": "共进行 120 组蒸馏实验",
+      "numbers": [
+        "120"
+      ],
+      "source_span": "Section 4.1 Experimental Setup",
+      "quote": "we conducted 120 experiments in total"
+    },
+    {
+      "claim": "用 Qwen2.5-72B-Instruct 作为答案正确性的自动校验器",
+      "numbers": [
+        "2.5",
+        "72"
+      ],
+      "source_span": "Appendix A.3 Correctness Filtering",
+      "quote": "Qwen2.5-72B-Instruct as an automatic verifier"
+    }
+  ]
+}

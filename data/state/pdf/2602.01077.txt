@@ -1,0 +1,1142 @@
+PISA: Piecewise Sparse Attention Is Wiser for Efficient
+Diffusion Transformers
+Haopeng Li1
+Shitong Shao1
+Wenliang Zhong1
+Zikai Zhou1
+Lichen Bai1
+Hui Xiong1,2
+Zeke Xie1,2,†
+1The Hong Kong University of Science and Technology (Guangzhou)
+2The Hong Kong University of Science and Technology
+ Code: https://github.com/xie-lab-ml/piecewise-sparse-attention
+A calico cat, with a carrot and a pack of tissues placed in front of it, is staring at the camera with a confused look and resting one of its front paws on the carrot, in a realistic painting style.
+(a) Wan2.1-14B Image-to-Video | Dense Attention | Latency: 1468 s
+(b) Wan2.1-14B Image-to-Video | PISA (Ours) | Latency: 687 s (2.14× Speedup) | PSNR: 24.69
+Dense Attention
+Ours (r=85%)
+SpargeAttn (r=80%)
+Dense Attention
+Ours (r=85%)
+SpargeAttn (r=80%)
+PSNR: 22.60
+PSNR: 13.32
+LPIPS: 0.129
+LPIPS: 0.373
+(c) FLUX.1-dev. r denotes the sparsity ratio.
+Dense Attention
+Active Blocks: 100%
+L1 Error: 0% | FLOPs: 100%
+PISA (Ours)
+Active Blocks: 100%
+L1 Error: 1.36% | FLOPs: 20.4%
+Sparse Attention
+Active Blocks: 20%
+L1 Error: 10.34% | FLOPs: 20.0%
+(d) Attention patterns on Wan2.1-1.3B
+Figure 1: PISA accelerates diverse generation tasks. (a, b) Wan2.1-14B image-to-video generation. (c)
+FLUX.1 image generation. PISA achieves better quality than SpargeAttn at higher sparsity. (d) Wan2.1-1.3B
+attention patterns: PISA more closely approximates dense attention than block sparse attention at similar cost.
+Abstract
+Diffusion Transformers are fundamental for visual generation, but their efficiency
+is bottlenecked by the quadratic complexity of self-attention. While block-sparse
+attention accelerates computation by attending only to critical key-value blocks,
+it suffers from quality degradation at high sparsity due to discarding substantial
+context. In this work, we discover that attention scores of non-critical blocks exhibit
+distributional stability, allowing their contributions to be accurately and efficiently
+recovered rather than dropped. Motivated by this insight, we propose PISA, a
+training-free Piecewise Sparse Attention that covers the full attention span via
+lightweight compensation for skipped non-critical blocks. Unlike the conventional
+“keep-or-drop” paradigm that directly drops non-critical blocks, PISA establishes
+the “exact-or-approximate” paradigm: it preserves exact computation for critical
+blocks while approximating the remainder through block-wise Taylor expansion
+around block centroids. This design allows PISA to serve as a faithful proxy to full
+attention, achieving 1.91× and 2.57× speedups on Wan2.1 and Hunyuan-Video,
+and 1.2–1.6× acceleration on FLUX without compromising quality.
+†Corresponding author.
+40th Conference on Neural Information Processing Systems (NeurIPS 2026).
+arXiv:2602.01077v5  [cs.CV]  21 Nov 2026
+1
+Introduction
+Diffusion Transformers (DiTs) [1] have demonstrated impressive performance and scalability in
+high-fidelity image and video generation across diverse visual tasks [2–10]. However, as demand for
+higher resolutions and longer video durations grows, the sequence length of input tokens increases
+dramatically. Consequently, the quadratic complexity of self-attention [11] becomes a significant
+bottleneck to efficient inference in large-scale DiTs.
+To address the computational bottleneck, especially in high-resolution image and video generation,
+recent research has leveraged the inherent sparsity in DiTs to enable sparse attention. Early works [12,
+13] capitalized on the spatiotemporal redundancy of video diffusion transformers to introduce static,
+training-free sparse attention patterns. To improve adaptability, other methods [14–17] propose
+computing sparse patterns dynamically at runtime. Moving beyond training-free approaches, recent
+works explore trainable sparse attention [18, 19], adopt linear attention for efficient generation [20, 4,
+21], or combine sparse and linear attention [22, 23].
+However, existing methods still face inherent limitations: (1) Hard truncation: Sparse attention
+directly discards key-value pairs, leading to performance drops at high sparsity and inefficiency on
+shorter sequences (e.g., 4K tokens). (2) Incompatibility with pre-trained weights: Linear and hybrid
+attention fundamentally alter the attention distribution of pre-trained models, precluding the direct
+reuse of weights and necessitating expensive retraining. These limitations underscore the need for a
+unified mechanism that enhances efficiency without sacrificing quality or requiring retraining.
+To this end, we propose PISA, a novel training-free sparse attention method that accelerates DiTs
+while maintaining high accuracy through piecewise computation. Unlike standard sparse attention,
+which computes only critical blocks and discards the rest, PISA treats attention as a piecewise
+process: (1) Exact computation for sparse key-value blocks to preserve critical information; (2)
+Approximation for the remaining blocks using block-wise Taylor expansion to cover the massive
+amount of non-critical information.
+Specifically, we propose a hybrid-order approximation strategy that uses block-wise zero-order
+expansion and global first-order approximation to efficiently improve accuracy. This significantly
+improves approximation fidelity to full attention with negligible computational overhead over standard
+sparse attention, as illustrated in Figure 1(d). These dual computational pathways are fused into a
+single online softmax process, achieving a state-of-the-art trade-off between efficiency and accuracy.
+Extensive experiments demonstrate the superiority of PISA. It accelerates Wan2.1-14B [2] and
+Hunyuan-Video [3] by 1.91× and 2.57×, respectively, while preserving state-of-the-art quality. Even
+for image generation tasks with lower inherent sparsity, PISA outperforms existing methods in both
+efficiency and quality.
+Our contributions are summarized as follows:
+1. We propose a novel training-free piecewise sparse attention that enables full attention span while
+substantially reducing computational cost. Through a unified exact-or-approximate computation, it
+resolves the critical dilemma between accuracy and efficiency.
+2. We develop a hybrid-order approximation scheme that boosts accuracy at negligible cost. We also
+derive a covariance-aware routing strategy from error analysis to reduce approximation divergence.
+3. Experiments demonstrate that our method achieves state-of-the-art quality and efficiency across
+diverse tasks, setting a new sparse attention paradigm for efficient visual generation.
+2
+Related Work
+Block Sparse Attention.
+To address the quadratic complexity of standard attention [24], sparse
+attention [14, 18, 13, 17, 19, 25, 26] limits computation to a subset of critical key-value blocks
+via static priors or dynamic routing. However, current methods simply discard the unselected
+blocks, which inevitably exacerbates output error and degrades performance at a high sparsity
+ratio. In contrast, PISA guarantees a strictly lower error bound than standard sparse attention by
+approximating the unselected blocks instead of dropping them, enabling superior performance.
+2
+0
+50
+90
+Score percentile of qt̄k
+⊤
+j in row
+10−8
+10−5
+10−2
+1st-order error
+−10
+−5
+0
+5
+10
+Value of QK⊤
+0
+50
+100
+Func. value
+μ=−1.8
+−5
+0
+5
+10
+15
+Value of QK⊤
+0
+500
+1000
+μ=4.0
+(a) First-order Taylor expansion at the block mean μ
+(b) Error vs. score percentile
+QK⊤ distribution
+exp(QK⊤)
+Taylor at μ
+Approx. error
+Top-10%
+Others
+Median
+Figure 2: Error of first-order Taylor expansion on pre-softmax attention scores (QK⊤) in
+Wan2.1-1.3B. (a) Expansion at the block mean µ (note the 10× y-range on the right). (b) Error vs.
+within-row score percentile (all layers/heads): the top-10% blocks carry 75% of the error.
+Bidirectional Linear Attention.
+Linear attention [27, 28] achieves linear complexity by replacing
+the exponential kernel with feature mappings. In the vision domain, existing bidirectional methods
+primarily focus on modifying these feature mappings [21, 29, 30], yet their core formulation remains
+consistent with the canonical framework. Notably, Taylor-based approaches [31] typically expand
+around zero for the entire sequence. Although kernel tricks [32] can yield high-order approximations,
+they incur severe dimension explosion and fail to preserve the pre-trained attention distribution.
+Consequently, these methods require computationally expensive retraining.
+Native Hybrid Attention.
+Recognizing the limitations of pure sparse or linear approaches, recent
+works have explored hybrid architectures. Methods like SLA [22] and NHA [33] attempt to combine
+sparse (or sliding window) attention with linear attention. However, SLA directly sums the outputs of
+different branches, which disrupts the intrinsic normalization of attention weights, while NHA adds
+linear-RNN memory slots; both require training to adapt pre-trained models. In contrast, PISA applies
+block-wise expansion to both the normalization numerator and denominator. By natively mixing
+exact and approximate terms under a unified softmax framework instead of simply adding outputs,
+our method preserves the intrinsic distribution and enables superior training-free performance.
+3
+Methodology
+3.1
+Preliminaries
+Given an input sequence X ∈RL×d, where L is the length and d is the feature dimension, the query,
+key, and value Q, K, V ∈RL×d are derived from X via learnable linear projections. The output
+O ∈RL×d of attention is (omit scale factor):
+O = Softmax
+ QK⊤
+V .
+(1)
+FlashAttention [34] introduces online softmax that avoids materializing attention scores in high
+bandwidth memory (HBM), significantly reducing memory access overhead. To further mitigate the
+computation complexity, sparse attention restrict computation to a subset of critical key-value blocks:
+O = Softmax
+ QK⊤+ M
+
+V ,
+M ∈{0, −∞}L×L.
+(2)
+Here, M denotes a mask where entries of −∞indicate the corresponding key-value pairs are ignored.
+However, directly discarding blocks inevitably causes the output to deviate sharply from the original
+attention distribution. This limitation motivated us to design a fast and accurate sparse attention
+mechanism capable of accelerating inference in a training-free manner.
+Key Insights.
+To identify a superior alternative to the “keep-or-drop” strategy, we analyzed the
+statistical properties of pre-trained models, yielding two key insights:
+(1) Pre-softmax scores of uncritical blocks exhibit a symmetric distribution centered around zero
+or negative values, rendering them highly amenable to approximation via mean-centered Taylor
+expansion, as illustrated in Figure 2.
+(2) Normalization Consistency. Existing hybrid methods rely on an additive strategy (Osparse +
+Olinear) that violates the intrinsic weighted sum rule. To ensure training-free compatibility, the
+approximation must be integrated internally into the softmax numerator and denominator.
+3
+3.2
+Piecewise Sparse Attention
+Based on these insights, we propose Piecewise Sparse Attention (PISA), which unifies exact sparse
+computation with block-wise approximation directly within the online softmax. The following
+subsection outline our framework.
+Formulation.
+We partition the query, key, value and output matrices (Q, K, V , O) into blocks
+of size B. To streamline notation, we express the query and output vectors using a global index.
+Let qt := QiB+m ∈R1×d (where t = iB + m) denote the query vector at global index t, which
+is the m-th row vector belongs to the i-th Q block. For the key and value sides, we preserve the
+block-internal structure: let kj,n and vj,n denote the n-th row vectors of the j-th key and value
+blocks, respectively (where 1 ≤n ≤B).
+For an arbitrary query qt, we partition the key-value block indices into a sparse selected set Si
+(computed exactly) and a long-tail unselected set Ui. Instead of discarding the unselected blocks as
+in standard sparse attention, we approximate the contribution from each block j ∈Ui via First-Order
+Taylor expansion centered at the block centroid αt,j := exp(qt¯k⊤
+j ), where ¯kj := 1
+B
+PB
+n=1 kj,n. The
+output vector ot ∈R1×d is derived by normalizing the weighted value aggregation (omit scale):
+ot := Nt
+Dt
+,
+where
+Dt :=
+X
+j∈Si
+B
+X
+n=1
+exp(qtk⊤
+j,n)
+|
+{z
+}
+Sparse Exact
++
+X
+j∈Ui
+B · exp(qt¯k⊤
+j )
+|
+{z
+}
+Block-wise Approx
+,
+Nt :=
+X
+j∈Si
+B
+X
+n=1
+exp(qtk⊤
+j,n)vj,n
+|
+{z
+}
+Sparse Exact
++
+X
+j∈Ui
+exp(qt¯k⊤
+j )
+B
+X
+n=1
+vj,n
+|
+{z
+}
+Block-wise Zeroth-order Approx
++ qt
+X
+j∈Ui
+exp(qt¯k⊤
+j )
+B
+X
+n=1
+(kj,n −¯kj)⊤vj,n
+|
+{z
+}
+Block-wise First-order Approx
+.
+(3)
+Note that the first-order term in the denominator Dt cancels out because PB
+n=1(kj,n −¯kj)⊤= 0.
+Since queries within the same block share identical block masking patterns, they can naturally
+generalize to the full block via matrix operations.
+Practical Challenge.
+The “Sparse Exact” term corresponds to standard block sparse attention,
+which can be computed efficiently. Similarly, “Block-wise Zeroth-order Approx” term can be
+efficiently computed via matrix multiplication (GEMM) by grouping pre-computed ¯kj and PB
+n=1 vj,n
+into sub-blocks. However, for “Block-wise First-order Approx” term, although it theoretically exhibits
+linear complexity, its practical implementation is severely bottlenecked by memory access. Computing
+this first-order term necessitates handling distinct matrices PB
+n=1(kj,n −¯kj)⊤vj,n ∈Rd×d for each
+block j ∈Ui, weighted by block-specific scalar. Whether these matrices are pre-computed and loaded
+from HBM or computed on-the-fly in SRAM, the process results in a memory-bound operation with
+low arithmetic intensity, rendering the theoretical speedup unattainable in practice. To resolve this
+conflict between theoretical complexity and hardware efficiency, we propose two solutions.
+3.3
+Hybrid Approximation
+Global First-Order Correction.
+We propose a hybrid-order approximation in which the first-order
+term is formulated globally across all unselected blocks, rather than block-wise. This allows all
+blocks to share a unified scale factor βt, thereby eliminating the need for weighted summation. Let
+¯kt denote the global centroid of keys across all blocks in Ui. The 1st-order term can be rewritten as:
+βtqt
+X
+j∈Ui
+B
+X
+n=1
+(kj,n −¯kt)⊤vj,n.
+(4)
+Determining the expansion coefficient βt presents a critical challenge. While a standard first-order
+Taylor expansion at the global centroid ¯kt would suggest βt = exp(qt¯k⊤
+t ), Jensen’s Inequality
+indicates that this approach severely underestimates the slope of the global first-order term, rendering
+the correction ineffective. To address this, we define βt using the mean of exp(qt¯k⊤
+j ) effectively
+4
+`\hat V_3`
+`\hat V_4`
+`\hat V_1`
+`\hat V_2`
+`\V_2`
+`\V_3`
+`\V_4`
+`\V_1`
+`\K_2`
+`\bar K_3` `\bar K_4`
+`Q_1`
+Outer Loop
+Mask
+Phase 1: Exact
+Phase 2: 0th-order
+Skip
+`\K_1`
+`\K_3`
+Skip
+`\K_4`
+`\bar K_1` `\bar K_2`
+`\N_{1}^{s}`
+rowsum
+`\D_{1}`
+`\D_{1}`
+`Q_1`
+`bar H`
+`+`
+`\N_{1,2}`
+`\N_{1,3}`
+`\N_{1,1}`
+`\N_{1,4}`
+`\N_{1}^{l}`
+`\N_{1}^{l}`
+`\N_{1}^{s}`
+Phase 3: 1st-order
+`/`
+`(`
+`)`
+Inner Loop
+rowsum
+Mean
+Sum
+Top-K Selection
+`\bar K_1` `\bar K_2`
+`\hat V_1`
+`\hat V_2`
+`\hat V_3`
+`\K_1`
+`\V_1`
+`\bar Q_1`
+`\bar K_3`
+`\V_2`
+`\V_3`
+`Q_1`
+`\K_2`
+`\K_3`
+`bar H`
+Prepare Phase
+Output
+Mean
+`+`
+`log M_j`
+Figure 3: The algorithm pipeline of PISA. Prepare Phase: we pre-compute block-wise means of
+queries and keys (Q, K), block-wise sums of values ( ˆV ) and the global statistic ¯H in a single pass; a
+block-wise Top-K selection (Eq. (7)) identifies critical blocks. Fused kernel: selected blocks (e.g.,
+2, 3) are computed exactly (Phase 1), unselected blocks (e.g., 1, 4) use the block-wise zeroth-order
+expansion with selected columns masked (Phase 2), and Phase 3 applies ¯H once to inject the global
+first-order term, avoiding memory-bound streaming.
+employing an average slope to estimate the magnitude of the first-order correction for all unselected
+blocks. Let Hj := PB
+n=1(kj,n −¯kj)⊤vj,n ∈Rd×d. The 1st-order term can be rewritten as:
+1
+|Ui|
+ X
+j∈Ui
+exp(qt¯k⊤
+j )
+
+qt
+X
+j∈Ui
+Hj
+
+.
+(5)
+Furthermore, by associating the normalization factor 1/|Ui| with the summation of Hj, we essentially
+compute the mean of Hj over the unselected blocks. Observing that the set of unselected blocks
+Ui typically constitutes the vast majority of the total blocks, we approximate the query-dependent
+mean over Ui using a query-independent global statistic ¯
+H =
+1
+N
+PN
+j=1 Hj, where N is number
+of blocks. This global statistic can be precomputed via a single pass. Consequently, we arrive at a
+computationally efficient formulation:
+Nt :=
+X
+j∈Si
+B
+X
+n=1
+exp(qtk⊤
+j,n)vj,n
+|
+{z
+}
+Exact Sparse Term
++
+X
+j∈Ui
+αt,j
+
+B
+X
+n=1
+vj,n
+
+|
+{z
+}
+Block-wise 0th-order
++ qt ¯
+H
+X
+j∈Ui
+αt,j
+|
+{z
+}
+Global 1st-order
+.
+(6)
+Error Analysis.
+We provide a briefly error analysis below and the full proof is in Appendix C.
+Theorem 3.1 (Total Error of PISA). Following Eq. (3)–(6), let o⋆
+t be the dense attention output
+and bot be the PISA output. We use the scale-omitted notation of Sec. 3. Assume ∥qt∥2 ≤Cq and
+∥vj,n∥2 ≤Cv.
+Let D⋆
+t and bDt denote the dense and PISA denominators, respectively, and let τt be the exact
+dense attention mass of the unselected blocks. Define
+ηt := max
+j∈Ui,n |qt(kj,n −¯kj)⊤|,
+ρt := τt
+D⋆
+t
+,
+ζt := 1 −
+bDt
+D⋆
+t
+,
+Mt := max
+j∈Ui ∥Hj −¯
+H∥2.
+Then 0 ≤ζt < 1, and
+∥bot −o⋆
+t ∥2 ≤
+ρt
+1 −ζt
+
+Cveηtη2
+t + CqMt
+B
+
+.
+The first term in the bound controls the second-order Taylor remainder and the associated denominator
+perturbation, while the second term controls the replacement of block-wise first-order matrices Hj
+by the global statistic ¯
+H. The factor 1/(1 −ζt) accounts for the change in softmax normalization.
+Covariance-Aware Block Selection.
+Practically, to guarantee small approximation error it suffices
+to ensure either the tail fraction ρt is small, or the per-block heterogeneity M is small. Based on the
+Theorem 3.1, we propose a Covariance-Aware Top-k Strategy that incorporates the norm of the block
+covariance matrix as a prior for importance routing.
+5
+Algorithm 1 PISA Forward Pass
+Input: Q, K, V ∈RL×d, block size B and C, sparsity r
+1: Compute block means ¯
+Q, ¯
+K, block sum ˆV and global ¯
+H; Partition ¯
+K, ˆV into groups { ¯
+K[g], ¯V[g]} of size C.
+2: Compute block indices Si via Eq. (7) for each query block i.
+3: for i ←1 to N = ⌈L/B⌉do
+4:
+On-chip: Initialize Oi ∈RB×d ←0, ℓi ∈RB ←0, ℓtail
+i
+∈RB ←0, mi ∈RB ←−∞.
+5:
+Load Qi ∈RB×d from HBM to on-chip SRAM.
+6:
+for j ∈Si do
+Phase 1
+7:
+Load Kj, Vj ∈RB×d from HBM to on-chip SRAM.
+8:
+On-chip: Sij = QiK⊤
+j ∈RB×B
+9:
+On-chip: mnew
+i
+= max(mi, rowmax(Sij)) ∈RB, β = exp(mi −mnew
+i
+) ∈RB.
+10:
+On-chip: Pij = exp(Sij −mnew
+i
+) ∈RB×B
+11:
+On-chip: ℓi ←β · ℓi + rowsum(Pij)
+12:
+On-chip: Oi ←diag(β)Oi + PijVj, mi ←mnew
+i
+13:
+end for
+14:
+for g ←1 to ⌈N/C⌉do
+Phase 2
+15:
+Load ¯
+K[g], ¯V[g] ∈RC×d from HBM to on-chip SRAM.
+16:
+On-chip: Sig = Qi ¯
+K⊤
+[g] ∈RB×C, Sig[{j | j ∈Si}] ←−∞.
+Column-wise masking
+17:
+On-chip: mnew
+i
+= max(mi, rowmax(Sig)) ∈RB, β = exp(mi −mnew
+i
+) ∈RB.
+18:
+On-chip: Pig = exp(Sig −mnew
+i
+) ∈RB×C
+19:
+On-chip: ℓi ←β · ℓi + rowsum(Pig), ℓtail
+i
+←β · ℓtail
+i
++ rowsum(Pig).
+20:
+On-chip: Oi ←diag(β)Oi + Pig ¯V[g], mi ←mnew
+i
+21:
+end for
+22:
+On-chip: Ri = diag(ℓtail
+i )(Qi ¯
+H)/L ∈RB×d
+Phase 3
+23:
+On-chip: Oi ←diag(ℓ−1
+i
+)(Oi + Ri)
+24: end for
+Output: O = {Oi}M
+i=1 ∈RL×d.
+Let Mj := ∥Hj −¯
+H∥2, the selection score for block j with respect to query qt is defined as:
+Scoret,j = Softmax
+ 
+qt¯k⊤
+j
+√
+d
++ log (Mj + ϵ)
+!
+,
+(7)
+where ϵ > 0 is a small constant for numerical stability. The derivation of Eq. (7) is further elaborated
+on in the Appendix D. This strategy ensures that blocks with either high semantic relevance are
+preserved in the exact set Si, while the smoother blocks are delegated to the Taylor expansion.
+3.4
+Hardware-aware Kernel Implementation
+We design a fused kernel which efficiently interleaves exact computation with approximate scanning
+in online softmax. Concretely, the kernel proceeds in four phases:
+• Prepare Phase: block centroids, block-wise value sums and the global statistic ¯
+H are pre-computed
+in a single pass, and the critical blocks Si of each query block are selected via Eq. (7).
+• Phase 1: the selected blocks j ∈Si are loaded into SRAM for exact sparse attention, updating the
+running maximum and normalizer of the online softmax.
+• Phase 2: aggregated block vectors are scanned densely in groups with coalesced memory access,
+while a dynamic mask excludes selected blocks, enabling high throughput for the tail mass.
+• Phase 3: the global first-order term is injected once per query block before the final normalization,
+recovering first-order information at negligible cost.
+Phases 1–3 form a single fused kernel; the pipeline is illustrated in Figure 3 and Algorithm 1.
+6
+4K
+8K
+16K
+32K
+Sequence Length
+0.2
+1
+10
+50
+Latency (ms)
+B2-H24-D64
+4K
+8K
+16K
+32K
+Sequence Length
+B2-H16-D128
+FlashAttention-2
+FlashAttention-3
+SpargeAttn
+Ours
+(a) Latency Analysis
+0.5
+0.4
+0.3
+0.2
+0.1
+Density
+1
+2
+3
+4
+5
+6
+Speedup over FA3
+B2-H16-D128
+4K
+8K
+16K
+32K
+(b) Speedup Analysis
+Figure 4: Kernel efficiency profile. (a) Latency comparison across sequence lengths at 12.5% density
+(87.5% sparsity) under two configurations with notation B-H-D (batch_size, num_heads, head_dim).
+(b) Relative speedup against FlashAttention-3 (FA3) across varying densities and sequence lengths
+under the B2-H16-D128 configuration. The dashed line indicates the baseline performance.
+4
+Experiments
+4.1
+Experimental Setup
+Models.
+We evaluate PISA on both video and image generation tasks. We employ Wan-2.1 [2] and
+Hunyuan-Video to produce videos at 480p and 720p resolutions. For image generation, we utilize SD
+3.5 [35] and FLUX.1-dev [5] to generate images at 1024×1024 (default) and 2048×2048 resolutions.
+Benchmarks.
+We employ VBench [36] to evaluate both video quality and consistency. For image
+generation, we utilize FID [37] alongside a suite of human preference metrics, including ImageReward
+(IR) [38], HPSv2 [39], and MPS [40]. Furthermore, we compute SSIM, PSNR and LPIPS [41] to
+quantify the similarity between PISA and full attention. Regarding efficiency, we note that theoretical
+FLOPs often fail to reflect real-world speeds. Therefore, to ensure a fair comparison of efficiency, we
+focus exclusively on end-to-end latency and the speedup ratio relative to full attention.
+Implementation Details.
+We define sparsity as the proportion of blocks computed using approxima-
+tion, analogous to the ratio of skipped blocks in standard sparse attention. Our kernel implementation
+uses a block size of 64×64. Following prior works [19, 17], we adopt a warmup strategy where early
+layers and inference steps retain dense. Detailed configurations are provided in the Appendix E.
+4.2
+Kernel Efficiency Evaluation
+To evaluate the efficiency of our method, we benchmark against state-of-the-art implementations.
+Specifically, we adopt FlashAttention [42, 43] as the standard for full attention, and SpargeAttn [14]
+as the baseline for block sparse attention. All results are profiled on NVIDIA H800 GPUs.
+Efficiency vs. Sequence Length.
+As illustrated in Figure 4a, PISA at a density of 12.5% (sparsity
+87.5%) consistently outperforms FlashAttention-3 and SpargeAttn. Notably, even at shorter sequence
+(e.g., 4K), our method maintains a speed advantage over FlashAttention-3.
+0
+25
+50
+75
+100
+Fraction of Kernel Runtime (%)
+16K
+32K
+64K
+1.3 ms
+4.6 ms
+17.9 ms
+Reduction
+Selection
+Exact Phase
+Approx Phase
+Figure 5: Latency breakdown of PISA at
+12.5% density. Exact attention (latency anno-
+tated) dominates the runtime at all lengths.
+Efficiency vs. Density.
+Figure 4b illustrates the
+speedup of PISA relative to FlashAttention-3 across
+varying densities and sequence lengths. PISA is
+faster whenever the density is below 50% for se-
+quences of 8K and longer, and below 30% for 4K;
+at 12.5% density the speedup reaches 3.5× at 32K.
+Runtime Breakdown.
+We profile the runtime of
+distinct phases within our kernel. As illustrated in
+Figure 5, the approximation phase incurs minimal
+overhead, confirming that our method improves
+accuracy without sacrificing runtime efficiency.
+7
+Dense Attention
+Dense Attention
+PISA (Ours)
+PISA (Ours)
+SVG2
+SpargeAttn
+Figure 6: Video generation samples of different attention mechanisms. Left: Hunyuan-Video 13B.
+Right: Wan2.1-14B. All sparse attention are configured under a similar sparsity level (∼87.5%).
+Table 1: Comparison of different sparse attention on video generation with warmup strategy. †: using
+the official-provided configuration for reproducing the 87.13% sparsity reported in SVG2 paper.
+Method
+Sparsity
+VBench(%) ↑
+Similarity
+Efficiency
+S.C.
+I.Q.
+A.Q.
+SSIM↑
+PSNR↑
+LPIPS↓
+Latency↓
+Speedup↑
+Wan2.1-1.3B (Text-to-Video, 480P)
+Dense
+0.00%
+94.96
+66.09
+60.79
+–
+–
+–
+98 s
+1.00×
+Sparge
+87.5%
+93.76
+64.89
+58.66
+0.761
+20.75
+0.138
+51 s
+1.92×
+SVG
+87.5%
+93.45
+64.01
+58.83
+0.806
+22.14
+0.121
+55 s
+1.78×
+SVG2†
+87.1%
+93.79
+64.51
+59.09
+0.809
+22.85
+0.104
+62 s
+1.58×
+Ours
+87.5%
+94.58
+65.94
+60.03
+0.800
+22.62
+0.111
+48 s
+2.04×
+Wan2.1-14B (Text-to-Video, 720P)
+Dense
+0.00%
+95.98
+67.71
+63.08
+–
+–
+–
+1564 s
+1.00×
+Sparge
+87.5%
+95.69
+67.11
+62.72
+0.766
+21.47
+0.144
+844 s
+1.85×
+SVG
+87.5%
+95.08
+66.25
+61.16
+0.777
+22.04
+0.130
+856 s
+1.83×
+SVG2†
+87.1%
+95.39
+66.97
+61.92
+0.796
+22.92
+0.121
+882 s
+1.77×
+Ours
+87.5%
+95.80
+67.88
+63.38
+0.787
+22.69
+0.124
+818 s
+1.91×
+Hunyuan-13B (Text-to-Video, 720P)
+Dense
+0.00%
+95.60
+67.65
+61.55
+–
+–
+–
+1651 s
+1.00×
+Sparge
+87.5%
+95.38
+67.37
+61.35
+0.837
+24.85
+0.107
+658 s
+2.51×
+SVG
+87.5%
+94.50
+62.99
+56.34
+0.833
+26.04
+0.106
+661 s
+2.49×
+SVG2†
+87.1%
+94.88
+63.10
+58.58
+0.848
+26.40
+0.109
+649 s
+2.54×
+Ours
+87.5%
+95.47
+68.16
+61.85
+0.840
+26.17
+0.106
+641 s
+2.57×
+4.3
+Visual Generation Evaluation
+Video Generation.
+We evaluate our PISA against recent sparse attention works (e.g.,
+SpargeAttn [14], SVG [13] and SVG2 [17]) on the Wan2.1 [2] and Hunyuan-Video [3]. As demon-
+strated in Table 1, our method achieves state-of-the-art performance on the VBench benchmark,
+significantly outperforming existing approaches while delivering substantial speedup advantages. Re-
+markably, it even surpasses full attention on certain generation quality metrics. In contrast, although
+SVG2 achieves high similarity scores, it suffers from severe degradation in overall video quality and
+consistency, exhibiting noticeable blurring and flickering between frames. Similarly, SpargeAttn
+struggles with the loss of fine-grained details, whereas PISA exhibits visual quality consistent with
+full attention, as shown in Figure 6.
+Image Generation.
+We compare our method against SpargeAttn [14] and MInference [44] (bidi-
+rectional version) on Stable Diffusion 3.5 (SD3.5) [35] and FLUX.1-dev [5], with results shown
+in Table 2 (2048×2048 results are in Table 7). At similar sparsity levels, our method significantly
+outperforms other methods in FID and other human preference benchmarks, while achieving greater
+speedups. In terms of similarity, our method consistently surpasses other methods across different
+models, demonstrating that our piecewise attention mechanism preserves critical structural and
+semantic information. Visual results are presented in Figure 1 and Appendix G.
+8
+Table 2: Comparison of different sparse attention on text-to-image generation with warmup strategy.
+Model
+Method
+Sparsity
+Quality
+Similarity
+Efficiency
+FID↓
+IR↑
+MPS↑
+HPSv2↑
+SSIM↑
+PSNR↑
+LPIPS↓
+Latency↓
+SD 3.5-M
+(1024p)
+Dense-Attn
+0%
+15.48
+0.912
+–
+30.13
+–
+–
+–
+3.03 s
+MInference
+70%
+17.30
+0.678
+39.87%
+27.03
+0.690
+16.44
+0.191
+2.88 s
+SpargeAttn
+70%
+19.52
+0.465
+32.32%
+26.30
+0.627
+14.60
+0.269
+2.69 s
+Ours
+70%
+14.78
+0.883
+49.71%
+30.40
+0.790
+19.55
+0.158
+2.15 s
+FLUX.1
+(1024p)
+Dense-Attn
+0%
+16.35
+0.965
+–
+31.31
+–
+–
+–
+8.32 s
+MInference
+85%
+20.02
+0.860
+40.01%
+29.13
+0.572
+14.29
+0.282
+7.60 s
+SpargeAttn
+85%
+22.13
+0.822
+37.39%
+27.66
+0.498
+11.08
+0.298
+7.47 s
+Ours
+85%
+15.91
+1.001
+51.98%
+31.69
+0.682
+17.07
+0.241
+6.87 s
+Table 3: Ablations of approximation strategy.
+†: with covariance-aware selection.
+Method
+SSIM↑
+PSNR↑
+LPIPS↓
+Spd.↑
+FLUX.1-dev
+0th
+0.643
+16.10
+0.274
+1.24×
+1st
+0.679
+17.04
+0.246
+0.96×
+hyd
+0.677
+17.01
+0.248
+1.22×
+hyd†
+0.682
+17.09
+0.241
+1.22×
+Wan2.1-14B
+0th
+0.772
+21.68
+0.136
+1.93×
+1st
+0.788
+22.84
+0.122
+0.91×
+hyd
+0.784
+22.41
+0.127
+1.92×
+hyd†
+0.787
+22.69
+0.124
+1.91×
+0.1
+0.3
+0.5
+0.7
+0.9
+Density
+0.0
+0.1
+0.2
+0.3
+Output Error
+4K
+8K
+16K
+32K
+Sequence Length
+0.20
+0.25
+0.30
+Output Error
+Sparse Only
+Sparse + Block-0th Approx
+Sparse + Hybrid Approx
+Figure 7: Quantitative ablation of approximation er-
+rors. Relative error w.r.t. dense attention.
+Dense
+PISA
+PISA-0th
+Dense
+PISA
+PISA-0th
+Dense
+PISA
+PISA-0th
+Figure 8: Approximation ablation (85% sparsity): FLUX.1 images (left, middle) and attention maps
+(right). PISA-0th loses fine details and attention structure, which the hybrid correction recovers.
+4.4
+Ablation Study
+Approximation Errors.
+We examine the normalized L1 error ratio of attention on Wan2.1-1.3B.
+As shown in Figure 7, the zeroth-order variant of PISA consistently achieves lower errors than
+standard sparse attention, while the hybrid-order variant yields further improvements. This validates
+the numerical precision of our method, confirming its ability to minimize output error.
+Effect of Approximation Strategy.
+Beyond output error of attention, we evaluate generation
+similarity against the exact block-wise first-order variant (Eq. (3)). As shown in Table 3, our hybrid
+approximation significantly improves similarity over the zeroth-order method and approaches the
+exact baseline with superior efficiency, demonstrating an optimal fidelity-efficiency trade-off.
+Qualitative Comparison.
+We visualized the approximation effects on FLUX.1 in Figure 8. While
+the 0th-order expansion maintains semantics and structural integrity, it struggles with local details. In
+contrast, the hybrid strategy significantly recovers these fine-grained details. This provides intuitive
+visual evidence that hybrid strategy effectively preserves human-perceptible details.
+5
+Conclusion
+In this work, we propose a unified “exact-or-approximate” framework that goes beyond the standard
+“keep-or-drop” sparse attention paradigm and achieves a better efficiency-accuracy trade-off for visual
+generation. Our current scope focuses on multi-step diffusion models with dense warmup. Future
+work will explore the co-design of PISA with few-step diffusion [45–48], advanced sampling [49, 50],
+and feature caching [51, 52], as well as its application to large language models (LLMs).
+9
+Acknowledgments
+We thank the Red Bird MPhil Program at the Hong Kong University of Science and Technology
+(Guangzhou) for providing support, computing resources, and funding, as well as Red Bird MPhil
+project supervisor Dr. Jingwei Yang. This work was also partially supported by the Hong Kong
+University of Science and Technology (Guangzhou) Kunpeng & Ascend Center of Cultivation.

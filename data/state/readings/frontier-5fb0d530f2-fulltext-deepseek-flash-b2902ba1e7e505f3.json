@@ -1,0 +1,177 @@
+{
+  "title_zh": "哪种失败被干预修复？agent 干预何时有效，自演化 skill 卡在何处",
+  "affiliations": [
+    "University of Southern California",
+    "Amazon"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "在近 90 万条轨迹上把 agent 干预的效应拆到单一轴并配以失败归因，正面回答 skill/harness/预算研究普遍只报一个平均增益所掩盖的问题。",
+    "novelty": 79,
+    "novelty_reason": "贡献不在新方法而在新评价范式：以\"修复哪类失败\"为计量单位、skill 冻结后跨模型复用、用放宽答案抽取把格式合规与实质修复分离。",
+    "technical_depth": 90,
+    "technical_depth_reason": "配对因子设计加每格三次重复、失败标签先冻结再查看匹配结果、独立 judge 与人工抽查校验、relaxed rescoring 与 A/A 校准讨论，并逐条标注未校准与不可分离之处。"
+  },
+  "reading": {
+    "why_read": "提出匹配因子干预归因研究：在九个基准、四个模型、四类 skill 与四级 harness 上逐轴改变条件（近 0.9M 条轨迹），判定每种干预修复哪类失败，并给出按 benchmark 决策的诊断清单。",
+    "task": "现代 agent 在模型外叠加 skill、工具与执行反馈、反思、额外推理预算，每种新干预只在自己作者的模型、harness 与预算下报一个平均增益，而基准把整摞组件一起打分：既说不清增益是否属于该干预，也说不清它修好了哪类失败。一个在 Qwen3.5-9B 上调出的 skill 搬到更强模型后，Hotpot Context 正确率从 62.0% 掉到 13.6%，加上带错误反馈与重试的 harness 也只回到 12.2%——模型仍知道答案，只是把答案字段填成了事实抽取工作表。",
+    "findings": [
+      {
+        "point": "干预效应是条件性的，且相互不可加",
+        "detail": "skill 与 harness 抢同一瓶颈时互相吸收：18 词的 SQuAD skill 增益从 +66.2 掉到 +2.2，因为 H0 缺的只是答案格式；允许轴间成对交互的模型把留出单元预测的 R² 从 0.729 提到 0.812。"
+      },
+      {
+        "point": "反馈只能修复留下可见信号的失败",
+        "detail": "恢复需走过暴露→行动→局部可修→最终正确四段，各段会分别断裂：BigCode 中 70–76% 的执行暴露了错误却最多修复 2%，Spreadsheet 局部改对也只有约五分之一整本正确。"
+      },
+      {
+        "point": "自演化 skill 的上限在 agent 自身经验之外",
+        "detail": "换更强构造器不解决问题（用 GPT-5.6-sol 重建使 SkillOpt 反降 6.05），缺事实时自建事实 skill 只把 SimpleQA 从 5.0% 抬到 6.3%，检索到外部段落才到 60.0%。"
+      }
+    ],
+    "method": "构造 1,872 个测试实例 × 4 模型 × 4 类 skill 条件（NoSkill、一次性 Direct、按分数迭代的 SkillOpt、从轨迹蒸馏的 Trace2Skill，均由 Qwen3.5-9B 构造、冻结后原样复用）× H0–H3 四级 harness × 三档预算，每格三次重复；每个比较只改一个轴、同一实例配对。失败标签在查看匹配结果前冻结并按轨迹归入八类根因，再用放宽的答案抽取重打分把格式合规与实质修复分开（SQuAD harness 增益 44.34→2.12），最后按失败类型映射到轴并重放；决策侧比较 per-task 路由、失败升级与 per-benchmark 小样本 pilot 三种策略。",
+    "results": "skill 增益随 harness 从 +66.2 降到 +2.2；按失败类型对齐后，execution 失败从 harness 得 +9.58、capability 失败从更强模型得 +64.54；有可见信号的失败救援率 76.9%，无信号 1.3%；每 benchmark 用 20 条标注样本选模型达 57.4，高于恒用 GPT-5.6-sol 的 53.5，成本低 36%。",
+    "limitations": "主矩阵 skill 全由 Qwen3.5-9B 构造并冻结复用，跨模型结果测的是迁移而非各自构造；H2 把错误反馈与最多三次重试捆绑，两者贡献无法分离；仅 56.5% 源失败有根因标签，LiveMath 因标签不可复现被整体排除。"
+  },
+  "claims": [
+    {
+      "claim": "因子矩阵覆盖九个基准、四个模型、四类 skill 与四级 harness，含近 0.9M 条轨迹。",
+      "numbers": [
+        "0.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "nearly 0.9 million trajectories"
+    },
+    {
+      "claim": "为 Qwen3.5-9B 构造的 skill 原样搬到 GPT-5.6-sol 后，Hotpot Context 正确率从 62.0% 降到 13.6%。",
+      "numbers": [
+        "62.0",
+        "13.6"
+      ],
+      "source_span": "Section 1, opening case",
+      "quote": "answers 62.0% of questions correctly without the skill and 13.6% with it"
+    },
+    {
+      "claim": "更强的 harness 没能修复该失败，分数停留在 12.2。",
+      "numbers": [
+        "12.2"
+      ],
+      "source_span": "Section 1",
+      "quote": "the score stays at 12.2"
+    },
+    {
+      "claim": "18 词的 SQuAD skill 在最小 harness 下增益 +66.2 分，在带执行反馈的 harness 下只剩 +2.2。",
+      "numbers": [
+        "18",
+        "66.2",
+        "2.2"
+      ],
+      "source_span": "Section 1 bullet / Section 3",
+      "quote": "an 18-word SQuAD skill adds 66.2 points under a minimal harness and 2.2 under execution feedback"
+    },
+    {
+      "claim": "允许轴间成对交互的模型把留出单元的预测 R² 从 0.729 提高到 0.812。",
+      "numbers": [
+        "0.729",
+        "0.812"
+      ],
+      "source_span": "Section 3, interaction fitting",
+      "quote": "from 0.729 to 0.812"
+    },
+    {
+      "claim": "按失败类型对齐后，execution 失败从 harness 获得 +9.58 分（相对其他轴均值）。",
+      "numbers": [
+        "9.58"
+      ],
+      "source_span": "Section 4, aligned replay",
+      "quote": "Execution failures gain +9.58 points from the harness over the mean of the other axes"
+    },
+    {
+      "claim": "capability 类失败从更强模型获得 +64.54 分。",
+      "numbers": [
+        "64.54"
+      ],
+      "source_span": "Section 4, aligned replay",
+      "quote": "capability failures gain +64.54 from a stronger model"
+    },
+    {
+      "claim": "SQuAD 上带可见错误信号的失败被 H2 救援的比例为 76.9%，无信号仅 1.3%。",
+      "numbers": [
+        "76.9",
+        "1.3"
+      ],
+      "source_span": "Section 4, Rescue needs a visible signal",
+      "quote": "Failures with a signal are rescued far more often on SQuAD (76.9% versus 1.3%)"
+    },
+    {
+      "claim": "BigCode 中 70–76% 的执行暴露了错误，但模型最多修复 2%。",
+      "numbers": [
+        "70",
+        "76",
+        "2"
+      ],
+      "source_span": "Section 4, Feedback is not recovery",
+      "quote": "BigCode exposes an error in 70–76% of executions, yet the model repairs at most 2% of them"
+    },
+    {
+      "claim": "放宽答案抽取后，SQuAD 的 harness 增益从 44.34 降到 2.12，说明该增益主要是答案格式。",
+      "numbers": [
+        "44.34",
+        "2.12"
+      ],
+      "source_span": "Section 4 / Appendix A.6.2",
+      "quote": "harness envelopes fall from 44.34 to 2.12"
+    },
+    {
+      "claim": "SimpleQA 上自建事实 skill 把准确率从 5.0% 抬到 6.3%。",
+      "numbers": [
+        "5.0",
+        "6.3"
+      ],
+      "source_span": "Section 5 / Table 5d",
+      "quote": "moves accuracy from 5.0% to 6.3%"
+    },
+    {
+      "claim": "检索到外部段落时同一模型达到 60.0%。",
+      "numbers": [
+        "60.0"
+      ],
+      "source_span": "Section 5 / Table 5d",
+      "quote": "the same model reaches 60.0%"
+    },
+    {
+      "claim": "用 GPT-5.6-sol 重建 skill 反而使 SkillOpt 比 Qwen 版低 6.05 分。",
+      "numbers": [
+        "6.05"
+      ],
+      "source_span": "Section 5 / Table 5a",
+      "quote": "makes SkillOpt worse than its Qwen-built version (−6.05)"
+    },
+    {
+      "claim": "决策实验中每 benchmark 只跑 20 条标注任务即可。",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Section 6, A policy that does pay",
+      "quote": "on 20 labeled tasks"
+    },
+    {
+      "claim": "per-benchmark pilot 达到 57.4，高于恒用 GPT-5.6-sol 的 53.5，且成本低 36%。",
+      "numbers": [
+        "57.4",
+        "53.5",
+        "36"
+      ],
+      "source_span": "Section 6",
+      "quote": "reaches 57.4 against 53.5 for always using GPT-5.6-sol, at 36% lower cost"
+    },
+    {
+      "claim": "只有 56.5% 的源失败被赋予根因标签。",
+      "numbers": [
+        "56.5"
+      ],
+      "source_span": "Section 7, Limits / Appendix A.6",
+      "quote": "Only 56.5% of source failures are labeled"
+    }
+  ]
+}
