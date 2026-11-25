@@ -12,6 +12,10 @@
 
 周预算只在**成功落盘之后**记账（`commit_week_budget`）：校验丢弃的条目不该
 占掉本周的综述/经典名额。
+
+开头有一道公告闸门（`_announcement_missing`）：批次日的 arXiv 公告一条都没
+进候选池时直接退出，不调任何 LLM。Actions 的 schedule 会漂移几小时，跑在
+01:00 UTC 公告之前的那一期，内容全是前几日的，照常跑完就是按陈批次白付钱。
 """
 
 from __future__ import annotations
@@ -69,6 +73,14 @@ def run(batch: date, args: argparse.Namespace, started: float) -> int:
 
     stages: dict[str, Any] = {}
 
+    if _announcement_missing(payload, batch):
+        log.error("批次日 %s 的 arXiv 公告一条都没入场，本期不投放（保留上一期）",
+                  batch)
+        _metrics(batch, stages, {}, {}, started, "skipped",
+                 [f"{batch} 的 arXiv 公告未入场：采集跑在 01:00 UTC 公告之前，"
+                  f"候选池里只有前几日的材料，本期跳过以免按陈批次付费"])
+        return 0
+
     # --- 阶段三：规则初筛
     filtered = filter_candidates(payload["items"], batch=batch)
     pools = filtered["pools"]
@@ -123,6 +135,27 @@ def run(batch: date, args: argparse.Namespace, started: float) -> int:
              "ok", notes)
     log.info("=== 批次 %s 完成：投放 %s ===", batch, published["counts"])
     return 0
+
+
+def _announcement_missing(payload: dict, batch: date) -> bool:
+    """批次日的 arXiv 公告是否整天都没抓到。
+
+    arXiv 在 01:00 UTC（美东 20:00）公告。Actions 的 schedule 会漂移——实测
+    16:30 UTC 的 cron 在 00:57 UTC 才起，早于当日公告，当天 0 条，候选池里
+    全是前一两日的材料。这种情况下照常跑完，等于按陈批次付一整期的 L2 钱，
+    还把"今日"页换成昨天的内容，所以在任何 LLM 调用之前就停住。
+
+    两种"空"不拦：周末 arXiv 本就不公告（采集会把这两天跳过，`by_day` 里
+    没有这个键）；旧候选池没有 `sources` 这份统计时也放过，否则改动一上线
+    就把历史批次的重跑全挡了。
+    """
+    if batch.weekday() >= 5:
+        return False
+    stats = ((payload.get("sources") or {}).get("arxiv") or {}).get("stats") or {}
+    by_day = stats.get("by_day")
+    if not isinstance(by_day, dict) or batch.isoformat() not in by_day:
+        return False
+    return int(by_day.get(batch.isoformat()) or 0) <= 0
 
 
 def _classic_pool(batch: date) -> list[dict]:

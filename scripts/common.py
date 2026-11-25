@@ -107,9 +107,12 @@ def parse_dt(value: str | None) -> datetime | None:
 def announce_date(override: str | None = None) -> date:
     """本期对应的 arXiv 公告批次日（UTC 日期）。
 
-    arXiv 在美东 20:00（00:00 UTC）公告，流水线在 16:30 UTC 运行，即同一 UTC
-    日内公告之后十六小时。批次日一律取运行时的 UTC 日期，不依赖本地时区，
-    便于幂等重跑。
+    arXiv 在美东 20:00（冬令时 01:00 UTC）公告，流水线在 10:30 UTC 运行，即
+    同一 UTC 日内公告之后九个半小时。批次日一律取运行时的 UTC 日期，不依赖
+    本地时区，便于幂等重跑。
+
+    Actions 的 schedule 会漂移到公告之前（实测过一次 00:57 UTC），那种情况下
+    这个日期是对的、候选池却是空的，由 `run_daily` 的公告闸门拦住。
     """
     if override:
         return date.fromisoformat(override)

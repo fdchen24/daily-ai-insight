@@ -142,6 +142,10 @@ def run(batch: date, args: argparse.Namespace, started: float) -> int:
         "generated_at": iso(utcnow()),
         "stage": "candidates",
         "counts": _channel_counts(deduped["items"]),
+        # 各源的 ok / count / stats 一起存进候选池，不只写 metrics：解读入口是
+        # 另一个 job、另一个进程，它要据此判断"批次日的 arXiv 公告是否已入场"
+        # （见 run_daily 的公告闸门），而候选池是两个入口唯一共享的文件。
+        "sources": sources,
         "normalize_stats": normalized["stats"],
         "dedup_stats": deduped["stats"],
         "items": deduped["items"],
