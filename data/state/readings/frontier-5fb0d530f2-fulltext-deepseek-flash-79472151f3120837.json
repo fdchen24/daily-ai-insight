@@ -1,0 +1,121 @@
+{
+  "title_zh": "Loom Attention：Transformer 的可重连电路",
+  "affiliations": [
+    "Beijing University of Posts and Telecommunications",
+    "ColorfulClouds Technology"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 head 间组合从固定虚拟权重变成逐 token 可选的布线，并用 scaling law、下游评测与机制分析共同支撑，对残差流架构和电路可解释性都有直接意义。",
+    "novelty": 88,
+    "novelty_reason": "与 HC/mHC、MUDDFormer、AttnRes 的层粒度路由不同，LoomFormer 在 head×QKV 粒度上由向量流生成端口、由矩阵流承载内容，实现逐 token 重连。",
+    "technical_depth": 86,
+    "technical_depth_reason": "有 wiring rank 的形式化、可重连性的构造性证明、匹配参数预算的缩放实验、完整消融与端口级机制分析；但最大规模仍限于十亿级，且大模型对比的 serial sub-layer 与静态双流骨干带来公平性保留。"
+  },
+  "reading": {
+    "why_read": "提出 LoomFormer，用逐 token 的垂直线性注意力在矩阵记忆上读写各 head 的输出，使电路可按 token 重连，并以约 2% 的额外 FLOPs 匹配 3× 算力训练的 Transformer。",
+    "task": "Transformer 通过跨层 head 组合成 circuit 解题，但两个 head 是否相连由固定的 $W^O_i W^s_j$ 决定；横向注意力可以选择 token，纵向跨层通路却在训练后固定。现有残差流改进（DenseFormer、HC/mHC、MUDDFormer、AttnRes）只做到层粒度路由：一层所有 head 的输出先求和再分配，无法让某个 head 单独读取或屏蔽另一个 head。模型于是把所需电路全部同时接上，让它们竞争残差流，只能借 attention sink 间接关闭 head。",
+    "findings": [
+      {
+        "point": "pre-LN 把布线矩阵限制为秩一 node gating",
+        "detail": "同一 token 内 pre-LN 只给所有 writer 一个共享缩放，reader 收到的有效连接是 $c_{ij}\\bar C_{ij}$，而 $C=gg'^\\top$ 至多秩一；只能整行/整列开关 head，非矩形连接模式要么在稠密权重下互相干扰，要么在稀疏权重下不可达。"
+      },
+      {
+        "point": "层粒度残差路由没有提供 head 级端口",
+        "detail": "HC/mHC、AttnRes、MUDDFormer 的 read/write port 按层共享，wiring rank 只有秩一（MUDDFormer 按 Q/K/V 也只有三）；要让 $r$ 个 reader 各自独立选 writer，node-gated 架构每个 reader 至少需要 $N(w,r-1)$ 个 head，实际规模下是 $\\Theta(w)$。"
+      },
+      {
+        "point": "naive 逐 head 纵向注意力代价随总 head 数二次增长",
+        "detail": "直接让每个 reader 对同一 token 的所有早期 head 输出做 softmax，需要按总 head 数二次增长的端口生成参数与乘加；论文估算在 XL 配置下已接近整个模型成本的七成，无法直接用于大模型。"
+      }
+    ],
+    "method": "Loom attention 把纵向与横向注意力交织：每个 head 从同一 token 的矩阵记忆 $M\\in\\mathbb{R}^{d_k\\times d}$ 读出 query/key/value/output bypass，再做因果横向注意力，输出写回 $M$。纵向读写用 normalized + gated linear attention 实现：writer 写外积 $k_i^m\\otimes o_i$，reader 用 $q_j^m M$ 读取；$M$ 沿深度累积，成为第二条残差流。向量流承载控制（端口、门控、RoPE），矩阵流承载跨 token 内容；MShift 混合前一 token 记忆，FFN 是向量流写入 $M$ 的主要后嵌入通道。槽数约为 head 数两倍，并调整 FFN 宽度保持参数预算；每 token 最多精确表达 $d_k$ 个 writer，更多 writer 会共享槽并干扰。",
+    "results": "在 432M–1.4B 的 scaling law 中匹配 Transformer++ 的 3.19–3.25× 算力与残差基线 1.73–2.76×；2.8B/300B token 下 0-shot/5-shot 平均 59.9/61.6，Pile ppl 6.02 与 Pythia-12B 的 6.01 持平。",
+    "limitations": "最大仅 2.8B/300B token，未覆盖更大模型与长上下文；$d_k$ 限制每 token 可精确重连的 writer 数，超出后共享槽并干扰；静态双流骨干仍贡献约 56% 的增益。"
+  },
+  "claims": [
+    {
+      "claim": "LoomFormer 在相同 300B token 训练下仅增加 2% 的 FLOPs",
+      "numbers": [
+        "300",
+        "2"
+      ],
+      "source_span": "Abstract",
+      "quote": "trained on the same 300B tokens with only 2% extra FLOPs"
+    },
+    {
+      "claim": "并匹配使用 3× 以上算力训练的 Transformer",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "Abstract",
+      "quote": "over 3× compute"
+    },
+    {
+      "claim": "scaling law 覆盖 432M、778M、1.4B 三个规模",
+      "numbers": [
+        "432",
+        "778",
+        "1.4"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "Medium (432M), Large (778M) and XL (1.4B)"
+    },
+    {
+      "claim": "LoomFormer 匹配 Transformer++ 的 3.19–3.25× 算力",
+      "numbers": [
+        "3.19",
+        "3.25"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "matches Transformer++ trained with 3.19–3.25× compute"
+    },
+    {
+      "claim": "并匹配残差流基线 1.73–2.76× 算力",
+      "numbers": [
+        "1.73",
+        "2.76"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "all four residual-stream baselines at 1.73–2.76×"
+    },
+    {
+      "claim": "2.8B 模型在 300B token 上训练",
+      "numbers": [
+        "2.8",
+        "300"
+      ],
+      "source_span": "Abstract",
+      "quote": "trained on the same 300B tokens with only 2% extra FLOPs, LoomPythia-2.8B achieves"
+    },
+    {
+      "claim": "LoomPythia-2.8B 的 0-shot/5-shot 平均为 59.9/61.6，0-shot 匹配 Pythia-12B，5-shot 超过 Pythia-12B 的 60.8",
+      "numbers": [
+        "59.9",
+        "61.6",
+        "12",
+        "60.8"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "Its 0-shot average (59.9) matches Pythia-12B (59.9), its 5-shot average (61.6) exceeds Pythia-12B (60.8)"
+    },
+    {
+      "claim": "Pile ppl 6.02 与 Pythia-12B 的 6.01 持平",
+      "numbers": [
+        "6.02",
+        "12",
+        "6.01"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "LoomPythia-2.8B reaches Pile ppl 6.02, on par with Pythia-12B (6.01)"
+    },
+    {
+      "claim": "固定读写端口后退化为 TfmK,Q，仍保留 56% 的增益",
+      "numbers": [
+        "56"
+      ],
+      "source_span": "Section 5.5 / Table 4",
+      "quote": "cuts the gain to 56.0%"
+    }
+  ]
+}

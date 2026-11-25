@@ -1,0 +1,75 @@
+{
+  "title_zh": "懒惰智能体违背自身信念：可验证信念强化学习 RLVB 教其按信念行动",
+  "affiliations": [
+    "Nanyang Technological University"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把“何时提交”形式化为可用模拟器后验验证的最优停止问题，为长程 agentic RL 的逐步信用分配提供了可检验的新信号。",
+    "novelty": 84,
+    "novelty_reason": "以精确后验教师生成过程奖励、且奖励完全不读智能体自述信念，区别于 outcome reward、LLM judge 过程奖励与 Agent-BRACE 式真实状态评分。",
+    "technical_depth": 89,
+    "technical_depth_reason": "三个 VLM、三个基准、完整消融、行为归因与训练成本对比；结论受“后验必须可计算”限制，但证据链完整。"
+  },
+  "reading": {
+    "why_read": "提出 RLVB，用模拟器逐步计算的精确后验作为过程奖励，训练视觉语言智能体在证据不足时继续探索、充分时再提交，并在多个基准上超过基座与 LLM judge 过程奖励。",
+    "task": "长程视觉智能体要在证据不足时继续探索、证据充分时提交答案，这决定了答案是否可靠。现有 VLM 常过早作答，甚至在自己写出的信念行仍列多个候选时提交；结果奖励只看最终答案，无法区分幸运猜中与证据支持，过程奖励又依赖 judge 或 critic。",
+    "findings": [
+      {
+        "point": "结果奖励的信用分配错位",
+        "detail": "奖励只在回合末给最终答案，幸运猜中与证据充分同分；多步回合中无法指出哪一步该继续、哪一步该提交。"
+      },
+      {
+        "point": "LLM judge/critic 以真实答案而非证据评分",
+        "detail": "看到隐藏目标的 judge 会奖励猜中、惩罚仍不确定但正确的信念；PPO 还要额外 critic 与逐步 judge，成本高且信号偏。"
+      },
+      {
+        "point": "会说信念不等于会按信念行动",
+        "detail": "基座即使写出多个候选仍提交，说明监控与决策控制脱节；外部 harness 读不到观测，无法替智能体判断证据是否充分。"
+      }
+    ],
+    "method": "RLVB 用模拟器已知规则枚举隐藏答案，逐步计算精确后验 $b_t$，并让后验教师做 lookahead，权衡继续探索还是作答。奖励取动作在教师策略下的 log 概率 $R(h,x)=\\log \\pi^*(u\\mid b)$，完全不读智能体写出的信念行；但整条 turn 的似然更新仍会训练该行。学习器在同一历史采样多条 turn 做组内相对加权（GRPO 式）或 EM，无需 judge、critic 或 reward model。信念项可额外评分，但消融显示不提升准确率，故主方法只用动作项。",
+    "results": "全部设定均优于基座，平均 +17.1%；同学习器下比结果奖励高 18.1%，比 LLM judge 过程奖励高 9.3% 且 GPU-hours 少 1.6 倍。证据充分时作答比例 51/12/74%，基座 8/0.4/36%。",
+    "limitations": "需已知规则与观测似然；信念行只能列候选集合，无法表达细粒度置信度；MiniGrid/MineSweeper 上单步信息增益低时无增益，证据充分后仍会误读观测。"
+  },
+  "claims": [
+    {
+      "claim": "RLVB 在全部九个设定上均优于基座，平均提升 17.1%。",
+      "numbers": [
+        "17.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "RLVB improves the base model in all nine settings, by 17.1% on average"
+    },
+    {
+      "claim": "在同一 GRPO 学习器下，后验过程奖励比结果奖励平均高 18.1%。",
+      "numbers": [
+        "18.1"
+      ],
+      "source_span": "Section 4.3, Comparison with the baselines",
+      "quote": "With this learner, the posterior process reward outperforms the outcome reward in all nine settings, by 18.1% on average."
+    },
+    {
+      "claim": "RLVB 比使用 LLM judge 过程奖励的 PPO 平均高 9.3%，且 GPU-hours 少 1.6 倍。",
+      "numbers": [
+        "9.3",
+        "1.6"
+      ],
+      "source_span": "Abstract",
+      "quote": "RLVB also outperforms PPO with a process reward from an LLM judge by 9.3% on average while using 1.6 times fewer GPU-hours."
+    },
+    {
+      "claim": "训练后智能体在三个基准上证据充分时作答比例分别为 51%、12%、74%，基座为 8%、0.4%、36%。",
+      "numbers": [
+        "51",
+        "12",
+        "74",
+        "8",
+        "0.4",
+        "36"
+      ],
+      "source_span": "Abstract",
+      "quote": "The trained agent answers with sufficient evidence in 51%, 12% and 74% of the episodes on the three benchmarks, against 8%, 0.4% and 36% for the base model."
+    }
+  ]
+}

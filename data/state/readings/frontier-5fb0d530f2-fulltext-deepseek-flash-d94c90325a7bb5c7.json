@@ -1,0 +1,61 @@
+{
+  "title_zh": "从有限交互经验蒸馏视觉智能体",
+  "affiliations": [
+    "University of Technology Sydney",
+    "Hong Kong Polytechnic University"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "研究少量交互经验能否把教师策略迁移到视觉智能体，跨多个环境和学生规模给出系统证据，对降低 agent 训练的数据与交互成本有直接意义。",
+    "novelty": 72,
+    "novelty_reason": "将技能–情境覆盖与有序视觉决策相似度用于整条轨迹选择，并系统比较固定历史 replay 与少任务 online OPD；选择目标组合已有组件，但问题设定和对照设计有新意。",
+    "technical_depth": 76,
+    "technical_depth_reason": "包含选择消融、matched SFT、全池与在线对照及跨规模实验；但核心端点多单次训练，部分聚合由合作者报告未本地审计，计算预算未对齐且选择目标无理论保证。"
+  },
+  "reading": {
+    "why_read": "提出基于技能–情境覆盖与有序视觉决策相似度的轨迹选择框架，结合 on-policy distillation 和固定历史 replay，用少量交互轨迹把视觉智能体迁移到新任务并恢复大部分教师差距。",
+    "task": "视觉智能体要在多步交互中读图、执行动作并根据反馈修正，把强教师蒸馏给小模型能降低部署成本；但动作会改变后续观测，产生状态分布偏移，少量任务或固定历史能否支撑迁移并不清楚。已有 few-shot 方法多用于语言任务，未回答视觉决策序列该如何选择与复用。",
+    "findings": [
+      {
+        "point": "轨迹价值取决于情境覆盖，而非长度或成功率",
+        "detail": "作者用技能–情境机会标注发现，少量轨迹即可覆盖训练池中反复出现的能力–情境组合，覆盖率很早就饱和；继续增加轨迹主要提升代表性，而非带来新情境。"
+      },
+      {
+        "point": "固定历史缺少新观测，但仍能提供 on-policy 监督",
+        "detail": "在原始因果前缀上让学生重新采样响应、由教师打分，可在不执行新动作的情况下纠正学生自己的决策分布；纯 SFT 只模仿教师响应，受教师状态分布限制。"
+      },
+      {
+        "point": "任务目录广度不是主要瓶颈",
+        "detail": "少任务 online OPD 也能迁移，单任务即可带来提升，说明重复监督与决策覆盖可能比收集大量不同任务更关键；但空间建图的跨房间泛化仍更依赖在线交互。"
+      }
+    ],
+    "method": "先用独立标注模型从环境文档与训练轨迹构建技能–情境清单，并按当前截图、历史动作和反馈生成因果视觉决策描述；标注只用于选轨迹，不进入学生或教师 prompt。选择器以新增情境覆盖为第一优先级，覆盖相同时用有序 soft matching 的 facility-location 增益挑整条轨迹。训练时保留原始因果前缀：固定历史 OPD 让学生重新生成响应、冻结教师给 token 级 log-ratio，用 PPO 式 clip 更新；matched SFT 改为拟合同一前缀上的教师响应；online OPD 则在选中任务上执行新动作、刷新观测。",
+    "results": "四条固定轨迹把标准 Navigation 的 4B 学生成功率从 49.17% 提到 82.08%，Sokoban 从 60.16% 提到 85.55%；独立面板 replay 从 45.83% 到 76.67%，且优化期间不与环境交互。作者报告恢复超过九成教师差距。",
+    "limitations": "核心结果多为单次训练，部分预算端点与选择器对照来自合作者报告且未本地审计；评估面板在开发期检查过，SpatialGym 的留出房间也用于监控，统计不确定性有限。"
+  },
+  "claims": [
+    {
+      "claim": "四条固定轨迹把标准 Navigation 的 4B 学生成功率从 49.17% 提到 82.08%，Sokoban 从 60.16% 提到 85.55%，并恢复超过九成教师差距。",
+      "numbers": [
+        "4",
+        "49.17",
+        "82.08",
+        "60.16",
+        "85.55",
+        "90"
+      ],
+      "source_span": "Abstract",
+      "quote": "Four fixed trajectories raise a 4B student's success from 49.17% to 82.08% on standard Navigation and from 60.16% to 85.55% on Sokoban, recovering over 90% of the measured gap to a 27B teacher on these panels."
+    },
+    {
+      "claim": "独立 Navigation 面板上 replay 把成功率从 45.83% 提到 76.67%，保留同任务在线增益的 91.36%。",
+      "numbers": [
+        "45.83",
+        "76.67",
+        "91.36"
+      ],
+      "source_span": "Abstract",
+      "quote": "replay improves success from 45.83% to 76.67%, retaining 91.36% of the same-task online gain"
+    }
+  ]
+}

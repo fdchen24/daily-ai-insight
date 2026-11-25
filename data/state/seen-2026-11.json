@@ -456,5 +456,123 @@
     "angles": [
       "以“城市状态表示”为统一视角，把多平台感知、表示家族、架构与数据集串成一条链，并指出真正缺口在跨平台联合数据与共享性度量。"
     ]
+  },
+  "arxiv-2005.14165": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "classic",
+    "title": "Language Models are Few-Shot Learners",
+    "count": 1,
+    "angles": [
+      "提出 GPT-3，用 175B 参数的自回归 LM 把 few-shot 变成 in-context learning：不更新任何梯度，只靠上下文中的示例完成新任务；今天 LLM 的 prompt 评测与三档 shot 报告仍沿用此设定。"
+    ]
+  },
+  "arxiv-2611.32884": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Lazy Agents Answer Against Their Own Beliefs: Reinforcement Learning with Verifiable Beliefs Teaches Them to Act on What They Believe",
+    "count": 1,
+    "angles": [
+      "提出 RLVB，用模拟器逐步计算的精确后验作为过程奖励，训练视觉语言智能体在证据不足时继续探索、充分时再提交，并在多个基准上超过基座与 LLM judge 过程奖励。"
+    ]
+  },
+  "arxiv-2603.24517": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "AVO: Agentic Variation Operators for Autonomous Evolutionary Search",
+    "count": 1,
+    "angles": [
+      "提出 AVO，把进化搜索的变异算子整体交给自主编码智能体（可查文档、读评测反馈、自行修复），在 B200 上经 7 天自主进化，注意力 kernel 最高超 cuDNN 3.5%、FlashAttention-4 10.5%。"
+    ]
+  },
+  "arxiv-2611.30634": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Rewirable Circuits in Transformers with Loom Attention",
+    "count": 1,
+    "angles": [
+      "提出 LoomFormer，用逐 token 的垂直线性注意力在矩阵记忆上读写各 head 的输出，使电路可按 token 重连，并以约 2% 的额外 FLOPs 匹配 3× 算力训练的 Transformer。"
+    ]
+  },
+  "arxiv-2611.26389": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "ViDecide: Teaching Video Diffusion Models to Reason and Plan Step by Step",
+    "count": 1,
+    "angles": [
+      "提出 ViDecide，将视频推理建模为逐段因果生成并学习视觉 EOS 终止，配合决策聚焦的时间步偏移与 Corrective Fine-tuning，把平均严格成功率从 23.3% 提升到 83.8%。"
+    ]
+  },
+  "arxiv-2602.04770": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Generative Modeling via Drifting",
+    "count": 1,
+    "angles": [
+      "提出 Drifting Models，把生成建模为训练时由反对称漂移场驱动前推分布演化，推理仅单步，在 ImageNet 上取得 FID 1.54（latent）与 1.61（pixel）。"
+    ]
+  },
+  "arxiv-2611.29064": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Single-Transformer Latent Diffusion",
+    "count": 1,
+    "angles": [
+      "提出 UNIFIED，将隐扩散的编码、生成、解码并入同一个全共享 DiT，以位置对齐序列、模式 token 和独立解码时间步区分三种模式，在 ImageNet-1K 上以 215M 参数取得 2.08 gFID。"
+    ]
+  },
+  "arxiv-2611.29897": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Motion Mamba 2.0: Autoregressive Diffusion Mamba for Long-Horizon Humanoid Control",
+    "count": 1,
+    "angles": [
+      "提出 Motion Mamba 2.0，将局部注意力、可恢复的 Mamba-3 递归状态与持久内容记忆（PCM）整合进自回归根–体扩散，实现长时程可交互人形运动生成并在 Unitree G1 上完成真实部署。"
+    ]
+  },
+  "arxiv-2611.28618": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Distilling Visual Agents from Limited Interaction Experience",
+    "count": 1,
+    "angles": [
+      "提出基于技能–情境覆盖与有序视觉决策相似度的轨迹选择框架，结合 on-policy distillation 和固定历史 replay，用少量交互轨迹把视觉智能体迁移到新任务并恢复大部分教师差距。"
+    ]
+  },
+  "arxiv-2611.31201": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "Embo-Harness: Towards Understanding Frontier-Model-as-Policy Harness",
+    "count": 1,
+    "angles": []
+  },
+  "arxiv-2611.30898": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "frontier",
+    "title": "World Models as Native Latent Action Models",
+    "count": 1,
+    "angles": [
+      "提出 Native LAM，将预训练视频世界模型同时用作 IDM 与 FDM、以动力学寄存器为唯一因果桥，并据此预训练 VLA 策略 PAWlicy，在 RoboTwin 2.0 域随机演示上达到 93.6% 平均成功率。"
+    ]
+  },
+  "arxiv-2609.13345": {
+    "last_recommended": "2026-11-25T20:16:03.991583+00:00",
+    "arxiv_announce_date": "2026-11-25",
+    "recommendation_type": "survey",
+    "title": "Beyond Point Forecasts: A Survey on Probabilistic Forecasting for Time Series and Spatiotemporal Data",
+    "count": 1,
+    "angles": [
+      "梳理时间与时空概率预测的模型无关和模型内生路线，按不确定性注入位置分为两支并细分，跨范式实验指出没有单一范式在校准、锐度与算力上全面占优。"
+    ]
   }
 }

@@ -1,0 +1,1082 @@
+World Models as Native Latent Action Models
+Qinyue Li1*, Weijie Qiao1,2*, Qingyi Tao1*†, Zerui Gong1, Zhe Yang2, Quanzhou Li2,
+Taolin Zhang2, Jinglin He1, Zhonghua Wu1, Chen Change Loy2,3
+1SenseTime Research, Singapore, 2S-Lab, Nanyang Technological University, 3ACE Robotics
+*Equal contribution, †Project lead
+Large and diverse video sources, such as egocentric human video and recordings from heterogeneous robots,
+carry rich dynamics but come either without actions or without a shared action space. Latent action models
+(LAMs) can recover these dynamics, but they train their inverse- and forward-dynamics models (IDM,
+FDM) from scratch, trading off pixel reconstruction against latent capacity and accuracy. Pretrained video
+world models natively generate dynamics and produce high-fidelity subsequent frames, yet represent them
+densely, entangled across the hidden states of every layer. Viewing the world model as a LAM, we show
+that these dynamics can be extracted with minimal changes to the model. Native LAM operates one
+pretrained video diffusion transformer as both IDM and FDM, with learnable dynamics registers as the
+only causal bridge between the two, and trains on counterfactual temporal pairs that differ in motion alone,
+so that the registers distill a video’s dynamics into a compact native latent action. We further propose a
+pretraining paradigm for vision-language-action (VLA) policies, Pretraining Actions from World models
+(PAWlicy), in which Native LAM serves as a dynamics teacher on large-scale video; unlike world action
+models, it generates video neither during training nor during inference. Native latent actions outperform
+existing LAMs on the LARY benchmark in both action classification and control regression, and replay the
+same motion on new robots, in new scenes, and from human hands to robots, although no transfer objective
+is used in training. With a 3.8B model, PAWlicy reaches a 93.6% average success rate on RoboTwin 2.0
+trained with domain-randomized demonstrations, the highest among VLAs. On RoboDojo, it achieves
+competitive results on every dimension we evaluate, and its Precision, evaluated by us, is on par with the
+leading entries of the public leaderboard. On real robots, it improves over the π0.5 baseline on both tasks.
+Both stages are trained only on publicly available data on top of a publicly released world model.
+Keywords: Latent Action Models; Video World Models; Vision-Language-Action Models; Robot Learning.
+Project Page: https://pawteam-eai.github.io/native-lam/
+1
+Introduction
+Video is the most abundant record of how agents act in the physical world, spanning robots of many embodiments,
+human manipulation, and simulation. Much of it cannot serve directly as action supervision, since egocentric human
+video provides no robot action labels and robot datasets record actions in embodiment-specific spaces. Latent
+action models (LAMs) [9, 71, 94] address this gap. An inverse-dynamics model (IDM) infers a latent action from
+an observed change, and a forward-dynamics model (FDM) reproduces the change from it. The resulting shared
+action space is used to pretrain vision-language-action (VLA) policies [11, 20, 45, 62, 94] and to control world
+models [29, 30, 74].
+The quality of this space, however, is limited by how it is learned. A typical LAM trains its IDM and FDM from
+scratch (Fig. 1a), so the objective trades off pixel reconstruction against the capacity and accuracy of the latent.
+Training is also fragile [60, 94]. A loose bottleneck can leak the future frame [71], a tight one cannot describe the
+motion [60, 94], and in between the latent drifts toward camera motion or distractors unrelated to the agent [11, 60].
+We start from a simple observation. A video world model is natively an FDM (Fig. 1b). Pretrained on large-scale robot
+and human video, it carries a strong forward-dynamics prior on how scenes evolve, renders the future faithfully, and
+implicitly captures inverse dynamics, which world action models (WAMs) exploit to decode actions [44, 46, 95, 108].
+1
+arXiv:2611.30898v1  [cs.CV]  23 Nov 2026
+(a) Latent action model
+IDM + FDM from scratch
+ft
+ft+k
+IDM encoder
+ˆa
+FDM decoder
+predicted ˆft+k
+(b) Video world model
+pretrained forward dynamics
+future ft+1:t+H
+Pretrained Video DiT
+ft
+control c
+(e.g. text, action)
+(c) Native LAM: the world model as a LAM
+no separate encoder or decoder; one model, two modes
+Pretrained Video World Model
+weights shared by both modes
+· · ·
+ft
+ft+H
+registers r
+ˆa
+ft
+ˆa
+noise
+· · ·
+ˆft+1
+ˆft+H
+IDM mode: ft:t+H + r →ˆa
+FDM mode: ft + ˆa →future
+(d) One latent action, replayed on new setups
+source video (robot)
+ˆa
+replayed on human hands
+replayed in a new scene
+new first frame
+generated frame
+(e) Learning a VLA with a latent action teacher
+pretraining video
+human
+video
+robot
+video
+simulation
+video
+Native LAM
+frozen
+teacher
+extracts dynamics
+from every video
+ˆa
+PAWlicy: Pretraining Actions from World models
+VLM
+latent
+action DiT
+action
+DiT
+shared
+attn.
+obs. + instruction
+noise
+noise
+a
+actions
+align to compact dynamics
+no pixel
+reconstruction
+Figure 1 World models as native latent action models. (a) Existing LAMs learn an IDM and an FDM from scratch.
+(b) A pretrained video world model is already an FDM. (c) Native LAM runs one world model in two modes, reading a latent
+action ˆa from video and regenerating the future from ˆa. (d) Latent actions share one space and replay the same motion from
+edited first frames in new setups. (e) PAWlicy pretrains a VLA on ˆa without reconstructing pixels.
+A pretrained world model can thus be viewed as a unified LAM whose learning signal need not be spent on rendering.
+Its dynamics, however, are entangled with appearance across dense hidden states, with no compact representation
+from which actions can be read. The challenge is to expose these dynamics natively through a compact action
+interface.
+Native LAM (Fig. 1c) appends a short, temporally ordered sequence of learnable dynamics registers to a pretrained
+video diffusion transformer and runs it in two modes, with no separate encoder or decoder and the registers as
+the only causal bridge between them. In IDM mode, the registers read a clean clip and yield the latent action. In
+FDM mode, the same network regenerates the future from the first frame and this latent alone, with its original
+flow-matching objective and no text. Training on counterfactual temporal pairs, clips that share a first frame but
+differ in motion, forces the latent to carry the motion. We term the resulting representation native latent actions, as
+it is produced and consumed by the world model itself rather than an auxiliary encoder–decoder pair. Native LAM
+thereby condenses the thousands of high-dimensional tokens that the world model processes for a clip (3,456 tokens
+of dimension 2,560, using Kairos 3.1 [37] as the pretrained video DiT) into 32 latent action tokens of dimension 128,
+without changing the network architecture or adding a separate encoder or decoder.
+We validate native latent actions in two respects. Quantitatively, they outperform existing LAMs in both action
+classification and control regression on the LARY benchmark (Sec. 4.2.1). Qualitatively, a latent action extracted
+from a robot video and replayed in FDM mode from a different first frame reproduces the same motion in a new
+scene, on another robot, or with a human hand (Fig. 1d), although training uses no transfer objective.
+Because they can be extracted from any video, native latent actions also enable a new way to pretrain policies
+2
+(Fig. 1e). We propose Pretraining Actions from World models (PAWlicy), in which the frozen Native LAM labels
+large-scale robot, human, and simulated video, and a VLA learns to predict these latents and to act on them.
+Unlike WAMs [44, 46, 95, 108], which make the policy generate appearance-dominated future video through a
+multi-billion-parameter generator that is optimized during training and sometimes also run at inference, PAWlicy
+keeps the world model’s dynamics and discards its rendering in both phases. Teacher latents are computed once
+and cached, supervision is compact, and inference runs a standard-size VLA. Both Native LAM and PAWlicy are
+trained only on publicly available datasets. On RoboTwin 2.0 [19], PAWlicy reaches a 93.6% average success rate,
+the highest in Tab. 5, and with clean demonstrations alone it still outperforms π0.5 [64] trained with the same past
+frame and augmentation by 5.5 points. On RoboDojo [18], it leads the compared methods on all four dimensions we
+evaluate, and its Precision, evaluated by us, is on par with the leading entries of the public leaderboard. On a real
+robot, it lifts π0.5 from 23.3% to 76.7% on stacking three blocks and from 33.3% to 90.0% on putting shoes in a box.
+In summary, our contributions are:
+• Native LAM, in which a pretrained video world model serves as both IDM and FDM, bridged only by dynamics
+registers, without a separate encoder or decoder.
+• A training recipe of counterfactual temporal pairs and a text-free FDM mode that makes the world model rely
+on its latent, applied to 46 robot, human, and simulation sources.
+• PAWlicy, a VLA pretraining paradigm on native latent actions, with evidence that these latents are action-
+informative and transferable and improve over π0.5 in simulation and the real world.
+2
+Related Work
+Latent action models. LAPO [71] and Genie [9] showed that an IDM/FDM pair trained to reconstruct future
+observations recovers a latent action space from unlabeled video. Most later LAMs [11, 20, 30, 41, 49, 94, 97, 100]
+follow this recipe and train their IDM and FDM from scratch. Nikulin et al. [60] show that, with distractors, the
+latents tend to collapse onto pixel change. Many LAMs further constrain the latent during training. LAPA [94] and
+Moto [21] quantize it into tokens, RotVLA [45] models it as rotations, ALAM [78] regularizes it for composition and
+reversal consistency, and UniVLA [11] conditions it on language. villa-X [20] adds proprioceptive supervision, which
+is closest to our kinematic grounding. Latent actions serve world models. AdaWorld [29] and DreamDojo [30] use
+them as the control input of world models learned from unlabeled video, and LD4WAM [74] learns latent dynamics
+from human video and distills them from generated futures to condition a world action model. In these methods the
+latent actions serve a world model but are still extracted by a separate LAM. Native LAM reverses this relation:
+the world model itself extracts the latent action, and its own generator is the decoder.
+World models for policy learning. Pretrained video generators such as Wan [83] and robot-oriented world models
+such as Kairos [37] encode strong dynamics priors, and several lines of work bring them into policy learning.
+Video-as-policy methods generate a future and recover actions with an inverse-dynamics model [26, 79]. World
+action models train a video generator and an action generator jointly, so that one model predicts both future frames
+and actions [8, 12, 13, 15, 40, 44, 46, 47, 53, 74, 108]; Fast-WAM [95] shows that much of their benefit comes from
+video co-training rather than test-time imagination; it keeps video generation as a training objective and skips it
+at inference. Alignment methods instead supervise the policy, or its future tokens, with representations of future
+observations—generated images [103], video-model features [34], or frozen-encoder embeddings [3, 55, 66, 101, 107].
+In all three, the policy is tied to dense visual targets that are dominated by appearance, which recent studies
+identify as a source of brittleness under visual shift [55, 66]. Native LAM uses the world model differently: it distills
+the model’s dynamics into a compact latent action, and PAWlicy aligns to that latent alone, so the policy neither
+renders pixels nor carries a video backbone.
+Visual representations for action. Self-supervised image and video encoders [4, 75] are widely used as visual
+backbones for policies. LARY [59] probes such encoders and LAMs for semantic actions and low-level robot control.
+Encoder features are dense, with hundreds of patch tokens per frame, whereas a latent action is a compact bottleneck
+of a few tokens per segment. We therefore compare with embodied LAMs under LARY’s protocol and show that a
+compact world-model-derived latent action is more action-informative than existing ones.
+3
+(a) Counterfactual pairs
+output time
+source time
+original
+speed
+pause
+static
+reverse
++ timing,
+fast
+x
+x′
+same ft
+x′ = x ◦ϕspeed
+shared: ft, context, noise ϵ, time τ
+only the motion differs
+(b) IDM mode: encode the latent action
+· · ·
+ft
+ft+32
+VAE
+frozen
+v0
+v1:8
+registers 8×4
+Video DiT
+VL context
+ft + neutral
+prompt
+v0
+v0
+v
+v
+r
+r
+attention mask
+MLPout
+ˆa ∈R8×4×128
+kinematic
+head
+shared
+weights
+(c) FDM mode: regenerate the future
+VAE
+frozen
+ft only
+v0
+ˆa
+MLPin
+noisy future vτ
+1:8
+Video DiT
+v0
+v0
+ˆa
+ˆa
+vτ
+vτ
+attention mask
+generated
+future ˆv1:8
+Lfm
+frozen: VAE, VL encoder
+trained: DiT, registers, MLPs, heads
+attention mask (row →column):
+attend
+blocked
+Figure 2 Training Native LAM. (a) Each video x is paired with a retimed copy x′ = x ◦ϕ of the same footage that shares
+the first frame but not the motion. (b) In IDM mode, dynamics registers read the clean video through a read-only attention
+mask and are projected to the latent action ˆa; on AgiBot World and DROID, a kinematic head grounds ˆa in end-effector
+motion. (c) In FDM mode, the same DiT regenerates the future from v0 and ˆa alone, with ˆa inserted into the token sequence
+through the adapter MLPin, taking over the conditioning role of text, trained with its original flow-matching loss; both clips
+of a pair share the noise and diffusion time, so only ˆa can explain their difference.
+3
+Method
+We first train Native LAM, which turns a pretrained video world model into a latent action model by running it in
+two modes linked by dynamics registers (Fig. 2; Secs. 3.1 and 3.2). The trained Native LAM then serves as a frozen
+dynamics teacher for PAWlicy: it extracts native latent actions from a mixture of robot, human, and simulated
+video, on which a VLA is pretrained and then fine-tuned on target-robot demonstrations (Sec. 3.3).
+3.1 Native LAM: one world model, two modes
+Preliminaries. From frames ft and ft+k without action labels, a LAM learns an inverse-dynamics encoder E and a
+forward-dynamics decoder D,
+ˆa = E(ft, ft+k),
+ˆft+k = D(ft, ˆa),
+(1)
+trained so that ˆft+k matches ft+k, with a bottleneck on ˆa that keeps it from copying the future.
+One backbone, two modes. Native LAM has no separate encoder or decoder. Both E and D are the same
+pretrained video diffusion transformer Gθ, the publicly released Kairos 3.1 4B robot world model [37], which operates
+on the latents of a frozen video VAE: a clip is encoded as v = (v0, v1, . . . , vN), where v0 encodes the first frame
+and each later vi a short temporal segment. Gθ runs in an IDM mode and an FDM mode with shared weights, and
+a short sequence of learnable dynamics registers r is the only causal bridge between them (Fig. 2b–c).
+IDM mode: registers read the clip. We append r to the tokens of a clean clip and run Gθ at τ = 0 (Fig. 2b).
+Under a read-only attention mask (Fig. 2b, right), the registers attend to all video tokens and to one another, but no
+video token attends to them, so the video stream is computed exactly as in the pretrained model and the registers
+act purely as readers of its internal states. A small output MLP (Fig. 2b) maps their final states to the latent action,
+ˆa = Eθ(v0:N) = MLPout
+ Gθ(v0:N, r)r
+
+,
+(2)
+where (·)r denotes the outputs at the register positions; Eθ takes the place of E(ft, ft+k) in Eq. (1). Grouped by
+time, ˆa forms a short, temporally ordered sequence of continuous tokens.
+FDM mode: the world model replays the latent. The same network then generates the future from the first frame
+4
+and the latent action alone (Fig. 2c), taking the place of D(ft, ˆa):
+ˆv1:N = Dθ(v0, ˆa) = Gθ
+ v0, MLPin(ˆa)
+
+,
+(3)
+where Gθ now generates by integrating its flow from noise, and the adapter MLPin maps ˆa to the width of
+Gθ and replaces the text or action condition that the world model would otherwise receive. The input is thus
+[v0, MLPin(ˆa), vτ
+1:N] (Fig. 2c, bottom). FDM mode sees no text and no clean future, so all information about how
+the scene unfolds must be carried by ˆa. We train it with the backbone’s own flow-matching objective on the future
+latents (Fig. 2c, top): with ϵ ∼N(0, I), τ ∈[0, 1], and vτ
+1:N = (1 −τ)v1:N + τϵ,
+Lfm = Eτ,ϵ w(τ)
+uθ
+ vτ
+1:N, τ | v0, MLPin(ˆa)
+
+−(ϵ −v1:N)
+2,
+(4)
+where uθ is the velocity predicted by Gθ and w(τ) the backbone’s timestep weighting [48, 50]. Gradients flow
+through the generator into ˆa, the registers, and the shared weights. Reading a latent action takes one forward pass
+on a clean clip, with no denoising.
+3.2 Making the world model rely on the latent
+Counterfactual temporal pairs. A pretrained world model that sees the first frame can already imagine a plausible
+future. Trained directly on video from its own pretraining domain, it suffers from posterior collapse: the FDM
+ignores the newly initialized latent pathway and leaves the registers uninformative (Sec. 4.2.4). We remove this
+shortcut. For each clip x we draw a time map ϕ and build x′ = x ◦ϕ from the same source video, with x′
+0 = x0
+(Fig. 2a). The map ϕ holds the first frame (static), pauses mid-clip (pause), changes speed mid-clip (speed), retimes
+the motion toward the same endpoint (timing), or plays backward into the preceding frames or faster when the
+source allows. Frames are taken at native indices: nothing is interpolated, padded, or extrapolated. Both clips are
+read independently in IDM mode; in FDM mode they share the first frame, the context, the noise ϵ, and τ. The
+two generation problems are identical except for the latent, so the only way to solve both is for ˆa and ˆa′ to carry
+the difference in motion.
+Kinematic grounding. For AgiBot World 2026 [2] and DROID [39], the only two sources whose action labels we
+use, a shallow kinematic head (Fig. 2b, top right) reads ˆa and predicts, for each group, end-effector waypoints at
+several horizons after the segment start: base-frame translation, rotation log(RtargetR⊤
+start), and gripper change.
+Targets are derived from measured trajectories and recomputed after the time map, so a static clip has zero motion.
+The loss Lkin has weight λkin = 0.1, warmed up over the first 2,000 updates so that the world model shapes the
+registers first. All other sources are video only, without action or text labels. The full objective is
+LLAM = Lfm(x) + Lfm(x′) + λkin 1kin
+
+Lkin(x) + Lkin(x′)
+
+,
+(5)
+where 1kin indicates a clip from these two sources.
+3.3 PAWlicy: pretraining actions from world models
+PAWlicy is a pretraining paradigm in which the trained Native LAM acts as a frozen dynamics teacher. The teacher
+assigns native latent actions to every video, irrespective of whether actions were recorded, and a VLA is trained to
+predict these latents and to condition its actions on them. We instantiate the paradigm with three experts that
+share attention (Fig. 3): a vision-language model (VLM) that encodes the observation and instruction, a latent
+action DiT that predicts native latent actions, and an action DiT that generates motor commands.
+Reconstructing the past to predict the future. The VLM is pretrained for vision-language understanding, and its
+representations are not trained to match the latent space of Native LAM. Predicting future latents directly from
+them asks the latent action DiT to map into this space and to forecast dynamics that have not yet been observed,
+all at once. We ease this by adding a past latent group to the target and a past frame to the input. Native LAM
+encodes eight groups per clip; we truncate the target ˆa∗
+t to the first four, which keeps the prediction horizon of
+PAWlicy close to that of common VLAs: one group for the segment that has just been observed and three for the
+segments that follow. In addition, the VLM receives, besides the current image, a past frame from the beginning
+5
+t−1
+t
+t+1
+t+2
+t+3
+past
+future
+Native LAM
+frozen teacher
+target ˆa∗
+t
+past
+future
+VLM
+latent
+action DiT
+action
+DiT
+shared
+attn.
+shared
+attn.
+noise
+noise
+align
+reconstruct past,
+predict future
+at:t+K
+actions
+past frame t−1
+(randomly dropped)
+current t
+instruction
+state
+Figure 3 PAWlicy.
+A frozen Native LAM labels each video window with one past and three future latent groups;
+t−1, t, . . . , t+3 index temporal groups, each containing four video frames. Sharing attention with the VLM, the latent action
+DiT reconstructs the past and predicts the future, and the action DiT conditions on it to generate actions. Video without
+actions still trains the latent pathway.
+of the observed segment. Recovering the past group from the two images is an inverse-dynamics problem whose
+answer is contained in the input. This reconstruction objective therefore provides a dense and well-posed signal that
+encourages the VLM output to align with the latent space, and lets the future groups, which are generated jointly
+with it, continue from a latent anchored in what has already been observed. Beyond using the past frame for this
+reconstruction, the latent action DiT must also predict reliably when no past frame is available, as at the start of an
+episode. We therefore drop the past frame at random, and additionally at the start of an episode during fine-tuning.
+Architecture. The latent action DiT generates ˆat from noise while attending to the VLM tokens. The action DiT
+generates an action chunk at:t+K while attending, at every layer, to the VLM tokens and to the keys and values of
+the latent action DiT. Through this shared attention, the predicted latent conditions every action layer and serves
+as a plan expressed in the representation of the world model. Both experts are trained with flow matching,
+LPAW = λ Lfm
+ ˆat; ˆa∗
+t
+
++ 1act Lfm
+ at:t+K; a∗
+t:t+K
+
+,
+(6)
+where Lfm(y; y∗) is the flow-matching loss of Eq. (4) for a prediction y of the target y∗, and 1act indicates that
+action labels are used. Since every video yields a latent target, egocentric human, cross-embodiment, and simulated
+video all contribute to the dynamics pathway, whereas action-labeled robot data additionally supervises the action
+DiT. The VLM is PaliGemma, initialized from the π0.5 base model [64]. The latent action DiT and the action DiT
+both have the architecture of the π0.5 action expert, with 18 layers of width 1024 (0.43B parameters each), so that
+PAWlicy has 3.78B parameters in total, against 3.35B for π0.5. At inference, both DiTs run 10 synchronous Euler
+flow-matching steps; at each step, the latent action DiT updates ˆat and supplies its per-layer keys and values to the
+action DiT.
+Pretraining and fine-tuning. We pretrain on this mixture and fine-tune on target-robot demonstrations with the
+same objective, with the frozen teacher still providing latent targets. Section 4.3 compares the cost with world
+action models.
+6
+Table 1 Data sources and their supervision in the two stages. Native LAM is trained on video, and on end-effector
+actions for kinematic grounding where marked; PAWlicy is pretrained on the teacher’s latent actions and, where marked, on
+robot actions. The sources below the line are used for PAWlicy only: Native LAM never sees them, and they are labeled by
+the frozen Native LAM. RoboTwin 2.0 and RoboDojo are excluded from PAWlicy pretraining.
+Native LAM
+PAWlicy
+Group
+Sources
+Video
+Action
+Latent action
+Action
+Real robots
+AgiBot World 2026 [2], DROID [39]
+✓
+✓
+✓
+✓
+Real robots
+ALOHA (static) [104], Bridge V2 [82], Galaxea [36], Unitree
+G1 [81], Unitree Z1 [81]
+✓
+✓
+✓
+Real robots
+Humanoid Everyday [105], MIME [73], 1X World-Model Raw
+Data [1], Fourier ActionNet [27]
+✓
+✓
+Real robots
+Fanuc Manipulation [109], GR00T Teleop G1 [61], GR00T
+Teleop GR1 [61], Jaco Play [23], 1X 1xgpt [1],
+RoboChallenge [93], RoboVQA [72], TACO Play [68], and
+OXE [63] subsets (Berkeley Autolab UR5 [17], Stanford
+Kuka [42], CMU Playing with Food [70], CMU Play
+Fusion [16], CMU Stretch [5, 57], RoboSet [7], Language
+Table [54])
+✓
+Human
+Xperience-10M [67]
+✓
+✓
+Human
+CASTLE 2024 [69], DexYCB [14], EgoDex [33],
+Ego-Exo4D [31], EgoExoLearn [35], EgoHands [6], EgoMe [65],
+EgoVid-5M [85], EPIC-KITCHENS-100 [22], FPVSum [32],
+GigaHands [28], HOI4D [51], HoloAssist [86], Kinetics-400 [38],
+Motion-X++ [102], OakInk2 [96], TACO [52]
+✓
+Simulation
+RoboCasa [58], RoboTwin 2.0 [19]
+✓
+Real robots
+RoboCOIN [88], RoboMIND [87]
+✓
+✓
+Real robots
+InternData-A1 [80] (physical/A2D subset)
+✓
+Simulation
+CALVIN [56]
+✓
+✓
+4
+Experiments
+We evaluate what native latent actions capture and how they transfer (Sec. 4.2), then test PAWlicy in simulation
+and on a real robot and analyze its compute cost (Sec. 4.3).
+4.1 Setup
+Implementation of Native LAM. Native LAM is trained on 46 video sources: real-robot datasets (65% sampling
+rate), human egocentric and hand-object video (30%), and simulation (5%). We use main, head, or external cameras
+only. Starting from the public backbone, we train for 13k iterations on 32 GPUs. Only AgiBot World 2026 and
+DROID provide kinematic grounding; all other data are video only, without action or text labels (Tab. 1). All
+human video comes from publicly released datasets, used under their licenses and the consent and de-identification
+procedures of their creators; we collect no new human data.
+Implementation of PAWlicy. PAWlicy is pretrained on 16 datasets: 12 of the Native LAM sources and four further
+datasets. The simulation benchmarks RoboTwin 2.0 and RoboDojo are excluded from PAWlicy pretraining. The
+frozen Native LAM provides a latent target for every clip, and the action DiT is supervised on the robot datasets
+marked in Tab. 1. For robot data, the wrist-camera views of each episode are added to the VLM input. We pretrain
+PAWlicy for 50k iterations on 32 GPUs with a global batch size of 512.
+Benchmarks. LARY [59] probes representations for the robot actions underlying a video. For closed-loop control,
+RoboTwin 2.0 [19] provides 50 bimanual tasks with clean and domain-randomized scenes and tests robustness to
+visual variation; RoboDojo [18], a recent benchmark with a public leaderboard, groups 42 simulation tasks into five
+capability dimensions; and two tasks on a real AgileX NERO robot, stacking three blocks and putting shoes in a
+7
+Table 2 Evaluation on LARY [59] against embodied latent action models: action classification (top-1 %) and control
+regression (normalized MSE). Baselines are taken from LARY and WLA3 [49].
+∗See Sec. 4.2.1. Best in bold, second
+underlined.
+Classification (top-1 %) ↑
+Control regression (MSE) ↓
+Method
+Comp. Human
+Comp. Robot
+Avg.
+CALVIN
+VLABench
+RoboCOIN
+AgiBot-Beta∗
+Avg.
+LAPA [94]
+14.61
+23.64
+19.13
+0.96
+0.95
+0.96
+1.00
+0.97
+UniVLA [11]
+19.08
+18.56
+18.82
+0.82
+0.74
+0.94
+0.97
+0.87
+villa-X [20]
+17.80
+29.90
+23.85
+0.86
+0.72
+0.94
+0.97
+0.87
+DiLA [100]
+64.41
+62.10
+63.26
+0.55
+0.27
+0.86
+0.82
+0.63
+MVP-LAM [41]
+50.31
+51.61
+50.96
+0.55
+0.38
+0.90
+0.92
+0.69
+CLAP [97]
+55.32
+63.02
+59.17
+0.43
+0.17
+0.68
+0.60
+0.47
+DreamDojo [30]
+63.69
+59.41
+61.55
+0.35
+0.12
+0.74
+0.81
+0.51
+WLA3 [49]
+73.12
+68.37
+70.75
+0.25
+0.09
+0.55
+0.57
+0.37
+Native LAM (ours)
+74.76
+68.77
+71.77
+0.18
+0.06
+0.36
+0.41
+0.25
+box, test transfer to a physical embodiment.
+Baselines. We compare against π0.5 [64] and against π0.5 with the same past frame and augmentation as PAWlicy
+(“π0.5 + past + aug.”; we use the online image augmentation of PatchWAM [84]), post-trained with the same
+end-effector action space, data, and budget, so that the two differ only in the PAWlicy pretraining stage.
+4.2 Native LAM as a latent action model
+4.2.1 Action evaluation on LARY
+LARY [59] probes a frozen representation of a video for the actions it depicts, on two tracks: semantic action classi-
+fication on composite human and robot sets, and regression of the underlying end-effector actions on CALVIN [56],
+VLABench [99], RoboCOIN [88], and AgiBot-Beta [10]. For the regression track we encode the source video segment
+of each sample, since Native LAM reads clips rather than frame pairs.
+Table 2 shows that Native LAM is the strongest latent action model on both tracks. It reaches 71.77% classification
+accuracy and 0.25 regression error on average, against 70.75% and 0.37 for WLA3, the best previous LAM. The
+margin holds on every dataset, and is largest on the real-robot sets RoboCOIN (0.36 against 0.55) and AgiBot-Beta
+(0.41 against 0.57). None of the four regression datasets is used to train Native LAM: AgiBot World 2026 is collected
+on the G2 rather than the G1 of AgiBot-Beta, so the two share no trajectories, and the other three are unseen.
+Native LAM stays frozen during probing.
+4.2.2 Motion that transfers and interpolates
+During training, each latent is decoded only from the first frame of its own video. At test time, we read a latent from
+one video in IDM mode and replay it in FDM mode from a different first frame (Fig. 4), changing the embodiment
+(a), the scene (b), the agent from a human to a robot hand (c), or the domain from simulation to a photorealistic
+scene (d). In every case the generated video performs the source motion with the new agent in the new scene: the
+latent captures what is done, largely independently of who performs it and in which scene.
+Interpolation tests whether the latent space is organized by motion or by appearance. We replay (1−β)ˆastill +βˆafull,
+mixing the latents of a still clip and a full-action clip, from the same first frame (Fig. 5). Each intermediate β
+yields one coherent motion that travels part of the way, further as β grows, whereas blending the two videos’ pixels
+superimposes static and moving arms. A mixture of latents is thus an intermediate motion, not an intermediate
+image.
+8
+(a) Across embodiments
+source: AgiBot
+human hands
+Galaxea R1
+ˆa
+(b) Across scenes
+source: AgiBot
+dining table
+bathroom vanity
+ˆa
+(c) Human to robot
+source: human hand
+Shadow hand, outdoors
+ˆa
+(d) Simulation to real
+source: RoboTwin
+photoreal scene
+ˆa
+Figure 4 Native latent actions transfer. A latent ˆa is read once from a source clip (blue) in the IDM mode of Native
+LAM and replayed in its FDM mode from a different first frame (orange), which is generated with GPT image generation
+from the source first frame; dotted frames are generated. The generated videos carry out the source motion with another
+embodiment, in another scene, from human to robot, and from simulation to a photorealistic scene, although no transfer
+objective is used in training.
+Latent interpolation: replay (1 −β) ˆastill + β ˆafull
+source: still
+β=0.5
+β=0.75
+source: full action
+ˆastill
+ˆafull
+blend
+Pixel interpolation (reference): blend the two videos
+β=0.5
+Figure 5 Interpolating latents interpolates the motion. Latents read from a still clip and a full-action clip are blended
+and replayed from the same first frame. The top and bottom rows are the two source clips; the dotted frames between them
+are generated. Each intermediate latent yields one coherent motion that travels part of the way, further as β grows; blending
+pixels instead superimposes static and moving arms (red box).
+4.2.3 Visual comparison with other LAMs
+We compare Native LAM with four other LAMs when the latent actions are decoded back into the clip they were
+read from, frame by frame and for the whole clip. Frame by frame, the latents of the other LAMs reconstruct large
+motions poorly in pixels: the arm and the banana blur or vanish during the fast transport (third frame of Fig. 6a).
+9
+(a) Frame by frame (teacher forcing)
+(b) Whole clip (autoregressive)
+Source
+DreamDojo [30]
+AdaWorld [29]
+Moto [21]
+LAPA [94]
+Native LAM
+Figure 6 Frames generated from the latent actions of different LAMs. A real-robot clip of picking up a banana and
+placing it in a basket (top row) runs left to right; the first frame is real. (a) Frame by frame: every method, Native LAM
+included, is used as a conventional LAM on frame pairs; for each two consecutive frames, it encodes the latent action between
+them (IDM) and generates the second frame from the real first one with its own world model (FDM), similar to teacher
+forcing. (b) Whole clip (autoregressive): the other LAMs generate each frame from the previously generated one with the
+latent action of the corresponding pair of real frames; Native LAM reads the whole clip at once in IDM mode and generates
+the whole clip from the real first frame in one pass in FDM mode.
+Native LAM reconstructs both large and small motions sharply, which we attribute to the prior of its pretrained
+world model, and the generated motion follows the source. For the whole clip (Fig. 6b), the frame-pair LAMs must
+roll out autoregressively, so their errors accumulate and within a few steps the arm and the banana blur away or
+stop moving. Native LAM generates the clip in one pass, which these LAMs cannot do directly, and keeps the arm,
+the banana, and the motion intact to the end.
+4.2.4 Counterfactual pairs prevent posterior collapse
+Without counterfactual pairs, the pretrained FDM learns to ignore the latent (Sec. 3.2). Gθ is initialized from
+Kairos 3.1, pretrained on large-scale robot and human manipulation video, and already predicts canonical trajectories
+from v0 alone, while the dynamics registers r, the output MLP, and the adapter MLPin(ˆa) start from random
+weights. Optimization therefore suppresses the adapter pathway instead of routing dynamics through r; gradients
+into r vanish, and FDM rollouts become insensitive to ˆa (register bypass). The pairs remove this shortcut, since the
+two flow-matching targets differ only through ˆa and ˆa′.
+The collapse appears early. Figure 7 compares two runs after 2k steps that differ only in whether counterfactual
+pairs are used, together with the final model at 13k steps. In the source clip the left arm grasps a tissue. Without
+pairs, the FDM sends the arm to the cup whether the latent comes from this clip or from its still counterfactual:
+the latent is ignored, and the model hallucinates a reach for the cup from the first frame alone. With counterfactual
+pairs, the still latent already yields a still rollout at 2k steps, while the moving latent is not yet followed, and at 13k
+steps both rollouts match their sources.
+10
+source clip
+generated end frame
+start
+end
+w/o counterfactual
+pairs, 2k
+with counterfactual
+pairs, 2k
+with counterfactual
+pairs, 13k (final)
+moving
+source
+grasps tissue
+reaches cup
+reaches cup
+grasps tissue
+still
+source
+still
+reaches cup
+stays still
+stays still
+Figure 7 Counterfactual pairs prevent posterior collapse. A latent action is read in IDM mode from a source clip in
+which the left arm grasps the tissue (top) or from its still counterfactual, which holds the first frame (bottom), and the FDM
+regenerates the clip from the same start frame with shared prompt, noise, and seed. Circles mark the end pose of the arm.
+Trained for 2k steps without counterfactual pairs, the FDM reaches for the cup in both cases. This is posterior collapse: the
+FDM ignores the latent and hallucinates a reach for the cup from the first frame alone. With counterfactual pairs, the same
+2k steps already keep the still latent still, although the moving latent still reaches for the cup. At 13k steps the generated
+end frames match the source in both cases.
+Table 3 RoboTwin 2.0 with clean training
+(success rate, %). Policies are trained on 50 clean
+demos per task and tested in clean (c2c) or ran-
+domized (c2r) scenes, with 100 seeds per task. π0.5
++ past + aug. uses the same past frame and aug-
+mentation as PAWlicy.
+Method
+c2c
+c2r
+Avg.
+π0.5 [64]
+70.66
+46.00
+58.33
+π0.5 + past + aug.
+81.42
+55.66
+68.54
+PAWlicy (ours)
+85.60
+62.44
+74.02
+Table 4 Real-robot tasks on AgileX NERO. Top: start and end of
+each task. Bottom: success rate (%) over 30 trials, with 100 training
+demonstrations per task.
+start
+end
+start
+end
+Stack three blocks
+Put shoes in box
+Method
+Stack three blocks
+Put shoes in box
+π0.5 [64]
+23.3
+33.3
+π0.5 + past + aug.
+66.7
+80.0
+PAWlicy (ours)
+76.7
+90.0
+4.3 PAWlicy in simulation and the real world
+Simulation. On RoboTwin 2.0, we train on clean demonstrations only (50 per task) or on clean and randomized
+demonstrations (50+500 per task), test on clean (c) or randomized (r) scenes, giving c2c, c2r, r2c, and r2r, and
+run the official 100 evaluation episodes per task. Table 3 measures the effect of PAWlicy pretraining. Trained on
+clean demonstrations only, PAWlicy improves over π0.5 with the same past frame and augmentation by 4.18 points
+in clean scenes and by 6.78 points in randomized scenes, reaching 74.02% on average against 68.54%. The gain is
+largest when the test scenes differ from the training scenes, consistent with a latent that encodes motion rather
+than appearance.
+With randomized demonstrations added, Tab. 5 places PAWlicy among published results. It reaches 93.8% in clean
+and 93.4% in randomized scenes; the clean-scene result is second only to LD4WAM [74] (94.0%), and both the
+randomized-scene result and the average of 93.6% are the best in the table. The average exceeds the strongest VLA
+and world action model in the table and improves on RotVLA [45], the best previous VLA that uses latent actions,
+by 4.5 points, although PAWlicy generates no video in training or inference.
+On RoboDojo, we do not compare on Memory, which requires a memory module that PAWlicy does not have.
+PAWlicy observes the current image and a single frame from the segment that has just ended, whereas the Memory
+tasks require information that is no longer visible, and the entries that lead them are built for this purpose; for
+example, the DM0.5 team reports that initializing from their memory-pretrained model improves memory tasks [25].
+Memory therefore measures a design orthogonal to our contribution, whereas the other four dimensions measure
+11
+Table 5 RoboTwin 2.0 and RoboDojo (success rate, %). On RoboTwin, methods are trained on 50 clean and 500
+randomized demos per task and tested in clean (r2c) or randomized (r2r) scenes; other results are from their papers or
+[45, 74]; GO-1 on RoboTwin is as reported in RotVLA [45]. RoboDojo reports Generalization, Precision, Long-Horizon, and
+Open from the public leaderboard [18] as of Nov. 16, 2026 (–: no entry; ours: evaluated by us, mean over three seeds). LA:
+latent-action pretraining. Best bold, second underlined.
+RoboTwin 2.0
+RoboDojo
+Method
+Size
+LA
+r2c
+r2r
+Avg.
+Generalization
+Precision
+Long-Horizon
+Open
+World action models
+Motus [8]
+8B
+✓
+88.7
+87.0
+87.8
+–
+–
+–
+–
+Being-H0.7 [53]
+3B
+✓
+90.2
+89.6
+89.9
+–
+–
+–
+–
+LaWAM [15]
+2.3B
+✓
+92.6
+89.8
+91.2
+–
+–
+–
+–
+Fast-WAM [95]
+6B
+91.9
+91.8
+91.8
+1.1
+0.0
+5.2
+0.4
+LingBot-VA [44]
+5B
+92.9
+91.5
+92.2
+–
+–
+–
+–
+AHA-WAM [12]
+7.2B
+93.4
+92.2
+92.8
+3.3
+2.4
+2.7
+0.8
+LD4WAM [74]
+5B
+✓
+94.0
+92.8
+93.4
+–
+–
+–
+–
+Vision-language-action models
+GO-1 [10]
+2B
+✓
+37.8
+36.2
+37.0
+1.2
+0.4
+0.3
+0.1
+X-VLA [106]
+0.9B
+72.8
+72.8
+72.8
+6.8
+12.0
+9.8
+0.5
+π0.5 [64]
+3.3B
+82.7
+76.8
+79.8
+8.2
+5.5
+14.7
+1.7
+StarVLA [77]
+4B
+88.2
+88.3
+88.3
+2.3
+4.3
+6.5
+0.6
+LingBot-VLA [89]
+4B
+88.6
+86.7
+87.7
+4.3
+1.8
+5.3
+0.7
+RotVLA [45]
+1.7B
+✓
+89.6
+88.5
+89.1
+–
+–
+–
+–
+HyVLA-0.5 [98]
+4.4B
+90.9
+90.1
+90.5
+8.4
+8.0
+14.9
+0.6
+ACE-Ego-0 [43]
+4.6B
+91.1
+90.6
+90.9
+–
+–
+–
+–
+LingBot-VLA 2.0 [90]
+6B
+93.5
+92.8
+93.2
+–
+–
+–
+–
+DM0.5 [24]
+6B
+93.6
+93.3
+93.5
+11.0
+16.8
+19.5
+2.1
+PAWlicy (ours)
+3.8B
+✓
+93.8
+93.4
+93.6
+17.3
+29.1
+27.0
+2.7
+what latent-action pretraining is meant to improve: motion that transfers to new scenes, is accurate, and stays
+coherent over long tasks. Following the official setting, we fine-tune on its 3,500 released trajectories, 100 for each of
+the 34 training tasks plus 100 auxiliary ones (the Open tasks have no training data), and report success rates over
+50 episodes per task, averaged over three seeds; as PAWlicy is not on the leaderboard, we evaluate it ourselves with
+the released code. PAWlicy is the best among the methods in Tab. 5 on all four dimensions despite its relatively
+small model size. The leading leaderboard entries [76, 91, 92] build on in-house or undisclosed pretraining data,
+whereas PAWlicy uses only public data; still, its Precision is on par with the leading entries.
+Real world. We evaluate the two tasks in Tab. 4, fine-tuning each policy on 100 demonstrations per task and
+evaluating it over 30 trials. The robot is an AgileX NERO with two 7-DoF arms, observed through a head camera
+and two wrist cameras at 20 Hz. The three policies are fine-tuned with the same recipe, separately on each task,
+and deployed alike: each call returns a 50-step action chunk that is executed in full before the next call. PAWlicy
+reaches 76.7% and 90.0%, against 66.7% and 80.0% for π0.5 with the same past frame and augmentation and 23.3%
+and 33.3% for π0.5. Similar to its advantage in Precision in simulation, PAWlicy performs more precise placement
+in both tasks. In stacking, PAWlicy places the cubes more precisely. In the shoe task, the failures of all three
+policies look alike: in most of them the right shoe does not end up flat in the box, but leans on the wall, tips onto
+the left shoe, or stands on its toe. PAWlicy fails in 3 of 30 trials, against 6 for π0.5 with the same past frame and
+augmentation and 20 for π0.5.
+Training and inference cost.
+World action models learn dynamics through a multi-billion-parameter video expert,
+such as Wan 2.2 5B in Motus [8] and Fast-WAM [95] or Kairos 3.1 in Kairos-WAM [37], whereas PAWlicy predicts
+native latent actions with a 0.43B latent action DiT trained from scratch. On the 33-frame, 384×256 clips of Native
+LAM, processing 32 latent tokens instead of the 864 video tokens of Wan 2.2 or the 3,456 of Kairos 3.1 reduces the
+training compute of the dynamics module by about 387× and 1,270× (0.0605 against ≈23.4 and ≈76.9 TFLOPs per
+step at batch size 1); both figures count each module alone, and joint attention with the other experts adds cost on
+both sides. At inference on an RTX 6000 Ada, our deployment GPU, with all methods timed by us, PAWlicy takes
+12
+Table 6 Training and inference cost.
+Top: dynamics-module training cost per step on 33-frame clips (384×256,
+width×height; batch size 1), measured for each module alone and excluding shared attention; values are rounded, and those
+of Kairos 3.1 include a recurrence-equivalent estimate for its fused GatedDeltaNet kernels. Bottom: median inference latency
+per control step over 20 runs, measured by us on one RTX 6000 Ada, our deployment GPU (BF16, batch size 1, 10 action
+sampling steps, action horizon 32). Each method uses its default input setting: the world action models take three views, and
+PAWlicy takes three views and one past frame; text and visual conditions are recomputed for every call.
+Training (per step)
+Video expert
+Wan 2.2
+(5B)
+Video expert
+Kairos 3.1
+(4.05B)
+Latent action
+DiT, ours
+(0.43B)
+Tokens per clip
+864
+3,456
+32
+Token dimension
+3,072
+2,560
+1,024
+Forward TFLOPs
+≈7.812
+≈25.651
+≈0.02016
+Backward TFLOPs
+≈15.621
+≈51.294
+≈0.04033
+Inference (RTX 6000 Ada)
+Method
+Latency (ms)
+Motus [8]
+900
+Fast-WAM [95] (no VLM)
+joint video prediction
+538
+IDM
+552
+without video generation
+103
+Kairos-WAM [37], w/o video gen.
+194
+PAWlicy (ours)
+106
+106 ms per step, on par with Fast-WAM without video generation (103 ms, no VLM), 1.8× faster than Kairos-WAM,
+and 5.2×, 5.1×, and 8.5× faster than Fast-WAM (IDM, joint) and Motus, which generate video at test time. Table 6
+lists all measurements.
+5
+Conclusion and Future Work
+We show that a pretrained video world model can serve as a native latent action model. Through dynamics registers,
+Native LAM distills motion information entangled with appearance into a compact latent that transfers across scenes
+and embodiments and interpolates into coherent intermediate motions. As a frozen teacher, it enables PAWlicy
+to learn from robot, human, and simulated video without generating video during policy training or inference,
+improving a generalist VLA in simulation and on a real robot.
+This study establishes the paradigm on Kairos 3.1. Only two of 46 training sources provide kinematic grounding; the
+remainder are video-only, and the evaluation datasets contain no overlapping trajectories, indicating that the learned
+action structure is not simply inherited from dense action labels. The transfer experiments preserve initial geometry
+while varying embodiment, scene, or domain, providing a controlled qualitative test of motion retention. Future
+work will test other video DiTs, isolate the contribution of kinematic grounding, and evaluate broader geometric
+changes and additional robots. As video world models improve, their internal dynamics may provide an increasingly
+scalable foundation for learning actions from video.

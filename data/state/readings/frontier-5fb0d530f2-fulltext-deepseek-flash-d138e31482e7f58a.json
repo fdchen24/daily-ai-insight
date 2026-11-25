@@ -1,0 +1,142 @@
+{
+  "title_zh": "AVO：以自主智能体充当变异算子的进化式注意力 kernel 优化",
+  "affiliations": [
+    "NVIDIA"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "在 B200 上自主进化出的 attention kernel 稳定超过 cuDNN 与 FlashAttention-4，并给出向 GQA、GatedDeltaNet、Triangle Attention 迁移的证据，直接检验了 agentic 搜索能否做出专家级 kernel 优化。",
+    "novelty": 80,
+    "novelty_reason": "把整个 $Vary$（采样+生成+评测）交给一个自主体循环，而不是在既有 Sample/Generate 分解里换更强的生成器；算法层没有新组件，新意在于角色重定义以及由此获得的实测结果。",
+    "technical_depth": 78,
+    "technical_depth_reason": "有逐版本消融（+8.1%、+1.1%、+2.1%）、匹配 wall-clock 的 EVO 基线对比，并逐条解释优化针对的硬件瓶颈；但只有单次 7 天运行、评测配置窄、部分增益在噪声内，关键对照散在附录。"
+  },
+  "reading": {
+    "why_read": "提出 AVO，把进化搜索的变异算子整体交给自主编码智能体（可查文档、读评测反馈、自行修复），在 B200 上经 7 天自主进化，注意力 kernel 最高超 cuDNN 3.5%、FlashAttention-4 10.5%。",
+    "task": "attention 是 Transformer 的核心算子，也是被手工优化得最狠的 GPU kernel：FlashAttention-4 与 cuDNN 都在 Blackwell 上投入数月调优，想再快就必须反复读硬件文档、看 profiler 定位瓶颈、改代码、调正确性。已有的 LLM 进化搜索（FunSearch、AlphaEvolve、LoongFlow）把模型锁在固定流水线的单轮生成步骤：采样用启发式、评测与种群由框架控制，模型不能先查资料、试跑、读反馈再改，面对这种深度迭代工程就触顶。",
+    "findings": [
+      {
+        "point": "现有进化搜索把 LLM 限制在单轮候选生成",
+        "detail": "Sample/Generate 分解里 Sample 是固定启发式、评测与种群由框架控制，模型每次只吐一个候选，不能先查参考实现、试跑、读反馈再改；AlphaEvolve、LoongFlow、TTT-Discover 均如此，遇到需要深度迭代的 kernel 工程即触顶。"
+      },
+      {
+        "point": "在线 softmax 的累加器重缩放条件分支开销被低估",
+        "detail": "跳过无用的 rescale 省了计算，但每个 K-block 迭代都要付 warp 同步成本，且条件控制流使其无法改用更轻的非阻塞 fence，masked 与 unmasked 迭代还走不同执行路径。"
+      },
+      {
+        "point": "照搬 FA4 的 warp 寄存器配额与串行 correction 流水在本 kernel 上成为瓶颈",
+        "detail": "profiler 显示 correction warp 组寄存器不足、溢出到 local memory，而 softmax 组仍有余量；双 Q-stage 设计下 correction warp 要等两个 PV GEMM 全部完成才开始归一化，第二个 GEMM 期间空转。"
+      }
+    ],
+    "method": "把 $Vary(P_t)=Generate(Sample(P_t))$ 换成 $Vary(P_t)=\\mathrm{Agent}(P_t,\\mathcal{K},f)$：通用编码 agent（Claude Opus 4.6，无 kernel 专用改造）在单条 lineage 上自主决定查 $\\mathcal{K}$（CUDA/PTX 文档、Blackwell 规格、FA4 源码）、比对历史版本与 profiling、改码并调 $f$ 评测（正确性不过直接判失败），失败即诊断重试。只有通过正确性且不劣于当前最优的版本才 commit 入库，supervisor agent 在停滞时介入换方向。对应三条根因：无分支 predicated select 替代条件重缩放并换轻量 fence；correction warp 在首个 PV GEMM 完成即开始归一化与之 overlap；把 softmax 组的部分寄存器挪给另两组。",
+    "results": "causal MHA 超 cuDNN 至多 3.5%、超 FA4 至多 10.5%，峰值 1668 TFLOPS；GQA 适配 30 分钟即超 cuDNN 7.0%，同预算比最强 EVO 基线高约 31%。",
+    "limitations": "仅验证单 lineage，种群分支与 archive 留待后续；评测限于 head dim 128、BF16、32k token 的 prefill，短序列 non-causal 增益落在噪声内，且只有一次 7 天运行；依赖内部 agent 与 Claude Opus 4.6，外部难以复现。"
+  },
+  "claims": [
+    {
+      "claim": "7 天连续自主进化后，MHA kernel 最多超过 cuDNN 3.5%、超过 FlashAttention-4 10.5%。",
+      "numbers": [
+        "3.5",
+        "10.5"
+      ],
+      "source_span": "Abstract",
+      "quote": "outperform cuDNN by up to 3.5% and FlashAttention-4 by up to 10.5%"
+    },
+    {
+      "claim": "BF16 精度下 MHA kernel 峰值达到 1668 TFLOPS。",
+      "numbers": [
+        "1668"
+      ],
+      "source_span": "Section 1 Introduction",
+      "quote": "producing MHA kernels achieving up to 1668 TFLOPS at BF16 precision"
+    },
+    {
+      "claim": "7 天里 agent 探索了超过 500 个优化方向，最终演化出 40 个 kernel 版本。",
+      "numbers": [
+        "500",
+        "40"
+      ],
+      "source_span": "Section 1 Introduction",
+      "quote": "the agent explored over 500 optimization directions and evolved 40 kernel versions"
+    },
+    {
+      "claim": "无分支累加器重缩放带来 non-causal +8.1%、causal +1.6% 的 geomean 提升，是单步最大收益。",
+      "numbers": [
+        "8.1",
+        "1.6"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "yield +8.1% geomean throughput on non-causal and +1.6% on causal attention"
+    },
+    {
+      "claim": "correction/MMA 流水 overlap 带来 non-causal +1.1%、causal +0.4% 的 geomean 提升。",
+      "numbers": [
+        "1.1",
+        "0.4"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "yielding +1.1% geomean throughput on non-causal and +0.4% on causal attention"
+    },
+    {
+      "claim": "寄存器跨 warp 组重分配后在 non-causal 上取得 +2.1% geomean 提升。",
+      "numbers": [
+        "2.1"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "yielding +2.1% geomean throughput on non-causal attention"
+    },
+    {
+      "claim": "寄存器配比被调整为 184/88/56。",
+      "numbers": [
+        "184",
+        "88",
+        "56"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "arriving at a 184/88/56 allocation"
+    },
+    {
+      "claim": "MHA kernel 适配到 GQA 只需约 30 分钟的自主工作。",
+      "numbers": [
+        "30"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "completed this adaptation autonomously in approximately 30 minutes"
+    },
+    {
+      "claim": "causal GQA 上最多超过 cuDNN 7.0%、超过 FA4 9.3%。",
+      "numbers": [
+        "7.0",
+        "9.3"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "AVO achieves up to +7.0% over cuDNN and +9.3% over FA4"
+    },
+    {
+      "claim": "non-causal 上仅在序列长度大于 16384 时超过 cuDNN 1.8%–2.4%，更短序列的差异在测量噪声内。",
+      "numbers": [
+        "16384",
+        "1.8",
+        "2.4"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "(+1.8% to +2.4% over cuDNN at sequence lengths larger than 16384)"
+    },
+    {
+      "claim": "匹配 wall-clock 预算下，AVO 比最强的 LLM 驱动 EVO 基线高约 31%。",
+      "numbers": [
+        "31"
+      ],
+      "source_span": "Appendix B（正文第 1 节引用）",
+      "quote": "AVO achieves an approximately 31% improvement over the strongest EVO baseline"
+    },
+    {
+      "claim": "在 GatedDeltaNet 上相对 Flash Linear Attention 最高取得 4.1× 加速。",
+      "numbers": [
+        "4.1"
+      ],
+      "source_span": "Section 1 贡献列表 / Appendix A",
+      "quote": "achieving up to 4.1× speedup over Flash Linear Attention on GatedDeltaNet"
+    }
+  ]
+}

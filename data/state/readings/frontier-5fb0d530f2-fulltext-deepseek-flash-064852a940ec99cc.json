@@ -1,0 +1,79 @@
+{
+  "title_zh": "Drifting Models：以漂移场在训练时演化前推分布的单步生成",
+  "affiliations": [
+    "MIT",
+    "Harvard University"
+  ],
+  "scores": {
+    "research_value": 90,
+    "research_value_reason": "把训练迭代本身作为分布演化机制，给出不依赖蒸馏或 SDE/ODE 轨迹的单步生成范式，并在 ImageNet 上取得领先的单步结果。",
+    "novelty": 92,
+    "novelty_reason": "不是换骨干或加模块：把漂移场 $V$ 作为一等设计对象，用反对称性定义训练时平衡点，由此统一解释 GAN/DMD/MMD 并支持特征空间聚合与训练时 CFG。",
+    "technical_depth": 86,
+    "technical_depth_reason": "有破坏性消融、样本分配/特征编码器/归一化消融、Precision/Recall、DINO-FD 与记忆化分析；但 $V=0$ 是否推出 $p=q$ 仅特殊情形可证，ImageNet 依赖冻结编码器。"
+  },
+  "reading": {
+    "why_read": "提出 Drifting Models，把生成建模为训练时由反对称漂移场驱动前推分布演化，推理仅单步，在 ImageNet 上取得 FID 1.54（latent）与 1.61（pixel）。",
+    "task": "生成建模要学习映射 $f$，使前推分布匹配数据分布。Diffusion 与 Flow Matching 把复杂前推拆成推理时的多步迭代，每次生成都要多次网络评估，采样成本高；已有单步方法多依赖蒸馏预训练多步模型，或用辅助网络近似 SDE/ODE 轨迹，仍受教师或轨迹监督约束。",
+    "findings": [
+      {
+        "point": "迭代被固定在推理端",
+        "detail": "Diffusion/Flow 把复杂前推拆成推理时多步复合；但训练本身已产生模型序列，参数更新会让生成样本自然漂移，因此分布演化可在训练时完成。"
+      },
+      {
+        "point": "高维原始空间中的核估计退化",
+        "detail": "GMMN 式 MMD 在 SD-VAE latent 上 FID 为 214.6；作者归因于有限 batch 下核/漂移估计方差随维度快速增长，使相似度核趋于平坦。"
+      },
+      {
+        "point": "缺少零漂移平衡点会失稳",
+        "detail": "反对称场保证 $p=q$ 时 $V=0$；一旦破坏反对称，FID 从 8.46 恶化到 41.05，attraction-only 达 177.14，说明训练信号必须在平衡点归零。"
+      }
+    ],
+    "method": "定义漂移场 $V_{p,q}(x)=V_p^+(x)-V_q^-(x)$：正样本来自数据、负样本来自当前生成分布，核加权 mean-shift 同时给出吸引与排斥；反对称性保证 $p=q$ 时 $V=0$。训练用 stop-gradient 固定点目标，把 $x$ 拉向冻结的 $x+V$，由优化器在训练中演化 $q$。为降低高维核估计方差，在冻结自监督编码器的多尺度、多位置特征上计算漂移，并做特征/漂移归一化与多温度聚合；CFG 通过混入无条件真实负样本在训练时实现，推理仍为单步。",
+    "results": "在 ImageNet 上，latent 模型单步 FID 1.54，pixel 模型 1.61，均优于此前单步方法；机器人控制中单步策略与多步 Diffusion Policy 大体相当。",
+    "limitations": "依赖冻结的自监督特征编码器；无编码器时 ImageNet 训练失败，且一般情形下 $V=0$ 是否蕴含 $p=q$ 仍未证明；实验仅限类别条件 ImageNet，文本条件与其他模态未验证。"
+  },
+  "claims": [
+    {
+      "claim": "在 ImageNet 上，latent 模型单步 FID 为 1.54，pixel 模型为 1.61。",
+      "numbers": [
+        "1.54",
+        "1.61"
+      ],
+      "source_span": "Abstract; Table 5",
+      "quote": "FID 1.54 in latent space and 1.61 in pixel space"
+    },
+    {
+      "claim": "GMMN 式 MMD 生成器在 SD-VAE latent 上 FID 为 214.6。",
+      "numbers": [
+        "214.6"
+      ],
+      "source_span": "Table 17, row (a); Sec. C.4",
+      "quote": "214.6 FID"
+    },
+    {
+      "claim": "反对称默认设置的 FID 为 8.46。",
+      "numbers": [
+        "8.46"
+      ],
+      "source_span": "Table 1, row 'anti-symmetry'",
+      "quote": "8.46"
+    },
+    {
+      "claim": "破坏反对称的 attraction 变体 FID 为 41.05。",
+      "numbers": [
+        "41.05"
+      ],
+      "source_span": "Table 1, row '1.5× attraction'",
+      "quote": "41.05"
+    },
+    {
+      "claim": "attraction-only 变体的 FID 为 177.14。",
+      "numbers": [
+        "177.14"
+      ],
+      "source_span": "Table 1, row 'attraction-only'",
+      "quote": "177.14"
+    }
+  ]
+}

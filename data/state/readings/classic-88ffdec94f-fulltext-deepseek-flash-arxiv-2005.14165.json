@@ -1,0 +1,111 @@
+{
+  "title_zh": "语言模型就是少样本学习者：GPT-3 与 in-context learning",
+  "affiliations": [
+    "OpenAI",
+    "Johns Hopkins University"
+  ],
+  "scores": {
+    "research_value": 90,
+    "research_value_reason": "zero-/one-/few-shot 三档评测协议、以提示指定任务的做法，以及 13-gram 重叠加干净子集的污染审计，至今仍是 LLM 基准与数据审计的默认框架。",
+    "novelty": 82,
+    "novelty_reason": "架构与训练目标沿用 GPT-2，实质差异在于把 in-context learning 当作被测量对象，用 175B 规模与跨 20 多个数据集的统一提示格式，证明它随规模可用。",
+    "technical_depth": 66,
+    "technical_depth_reason": "无新算法：改动仅为交替 dense 与 locally banded sparse attention，技术含量在 8 个规模族（125M–175B）的工程实现、打分与归一化协议设计，以及污染量化的方法学。"
+  },
+  "reading": {
+    "why_today": "提出 GPT-3，用 175B 参数的自回归 LM 把 few-shot 变成 in-context learning：不更新任何梯度，只靠上下文中的示例完成新任务；今天 LLM 的 prompt 评测与三档 shot 报告仍沿用此设定。",
+    "historical_context": "2020 年前的主流是 pre-train + fine-tune：架构虽已与任务无关，每个新任务仍需数千到数十万条标注样本。GPT-2 已出现 in-context learning 的雏形，但在 Natural Questions 上仅 4%，远落后于微调结果。",
+    "problem_then": "能否不做梯度更新、只在上下文里给几个示例，就让语言模型完成新任务？以及这种能力是否随规模可预测地变强？",
+    "contributions": [
+      {
+        "point": "把 in-context learning 从雏形推到可用",
+        "detail": "在 175B 规模上系统评测 zero-/one-/few-shot：不更新权重，仅凭提示示例，LAMBADA few-shot 达 86.4%、TriviaQA few-shot 达 71.2%，后者超过同设定的微调闭卷结果。"
+      },
+      {
+        "point": "规模族与统一评测协议",
+        "detail": "同时训练 125M 到 175B 共 8 个模型，各训练 300B tokens，在 2 打以上数据集上用同一套提示格式评测，给出可比的 scaling 曲线。"
+      },
+      {
+        "point": "benchmark 污染的量化和处置",
+        "detail": "以 13-gram 重叠构造保守的干净子集并对比分数，对受影响的 PIQA、Winograd 结果打星号，对几乎完全泄漏的 Wikipedia LM 任务直接不报告。"
+      }
+    ],
+    "core_idea": "训练目标完全不变：GPT-3 沿用 GPT-2 架构，只在 transformer 层里交替使用 dense 与 locally banded sparse attention，把参数量放大到 175B。任务不再靠改网络或改权重指定，而是写进上下文：$K$ 个 (context, completion) 示例后接待答 context，模型在前向传播中预测 completion。多选任务比较各候选的 $\\log P(\\text{completion}\\mid\\text{context})$ 并做长度归一化，部分数据集再除以无条件概率做 PMI 式校正；上下文窗口 2048 tokens，通常容纳 10–100 个示例。",
+    "influence": "三档 shot 报告方式成为 LLM 基准的默认写法；「上下文即任务说明」直接支撑了此后 prompt 工程与 API 化的模型使用方式。文中把 human feedback、RL 微调、多模态 grounding 列为下一步，这条线后来成为对齐研究的主干；污染检测流程也成了大模型数据审计的参照做法。",
+    "modern_reading": "今天看，「提示里塞示例」已更多让位于指令微调与工具调用，175B 的 few-shot 数字也早被超过；论文自陈的短板仍在起作用：SuperGLUE few-shot 平均 69.0，远低于微调 SOTA 的 92.5，WiC 只有 49.4（随机水平），比较两句类任务普遍偏弱。真正留下来的是评测范式：三档 shot 设定，以及污染必须被量化并标注。"
+  },
+  "claims": [
+    {
+      "claim": "GPT-3 是 1750 亿参数的自回归语言模型",
+      "numbers": [
+        "175"
+      ],
+      "source_span": "Abstract",
+      "quote": "175 billion parameters"
+    },
+    {
+      "claim": "GPT-2 在 Natural Questions 上仅 4%",
+      "numbers": [
+        "4"
+      ],
+      "source_span": "Section 1 Introduction",
+      "quote": "achieves only 4% on Natural Questions"
+    },
+    {
+      "claim": "所有模型统一训练 3000 亿 tokens",
+      "numbers": [
+        "300"
+      ],
+      "source_span": "Table 2.1",
+      "quote": "All models were trained for a total of 300 billion tokens."
+    },
+    {
+      "claim": "所有模型上下文窗口为 2048 tokens",
+      "numbers": [
+        "2048"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "2048 tokens"
+    },
+    {
+      "claim": "LAMBADA few-shot 准确率 86.4%",
+      "numbers": [
+        "86.4"
+      ],
+      "source_span": "Table 3.2",
+      "quote": "86.4"
+    },
+    {
+      "claim": "TriviaQA few-shot 达到 71.2%",
+      "numbers": [
+        "71.2"
+      ],
+      "source_span": "Table 3.3",
+      "quote": "71.2"
+    },
+    {
+      "claim": "SuperGLUE few-shot 平均 69.0",
+      "numbers": [
+        "69.0"
+      ],
+      "source_span": "Table 3.8",
+      "quote": "69.0"
+    },
+    {
+      "claim": "SuperGLUE 微调 SOTA 平均 92.5",
+      "numbers": [
+        "92.5"
+      ],
+      "source_span": "Table 3.8",
+      "quote": "92.5"
+    },
+    {
+      "claim": "WiC few-shot 仅 49.4%，处于随机水平",
+      "numbers": [
+        "49.4"
+      ],
+      "source_span": "Table 3.8 / Section 3.7",
+      "quote": "49.4"
+    }
+  ]
+}

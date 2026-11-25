@@ -1,0 +1,135 @@
+{
+  "title_zh": "Embo-Harness：理解「前沿模型即策略」式机器人 harness 的设计与能力来源",
+  "affiliations": [
+    "Nanyang Technological University",
+    "ACE Robotics",
+    "SenseTime Research",
+    "Xiamen University",
+    "Lenovo Robotics Lab"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "针对「前沿多模态模型直接当闭环机器人策略」这一新范式，系统回答了两个基础问题：harness 的哪些设计带来增益、性能究竟来自哪种能力，结论对后续 harness 与 RFM 设计都有直接指导性。",
+    "novelty": 73,
+    "novelty_reason": "范式本身已有 GPT-as-Policy、SenseNova-RoboRSI 等工作，新意在于四个维度的受控消融配方，以及用 direct-joint / direct-chunk 探针与空间定位误差实验把性能归因到空间感知而非低层动作先验。",
+    "technical_depth": 77,
+    "technical_depth_reason": "消融覆盖动作表示、chunk、规划、上下文、视角、分辨率、工具与 VLA 集成，并与定位误差探针互相印证；但消融只在 20 任务 ×3 次子集、单一 GPT-6-Astra 模型族上做，逐步累进协议没有独立重跑与方差估计。"
+  },
+  "reading": {
+    "why_read": "提出 Embo-Harness，系统拆解前沿模型作为闭环机器人策略时提示、规划、动作执行与工具使用四个维度的设计选择，在 RoboLab-120 上取得 83.3% 成功率，并给出「能力来自空间感知」的机制解释。",
+    "task": "把前沿多模态模型直接当闭环策略（frontier-model-as-policy）生成机器人动作，已在操作基准上超过专门的 VLA 与 WAM。但现有工作（GPT-as-Policy、SenseNova-RoboRSI 等）只展示或改进某个系统，既没说清 harness 里哪些设计真正带来增益，也没解释通用模型为何能胜过专用控制策略。",
+    "findings": [
+      {
+        "point": "能力来源是空间目标定位，不是低层动作生成",
+        "detail": "直接生成关节角或逐帧轨迹分别掉 23.3 与 18.3 个百分点，而失败抓取中夹爪到目标的误差（11.04 cm）与模型自报的 3D 定位误差同量级，瓶颈在定位而非控制。"
+      },
+      {
+        "point": "模型对执行视界不敏感，chunk 必须固定且偏短",
+        "detail": "不同 chunk 下模型预测的目标位置几乎不变：大 chunk 动作变慢、耗尽步数预算，小 chunk 到不了目标需重复下发；异步推理也因无法预判执行后状态而失败。"
+      },
+      {
+        "point": "空间分辨率与推理强度是主要瓶颈",
+        "detail": "分辨率与推理档提升同时降低 3D 定位误差并抬升成功率；显式规划、失败经验提醒、直接写关节角等手工先验均无收益，加进去反而掉点。"
+      }
+    ],
+    "method": "只暴露模型擅长的接口：绝对末端执行器（EEF）动作 + 固定 chunk 8、GPT-6-Astra 配 xhigh 推理、640×360 双视角（第三人称 + 腕部）输入，去掉显式规划、失败教训提醒与异步执行。工具层补两项：短多动作序列（一次输出约三个连续动作，覆盖 approach–grasp–retreat 等模式，约 30% 场景使用）与 VLA 精修（VLA 提议、前沿模型修正后执行），而不是把动作委派给 VLA。",
+    "results": "在 RoboLab-120 上 SR 83.3%、Score 89.2，比最强基线 SenseNova-RoboRSI（57.1%）高 26.2 个百分点、Score 高 19.3；真机四任务零样本 15/20。",
+    "limitations": "真机上洗碗仅 2/5、插花 3/5，失败集中在精细定位；消融基于单一 GPT-6-Astra 模型族与 20 任务子集，无重复运行方差，结论可能随模型版本失效。"
+  },
+  "claims": [
+    {
+      "claim": "Embo-Harness 在 RoboLab-120 上 SR 83.3%、Score 89.2",
+      "numbers": [
+        "83.3",
+        "89.2"
+      ],
+      "source_span": "Section 3.6.1",
+      "quote": "Embo-Harness achieves an SR of 83.3% and a Score of 89.2"
+    },
+    {
+      "claim": "最强基线 SenseNova-RoboRSI 的成功率为 57.1%",
+      "numbers": [
+        "57.1"
+      ],
+      "source_span": "Section 1",
+      "quote": "compared with 57.1% for SenseNova-RoboRSI"
+    },
+    {
+      "claim": "相对该基线 SR 提升 26.2 个百分点、Score 提升 19.3",
+      "numbers": [
+        "26.2",
+        "19.3"
+      ],
+      "source_span": "Section 3.6.1",
+      "quote": "it improves SR by 26.2 percentage points and Score by 19.3"
+    },
+    {
+      "claim": "真机四个任务零样本成功 15/20 次",
+      "numbers": [
+        "15",
+        "20"
+      ],
+      "source_span": "Abstract",
+      "quote": "It also succeeds in 15 of 20 zero-shot trials across four real-world manipulation tasks"
+    },
+    {
+      "claim": "直接生成关节角比 IK 辅助低 23.3 个百分点",
+      "numbers": [
+        "23.3"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "this performance is 23.3 percentage points lower than that of IK-assisted control"
+    },
+    {
+      "claim": "逐帧直接生成轨迹比目标位姿预测低 18.3 个百分点",
+      "numbers": [
+        "18.3"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "this approach underperforms target pose prediction by 18.3 percentage points"
+    },
+    {
+      "claim": "失败抓取中夹爪到目标的误差平均 11.04 cm，与模型定位误差同量级",
+      "numbers": [
+        "11.04"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "the position estimation errors are comparable in magnitude to the gripper-to-target errors observed in failed grasps under short-range action generation (11.04 cm on average)"
+    },
+    {
+      "claim": "固定动作块长度 8 在消融中最优",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Section 3.1",
+      "quote": "a chunk size of 8 achieves the best performance by balancing movement speed and execution horizon"
+    },
+    {
+      "claim": "最终采用 640×360 的输入分辨率",
+      "numbers": [
+        "640",
+        "360"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "we adopt a higher visual resolution of 640 × 360"
+    },
+    {
+      "claim": "短多动作序列在约 30% 的场景被使用，平均每次约三个连续动作",
+      "numbers": [
+        "30"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "short multi-action sequences are used in approximately 30% of cases, with an average of three actions generated per sequence"
+    },
+    {
+      "claim": "真机上堆叠与装果各 5/5，洗碗 2/5，插花 3/5",
+      "numbers": [
+        "5",
+        "2",
+        "3"
+      ],
+      "source_span": "Section 3.6.2",
+      "quote": "achieving 5/5 successes in both block stacking and fruit packing, 2/5 in dish washing, and 3/5 in flower arranging"
+    }
+  ]
+}

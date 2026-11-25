@@ -52,22 +52,22 @@
         "survey": 1
       },
       "total": 12,
-      "generated_at": "2026-11-25T01:18:10.308519+00:00",
+      "generated_at": "2026-11-25T20:16:03.991583+00:00",
       "titles": [
-        "LLaMA：开放且高效的基座语言模型",
-        "Latent Reasoning VLA：面向视觉-语言-动作模型的潜在推理与预测",
-        "PISA：为高效扩散 Transformer 设计的分段稀疏注意力",
-        "GroupChat-Bench：评估 LLM 智能体对真实群聊长期理解的基准",
-        "Cognitive Supersensing：面向多模态大语言模型的潜在视觉推理训练范式",
-        "AgentArk：将多智能体智能蒸馏进单个 LLM Agent",
-        "多输出 conformal 回归的统一比较研究与广义一致性分数",
-        "La-JEPA：在隐空间做世界建模的紧凑机器人策略",
-        "Feedback Shortcut：面向潜在反馈 Transformer 的投机解码",
-        "哪种失败被干预修复？agent 干预何时有效，自演化 skill 卡在何处",
-        "Yggdrasil：树路由循环专家用于状态追踪与快速 CPU 推理",
-        "城市状态表示：面向自主移动的多模态感知、架构、数据集与基准综述"
+        "语言模型就是少样本学习者：GPT-3 与 in-context learning",
+        "懒惰智能体违背自身信念：可验证信念强化学习 RLVB 教其按信念行动",
+        "AVO：以自主智能体充当变异算子的进化式注意力 kernel 优化",
+        "Loom Attention：Transformer 的可重连电路",
+        "ViDecide：让视频扩散模型逐步推理与规划",
+        "Drifting Models：以漂移场在训练时演化前推分布的单步生成",
+        "UNIFIED：单 Transformer 隐扩散模型",
+        "Motion Mamba 2.0：面向长时程人形控制的自回归扩散 Mamba",
+        "从有限交互经验蒸馏视觉智能体",
+        "Embo-Harness：理解「前沿模型即策略」式机器人 harness 的设计与能力来源",
+        "世界模型作为原生潜在动作模型",
+        "超越点预测：时间序列与时空数据的概率预测综述"
       ]
     }
   },
-  "updated_at": "2026-11-25T01:18:10.308519+00:00"
+  "updated_at": "2026-11-25T20:16:03.991583+00:00"
 }

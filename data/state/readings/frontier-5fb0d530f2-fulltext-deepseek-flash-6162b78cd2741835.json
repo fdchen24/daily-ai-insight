@@ -1,0 +1,67 @@
+{
+  "title_zh": "世界模型作为原生潜在动作模型",
+  "affiliations": [
+    "SenseTime Research",
+    "Nanyang Technological University",
+    "ACE Robotics"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把视频世界模型直接转成可从无动作视频提取可迁移 latent action 的教师，并用于 VLA 预训练，问题重要且路线有复用价值。",
+    "novelty": 86,
+    "novelty_reason": "不改架构、不加独立 encoder/decoder，仅用动力学寄存器与反事实时序对让同一世界模型自读自放，区别于从零训练 LAM 和生成视频的 WAM。",
+    "technical_depth": 84,
+    "technical_depth_reason": "LARY、RoboTwin/RoboDojo、真机与算力对比齐全，并有反事实对消融；但仅一个 backbone、grounding 贡献未隔离，部分榜单结果由作者自评。"
+  },
+  "reading": {
+    "why_read": "提出 Native LAM，将预训练视频世界模型同时用作 IDM 与 FDM、以动力学寄存器为唯一因果桥，并据此预训练 VLA 策略 PAWlicy，在 RoboTwin 2.0 域随机演示上达到 93.6% 平均成功率。",
+    "task": "视频记录了智能体在物理世界中的动作，但人类第一视角视频没有机器人动作标签，不同机器人数据的动作空间也不共享，难以直接作为策略监督。现有 LAM 从零训练 IDM 与 FDM，用像素重建约束潜动作，重建质量与潜变量容量、精度互相牵制，训练不稳定；预训练视频世界模型虽具备强前向动力学，却把动力学稠密地纠缠在各层隐藏状态中，缺少可读写的紧凑动作接口。",
+    "findings": [
+      {
+        "point": "从零训练的重建目标制造了瓶颈两难",
+        "detail": "IDM/FDM 从零学，潜动作既要压缩又要支撑像素重建：瓶颈松会泄漏未来帧，紧则无法描述运动，居中又易漂向相机运动或干扰物，潜空间因此不纯。"
+      },
+      {
+        "point": "预训练 FDM 会绕过新初始化的 latent 通路",
+        "detail": "世界模型仅凭首帧就能生成合理未来，直接训练时优化会抑制 adapter 与寄存器，梯度进不到寄存器，形成 posterior collapse（register bypass），latent 对生成结果不敏感。"
+      },
+      {
+        "point": "动力学与外观在稠密隐藏状态中纠缠",
+        "detail": "世界模型没有现成的紧凑动作表示；若用稠密视觉特征或生成像素监督策略，监督会被外观主导，视觉偏移下策略更脆弱。"
+      }
+    ],
+    "method": "不设独立 encoder/decoder，保持预训练视频 DiT 与 VAE 不变，在 token 序列中加入一组可学习动力学寄存器，同一权重跑两种模式：IDM 模式下寄存器经只读注意力读取整段干净视频，由输出 MLP 得到按时间分组的紧凑 latent action；FDM 模式把该 latent 经适配 MLP 注入，替代文本/动作条件，仅凭首帧与 latent 用原 flow-matching 损失重建未来，不看文本和干净未来。为防世界模型凭首帧抄近路，用同一视频重定时构造反事实对，共享首帧、上下文、噪声与扩散时刻，只让运动不同，迫使 latent 携带运动差异；在少数有动作标签的数据上加浅层运动学头做 grounding。再冻结 Native LAM 作教师，为机器人、人类与仿真视频打 latent 标签，训练共享注意力的 VLM、latent action DiT 与 action DiT；策略只预测紧凑 latent 并据此出动作，不生成视频。",
+    "results": "LARY 平均分类 71.77%、回归 MSE 0.25，优于 WLA3 的 70.75%/0.37；RoboTwin 2.0 随机演示训练下平均 93.6%，真机两项 76.7% 与 90.0%，均高于 π0.5。",
+    "limitations": "只在单一预训练视频世界模型上验证，训练来源中仅少数提供运动学 grounding，其独立贡献未隔离；RoboDojo 的 Memory 维度未评估，部分结果由作者自行复现，真实机器人任务也有限。"
+  },
+  "claims": [
+    {
+      "claim": "Native LAM 在 LARY 上平均分类 71.77%、回归 MSE 0.25，WLA3 为 70.75% 与 0.37。",
+      "numbers": [
+        "71.77",
+        "0.25",
+        "70.75",
+        "0.37"
+      ],
+      "source_span": "Sec. 4.2.1",
+      "quote": "It reaches 71.77% classification accuracy and 0.25 regression error on average, against 70.75% and 0.37 for WLA3, the best previous LAM."
+    },
+    {
+      "claim": "PAWlicy 在 RoboTwin 2.0 上平均成功率达到 93.6%。",
+      "numbers": [
+        "93.6"
+      ],
+      "source_span": "Abstract",
+      "quote": "With a 3.8B model, PAWlicy reaches a 93.6% average success rate on RoboTwin 2.0 trained with domain-randomized demonstrations, the highest among VLAs."
+    },
+    {
+      "claim": "真机上 PAWlicy 在叠三块与放鞋任务分别达到 76.7% 与 90.0%，高于 π0.5。",
+      "numbers": [
+        "76.7",
+        "90.0"
+      ],
+      "source_span": "Introduction",
+      "quote": "On a real robot, it lifts π0.5 from 23.3% to 76.7% on stacking three blocks and from 33.3% to 90.0% on putting shoes in a box."
+    }
+  ]
+}

@@ -1,0 +1,1064 @@
+Preprint
+SINGLE-TRANSFORMER LATENT DIFFUSION
+Hao-Yu Hsu, Shenlong Wang & Alexander G. Schwing
+University of Illinois Urbana-Champaign
+{haoyuyh3, shenlong, aschwing}@illinois.edu
+https://haoyuhsu.github.io/Unified-LDM/
+ABSTRACT
+Latent generative models typically rely on three separate networks: an encoder
+that tokenizes pixels, a generator that models the latent distribution, and a de-
+coder that maps latents back to pixels. UNITE recently merged the first two into
+a single generative encoder trained in one stage, but its decoder remains a sepa-
+rate network. We ask whether this last network can be folded in too, so that one
+diffusion transformer encodes, generates, and decodes. Simply letting the shared
+backbone decode does not help. What makes it work is to cast all three modes
+as position-aligned sequence maps over one fully shared backbone, distinguished
+only by a mode token and the timestep. The resulting model, UNIFIED, is sim-
+ple: one network trained from scratch in a single stage with only reconstruction
+and flow-matching losses, without adversarial losses or pretrained encoders (e.g.,
+DINO). On ImageNet-1K 256 × 256 at matched parameters, UNIFIED improves
+gFID over UNITE at three sizes (∼60M, ∼115M, and ∼215M) and reaches 2.08
+with 215M parameters, the lowest among compared models under 250M parame-
+ters. On text-to-image generation, UNIFIED-B (218M) reaches a GenEval score
+of 0.87 at 512 × 512, exceeding single-stage pixel diffusion models with around
+one billion parameters. Full unification of latent diffusion is thus not merely fea-
+sible but beneficial.
+1
+INTRODUCTION
+Latent diffusion models (Rombach et al., 2022; Peebles & Xie, 2023; Ma et al., 2024) rely on
+three trainable networks: an encoder that maps pixels to latents, a generator that models the latent
+distribution, and a decoder that maps latents back to pixels. They are usually trained in stages:
+the autoencoder is first trained for reconstruction, and then frozen while the generator is fit to its
+latents. This recipe fixes the representation before the model that must sample from it is trained. It
+also forces a choice of how much capacity each network receives, and the effect of that choice on
+generation is hard to predict (Hansen-Estruch et al., 2025).
+We ask whether this pipeline can collapse into a single diffusion transformer (DiT) whose every
+block is shared by encoding, denoising, and decoding, trained in a single stage with only a re-
+construction loss and a flow-matching loss, with no pretrained encoders such as DINO (Oquab
+et al., 2024). Most single-stage training methods keep the tokenizer and generator as separate net-
+works (Vahdat et al., 2021; Leng et al., 2025; Zhao et al., 2026; Zheng et al., 2026b; Heek et al.,
+2026), while the few that use a single network still reserve parts of it for individual modes: LDM-
+is-AE (Zhang et al., 2026) splits one DiT by depth into encoding and decoding blocks, which turns
+the allocation choice above into a choice of split depth, and DSD (Wang & Zhang, 2025) adds a
+dedicated diffusion head and relies on DINO alignment.
+UNITE (Duggal et al., 2026) is the closest step in this direction. It treats tokenization and generation
+as the same latent-inference problem and solves both with one generative encoder, trained in a single
+stage with only reconstruction and flow-matching losses, but it still decodes pixels with a separate
+network (Figure 2b). A natural baseline is to let UNITE’s backbone decode as well. We call this
+extension UNITE++ (Figure 2c): it shares every weight across the three modes and selects the
+mode with a learned mode token. Like UNITE, it reads its outputs from readout tokens, which are
+extra input tokens whose outputs are taken as the latent or as pixels. UNITE++ does not improve
+upon UNITE: at ∼215M parameters it reaches a gFID of 2.24 vs. UNITE’s 2.23 and reconstructs
+1
+arXiv:2611.29064v1  [cs.CV]  21 Nov 2026
+Preprint
+61M
+62M
+113M
+117M
+116M
+222M
+217M
+215M
+2.0
+2.5
+3.0
+4.0
+5.0
+gFID ↓
+Tiny
+Small
+Base
+Model size
+Separate
+UNITE
+UNIFIED (Ours)
+Figure 1: (Left) Selected samples from UNIFIED on ImageNet-1K 256 × 256 (CFG scale 4.0).
+(Right) Full unification is not merely feasible but beneficial. gFID (↓) at three sizes; bar labels
+give the total trainable parameters. UNIFIED improves on UNITE at every size, and Tiny UNI-
+FIED nearly matches Small UNITE with about half the parameters (2.78 at 62M vs. 2.76 at 117M).
+Separate is a standard three-network pipeline (Figure 2a), trained at Small and Base. UNITE and
+UNIFIED: mean over five evaluation seeds (Table 14).
+markedly worse (rFID 2.20 vs. 1.41). We attribute this to the readout design: there is no direct
+mapping between latent tokens and image locations, so to decode, every image location must gather
+its content from the latent tokens through attention.
+We therefore propose UNIFIED (Figure 2d), a single DiT that maps images to latents, latents to
+latents, and latents to images as position-aligned sequence maps: a given sequence index refers to
+the same image location whether it holds a pixel patch, a latent, or a noisy latent. The backbone is
+fully shared, and each mode is selected by a learned mode token and lightweight input and output
+heads. Relative to UNITE, UNIFIED changes only the sequence layout, the timesteps for encoding
+and decoding, and the mode tokens, and replaces the standalone decoder with a lightweight pixel
+output head. The training recipe is unchanged.
+The remaining design choice is the timestep that conditions encoding and decoding. Both are noise-
+less maps, so the natural choice is the clean endpoint (t = 1). This improves gFID over UNITE
+(2.15 vs. 2.23 at ∼215M). At t = 1, however, three modes disagree on what to output: encoding
+and generation both produce the clean latent, whereas decoding produces pixels. Sharing t = 1 thus
+forces the last block to serve two output spaces, and the conflict is sharpest near the clean endpoint at
+the end of the layers (Section 4.3). We therefore give decoding its own learned timestep embedding,
+denoted tdec = −1 (a label outside [0, 1]), which leaves t = 1 to the two modes whose target is the
+clean latent. This further lowers gFID to 2.08 and restores the alignment between the two passes
+near the clean endpoint (Figure 3).
+On ImageNet-1K 256×256 at matched parameter counts, UNIFIED improves gFID over UNITE at
+all three sizes (∼60M, ∼115M, and ∼215M). Tiny UNIFIED nearly matches Small UNITE on gFID
+with about half the parameters, suggesting that a standalone decoder uses capacity less efficiently
+than the shared backbone. Against published models, UNIFIED-B reaches a gFID of 2.08 with
+215M parameters, the lowest among compared models with at most 250M parameters, without a
+pretrained autoencoder or vision foundation model (Section 4.2). On text-to-image generation at
+256 × 256, UNIFIED-L (554M) outperforms both the pixel-space JiT (Li & He, 2026) (615M)
+and DiTDH-XL (Zheng et al., 2026a) with a pretrained FLUX-VAE (959M) on GenEval, DPG-
+Bench, and GenAI-Bench. At 512 × 512, UNIFIED-B (218M) reaches 0.87 on GenEval and 0.827
+on DPG-Bench, exceeding single-stage pixel diffusion models with around one billion parameters
+(Section 4.5).
+2
+Preprint
+Our contributions are:
+• We propose UNIFIED, a single DiT that encodes, generates, and decodes with every back-
+bone weight shared, trained from scratch in a single stage with only reconstruction and
+flow-matching losses, without adversarial losses or pretrained encoders (e.g., DINO).
+• We analyze how shared weights keep the three modes apart. We show that position align-
+ment restores the reconstruction lost by naive full sharing, that the encoding timestep must
+match what the encoder reads, and that a learned decoding timestep removes the conflict
+between decoding and generation at the clean endpoint, leading to better performance.
+• At matched parameter counts on ImageNet, UNIFIED improves over UNITE at three pa-
+rameter scales and attains the lowest gFID among compared models with at most 250M
+parameters. It also extends to text-to-image generation: at 512 × 512, UNIFIED-B (218M)
+exceeds single-stage pixel diffusion models with around one billion parameters.
+2
+RELATED WORK
+Autoencoders and latent diffusion. Latent generative models typically follow a two-stage recipe:
+an autoencoder is trained for reconstruction and frozen, and a separate generator is then fit to its
+latents. The tokenizer is usually a KL-regularized VAE (Kingma & Welling, 2014; Rezende et al.,
+2014) for latent diffusion (Rombach et al., 2022; Podell et al., 2024) or a vector-quantized autoen-
+coder (van den Oord et al., 2017; Razavi et al., 2019) for discrete generation, in both cases trained
+with the perceptual (Zhang et al., 2018) and adversarial losses popularized by VQGAN (Esser et al.,
+2021). Because the two stages are decoupled, progress has largely come one network at a time:
+generators have moved to transformer backbones (Peebles & Xie, 2023; Zheng et al., 2024; Gao
+et al., 2023; Ma et al., 2024; Wang et al., 2026b) and flow-based objectives (Lipman et al., 2023;
+Liu et al., 2023), while tokenizers have improved latent quantization (Mentzer et al., 2024; Yu et al.,
+2024a) and compactness (Yu et al., 2024b; Chen et al., 2025b). This decoupling has a cost, however.
+The two stages optimize different objectives, which creates an optimization dilemma: a latent that
+favors reconstruction can degrade generation. VA-VAE (Yao et al., 2025) addresses this dilemma by
+aligning the VAE latent with a pretrained vision encoder (Caron et al., 2021; Oquab et al., 2024).
+Such encoders also serve as an alignment target for the generator (Yu et al., 2025), or even replace
+the tokenizer’s encoder in the latent diffusion pipeline (Zheng et al., 2026a; Shi et al., 2026). We
+instead revisit the recipe itself: a single backbone serves as encoder, decoder, and generator, and is
+trained in a single stage without relying on a pretrained vision encoder.
+End-to-end tokenization and generation. Closer to our setting, several methods train the tokenizer
+and generator jointly (Leng et al., 2025; Duggal et al., 2026). The central difficulty is latent collapse:
+once the generation loss can shape the latent, the generator can lower its loss by making the latent
+trivial rather than modeling it (Leng et al., 2025; Wang & Zhang, 2025; Zheng et al., 2026b). Exist-
+ing methods differ mainly in how they prevent this. Likelihood-based approaches keep a variational
+bound whose KL or entropy terms hold the latent in place, and train a score-based (Vahdat et al.,
+2021), normalizing-flow (Zhao et al., 2026), or diffusion (Zheng et al., 2026b; Heek et al., 2026)
+prior jointly with the autoencoder. REPA-E (Leng et al., 2025) instead anchors the latent to an exter-
+nal representation, backpropagating a representation-alignment loss, rather than the diffusion loss,
+into the VAE. Other approaches stop the gradient through the denoising target and predict clean la-
+tents (Duggal et al., 2026; Wang & Zhang, 2025; Zhang et al., 2026); this needs neither a variational
+bound nor an external encoder, and we adopt it. Closest to our work, three methods built on this
+recipe also share weights. UNITE (Duggal et al., 2026) merges the encoder and generator but keeps
+a standalone decoder; LDM-is-AE (Zhang et al., 2026) splits one DiT by depth into encoding and
+decoding blocks, which requires manually choosing the split depth and the feature-mixing schedule;
+and DSD (Wang & Zhang, 2025) uses a single ViT for all three modes with lightweight blocks for
+diffusion, but reintroduces an external alignment loss. UNIFIED instead shares every block of a
+single DiT backbone across all three roles, with no role-specific blocks or alignment loss.
+Pixel diffusion. A more direct way to avoid the two-stage recipe is to drop the latent and run
+diffusion on pixels. Early pixel-space models handle the high dimensionality with U-Net designs,
+adjusted noise schedules, and loss weightings (Dhariwal & Nichol, 2021; Hoogeboom et al., 2023;
+Kingma & Gao, 2023; Hoogeboom et al., 2025), adaptive computation over a small set of latent
+tokens (Jabri et al., 2023), or cascades across resolutions (Chen et al., 2025c). JiT (Li & He, 2026;
+3
+Preprint
+(d)  UNIFIED (Ours)
+Shared E! / G! / D!
+Encoding
+Generation
+Decoding
+(a)  Separate
+E!
+D"
+G#
+(b)  UNITE
+(c)  UNITE++
+Shared E! / G!
+D"
+Shared E! / G! / D!
+Image
+Latent
+Noisy latent
+Readout token
+Mode token
+E: Encoder
+G: Generator
+D: Decoder
+(c) 𝒕!"# = 𝟎, 𝒕$!# = 𝟏
+(d) 𝒕!"# = 𝟏, 𝒕$!# = 𝟏, −𝟏
+(b) 𝒕!"# = 𝟎
+Enc
+Dec
+Gen
+Enc
+Gen
+Dec
+Figure 2: From three networks to one shared transformer. (a) Separate: the standard latent-
+diffusion pipeline trains an encoder Eθ, a generator Gψ, and a decoder Dϕ. (b) UNITE shares one
+backbone between encoding and generation; the encoding pass appends N(0, I) readout tokens to
+the image patches and takes the latent z from their outputs, but a standalone decoder Dϕ remains.
+(c) UNITE++ folds decoding into the same backbone as a third mode, selected by a mode token,
+but keeps readout tokens for encoding (latent readouts) and decoding (pixel readouts). (d) UNIFIED
+(ours) removes all readout tokens: every pass maps a same-length, position-aligned sequence (image
+x, noisy latent zt, or latent z) after a mode token at position 0, and encodes clean images at tenc = 1
+rather than 0. Bottom right: each model’s encoding and decoding timesteps.
+Starodubcev et al., 2026) shows that a plain ViT on large patches suffices when it predicts the clean
+image. Follow-up works improve details with dedicated pixel-level modules (Yu et al., 2026; Wang
+et al., 2026a; Ma et al., 2026a) or U-shaped skip connections (Guo et al., 2026), or draws on a
+pretrained vision encoder for representation alignment (Shin et al., 2026), perceptual losses (Ma
+et al., 2026b), or denoising its features first (Baade et al., 2026). Likewise, UNIFIED trains one
+network in a single stage, but keeps a learned latent that the same backbone encodes and decodes.
+One transformer, many tasks. A single transformer can serve many tasks when the task is specified
+through its input. The most common way is the input format: a text prefix or prompt (Raffel et al.,
+2020; Chen et al., 2022; Lu et al., 2023; 2024a), the choice of input and target modalities (Mizrahi
+et al., 2023), in-context example pairs (Wang et al., 2023), or a multimodal instruction (Xiao et al.,
+2025). Unified multimodal models (Chameleon Team, 2024; Zhou et al., 2025; Xie et al., 2025;
+Wu et al., 2025; Deng et al., 2025) extend this to understanding and generation in one backbone.
+Another way is the corruption level of each input, set by per-modality or per-token timesteps (Bao
+et al., 2023; Chen et al., 2024; Le et al., 2025) or by masking ratios (Li et al., 2023; Hansen-Estruch
+et al., 2024): clean inputs act as conditions and heavily corrupted ones are generated, so one network
+can switch among conditional, joint, and marginal generation, or between representation learning
+and generation. In this paper, we use a learned mode token and a mode-specific timestep to direct a
+single DiT backbone between tokenization and generation.
+3
+METHOD
+UNIFIED replaces the encoder, generator, and decoder of latent diffusion with a single diffusion
+transformer Tθ that operates in three modes: encoding, generation, and decoding. Each training step
+runs one pass per mode, and every pass is a position-aligned sequence map, in which index i refers
+to the same image location whether it holds a pixel patch, a latent token, or a noised latent token.
+The backbone weights are fully shared; the modes differ only in lightweight input and output heads,
+in a learned mode token prepended to the sequence, and in the AdaLN conditioning, namely the
+timestep and a class label that is null outside generation (Table 1).
+4
+Preprint
+Table 1: What each pass receives in the shared backbone Tθ. r ∼N(0, I): latent readouts;
+xreadout: pixel readouts. UNIFIED decodes either at the clean endpoint (t = 1) or with the learned
+decoding timestep (t = −1).
+Model
+Mode
+Input sequence
+Output
+t
+c
+Length
+UNITE++
+Encode
+[qenc; r; P in
+x (x)]
+P out
+z
+at the K latent readouts
+0
+∅
+1 + K + N
+Generate
+[qgen; P in
+z (zt)]
+P out
+z
+at positions 1:K
+t
+c
+1 + K
+Decode
+[qdec; P in
+z (z); xreadout]
+P out
+x
+at the N pixel readouts
+1
+∅
+1 + K + N
+UNIFIED
+Encode
+[qenc; P in
+x (x)]
+P out
+z
+at positions 1:N
+1
+∅
+N + 1
+Generate
+[qgen; P in
+z (zt)]
+P out
+z
+at positions 1:N
+t
+c
+N + 1
+Decode
+[qdec; P in
+z (z)]
+P out
+x
+at positions 1:N
+1/−1
+∅
+N + 1
+3.1
+PRELIMINARIES: LATENT DIFFUSION AND UNITE
+Let x ∈RH×W ×3 denote an image, which a transformer reads as N = HW/p2 patches of size
+p × p, and let z ∈RK×d denote its latent, a sequence of K tokens of width d. t ∈[0, 1] is the noise
+level, with t = 1 corresponding to clean data and t = 0 to Gaussian noise, and c is the class label,
+with ∅denoting the null label. A noised latent is formed by the rectified-flow interpolation (Lipman
+et al., 2023)
+zt = t z + (1 −t) ϵ,
+ϵ ∼N(0, I),
+t ∼U[0, 1],
+(1)
+so that z1 = z is the clean latent and z0 is pure noise.
+Latent diffusion. The standard pipeline (Figure 2a) trains three networks: an encoder Eθ that maps
+an image to its latent, a generator Gψ that recovers the clean latent from a noised one, and a decoder
+Dϕ that maps latents back to pixels (Rombach et al., 2022; Peebles & Xie, 2023). The encoder and
+decoder are trained first under a reconstruction objective and then frozen, so generative gradients
+cannot shape the latent space that the generator must later model.
+UNITE. UNITE (Duggal et al., 2026) observes that tokenization and generation are the same latent-
+inference problem under different conditioning: tokenization infers the latent from a fully observed
+image, and generation infers it from a noised latent. It therefore implements the encoding and
+generation modes with one network, the generative encoder, trained in a single stage (Figure 2b).
+Its encoding pass reads the image patches alongside K tokens drawn from N(0, I) and returns
+their outputs as the latent, and its generation pass places zt at the same positions. UNITE calls these
+tokens registers; we call them latent readouts, since unlike the registers of Darcet et al. (2024), whose
+outputs are discarded, their outputs are the latent. We apply a stop-gradient to the encoder output z
+in the generation loss, so the loss treats the latent as a constant. The same detached latent serves as
+the clean target and, once noised, as the generator’s input. Because no gradient from the generation
+loss reaches z, this loss cannot push the latent toward a trivial solution. The reconstruction and
+generation losses still jointly update the shared weights. Writing each pipeline in terms of the three
+functions it learns, gives
+LDM:
+z = Eθ(x),
+ˆz = Gψ(zt, t, c),
+ˆx = Dϕ(z),
+(2)
+UNITE:
+z = Eθ(x),
+ˆz = Gθ(zt, t, c),
+ˆx = Dϕ(z),
+(3)
+UNIFIED:
+z = Eθ(x),
+ˆz = Gθ(zt, t, c),
+ˆx = Dθ(z).
+(4)
+Functions with a common subscript share every backbone weight; they differ only in lightweight
+input and output heads and, in UNIFIED, a learned mode token (Section 3.2).
+A naive full-sharing baseline: UNITE++. UNITE reduces three networks to two, but the decoder
+Dϕ remains a standalone network. The interface in Equation 4 does not by itself determine how
+the three passes are laid out. Its most direct realization keeps UNITE’s readout layout and lets the
+generative encoder decode as well; we call this baseline UNITE++ (Figure 2c). Its encoding pass
+is UNITE’s, reading the image patches alongside K latent readouts at tenc = 0; its decoding pass
+reads the latent alongside N pixel readouts at tdec = 1 and returns pixels from them; and a learned
+mode token selects the mode (Table 1). UNITE++ thus shares every backbone weight, the mode
+tokens, and the training objective with UNIFIED, and differs only in the sequence layout and the
+encoding and decoding timesteps. Section 3.3 motivates each of these two choices, and Section 4.3
+isolates their effects.
+5
+Preprint
+3.2
+UNIFIED: ONE BACKBONE, THREE MODES
+UNIFIED computes all three functions in Equation 4 with one backbone Tθ, a stack of DiT
+blocks (Peebles & Xie, 2023) with RoPE (Su et al., 2024), in which the timestep and class label
+reach every block through AdaLN. The backbone takes a token sequence together with (t, c) and
+returns a sequence of the same length. Four lightweight heads translate between values and the back-
+bone width: P in
+x and P out
+x
+for pixel patches, and P in
+z and P out
+z
+for latent tokens. Three of the four
+heads, P in
+x , P in
+z , and P out
+z
+, are those of UNITE’s generative encoder and are used unchanged. The
+fourth, P out
+x
+, is the only head that UNIFIED adds: it lets the backbone itself return pixel patches
+and thereby replaces UNITE’s standalone decoder. A learned mode token, qenc, qgen, or qdec, is
+prepended at position 0 to select the mode. The three passes are
+Eθ(x) = P out
+z
+Tθ
+ [qenc; P in
+x (x)], tenc, ∅
+
+,
+(5)
+Gθ(zt, t, c) = P out
+z
+Tθ
+ [qgen; P in
+z (zt)], t, c
+
+,
+(6)
+Dθ(z) = P out
+x
+Tθ
+ [qdec; P in
+z (z)], tdec, ∅
+
+,
+(7)
+where [ · ; · ] denotes concatenation along the sequence dimension and the output at the mode-token
+position is discarded before the output head. The latent has one token per patch, K = N, so ev-
+ery pass has length N + 1; the encoding and decoding timesteps tenc and tdec are discussed in
+Section 3.3. Every backbone parameter is shared across Equations 5–7; the only mode-specific pa-
+rameters are the four heads, the three mode tokens, and the learned decoding timestep (Section 3.3),
+which together make up 1.63% of the parameters at Base (∼215M). Because the generation and
+decoding passes read latents through the same head P in
+z , the two differ only in their mode token,
+their conditioning, and their output head. Table 1 lists what each pass receives.
+3.3
+SPECIFYING MODES IN SHARED WEIGHTS
+With every backbone weight shared, the three passes differ only in what enters the backbone: the
+values supplied by the input heads, the layout of the sequence, the mode token, and the conditioning
+(t, c). The class label is null in both encoding and decoding, so the layout, the mode token, and the
+timestep must keep the modes apart. We set each by a single principle.
+Position alignment. In UNITE and UNITE++, the latent occupies its own group of readout tokens
+(Table 1), so pixels and latents interact only through attention: encoding must route the content of
+every image location into latent readouts with no fixed spatial correspondence, and in UNITE++
+decoding must route it back out to the pixel readouts. The backbone thus learns this routing on top
+of encoding and decoding themselves. UNIFIED instead aligns the sequences of all three modes:
+the pixel patch, latent token, and noised latent token share one sequence index and one RoPE posi-
+tion. This leaves attention to model context rather than to move content between pixels and latents.
+Alignment comes at a cost. Readouts decouple the latent length K from the number of patches, as
+in Perceiver-style readouts (Jaegle et al., 2022), while alignment ties K = N. In exchange, each
+encoding or decoding pass has length N + 1 instead of 1 + K + N.
+Encoding timestep. The timestep is the backbone’s explicit signal of how much of the content at
+its output positions is observed: t = 0 marks pure noise and t = 1 a clean latent. We set it in every
+mode to match that content. The generation pass reads zt and uses the sampled t. For the encoding
+pass, what the output positions hold depends on the layout. In UNITE and UNITE++, they hold
+N(0, I) latent readouts, the same input from which sampling starts, so the matched choice is the
+noisy endpoint, tenc = 0: encoding is generation from noise, conditioned on the image through
+attention. Under position alignment, the same positions hold the observed image patches, so the
+matched choice becomes the clean endpoint, tenc = 1.
+Decoding timestep. Decoding reads a clean latent, so the principle above would set tdec = 1. At
+the clean endpoint, however, the modes disagree on what to output: encoding and generation return
+the clean latent, whereas decoding returns pixels. The conflict is sharpest at the end of sampling.
+There the generation input zt ≈z enters through the same head P in
+z as the decoding input, and in
+the unconditional branch of classifier-free guidance both passes also carry the null label, so their
+AdaLN conditioning is identical and only the mode token, acting through attention, tells them apart.
+The conflict surfaces in the last blocks near t = 1, where the two passes must diverge into different
+output spaces. We resolve it by conditioning decoding on its own learned embedding in place of the
+timestep embedding, denoted as tdec = −1 for timestep outside the flow interval.
+6
+Preprint
+Table 2:
+Separate, UNITE, and UNIFIED at
+matched sizes on ImageNet-1K 256 × 256, with
+best CFG. UNITE uses its best allocation at Tiny.
+tdec=1:
+decoding at clean endpoint; tdec=−1:
+learned decoding timestep. gFID and IS: mean over
+five evaluation seeds (Table 14); †: single run. Full
+results in Table 13.
+Size
+Method
+gFID ↓
+IS ↑
+rFID ↓
+Tiny
+UNITE (2:1)
+3.00
+272.4
+1.27
+UNIFIED (tdec=1)
+2.75
+282.0
+1.30
+UNIFIED (tdec=−1)
+2.78
+280.1
+1.75
+Small
+Separate†
+5.17
+244.8
+1.64
+UNITE
+2.76
+283.9
+1.13
+UNIFIED (tdec=1)
+2.41
+287.4
+0.95
+UNIFIED (tdec=−1)
+2.43
+295.9
+1.04
+Base
+Separate†
+3.96
+267.7
+1.38
+UNITE
+2.23
+282.1
+1.41
+UNIFIED (tdec=1)
+2.15
+312.8
+0.97
+UNIFIED (tdec=−1)
+2.08
+314.4
+0.95
+Table 3: Timestep conditioning of encod-
+ing and decoding (Base, with CFG). tenc,
+tdec:
+timesteps of the encoding and de-
+coding passes; tdec=−1: learned decoding
+timestep; –: not applicable. gFID and IS:
+mean over five evaluation seeds (Table 14);
+†: single run. Full results in Table 12.
+Method
+tenc tdec gFID ↓
+IS ↑
+rFID ↓
+UNITE
+0
+–
+2.23
+282.1
+1.41
+UNITE++
+0
+1
+2.24
+327.1
+2.20
+UNIFIED†
+0
+1
+2.31
+300.0
+1.39
+UNIFIED
+1
+1
+2.15
+312.8
+0.97
+UNIFIED
+1
+−1
+2.08
+314.4
+0.95
+Mode token. A learned mode token at position 0 tells the backbone which pass it is running. It
+enters as a prefix token rather than through AdaLN or mode-specific blocks, so it adds no per-block
+parameters and every block stays fully shared.
+3.4
+SINGLE-STAGE TRAINING AND INFERENCE
+Each training step runs the three passes of Section 3.2 on a batch of images. The encoding pass
+produces z = Eθ(x). The latent is perturbed before reconstruction, ˜z = z + σrecϵr with ϵr ∼
+N(0, I), which makes the decoding mode robust. The decoding pass reconstructs ˆx = Dθ(˜z) under
+Lrec = Ex,ϵr[∥ˆx −x∥1 + λperc LPIPS(ˆx, x)] ,
+(8)
+where LPIPS is the perceptual distance (Zhang et al., 2018). The generation pass predicts the clean
+latent directly from the noised latent zt:
+Lgen = Ex,t,ϵ
+h
+∥Gθ(sg(zt), t, c) −sg(z)∥2
+2
+i
+,
+(9)
+where sg(·) is the stop-gradient operator, which treats its argument as a constant during backpropa-
+gation. The complete objective is
+L = λrecLrec + λgenLgen.
+(10)
+Gradient flow. As in UNITE, the stop-gradient keeps the generation loss from reaching the en-
+coding pass through its target, but all three passes run through Tθ, so both losses update the same
+weights.
+Inference. Generation starts from Gaussian noise at t = 0 and integrates the learned flow over the
+full interval t ∈[0, 1] with repeated generation passes; classifier-free guidance is applied only for
+t ∈[0.1, 1]. A single decoding pass then maps the final latent to pixels. Every step runs the same
+network, switching only the mode token and conditioning. Appendix B gives the solver, time grid,
+and guidance settings of every experiment.
+4
+EXPERIMENTS
+All ImageNet-1K 256×256 models are trained for 200 epochs, and each optimizer step combines
+one reconstruction step and 12 flow-matching steps on the same batch into a single gradient update.
+Otherwise, we follow the training setup of UNITE (Duggal et al., 2026), and refer to Appendices A
+and B for more training and evaluation details.
+7
+Preprint
+Table 4: Class-conditional generation on ImageNet-1K 256 × 256 with at most 250M param-
+eters. Models: generator (Gen.), pretrained autoencoder (AE), pretrained vision foundation model
+(VFM), or standalone decoder trained jointly with the generator (Dec.). No Aux. Info.: ✓if training
+uses no auxiliary pretrained representation (e.g., DINOv2 features). Repr.: the space in which dif-
+fusion runs, namely a frozen pretrained latent (Fixed), pixels (Pixel), or a latent learned jointly with
+the generator (Dynamic). Params counts all networks used. ∗: UNITE trained under our protocol.
+UNITE∗and UNIFIED: mean over five evaluation seeds. Larger models and all baselines: Table 10.
+Scale
+Method
+Models
+No Aux.
+Info.
+Repr.
+Epoch
+Params
+gFID ↓
+IS ↑
+UNITE-T∗
+Gen.+Dec.
+✓
+Dynamic
+200
+61M
+3.00
+272.4
+≤100M
+UNIFIED-T (Ours)
+Gen.
+✓
+Dynamic
+200
+62M
+2.78
+280.1
+JiT-B/16
+Gen.
+✓
+Pixel
+600
+131M
+3.66
+275.1
+PixelREPA-B/16
+Gen.+VFM
+Pixel
+600
+131M
+3.17
+284.6
+JiT-B/16 + RG
+Gen.
+✓
+Pixel
+600
+131M
+2.96
+251.1
+UNITE-S∗
+Gen.+Dec.
+✓
+Dynamic
+200
+117M
+2.76
+283.9
+100–150M
+UNIFIED-S (Ours)
+Gen.
+✓
+Dynamic
+200
+116M
+2.43
+295.9
+PixelU-B/16
+Gen.+VFM
+Pixel
+600
+164M
+3.40
+276.0
+DSD
+Gen.+VFM
+Dynamic
+50
+205M
+3.35
+255.0
+REPA-B
+Gen.+AE+VFM
+Fixed
+–
+214M
+2.15
+268.3
+UNITE-B∗
+Gen.+Dec.
+✓
+Dynamic
+200
+217M
+2.23
+282.1
+150–250M
+UNIFIED-B (Ours)
+Gen.
+✓
+Dynamic
+200
+215M
+2.08
+314.4
+4.1
+FULL UNIFICATION IMPROVES GENERATION AT MATCHED SIZE
+Table 2 compares three ways of spending a fixed parameter budget: separate networks, a shared
+generative encoder with a standalone decoder (UNITE), and one fully shared backbone (UNIFIED).
+Both UNIFIED variants improve gFID over UNITE at every size. The gain is largest when capacity
+is scarce (0.22 and 0.33 at Tiny and Small vs. 0.15 at Base), and Tiny UNIFIED nearly matches
+Small UNITE with about half the parameters (2.78 at 62M vs. 2.76 at 117M). This suggests that the
+shared backbone is more parameter-efficient than separate networks.
+4.2
+COMPARISON WITH PIXEL-SPACE AND LATENT DIFFUSION MODELS
+Table 4 compares UNIFIED with published class-conditional generators of at most 250M parameters
+on ImageNet-1K 256×256. Appendix D describes all baselines and extends the comparison to larger
+models (Table 10). In every parameter range, UNIFIED attains the lowest gFID without relying on
+a pretrained autoencoder or vision foundation model, although it is trained for only 200 epochs,
+against 600 for the pixel-space baselines. Even UNIFIED-T (62M, 2.78) improves on every pixel-
+space baseline of 131–164M (2.96–3.66), including PixelREPA-B/16 and PixelU-B/16, which align
+to a pretrained vision encoder. At 100–150M, UNIFIED-S (116M) reaches 2.43, against 2.96 for the
+best pixel-space model, JiT-B/16 with register guidance (RG). At 150–250M, UNIFIED-B (215M)
+reaches 2.08 and the highest IS in the table (314.4), improving on the end-to-end latent model DSD
+(3.35) and on two-stage REPA-B (2.15), which uses both a pretrained autoencoder and a vision
+foundation model. In the full comparison, every model with a lower gFID than UNIFIED-B uses at
+least 545M parameters.
+4.3
+HOW ARE THREE TASKS KEPT APART IN SHARED WEIGHTS?
+Table 3 traces the model design path from UNITE to UNIFIED at Base level. Each step changes
+one factor: where the decoder lives, the sequence layout, the encoding timestep, and the decoding
+timestep.
+Readout tokens. UNITE encodes from N(0, I) readout tokens at tenc = 0. The natural way to fold
+its decoder into the backbone is UNITE++, which adds learnable readout tokens for the image and
+decodes at the clean endpoint, tdec = 1. UNITE++ generates on par with UNITE but reconstructs
+worst of all models (rFID 2.20 vs. 1.41). We attribute this to the readout design: every image
+location must be recovered by attending from readout tokens to latents that have no fixed spatial
+8
+Preprint
+2
+4
+6
+8
+10
+12
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Centred Kernel
+Alignment (CKA)
+t = 0.7
+2
+4
+6
+8
+10
+12
+t = 0.9
+2
+4
+6
+8
+10
+12
+t = 0.99
+2
+4
+6
+8
+10
+12
+Layer Index
+t = 0.995
+Separate
+UNITE
+UNITE++
+UNIFIED (tdec=1)
+UNIFIED (tdec=−1)
+Figure 3:
+Layer-wise CKA between the encoding and generation passes.
+Following
+UNITE (Duggal et al., 2026), we record each block’s activations while encoding an image and
+while running the generation pass on its encoded latent corrupted to level t (t = 1 clean); each panel
+reports CKA (Kornblith et al., 2019) at one t.
+correspondence to it, an indirect route for dense decoding. UNITE++ keeps tenc = 0 because its
+encoder still reads N(0, I) readouts: tenc = 1 would label pure noise as clean, so the encoding
+timestep can be varied only once the encoder reads image patches.
+Position alignment. UNIFIED removes this detour by placing each pixel patch, latent, and noisy
+latent at the same sequence index. With the same timesteps as UNITE++ (tenc = 0, tdec = 1)
+and the same fully shared backbone, the layout is the only change: it improves rFID from 2.20 to
+1.39, but its gFID is worse (2.31). We attribute this to a mismatch between the encoder’s input
+and its timestep. The timestep tells the backbone how much of its input is observed: t = 0 means
+pure noise. In UNITE++, the encoder reads N(0, I) readout tokens, so tenc = 0 describes its input
+correctly. In UNIFIED, the encoder instead reads clean image patches, yet tenc = 0 still labels them
+as pure noise, so the backbone receives the same conditioning for a fully observed image as for the
+pure-noise input at the start of generation.
+Clean endpoint for encoding. Encoding and decoding are both deterministic maps from fully ob-
+served inputs, so both naturally belong at the clean endpoint. Changing only the encoding timestep
+to tenc = 1, with the layout and tdec = 1 fixed, improves gFID from 2.31 to 2.15 and rFID from
+1.39 to 0.97, now better than UNITE on both.
+CKA analysis. Following UNITE, we compare what the shared backbone computes when encoding
+and when generating with layer-wise CKA (Figure 3). Section 3.3 predicts that position alignment
+lets the encoding pass track the generation pass from the early blocks, and the CKA is consistent
+with this: both UNIFIED variants reach 0.48–0.72 in blocks 1–5 at every t, whereas UNITE and
+UNITE++ stay at or below 0.15. Their encoders start from N(0, I) readout tokens, which carry
+no image information until attention writes it in, so they align only in the last blocks (0.84–0.92 for
+UNITE). The one exception is the last block near the clean endpoint. At t = 0.995, its CKA drops in
+both models that decode at t = 1, whatever their layout (0.37 for UNIFIED with tenc = tdec = 1 and
+0.58 for UNITE++), but stays at 0.92 for UNITE, whose decoder is a separate network. We attribute
+this to the output conflict at the shared endpoint: encoding and generation output the clean latent,
+whereas decoding outputs pixel features, and near t = 1 the generation input is nearly identical to
+the decoding input, so the last block must serve both output spaces. We use CKA only to locate
+where the two passes diverge, while the effect of each design choice on generation is measured by
+the ablations in Table 3.
+Learned decoding timestep. We therefore condition decoding on its own learned timestep, tdec =
+−1. This removes the drop, keeping the last-block CKA at 0.92–0.93 from t = 0.9 to 0.995, on par
+with UNITE, and gives the best gFID and rFID at Base (2.08 and 0.95).
+4.4
+GENERATION QUALITY ACROSS TRAINING AND SAMPLING BUDGETS
+Figure 4 varies the training and sampling budgets at Base. UNIFIED (tdec=−1) has a lower gFID
+than UNITE at every training checkpoint (2.08 vs. 2.23 at epoch 200), as it does at Small and Tiny
+(Figure 6). Per training FLOP, UNITE is ahead early, but UNIFIED at 120 epochs already matches
+9
+Preprint
+40
+80
+120
+160
+200
+Epochs
+2
+2.25
+2.5
+2.75
+3
+3.25
+gFID ↓
+300
+600
+900
+1200
+Training EFLOPs
+2
+2.25
+2.5
+2.75
+3
+3.25
+16
+32
+64
+128
+256
+NFE
+2
+2.5
+3
+3.5
+4
+gFID ↓
+1
+2
+4
+8
+16
+Sampling TFLOPs
+2
+2.5
+3
+3.5
+4
+Training budget
+Sampling budget
+UNITE
+UNITE++
+UNIFIED (tdec=1)
+UNIFIED (tdec=-1)
+Figure 4: Generation quality across training and sampling budgets. Base models (∼215M) on
+ImageNet-1K 256 × 256, with CFG. Training budget: adaptive dopri5 solver over [0, 1], epoch-40
+to 200 checkpoints; epoch 200 (five evaluation seeds) and the UNIFIED (tdec=−1) checkpoints
+of Table 9 are means over multiple evaluation seeds, other checkpoints are single runs. Sampling
+budget: epoch-200 checkpoints, fixed-step Euler solver over [0, 1] on the shifted time grid of Ap-
+pendix B; sampling FLOPs per image = NFE × one flow-matching forward pass. Small and Tiny:
+Figure 6.
+Table 5: Text-to-image generation on GenEval, DPG-Bench, and GenAI-Bench at 256 × 256.
+All models are pretrained on same data (JourneyDB and BLIP3o) for 100k iterations with the same
+text encoder. “SFT” denotes further fine-tuning on BLIP3o-60k for 2k steps. #Params: generator +
+autoencoder. Higher is better for all metrics.
+Pretraining (100k steps)
+SFT (2k steps)
+Method
+#Params
+GenEval
+DPG-Bench
+GenAI-Bench
+GenEval
+DPG-Bench
+GenAI-Bench
+UNITE-B
+219M
+0.430
+0.780
+0.657
+0.826
+0.820
+0.709
+DiTDH-XL (FLUX-VAE)
+875M+84M
+0.497
+0.789
+0.637
+0.841
+0.835
+0.688
+JiT
+615M
+0.516
+0.782
+0.674
+–
+–
+–
+NanoGen (SD-VAE)
+611M+84M
+0.578
+0.804
+0.691
+–
+–
+–
+UNIFIED-B (Ours)
+218M
+0.471
+0.792
+0.672
+0.849
+0.833
+0.729
+UNIFIED-L (Ours)
+554M
+0.527
+0.794
+0.685
+0.878
+0.848
+0.748
+UNITE’s final gFID (2.22 vs. 2.23) with about 10% less compute (Table 9). At sampling time,
+UNIFIED improves on both UNITE and UNITE++ from 32 NFE to 256 NFE, whereas UNITE++ is
+best at 16 NFE, suggesting that its separate readout pathway may help under coarser steps. UNIFIED
+at 64 NFE (2.23) already surpasses both at 256 NFE (2.28 for both), with fewer sampling FLOPs
+(5.2 vs. 12.8 TFLOPs per image for UNITE). More generally, at matched quality, UNIFIED needs
+fewer sampling FLOPs than UNITE for any target gFID of 2.50 or better; UNITE is cheaper only
+for coarser targets.
+4.5
+TEXT-TO-IMAGE GENERATION
+Implementation details.
+We extend UNIFIED to text-to-image generation by replacing the class-
+embedding conditioner with a text-encoder conditioner. We use Qwen3-0.6B (Yang et al., 2025)
+as the text encoder and take its final-layer hidden states as the text conditioning tokens. Following
+DiffusionBench (Leng et al., 2026), we pretrain on JourneyDB (Sun et al., 2023) and the long- and
+short-caption subsets of BLIP3-o (Chen et al., 2025a) for 100K iterations, with a batch size of 1024
+and 10% text-condition dropout. All other settings, including the learning rate schedule, optimizer,
+EMA decay, gradient clipping, and sampler, follow the ImageNet setup. Optionally, we fine-tune
+the pretrained model on BLIP3o-60k for 2K steps.
+Evaluation.
+All models use a 50-step Euler solver with CFG scale 6.0 applied over the entire
+integration. Table 5 reports GenEval (Ghosh et al., 2023), DPG-Bench (Hu et al., 2024), and GenAI-
+Bench (Li et al., 2024). Figure 5 shows samples. After pretraining, UNIFIED-L (554M) improves
+on pixel-space JiT (615M) on all three benchmarks, and UNIFIED-B (218M) is on par with JiT
+10
+Preprint
+Table 6: Text-to-image generation at 512 × 512. All models are single-stage: they are trained end
+to end without a pretrained autoencoder. No Aux. Info.: ✓if training uses no auxiliary pretrained
+representation (e.g., DINOv2 features as a representation-alignment target), as in Table 4. Results
+of other methods are taken from their papers. “–” means not reported.
+Method
+#Params
+No Aux. Info.
+GenEval ↑
+DPG-Bench ↑
+PixelFlow-XL/4
+882M
+✓
+0.60
+0.779
+PixNerd-XXL/16
+1.2B
+0.73
+0.809
+PixelGen-XXL/16
+1.1B
+0.79
+–
+DeCo-XXL/16
+1.1B
+0.86
+0.814
+UNIFIED-B (Ours)
+218M
+✓
+0.87
+0.827
+A bare oak tree silhouetted
+against a winter sunset.
+A phoenix of fire in anime
+A Birman cat with blue eyes.
+the path to Heaven
+a panda bear with aviator glasses
+on its head
+A red-haired queen wearing a
+green and black dress and veil
+depicted in an intricate and
+elegant digital painting.
+Portrait of a gecko wearing a
+train conductor’s hat and holding
+a flag. Chinese ink.
+Blueberry ice cream in a stylish
+modern glass, ice cubes, nuts,
+mint leaves, splashing milk cream.
+Figure 5: Text-to-image samples from UNIFIED. Top: UNIFIED-L (554M) after 100K pretrain-
+ing steps at 256 × 256 (more in Figure 11). Bottom: UNIFIED-B (218M) after 10K fine-tuning
+steps at 512 × 512 (more in Figure 8). All samples use a 50-step Euler solver and CFG scale 6.0.
+Prompts are shown above each image.
+on DPG-Bench and GenAI-Bench. Unlike DiTDH-XL and NanoGen, UNIFIED does not rely on
+a pretrained VAE, which may have been trained on large-scale external data; it learns its latent
+space from scratch during training. After fine-tuning, UNIFIED-L improves on DiTDH-XL with
+a pretrained FLUX-VAE (959M in total) on all three benchmarks, and UNIFIED-B matches it on
+GenEval and DPG-Bench and improves on it on GenAI-Bench. Compared with UNITE-B (219M),
+UNIFIED-B improves on all three benchmarks both after pretraining and after fine-tuning, so the
+gain of full sharing on ImageNet carries over to text-to-image generation.
+Scaling to 512 × 512.
+Following DeCo (Ma et al., 2026a) and PixelGen (Ma et al., 2026b), we
+pretrain UNIFIED-B at 256×256 for 200K iterations, fine-tune it at 512×512 for 10K iterations, and
+apply SFT for 2K iterations (Appendix F.4). With the patch size unchanged, each image now yields
+1,024 latent tokens, a 4× longer sequence. Table 6 compares UNIFIED-B with single-stage pixel
+diffusion models, which, like UNIFIED, train without a pretrained autoencoder: PixelFlow (Chen
+et al., 2025c), PixNerd (Wang et al., 2026a), PixelGen (Ma et al., 2026b), and DeCo (Ma et al.,
+2026a). UNIFIED-B (218M) reaches the highest GenEval (0.87) and DPG-Bench (0.827) scores.
+It improves on the strongest baseline, DeCo-XXL/16 (1.1B), with about 5× fewer parameters, one
+11
+Preprint
+eighth of its 512 × 512 fine-tuning iterations (10K vs. 80K), and no DINO supervision, and on
+PixelFlow-XL/4 (882M), the only baseline that likewise uses no auxiliary pretrained representation,
+by 0.27 on GenEval. A single fully shared network therefore still encodes, generates, and decodes
+well with a 4× longer latent sequence. Figure 5 (bottom) and Figure 8 show 512 × 512 samples.
+5
+CONCLUSION
+We presented UNIFIED, a single diffusion transformer that encodes, generates, and decodes with
+fully shared weights. We systematically study how to unify these modes, including partial versus
+full weight sharing, sequence layout, and the timestep conditioning of each mode, and find that it
+works best when the three modes are cast as position-aligned sequence maps and decoding receives
+its own learned timestep. At matched parameters on ImageNet-1K, UNIFIED improves generation
+over UNITE at every size. This also extends to text-to-image generation, where it is competitive with
+substantially larger models on GenEval, DPG-Bench, and GenAI-Bench, and at 512 × 512 exceeds
+single-stage pixel diffusion models with around one billion parameters. Overall, full unification of
+latent diffusion is not merely feasible but beneficial.

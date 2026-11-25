@@ -1,0 +1,84 @@
+{
+  "title_zh": "Motion Mamba 2.0：面向长时程人形控制的自回归扩散 Mamba",
+  "affiliations": [
+    "Peking University",
+    "Korea University",
+    "Monash University",
+    "Nanyang Technological University"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "面向长时程、实时可交互的人形运动生成，在数十秒滚动基准与 Unitree G1 实机上同时验证控制精度和推理延迟，问题对交互动画与人形机器人均关键。",
+    "novelty": 78,
+    "novelty_reason": "在 ARDY 的根–体扩散框架上引入 PCM，将 Mamba 递归状态汇总、状态差分与文本条件写入注意力可读槽位，并区分扩散采样迭代与已接受运动历史的提交。",
+    "technical_depth": 84,
+    "technical_depth_reason": "统一训练预算下对比大量基线，包含架构消融、推理组件消融、配对加速测量与实机多任务评估；但部分短时程语义指标并非全面领先，结论边界较克制。"
+  },
+  "reading": {
+    "why_read": "提出 Motion Mamba 2.0，将局部注意力、可恢复的 Mamba-3 递归状态与持久内容记忆（PCM）整合进自回归根–体扩散，实现长时程可交互人形运动生成并在 Unitree G1 上完成真实部署。",
+    "task": "任务是在线生成可被下游跟踪器执行的人形运动，对交互动画与人形机器人很关键：智能体要在运动过程中响应新文本指令与空间目标，而非离线合成固定片段。现有自回归扩散逐窗生成，但有限注意力缓存会丢弃较早运动特征，无限缓存又随序列增长；重复去噪还带来显著推理开销。",
+    "findings": [
+      {
+        "point": "有限注意力缓存丢失远端历史，无限缓存成本随序列增长",
+        "detail": "逐窗生成时缓存只能保留最近若干窗，更早运动特征被逐出；若改为不设界，存储与计算又随时长增长，因此需要压缩但有界的运动历史表示。"
+      },
+      {
+        "point": "压缩递归状态不能直接被注意力读取",
+        "detail": "Mamba 递归状态携带演化上下文，但与注意力缓存暴露历史的方式不同；简单把注意力与 Mamba 并置，并不会让递归历史成为注意力可检索的内容。"
+      },
+      {
+        "point": "扩散中间候选不能写入运动历史",
+        "detail": "同一窗口的多次去噪候选只是采样迭代，并非按物理时间推进的运动；若把中间状态提交为历史，会把采样迭代与真实时间混在一起。"
+      }
+    ],
+    "method": "模型沿用根–体分解：根网络先预测全局轨迹，体网络再以其局部特征为条件生成关节运动。每个去噪器内，局部注意力检索最近窗口，Mamba-3 从已接受前缀恢复递归状态。PCM 把递归状态汇总、相邻已接受窗口的状态差分和文本条件映射为动态内容槽，经门控写入后供注意力读取；槽位、缓存与递归状态只在干净窗口被接受后一起提交。推理侧用只读去噪、融合 Mamba 预处理核、三路 CFG 的 CUDA Graph 重放和流程简化降低调度与显存开销。",
+    "results": "HiPHI 39.52 s 上 Root/End CE 7.55/13.64 cm，End CE 优于 ARDY 的 14.84 cm；p50 延迟 1685.35→276.14 ms（6.138×）；G1 上 94/100 全任务成功、无摔倒。",
+    "limitations": "作者只承认尚未覆盖物体操作；此外短时程语义指标并非全面领先，实机部署仍依赖外部 SONIC 跟踪器，生成与控制未联合优化。"
+  },
+  "claims": [
+    {
+      "claim": "在重定向 HiPHI 的 39.52 s 滚动上，Root CE 为 7.55 cm、End CE 为 13.64 cm。",
+      "numbers": [
+        "39.52",
+        "7.55",
+        "13.64"
+      ],
+      "source_span": "Sec. 5.2 / Table 1, row 'Motion Mamba 2.0', 39.52 s column",
+      "quote": "At 39.52 s, our method achieves 7.55/13.64 cm"
+    },
+    {
+      "claim": "End CE 优于 ARDY 的 14.84 cm。",
+      "numbers": [
+        "14.84"
+      ],
+      "source_span": "Sec. 5.2, 39.52 s comparison",
+      "quote": "End CE of 14.84 cm from ARDY"
+    },
+    {
+      "claim": "优化后 p50 完整窗口延迟由 1685.35 ms 降至 276.14 ms。",
+      "numbers": [
+        "1685.35",
+        "276.14"
+      ],
+      "source_span": "Sec. 5.4 / Table 7",
+      "quote": "reduces p50 latency from 1685.35 to 276.14 ms"
+    },
+    {
+      "claim": "配对加速中位数为 6.138 倍。",
+      "numbers": [
+        "6.138"
+      ],
+      "source_span": "Sec. 5.4 / Table 7",
+      "quote": "median paired speedup is 6.138×"
+    },
+    {
+      "claim": "Unitree G1 上 100 次试验中 94 次全任务成功，未观察到摔倒。",
+      "numbers": [
+        "94",
+        "100"
+      ],
+      "source_span": "Table 8 / Sec. 6.3",
+      "quote": "Across all four tasks, 94/100 trials achieve full-task success, 97/100 meet the stability criterion, and no falls are observed"
+    }
+  ]
+}

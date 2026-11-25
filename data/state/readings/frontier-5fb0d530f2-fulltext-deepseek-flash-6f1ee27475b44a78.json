@@ -1,0 +1,82 @@
+{
+  "title_zh": "UNIFIED：单 Transformer 隐扩散模型",
+  "affiliations": [
+    "University of Illinois Urbana-Champaign"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把 latent diffusion 的三网络拆解推进到单个全共享 DiT，并在匹配参数下证明统一解码带来收益，对单阶段生成模型有实际意义。",
+    "novelty": 79,
+    "novelty_reason": "相对 UNITE 不只是多共享一个 decoder：位置对齐序列、模式 token 与独立解码时间步是实质设计差异，但整体仍是 DiT 多模式共享路线的延续。",
+    "technical_depth": 87,
+    "technical_depth_reason": "给出 UNITE++ 负结果、逐因素消融、CKA 诊断、三个参数规模与文生图验证，证据链较完整，基线与训练协议对齐清楚。"
+  },
+  "reading": {
+    "why_read": "提出 UNIFIED，将隐扩散的编码、生成、解码并入同一个全共享 DiT，以位置对齐序列、模式 token 和独立解码时间步区分三种模式，在 ImageNet-1K 上以 215M 参数取得 2.08 gFID。",
+    "task": "隐扩散通常把编码器、生成器、解码器分成三个网络，先训练并冻结自编码器，再让生成器拟合其 latent；这既固定了表示，也让容量分配对生成的影响难以预测。UNITE 把编码与生成合并，但解码器仍是独立网络；作者要问：最后这张网能否也折进同一个 DiT，并真正带来收益。",
+    "findings": [
+      {
+        "point": "读出 token 布局迫使解码绕道 attention",
+        "detail": "UNITE++ 让像素从像素 readout token 反查 latent，而 latent token 与图像位置无固定对应；每个图像位置都要通过 attention 汇聚内容，密集重建因此变差，rFID 2.20 对 UNITE 的 1.41。"
+      },
+      {
+        "point": "编码时间步与输入内容不匹配",
+        "detail": "改成位置对齐后，编码器读的是干净图像 patch，却仍用纯噪声端点作条件；backbone 收到与生成起点相同的条件，反而损害生成。改为干净端点后 gFID 从 2.31 降到 2.15。"
+      },
+      {
+        "point": "干净端点上的输出冲突",
+        "detail": "编码和生成都输出干净 latent，解码却输出像素；接近干净端点时生成输入与解码输入几乎相同，AdaLN 条件也相同，最后几个 block 必须同时服务两个输出空间。给解码单独的时间步嵌入后，末层 CKA 恢复，gFID 降到 2.08。"
+      }
+    ],
+    "method": "把三种模式都写成等长、位置对齐的序列图：像素 patch、latent token、加噪 latent token 共用同一序列下标与 RoPE 位置，序列长度为 $N+1$。主干是完整共享的 DiT，模式只靠序列首位的可学习 mode token、轻量输入/输出 head 与 AdaLN 条件区分；编码在干净端点运行，生成用采样时间步，解码改用独立学习的时间步嵌入以避开输出冲突。训练仍是单阶段，只用重建损失 $\\mathcal{L}_{rec}$（$\\ell_1$ 与 LPIPS）和 flow-matching 损失 $\\mathcal{L}_{gen}$，生成损失对 latent 目标做 stop-gradient，无对抗损失、无预训练编码器。代价是位置对齐把 latent 长度钉死为 $K=N$，失去 readout 的可压缩性。",
+    "results": "ImageNet-1K UNIFIED-B（215M）gFID 2.08，优于 UNITE 2.23；512² 文生图 UNIFIED-B（218M）GenEval 0.87，超过更大单阶段像素扩散基线。",
+    "limitations": "位置对齐把 latent 长度钉死为 patch 数，高分辨率下序列变长、成本上升；小模型上学习解码时间步并非总优，文生图也只在有限基准与数据上验证。"
+  },
+  "claims": [
+    {
+      "claim": "UNIFIED-B 以 215M 参数达到 gFID 2.08。",
+      "numbers": [
+        "215",
+        "2.08"
+      ],
+      "source_span": "Abstract",
+      "quote": "reaches 2.08 with 215M parameters"
+    },
+    {
+      "claim": "UNITE 的 gFID 为 2.23。",
+      "numbers": [
+        "2.23"
+      ],
+      "source_span": "Section 1",
+      "quote": "vs. UNITE’s 2.23"
+    },
+    {
+      "claim": "512×512 文生图 UNIFIED-B（218M）GenEval 0.87。",
+      "numbers": [
+        "512",
+        "218",
+        "0.87"
+      ],
+      "source_span": "Section 1",
+      "quote": "At 512 × 512, UNIFIED-B (218M) reaches 0.87 on GenEval"
+    },
+    {
+      "claim": "UNITE++ 的 rFID 为 2.20，UNITE 为 1.41。",
+      "numbers": [
+        "2.20",
+        "1.41"
+      ],
+      "source_span": "Section 1",
+      "quote": "rFID 2.20 vs. 1.41"
+    },
+    {
+      "claim": "位置对齐但编码仍用噪声端点时 gFID 为 2.31，改为干净端点后为 2.15。",
+      "numbers": [
+        "2.31",
+        "2.15"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "improves gFID from 2.31 to 2.15"
+    }
+  ]
+}

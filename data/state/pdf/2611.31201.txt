@@ -1,0 +1,1127 @@
+Embo-Harness: Towards Understanding Frontier-Model-as-Policy Harness
+https://dravenalg.github.io/projects/Embo-Harness/
+Xiao-Ming Wu1, Kang Liao1, Yuexiao Ma1, Taolin Zhang1, Mingqian Zhou1
+Nuo Chen5, Ziming Li6, Yihang Luo1, Rui Li1, Zhonghua Wu3
+Tianyu Xie4, Xiawu Zheng4, Zhongang Cai3, Zhi Hou2, Chen Change Loy1*
+1S-Lab, Nanyang Technological University
+2ACE Robotics
+3SenseTime Research
+4Xiamen University
+5Lenovo Robotics Lab
+6University of Connecticut
+w/
+joint-bias
+low-level action,
+ although understand, 
+but not help 
+(-23.3)
+20
+40
+60
+RoboLab benchmark
+average success rate
+joint
+absolute 
+EEF
+absolute
+chunk 8
+astra
+xhigh
+image
+640
+multiact
+13.6
+8.6
+10.5
+13.9
+harness time (min.)
+baseline setup
+joint absolute
+chunk 15
+astra medium
+image 224
+14.6
+10.5
+80
+100
+refine
+VLA
+14.8
+pi0.5
+baseline
+43.3
+43.3
+58.3
+65.0
+83.3
+90.0
+96.7
+45.0
+RoboLab benchmark
+average success rate
+(a) recipe: use frontier models’ native can-do
+(b) insight: robotic ability stems from spatial perception
+10
+30
+50
+70
+w/o
+joint-bias
+w/
+traj.-bias
+w/o
+traj.-bias
+gen.
+destination
+gen.
+action
+(-18.3)
+50
+40
+(+5.0)
+90
+60
+directly generate and use
+destination is enough 
+(c) demos
+Embo-Harness
+Place the lid of the same color onto the game piece on the table.
+Place the potato in the basket.
+Turn on the faucet to wash the dishes.
+Pour the water from the blue cup into the white cup.
+Stack the yellow block on top of the green block.
+Insert the flower into the vase.
+Pouring water forward avoids 
+spilling it onto the gripper.
+Remove the green block first before 
+placing the yellow one on top.
+The game piece is red, so I 
+should use the red lid.
+Figure 1. Embo-Harness: (a) Recipe. We progressively develop a frontier-model-as-policy harness on RoboLab benchmark (20 tasks in
+3 runs). Short multi-action sequences enable multiple consecutive actions in a single call. (b) Insight. Joint bias refers to direct joint-
+angle generation without IK assistance, while trajectory bias refers to frame-wise action generation instead of target-pose prediction with
+interpolation. EEF destination prediction directly generates the final target pose. (c) Demos. Real-world manipulation demos.
+Abstract
+Frontier multimodal models exhibit extraordinary gener-
+alization in generating robot actions from observations
+and instructions, enabling a new paradigm in which they
+serve directly as policies within closed-loop robotic har-
+nesses. However, the design principles of such harnesses,
+*Corresponding author.
+and the capabilities underlying their strong performance,
+remain unclear. We present Embo-Harness, a framework
+for systematically studying frontier-model-as-policy har-
+nesses. We investigate four components of the robotic agen-
+tic loop, namely, prompting, planning, action execution,
+and tool use, and distill six empirical findings into a practi-
+cal recipe. This recipe prioritizes interfaces that exploit the
+model’s native visual reasoning and tool-use capabilities
+1
+arXiv:2611.31201v1  [cs.RO]  23 Nov 2026
+over handcrafted plans, skills, or action priors, and iden-
+tifies effective choices for action representation, chunking,
+reasoning effort, visual observations, short multi-action se-
+quences, and policy refinement. On RoboLab-120, Embo-
+Harness achieves an 83.3% success rate, outperforming the
+strongest reported baseline by 26.2 percentage points. It
+also succeeds in 15 of 20 zero-shot trials across four real-
+world manipulation tasks. Beyond performance, controlled
+interventions indicate that the studied model depends more
+strongly on accurate spatial target estimation than on ex-
+plicit low-level joint or trajectory generation. These results
+provide both a practical recipe for building strong frontier-
+model-as-policy harnesses and a clearer account of the ca-
+pabilities that drive their performance.
+1. Introduction
+Recent advances in frontier models, such as GPT-6-
+Astra [49], are reshaping robotic manipulation [62, 74].
+Their remarkable generalization capabilities enable them to
+handle complex instructions, diverse environments, long-
+horizon manipulation, and failure recovery, substantially
+outperforming existing robot foundation models (RFMs),
+such as Vision-Language-Action models (VLAs) [6, 36, 38,
+67, 78] and World Action Models (WAMs) [42, 71, 73], on
+recent benchmarks [14, 46, 68, 77], offering a different pos-
+sibility for future robotic policies.
+A robotic harness is the software loop that connects
+observations and instructions to planning, tool use, ac-
+tion generation, execution, and feedback.
+As illustrated
+in Figure 2, existing robotic harnesses can be broadly di-
+vided according to how actions are produced.
+Tool- or
+code-as-policy [16, 20, 24, 29, 31, 33, 34, 44, 65] har-
+nesses use multimodal models [3, 27] for high-level plan-
+ning but execute actions through predefined tools or gen-
+erated code.
+Model-as-policy [56, 58, 75] harnesses in-
+stead delegate action generation to specialized learned poli-
+cies. Recent frontier-model-as-policy harnesses take a fur-
+ther step by using the frontier model itself to plan and gen-
+erate robot actions within a closed loop. Recent studies
+have established the feasibility of this paradigm [15, 43, 61–
+63, 74]. For example, SenseNova-RoboRSI [62] improves
+a frontier-model policy through recursive self-improvement
+based on prior training datasets and test-time execution roll-
+outs, while GPT-as-Policy [61] and related studies [17, 49]
+profile the native robotic capabilities of frontier models.
+However, these works primarily demonstrate or improve the
+performance of particular systems. They do not systemat-
+ically study which harness components are responsible for
+the gains, or why general-purpose frontier models can out-
+perform policies specialized for robotic control.
+We address these questions through Embo-Harness,
+a controlled study for frontier-model-as-policy harnesses.
+plan
+frontier
+action
+tool 
+code
+prompt
+frontier
+action
+closed loop
+(1) tool / code-as-policy harness
+(3) frontier-model-as-policy harness
+prompt
+plan
+frontier
+action
+model
+(2) model-as-policy harness
+prompt
+plan
+closed loop
+closed loop
+act
+act
+act
+frontier
+Figure 2. Typical Robotic Harness Paradigms. (1) Tool/code-as-
+policy harnesses leverage frontier models for high-level planning
+while relying on predefined tools or generated code for action ex-
+ecution. (2) Model-as-policy harnesses delegate action generation
+to specialized policy models. (3) Frontier-model-as-policy har-
+nesses directly generate robot actions using frontier models. All
+three paradigms operate within a closed-loop framework, differ-
+ing primarily in how robot actions are generated.
+Starting from a common baseline, we vary individual design
+factors and progressively integrate the effective choices,
+rather than optimizing the complete system as a single
+configuration.
+Our study covers four dimensions of the
+robotic agentic loop: prompting, planning, action execu-
+tion, and tool use. The resulting six findings can be summa-
+rized into three principles. First, suitable action representa-
+tions and execution strategies are essential: frontier models
+more effectively generate end-effector actions than joint-
+space actions and favor short, fixed-length action chunks
+over adaptive chunking. Second, their performance bene-
+fits substantially from stronger reasoning and richer visual
+observations, including higher resolutions and complemen-
+tary viewpoints. Third, tools and learned policies should
+complement the model’s native capabilities rather than re-
+place them: manually designed plans and failure-derived
+reminders provide limited benefits, whereas short multi-
+action sequences and VLA refinement improve effective-
+ness and efficiency. Guided by this recipe, Embo-Harness
+achieves an 83.3% success rate on RoboLab-120, compared
+with 57.1% for SenseNova-RoboRSI, the strongest existing
+baseline. It also completes 15 of 20 zero-shot trials across
+four real-world manipulation tasks.
+Beyond performance, we further investigate why fron-
+tier models succeed as robotic policies. Although they can
+generate joint-level and trajectory-level actions commonly
+learned by VLAs and WAMs, explicitly requiring such gen-
+eration degrades performance. In contrast, directly predict-
+ing the final EEF destination outperforms short-range action
+generation, suggesting a stronger reliance on spatial percep-
+tion than low-level action generation. We further validate
+2
+this hypothesis through spatial position estimation experi-
+ments, observing broadly aligned trends with manipulation
+performance across reasoning efforts and visual resolutions,
+as well as comparable errors between direct position esti-
+mates and gripper positions in failed grasps, both measured
+against ground-truth target positions. These findings further
+highlight the central role of spatial perception in frontier
+models’ robotic capabilities.
+2. Revisiting Agentic Robotics
+Robot policies map task instructions and observations to ex-
+ecutable actions [2, 40, 47, 51]. Traditionally, these poli-
+cies relied on handcrafted rules and specialized tools [8,
+19, 59, 60], while recent advances in neural networks and
+large-scale robot data have enabled learned policies [7, 18,
+26, 55, 76] and robot foundation models (RFMs), including
+Vision-Language-Action models (VLAs) [6, 36, 38, 67, 78]
+and World Action Models (WAMs) [42, 71, 73].
+Beyond standalone policies, agentic robotics employs
+software-based harnesses to coordinate perception, plan-
+ning, action execution, and tool use within a closed-loop
+framework. As illustrated in Fig. 2, existing robotic har-
+nesses can be broadly categorized into three paradigms
+based on how robot actions are generated.
+Tool/code-as-policy.
+These harnesses typically leverage
+vision-language models for perception and high-level plan-
+ning, while relying on predefined tools or generated code
+for action execution [10, 12, 16, 20, 21, 24, 25, 29–
+31, 33, 34, 41, 44, 57, 65, 72].
+Such tools include ob-
+ject detection [48], segmentation [9, 39, 52], grasp detec-
+tion [11, 22, 66], and motion planning [19, 60]. Code-as-
+Policy methods further enable flexible composition and in-
+vocation of these tools through code [24, 25, 29, 44].
+Model-as-policy. Rather than relying solely on predefined
+tools, these harnesses delegate action generation to learned
+policy models, while VLMs coordinate high-level planning,
+execution, and feedback [28, 32, 35, 53, 56, 58, 64, 70, 75].
+By integrating specialized policy models into the agentic
+loop, these approaches combine high-level reasoning with
+learned low-level control .
+Frontier-model-as-policy.
+Recent advances in frontier
+models, such as GPT-6-Astra, have introduced a new
+paradigm in which frontier models directly generate robot
+actions, integrating perception, planning, and action gener-
+ation within a unified agentic loop [15, 17, 37, 43, 45, 61–
+63, 74]. Recent studies show that frontier models exhibit
+remarkable generalization, outperforming several VLA and
+WAM baselines on robotic manipulation benchmarks [62,
+74]. However, existing studies have primarily focused on
+demonstrating their capabilities, leaving open how to effec-
+tively design frontier-model-as-policy harnesses and what
+underlying capabilities drive their performance.
+Thus, we introduce Embo-Harness to systematically de-
+prompt
+act
+plan
+tool
+1) instruction
+2) visual
+1) context
+2) planning
+3) model & effort
+1) acting
+2) policy
+1) action format
+2) action chunk
+3) asyn. exec.
+agentic loop
+closed loop
+Figure 3. Overview of the Robotic Agentic Loop. A robotic
+harness consists of four key dimensions: 1) Prompting, including
+task instructions and visual observations; 2) Planning, including
+context management, planning strategies, and model and reason-
+ing effort selection; 3) Tool Use, including acting tools and policy
+models; and 4) Action Execution, including action formats, action
+chunking, and asynchronous execution. These dimensions operate
+within a closed-loop framework and form the design space sys-
+tematically explored in Embo-Harness.
+velop a practical harness recipe and investigate the under-
+lying capabilities of frontier models. A concurrent online
+blog, Astranomy [69], similarly explores frontier models
+for robotic manipulation. Our work further develops a uni-
+fied recipe through progressive exploration and investigates
+their underlying capabilities, highlighting the importance of
+spatial perception over low-level action generation.
+3. Developing Embo-Harness
+Frontier models have reshaped robotic harnesses while in-
+troducing a fundamental design challenge: how to fully
+leverage their capabilities within an agentic loop. Toward
+this end, we systematically explore four key dimensions
+of the robotic agentic loop: prompting, planning, action
+execution, and tool use, as illustrated in Fig. 3.
+Specif-
+ically, prompting covers text prompts and visual inputs;
+planning involves context management, planning strategies,
+and model selection; action execution considers action rep-
+resentations, action chunk sizes, and asynchronous infer-
+ence; and tool use further extends the harness through com-
+bined action generation and integration with robot policies.
+Baseline Setup. For our exploration, we follow the ex-
+perimental setup of π0.5 [36]. Specifically, we adopt abso-
+lute joint positions as the action representation with an ac-
+tion chunk of 15, providing only task instructions and dual-
+view images at a resolution of 224 × 126 as inputs. We
+use GPT-6-Astra with medium reasoning effort as our base-
+line, operating in goal mode for task execution. We adopt
+a progressive evaluation protocol, where each experiment
+varies a single design factor while keeping all others fixed.
+The best-performing configuration identified at each stage
+is then carried forward to subsequent experiments, progres-
+sively refining the harness recipe. The full exploration re-
+sults are shown in Table 1. All experiments are conducted
+on a subset of 20 tasks from the RoboLab benchmark [68],
+with 3 trials per task to reduce the impact of randomness.
+3
+Table 1. Ablation across the robotic harness design space on
+RoboLab (20 tasks, 3 runs). We evaluate the effects of differ-
+ent design choices across four key dimensions: action execution,
+planning, prompting, and tool use. We report success rate (SR),
+task completion score (Score), and harness execution time.
+Model
+SR (%) Score Harness time (min.)
+Action Execution
+action space
+joint absolute
+43.3
+52.2
+13.6
+joint delta
+48.3
+53.8
+12.1
+EEF absolute
+43.3
+51.9
+8.6
+EEF delta
+45.0
+51.4
+9.0
+action chunking
+chunk 4
+40.0
+50.8
+9.0
+chunk 8
+58.3
+68.3
+10.5
+chunk 15
+43.3
+51.9
+9.0
+chunk 30
+21.7
+28.1
+5.0
+action exection
+syn. exection
+58.3
+68.3
+10.5
+asyn. exection
+51.7
+53.6
+12.5
+Planning
+model type and effort
+GPT-6-astra-medium
+58.3
+68.3
+10.5
+GPT-6-astra-high
+51.7
+55.6
+14.5
+GPT-6-astra-xhigh
+65.0
+69.2
+13.9
+GPT-6.1-sol-medium
+40.0
+44.4
+12.8
+GPT-6.1-terra-medium
+38.3
+39.7
+12.1
+planning
+implicit planning
+65.0
+69.2
+13.9
+explicit planning
+61.7
+65.0
+16.5
+context
+full context
+65.0
+69.2
+13.9
+cut visual history context
+8x token cost (regen. KV-cache)
+Prompting and Visual Inputs
+prompt
+system prompt only
+65.0
+69.2
+13.9
+with notice reminder
+60.0
+60.3
+15.3
+views
+two views
+65.0
+69.2
+13.9
+single view
+30.0
+36.4
+13.1
+visual resolution
+image 224 × 126
+65.0
+69.2
+13.9
+image 320 × 180
+71.7
+73.6
+13.4
+image 640 × 360
+83.3
+86.7
+14.6
+Tool and Policy Integration
+short action sequence as tool
+one action at a time
+83.3
+86.7
+14.6
+with action sequence
+90.0
+90.0
+10.5
+policy models as tool
+frontier model only
+90.0
+90.0
+10.5
+select policy models
+58.3
+62.2
+4.4
+refine policy models
+96.7
+96.7
+14.8
+3.1. Action Execution
+Action Format. We first investigate action execution, the
+dimension most closely related to robot control, by exam-
+ining whether frontier models can understand and gener-
+ate different action representations and identifying the most
+effective one. In robotic manipulation, two common ac-
+tion representations are end-effector (EEF) actions, which
+specify the spatial position of the robot end-effector, and
+joint-space actions, which specify the angles of individual
+robot joints. Given the robot’s kinematic parameters, EEF
+actions can be converted into joint-space actions through in-
+verse kinematics (IK). Both representations can be further
+expressed as absolute values or relative offsets (delta) from
+the previous timestep, resulting in four action formats. As
+shown in Table 1, frontier models can handle all four for-
+mats with comparable success rates. However, generating
+joint-space actions is more challenging and incurs longer
+execution times. We observe that frontier models often re-
+sort to writing code to use IK to compute joint values, di-
+rectly generating them in only approximately 30% of cases,
+typically for simple or repeated actions. Absolute and delta
+formats exhibit comparable performance and time cost.
+Action Chunk. We next investigate whether frontier mod-
+els can adapt their generated actions to different action
+chunk sizes. We observe that frontier models tend to predict
+similar target positions regardless of the specified chunk
+size, suggesting limited awareness of action execution hori-
+zons (detail in appendix). Consequently, larger chunks re-
+sult in slower movements and may exhaust the episode step
+budget, while smaller chunks may provide insufficient exe-
+cution time to reach the target, requiring repeated action ex-
+ecution to the same target. As shown in Table 1, a chunk size
+of 8 achieves the best performance by balancing movement
+speed and execution horizon, outperforming both larger
+and smaller chunk selections.
+Asynchronous Execution.
+We next investigate whether
+frontier models can support asynchronous inference, a tech-
+nique commonly used in robot policies to reduce execution
+latency. Specifically, asynchronous inference starts generat-
+ing the next action chunk before the current chunk finishes
+executing, allowing the next chunk to be ready upon com-
+pletion and thereby reducing the idle time between consec-
+utive chunks. For frontier models, this requires anticipat-
+ing the future robot state after executing the current chunk
+and generating subsequent actions accordingly. However,
+Table 1 shows that frontier models struggle to anticipate
+such future states and instead focus primarily on immedi-
+ate movements. Therefore, we do not employ asynchronous
+inference in subsequent experiments.
+3.2. Planning
+Model Types.
+Having established the recipe for action
+execution, we next turn our attention to model selection
+4
+and planning.
+We first investigate the impact of differ-
+ent frontier models and reasoning efforts.
+For instance,
+GPT models [49] offer different variants (e.g., 6-Astra, 6.1-
+Sol, 6.1-Terra) and reasoning efforts (e.g., xhigh, high, and
+medium). As shown in Table 1, stronger model variants
+and higher reasoning efforts generally achieve better per-
+formance. Interestingly, medium reasoning effort outper-
+forms high, suggesting that more reasoning does not neces-
+sarily translate into better action execution.
+Explicit Planning.
+We next investigate whether ex-
+plicit planning improves robotic manipulation performance.
+Specifically, we compare two strategies: implicit planning,
+where the goal model directly plans and executes the task,
+and explicit planning, where an additional model call in
+plan mode decomposes the task into subtasks, which are
+then sequentially executed by the goal model. As shown
+in Table 1, explicit planning provides no performance im-
+provement while increasing execution time due to addi-
+tional planning overhead.
+Context Management.
+We further investigate whether
+frontier models require the full interaction history for ac-
+tion generation. During task execution, the interaction his-
+tory continuously grows with new observations, although
+earlier observations may not always be necessary for sub-
+sequent actions. Our experiments show that removing his-
+torical observations reduces execution time while maintain-
+ing comparable performance. However, this substantially
+decreases the KV-cache hit rate from over 95% to approxi-
+mately 25%, resulting in a 7–8× increase in uncached token
+consumption.
+3.3. Prompting and Visual Inputs
+Notice Reminder.
+Having explored model selection
+and planning, we next investigate whether additional
+prompt guidance improves robotic manipulation perfor-
+mance. Specifically, we employ recursive self-improvement
+(RSI) to analyze failure cases from baseline rollouts and
+distill 12 task-agnostic textual reminders, also removing all
+task-specific information to retain only task-agnostic guid-
+ance. As shown in Table 1, these reminders decrease per-
+formance and also increase execution time, suggesting that
+introducing failure-derived robotic skills offers limited ben-
+efits to frontier models. Details of reminders are provided
+in the appendix.
+Visual Views. Multi-view observations are a key design
+choice in robotic policies, providing complementary visual
+information for manipulation. We next investigate whether
+this design is equally important for frontier-model-as-policy
+harnesses. Following conventional robot policies, our base-
+line uses both third-person and wrist-view observations,
+which we compare against using only a single third-person
+view. As shown in Table 1, removing the wrist view leads
+to a performance drop, highlighting the importance of com-
+plementary visual viewpoints for robotic manipulation.
+Visual Resolution. We next investigate the impact of vi-
+sual input resolution on robotic manipulation performance.
+Specifically, we evaluate different input resolutions to ex-
+amine their effects on action execution. As shown in Ta-
+ble 1, higher-resolution visual inputs provide finer spa-
+tial details, leading to substantial improvements in harness
+performance. For the remaining experiments, we adopt a
+higher visual resolution of 640 × 360.
+3.4. Tool and Policy Integration
+Short Multi-action Sequences.
+We further investigate
+whether additional tools can further enhance harness per-
+formance, focusing on short multi-action sequences that en-
+able multiple consecutive actions to be executed together.
+Specifically, we introduce an additional tool that allows
+frontier models to generate multiple consecutive actions in
+a single output without observing intermediate states. As
+shown in Table 1, this strategy further improves both task
+performance and execution speed. We further analyze the
+short multi-action sequences employed during task execu-
+tion and identify three common patterns: (1) approach,
+grasp, and retreat; (2) lower, release, and withdraw; and (3)
+repetition of previously executed action sequences. Over-
+all, short multi-action sequences are used in approximately
+30% of cases, with an average of three actions generated
+per sequence. These results motivate the inclusion of short
+multi-action sequences as a tool in our harness.
+VLA Integration. Finally, we investigate how to integrate
+VLAs into the harness to assist action execution. Specifi-
+cally, we explore two strategies: (1) VLA selection, where
+frontier models decide at each step whether to execute ac-
+tions themselves or delegate execution to a VLA; and (2)
+VLA refinement, where a VLA proposes an action at each
+step, which frontier models then refine and execute. As
+shown in Table 1, VLA selection substantially reduces ex-
+ecution time but also degrades task performance. We ob-
+serve that frontier models struggle to accurately assess VLA
+capabilities and tend to delegate most actions to the VLA,
+even when its predictions are unreliable. In contrast, VLA
+refinement achieves the best performance, suggesting that
+VLAs and frontier models possess complementary capabil-
+ities and that refining VLA-proposed actions leads to more
+effective task execution.
+It is noteworthy that this result does not rule out selection
+as a strategy: calibrated exposure to the VLA’s successes
+and failures, or an explicit estimate of its confidence, may
+enable more reliable delegation. We leave this possibility to
+future work.
+3.5. Recipe Summary
+Through systematic exploration, we distill a practical recipe
+for building strong frontier-model-as-policy harnesses, as
+5
+plan&
+act
+instruction
+frontier
+models
+EEF abs.
+chunk 8
+multiact
+VLA
+use
+refine
+high resolution
+multi-view images
+action
+e.g. GPT-6-astra xhigh
+(a) Embo-Harness Pipeline
+(b) How it Helps
+more reasoning,  think carefully
+The Rubik's Cube is 
+in the way. Try a 
+different pose.
+see wider,  see better
+Oh, here is onion
+multiple actions sequence
+Learn from previous 
+action seq. and do 
+multiact
+VLA complements frontier models
+VLA: the box is too low
+frontier: I will move higher
+1
+2
+3
+Figure 4. Overview of Embo-Harness. Embo-Harness is de-
+signed to leverage the model’s native visual reasoning and tool-use
+capabilities over handcrafted plans, failure-derived skills, or action
+priors. The harness takes task instructions and high-resolution vi-
+sual observations as inputs to GPT-6-Astra with xhigh reasoning
+effort. The frontier model produces short, fixed-length chunks of
+absolute end-effector (EEF) actions. Short multi-action sequences
+and VLA refinement are further integrated as tools to enhance ma-
+nipulation performance. Zoom in for best view of the demos.
+illustrated in Fig. 4. Overall, our findings highlight the im-
+portance of leveraging frontier models’ native capabilities
+through effective choices for action representation, chunk-
+ing, reasoning effort, visual observations, short multi-action
+sequences, and policy refinement.
+3.6. Evaluating Embo-Harness
+Benchmark Evaluation.
+We evaluate our method on
+RoboLab-120 [68], a high-fidelity simulation benchmark
+built on NVIDIA Isaac Lab. The benchmark consists of 120
+tabletop manipulation tasks spanning three key competen-
+cies: visual, relational, and procedural reasoning. We adopt
+the DROID robot configuration, featuring a 7-DoF Franka
+Panda arm equipped with a Robotiq 2F-85 gripper and ZED
+camera observations. All methods are evaluated out of the
+box without task-specific fine-tuning, ensuring a fair and
+consistent comparison. We report two performance met-
+rics, success rate (SR) and task completion score (Score),
+following Yang et al. [68]. SR measures the percentage of
+successfully completed episodes, while Score measures the
+Franka Research 3
+Zed mini
+Zed 2
+Robotiq 2F-85
+Objects for Four Tasks
+Figure 5. Real-world robotic setup for Embo-Harness. Our
+setup consists of a Franka Research 3 (FR3) robot arm equipped
+with a Robotiq 2F-85 gripper, a wrist-mounted ZED Mini cam-
+era, and an external ZED 2 camera. We illustrate the objects and
+workspace used for real-world tabletop manipulation tasks.
+average proportion of successfully completed subtasks per
+episode.
+Real-World Evaluation. To further validate the effective-
+ness of our method in real-world environments, we establish
+a physical robot setup closely matching the RoboLab con-
+figuration, as seen in Figure 5. We evaluate our method on
+four real-world tabletop manipulation tasks.
+3.6.1. Benchmark Evaluation Results
+We evaluate Embo-Harness on the full RoboLab-120
+benchmark against three categories of baselines: VLAs,
+WAMs, and agentic methods.
+Among the agentic base-
+lines, SenseNova-RoboRSI [62] is a closely related frontier-
+model-as-policy approach that, like ours, employs GPT-6-
+Astra for robot action generation. As shown in Table 2,
+Embo-Harness achieves an SR of 83.3% and a Score of
+89.2, outperforming all compared methods on both metrics
+where reported. Notably, relative to SenseNova-RoboRSI,
+the strongest baseline, it improves SR by 26.2 percentage
+points and Score by 19.3. These results demonstrate the ef-
+fectiveness of our systematically developed harness recipe,
+highlighting the importance of leveraging frontier models’
+native capabilities rather than imposing handcrafted robotic
+priors. We note that the concurrent work AMP1 [10] also
+reports strong performance. However, its reliance on an ex-
+ternal high-accuracy depth estimator makes the evaluation
+settings different, precluding a direct comparison.
+3.6.2. Real-World Evaluation Results
+We further evaluate Embo-Harness on four real-world ma-
+nipulation tasks: block stacking, fruit packing, dish wash-
+ing, and flower arranging. All experiments are conducted in
+a purely zero-shot setting, without any task-specific mem-
+ory or hints. As shown in Table 3, Embo-Harness consis-
+tently outperforms our baseline setup, achieving 5/5 suc-
+cesses in both block stacking and fruit packing, 2/5 in dish
+washing, and 3/5 in flower arranging. The remaining fail-
+ures primarily stem from limitations in fine-grained spatial
+6
+Table 2.
+Comparison on the full RoboLab-120 benchmark.
+We report the success rate (SR) and score.
+The
+best
+and
+second-best results are highlighted.
+Policy
+Type
+SR (%)
+Score
+agentic methods
+Embo-Harness
+Agentic
+83.3
+89.2
+SenseNova-RoboRSI [62]
+Agentic
+57.1
+69.9
+VoLo [13]
+Agentic
+28.2
+44.1
+policy models
+FLUX 3 Action [23]
+WAM
+42.9
+–
+Atomic-WAM [54]
+VLM+WAM
+39.6
+55.5
+Cosmos3-Nano-Policy [1]
+WAM
+36.8
+51.9
+π0.5 [36]
+VLA
+28.0
+43.4
+DreamZero [71]
+WAM
+25.7
+39.8
+Cosmos3-Edge-Policy [1]
+WAM
+22.9
+–
+π0-FAST [50]
+VLA
+15.5
+26.9
+GR00T N1.6 [5]
+VLA
+7.2
+17.1
+π0 [6]
+VLA
+5.0
+12.2
+paligemma-binning [4]
+VLA
+3.4
+9.9
+Table 3. Real-world evaluation of Embo-Harness. We compare
+Embo-Harness with the baseline across four real-world manipula-
+tion tasks: block stacking, fruit packing, dish washing, and flower
+arranging. We report the success/total number for each task.
+Policy
+Block Stacking
+Fruit Packing
+Baseline
+4/5
+3/5
+Embo-Harness
+5/5
+5/5
+Policy
+Dish Washing
+Flower Arranging
+Baseline
+0/5
+0/5
+Embo-Harness
+2/5
+3/5
+perception. Specifically, dish washing requires precise lo-
+calization of a small faucet switch, which remains challeng-
+ing for current frontier models. Similarly, flower arranging
+requires accurate alignment with the vase opening, which
+becomes difficult to observe from the wrist-view camera at
+tilted orientations. Despite these challenges, Embo-Harness
+demonstrates promising zero-shot generalization to real-
+world robotic manipulation.
+4. Why Frontier Models Succeed in Robotics
+The emergence of frontier models as competitive robot poli-
+cies raises a broader question for embodied intelligence:
+what capabilities enable general-purpose multimodal mod-
+els, not specifically designed for low-level robot control, to
+rival or even surpass specialized VLA and WAM policies?
+Answering this question is important not only for under-
+standing current systems, but also for determining which ca-
+pabilities and training signals future robot foundation mod-
+els should prioritize. We investigate three related questions:
+whether frontier models encode low-level joint and trajec-
+tory patterns, whether such knowledge contributes to suc-
+cessful manipulation, and, if not, which more general capa-
+bility accounts for their performance.
+4.1. Evaluating Low-level Action Generation
+To answer the first two questions, we investigate whether
+frontier models exhibit characteristic biases of low-level
+robotic actions and whether these biases contribute to their
+manipulation capabilities.
+Specifically, we consider two
+levels of low-level actions: 1) trajectory-level bias, which
+captures frame-to-frame motion patterns, and 2) joint-level
+bias, which captures the movements of individual robot
+joints. Existing VLAs and WAMs typically learn low-level
+action patterns through imitation learning, with most meth-
+ods modeling trajectory-level patterns with an action chunk-
+ing strategy and some, such as π0.5 [36], additionally mod-
+eling joint-level patterns. We therefore examine whether
+frontier models exhibit these two biases and whether explic-
+itly leveraging them improves manipulation performance.
+Joint-level bias.
+We compare direct joint-angle genera-
+tion (disable inverse kinematics (IK) usage) with joint-angle
+generation assisted by inverse kinematics (IK). As shown
+in Table 4, direct joint control achieves a 20.0% zero-shot
+success rate, indicating that frontier models possess some
+understanding of joint-level actions.
+However, this per-
+formance is 23.3 percentage points lower than that of IK-
+assisted control, suggesting that explicitly generating joint-
+level actions does not improve manipulation performance.
+Trajectory-level bias. We further compare explicit multi-
+frame action generation, where frontier models predict an
+action for each frame, with predicting a future target pose
+several frames ahead. As shown in Table 4, explicit multi-
+frame action generation (indicated by the row ‘direct chunk
+8’) achieves a 40.0% zero-shot success rate, demonstrating
+that frontier models can generate low-level trajectories. But
+this approach underperforms target pose prediction by 18.3
+percentage points (indicated by the row ‘chunk 8’), sug-
+gesting that explicitly modeling frame-level motion patterns
+also fails to improve manipulation performance.
+Overall, these results show that frontier models possess
+some ability to generate joint-level actions and frame-level
+trajectories. However, the evaluated harness performs sub-
+stantially better when the model predicts spatial targets and
+delegates low-level execution to IK or trajectory interpo-
+lation. This suggests that its strong manipulation perfor-
+mance does not primarily depend on explicit low-level ac-
+tion generation, although the model may still use implicit
+action knowledge during spatial reasoning and target selec-
+tion. We further find that frontier models generate similar
+action displacements across different execution horizons,
+indicating limited sensitivity to frame-level temporal infor-
+mation. Their rollout trajectories also exhibit broader spa-
+tial distributions than those of π0.5 [36], suggesting distinct
+7
+Table 4. Probing robot-specific action biases in GPT-Astra on
+RoboLab (20 tasks in 3 runs). We investigate two potential ac-
+tion biases: direct joint control versus IK/FK-assisted control, and
+direct action chunk generation versus end-effector prediction fol-
+lowed by interpolation. While GPT-Astra demonstrates some abil-
+ity to generate robot actions directly, the substantial performance
+drops suggest that its strong manipulation capabilities are not pri-
+marily driven by learned robot action priors. We report success
+rate (SR) and task completion score (Score).
+Policy
+SR (%)
+Score
+joint bias
+joint absolute with IK/FK
+43.3
+52.2
+directly joint absolute
+20.0 (-23.3)
+27.2 (-25.0)
+joint delta with IK/FK
+48.3
+53.8
+directly joint delta
+16.7 (-31.6)
+26.6 (-27.2)
+action chunk bias
+chunk 8
+58.3
+68.3
+direct chunk 8
+40.0 (-18.3)
+43.6 (-24.7)
+chunk 15
+43.3
+51.9
+direct chunk 15
+33.3 (-10.0)
+36.7 (-15.2)
+Table 5. Probing spatial perception in GPT through EEF con-
+trol on RoboLab (20 tasks in 3 runs). We compare absolute and
+delta end-effector control with direct EEF destination prediction to
+investigate the role of spatial perception in robotic manipulation.
+We report success rate (SR) and task completion score (Score).
+Policy
+SR (%)
+Score
+EEF absolute
+43.3
+51.9
+EEF delta
+45.0
+51.4
+EEF destination
+50.0 (+5.0)
+55.0 (+3.1)
+motion patterns from policies trained on low-level actions.
+These findings provide additional evidence for our conclu-
+sions, with detailed results presented in the supplementary
+material.
+4.2. Evaluating Spatial Perception
+We now turn to the third question: if low-level action un-
+derstanding is not the primary driver of frontier models’
+manipulation capabilities, where do these capabilities come
+from? We hypothesize that their strength primarily stems
+from accurate 3D spatial perception. To investigate this hy-
+pothesis, we compare two action generation strategies: gen-
+erating short-range action chunks, as in our previous experi-
+ments, and directly predicting the final EEF destination. As
+shown in Table 5, directly predicting the final destination
+achieves slightly higher success rates than short-range ac-
+tion generation, suggesting that spatial perception may play
+a more fundamental role than low-level action generation.
+To further examine this hypothesis, we directly evalu-
+ate the 3D position estimation accuracy of frontier mod-
+els under different reasoning efforts, visual resolutions, and
+Table 6. Evaluation of spatial position estimation and grasp
+execution errors (20 tasks, 1 run). We report average and me-
+dian position errors (cm), along with the percentage of errors
+within 5 cm, under different reasoning efforts, visual resolutions,
+and movement priors. We further compare these results with the
+gripper-to-target errors observed in failed grasp executions.
+Setting
+avg. (cm) med. (cm) ≤5 cm (%)
+model effort
+medium
+14.10
+11.24
+7.4
+high
+10.67
+9.21
+10.0
+xhigh
+9.07
+7.04
+28.1
+visual resolution
+224 × 126
+14.14
+11.39
+10.0
+320 × 180
+11.57
+9.58
+12.5
+640 × 360
+9.07
+7.04
+28.1
+moving prior
+normal
+9.07
+7.04
+28.1
+moving closer
+7.15
+5.48
+48.4
+execution reference (failed grasps)
+grasp position error
+11.04
+8.39
+17.2
+movement priors. As shown in Table 6, higher reasoning
+effort and visual resolution substantially reduce spatial po-
+sition estimation errors, broadly aligning with the manipu-
+lation performance trends in Table 1. These results suggest
+that improved spatial perception may contribute to stronger
+manipulation capabilities. Interestingly, the position esti-
+mation errors are comparable in magnitude to the gripper-
+to-target errors observed in failed grasps under short-range
+action generation (11.04 cm on average), suggesting that
+manipulation accuracy is closely related to spatial posi-
+tion estimation. We further observe overlapping trajectory
+distributions between the two strategies, suggesting shared
+spatial characteristics. These analyses, detailed in the sup-
+plementary material, further support the important role of
+spatial perception in frontier models’ robotic capabilities.
+4.3. Discussion
+Frontier models are most effective when used to infer task-
+relevant spatial targets, rather than low-level actions. Three
+observations from our experiments support this view. First,
+direct joint and frame-level trajectory generation is possi-
+ble but consistently underperforms IK-assisted or target-
+pose control.
+Second, stronger reasoning and higher vi-
+sual resolution reduce 3D localization errors in parallel with
+improvements in task success. Third, real-world failures
+are concentrated in tasks requiring precise localization and
+alignment. These findings do not imply that frontier models
+lack implicit action knowledge or that low-level action data
+are unnecessary, as the observed performance gaps may also
+reflect limitations in action interfaces and numerical gener-
+ation. Nevertheless, they highlight the importance of spa-
+8
+tial perception and motivate greater emphasis on spatially
+grounded models, datasets, and benchmarks. More broadly,
+these insights suggest a promising direction for developing
+new robot policy paradigms beyond conventional VLAs and
+WAMs, potentially achieving strong manipulation perfor-
+mance and efficient execution without relying heavily on
+low-level action imitation.
+5. Conclusion
+We have introduced Embo-Harness to investigate how to
+build strong frontier-model-as-policy harnesses and why
+frontier models achieve remarkable robotic manipulation
+performance. Through a systematic exploration of prompt-
+ing, planning, action execution, and tool use, we distilled
+six key findings into a practical recipe that emphasizes
+leveraging frontier models’ native capabilities rather than
+imposing handcrafted plans, skills, or action priors. Guided
+by this recipe, Embo-Harness achieves state-of-the-art per-
+formance on RoboLab-120 and demonstrates strong perfor-
+mance in real-world experiments. Beyond harness design,
+we further investigated the underlying capabilities of fron-
+tier models, revealing that their manipulation performance
+primarily stems from accurate spatial perception rather than
+low-level action understanding.
+These findings not only
+provide practical guidance for developing stronger robotic
+harnesses but also suggest a promising direction for future
+robot datasets and foundation models.
+Limitations and Future Research. Our findings depend
+on the capabilities of current frontier models and may
+evolve with future advances. While spatial perception may
+enable general-purpose gripper-based manipulation, dexter-
+ous manipulation, locomotion, and tactile perception re-
+quire additional low-level and dynamic capabilities, pre-
+senting promising directions for future research.

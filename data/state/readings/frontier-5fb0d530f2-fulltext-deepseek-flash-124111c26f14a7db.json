@@ -1,0 +1,49 @@
+{
+  "title_zh": "ViDecide：让视频扩散模型逐步推理与规划",
+  "affiliations": [
+    "Nanyang Technological University",
+    "KlingAI Research",
+    "CUHK"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把视频扩散模型的多步推理与规划作为可检验的决策过程来研究，并构建 RoboTwin-Plan，问题对世界模型与具身规划都关键。",
+    "novelty": 80,
+    "novelty_reason": "将自回归分段生成、可学习视觉 EOS、决策聚焦时间步偏移与基于失败噪声映射的 CFT 组合起来；CFT 的决策级校正区别于视频级 RL，但多数组件是已有技术的针对性重组。",
+    "technical_depth": 87,
+    "technical_depth_reason": "在统一严格 verifier 下做受控消融，覆盖两个骨干、三类基准与 OOD 测试；生成范式、时间步偏移、CFT 各有对照，结论由数据支撑。"
+  },
+  "reading": {
+    "why_read": "提出 ViDecide，将视频推理建模为逐段因果生成并学习视觉 EOS 终止，配合决策聚焦的时间步偏移与 Corrective Fine-tuning，把平均严格成功率从 23.3% 提升到 83.8%。",
+    "task": "视频生成模型被视为世界模拟器与具身规划的基础，但多步推理要求模型在像素空间中连续做出合法决策，而不只是生成逼真画面。现有模型即使经过大规模推理数据微调或扩散 RL，仍常出现物体消失、穿墙、非法移动等违反物理/逻辑约束的转移；作者指出，仅增加数据或视频级奖励并不能解决。",
+    "findings": [
+      {
+        "point": "固定长度联合去噪割裂了决策链",
+        "detail": "模型一次性生成整段固定长度视频，既忽略状态之间的因果先后，也把推理长度预先写死；步数随谜题难度变化时，这种设定直接失配。"
+      },
+      {
+        "point": "训练噪声分布偏向视觉重建",
+        "detail": "标准 flow-matching 大量时间步落在低噪声区，目标外观已可见，模型主要学局部重建；真正需要推断下一状态的决策发生在其被噪声遮住的高噪声区。"
+      },
+      {
+        "point": "视频级奖励无法定位错误决策",
+        "detail": "现有扩散 RL 对整条视频给一个标量奖励，少数错误动作被大量合法转移稀释，credit assignment 噪声大，也没有对失败决策给出显式纠正。"
+      }
+    ],
+    "method": "针对因果顺序，ViDecide 把解建模为逐段条件生成，每段以全部历史状态为条件，并学习一个视觉 EOS 帧来终止，使推理长度随任务变化；逐帧或短块生成对应不同动作粒度。针对决策发生在高噪声区，训练时把 flow-matching 时间步采样向高噪声偏移，例如 $t=\\frac{s t'}{1+(s-1)t'}$，让模型多学“下一状态是什么”而非外观重建。针对失败决策，CFT 先 rollout 并定位首次失败，从同一历史重采样成功续写，把导致失败的噪声 $\\epsilon_d^-$ 与成功段 $X_d^+$ 配对做回归校正，目标为 $L_{\\text{CFT}}=L_{\\text{corr}}+L_{\\text{suffix}}+\\lambda L_{\\text{DF}}^{\\text{exp}}$，无需 policy-gradient，训练更稳定。",
+    "results": "在 FlowFree、Sokoban、VBVR-MultiStep 与 RoboTwin-Plan 上按严格成功率评估：平均 83.8%，标准 SFT 23.3%，最强先前方法 67.8%；消融显示三个组件各自有效，并在更大谜题与未见布局上部分泛化。",
+    "limitations": "作者承认按 benchmark 分别训练、依赖规则 verifier，且只评估生成视频而非真实机器人动作；在 RoboTwin 新布局上 CFT 因自生成视频的视觉缺陷使成功率略降。"
+  },
+  "claims": [
+    {
+      "claim": "ViDecide 平均严格成功率为 83.8%，标准 SFT 为 23.3%，最强先前方法为 67.8%。",
+      "numbers": [
+        "83.8",
+        "23.3",
+        "67.8"
+      ],
+      "source_span": "Abstract",
+      "quote": "ViDecide achieves an average strict success rate of 83.8%, far above 23.3% for standard fine-tuning and 67.8% for the strongest prior method"
+    }
+  ]
+}
