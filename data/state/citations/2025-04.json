@@ -42,5 +42,59 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2504.03228": {
+"citation_count": 4,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3,
+"2025": 1
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Spatial and Panel Data Analysis"
+],
+"institutions": [
+"University of Geneva"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2504.08604": {
+"citation_count": 3,
+"reference_count": 76,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Domain Adaptation and Few-Shot Learning"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2504.10850": {
+"citation_count": 0,
+"reference_count": 62,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"Michigan State University",
+"The University of Melbourne"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

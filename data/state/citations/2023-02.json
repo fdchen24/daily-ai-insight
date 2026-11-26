@@ -15,5 +15,25 @@
 ],
 "fetched_at": "2026-11-25T01:03:21.313101+00:00",
 "v": 2
+},
+"2302.09019": {
+"citation_count": 97,
+"reference_count": 235,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 33,
+"2025": 32
+},
+"oa_topics": [
+"Tensor decomposition and applications",
+"Neural Networks and Applications"
+],
+"institutions": [
+"City University of Hong Kong"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

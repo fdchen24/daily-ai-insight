@@ -745,5 +745,268 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2607.05316": {
+"citation_count": 2,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"AI Institute",
+"McGill University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.01749": {
+"citation_count": 1,
+"reference_count": 64,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Gene Regulatory Network Analysis",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Worcester Polytechnic Institute",
+"University of California, Irvine",
+"University of Utah"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.04882": {
+"citation_count": 1,
+"reference_count": 16,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Geophysical Methods and Applications",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"Sir Syed CASE Institute of Technology",
+"University of Strathclyde"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.02781": {
+"citation_count": 1,
+"reference_count": 33,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Natural Language Processing Techniques",
+"Topic Modeling"
+],
+"institutions": [
+"University of Massachusetts Amherst",
+"Independent Researcher"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.11921": {
+"citation_count": 1,
+"reference_count": 61,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Gaussian Processes and Bayesian Inference",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Simon Fraser University",
+"University of Bonn",
+"Fraunhofer Institute for Algorithms and Scientific Computing"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.23586": {
+"citation_count": 9,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Access Control and Trust",
+"Digital Rights Management and Security"
+],
+"institutions": [
+"University of Technology Sydney",
+"Griffith University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.14203": {
+"citation_count": 5,
+"reference_count": 70,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Advanced Vision and Imaging"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.19747": {
+"citation_count": 4,
+"reference_count": 54,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"institutions": [
+"University of Science and Technology of China",
+"Tencent (China)",
+"University of Chinese Academy of Sciences",
+"Shandong University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.27511": {
+"citation_count": 4,
+"reference_count": 29,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"Georgia Institute of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.14726": {
+"citation_count": 0,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Video Surveillance and Tracking Methods",
+"Infrared Target Detection Methodologies"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.19986": {
+"citation_count": 0,
+"reference_count": 114,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"3D Shape Modeling and Analysis"
+],
+"institutions": [
+"University of Southern California",
+"Beihang University",
+"University of California, Berkeley",
+"Huazhong University of Science and Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.20662": {
+"citation_count": 0,
+"reference_count": 10,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Various Chemistry Research Topics",
+"Experimental Learning in Engineering"
+],
+"institutions": [
+"University of Toronto",
+"Acceleration Consortium",
+"Qatar Science and Technology Park"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.21570": {
+"citation_count": 0,
+"reference_count": 52,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Educational Games and Gamification",
+"Artificial Intelligence in Healthcare and Education"
+],
+"institutions": [
+"Tencent (China)",
+"Southern Medical University",
+"Peking University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2607.21411": {
+"citation_count": 0,
+"reference_count": 4,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Quantum Computing Algorithms and Architecture",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"New York University Abu Dhabi"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

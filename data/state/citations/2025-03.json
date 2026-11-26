@@ -42,5 +42,21 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2503.11006": {
+"citation_count": 2,
+"reference_count": 55,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Spatial Cognition and Navigation"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

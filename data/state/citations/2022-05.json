@@ -17,5 +17,26 @@
 ],
 "fetched_at": "2026-11-25T01:02:25.495130+00:00",
 "v": 2
+},
+"2205.05561": {
+"citation_count": 43,
+"reference_count": 37,
+"venue": "RePEc: Research Papers in Economics",
+"year": 2022,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 14,
+"2025": 11
+},
+"oa_topics": [
+"Advanced Causal Inference Techniques",
+"Evaluation and Performance Assessment"
+],
+"institutions": [
+"New York University",
+"Yale University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

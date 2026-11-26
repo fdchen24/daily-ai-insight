@@ -1,0 +1,28 @@
+{
+"2403.03218": {
+"citation_count": 829,
+"reference_count": 73,
+"venue": "International Conference on Machine Learning",
+"year": 2024,
+"work_type": "conference-paper",
+"fwci": 54.71,
+"citation_percentile": 0.999,
+"citations_by_year": {
+"2026": 504,
+"2025": 259
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"University of California, Berkeley",
+"Massachusetts Institute of Technology",
+"Scale AI",
+"Center for AI Safety",
+"New York University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+}
+}

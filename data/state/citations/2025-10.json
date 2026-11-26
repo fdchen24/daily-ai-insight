@@ -251,5 +251,80 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2510.21984": {
+"citation_count": 5,
+"reference_count": 67,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Opinion Dynamics and Social Influence",
+"Social Media and Politics"
+],
+"institutions": [
+"Carnegie Mellon University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2510.16466": {
+"citation_count": 3,
+"reference_count": 14,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Sentiment Analysis and Opinion Mining",
+"Digital Marketing and Social Media"
+],
+"institutions": [
+"Birla Institute of Technology and Science, Pilani",
+"KIIT University",
+"Birdeye Gurgaon , India"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2510.04769": {
+"citation_count": 1,
+"reference_count": 49,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Bayesian Modeling and Causal Inference",
+"Gaussian Processes and Bayesian Inference"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2510.17088": {
+"citation_count": 1,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Anomaly Detection Techniques and Applications",
+"Stock Market Forecasting Methods"
+],
+"institutions": [
+"Rensselaer Polytechnic Institute"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

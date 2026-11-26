@@ -21,5 +21,26 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2410.01124": {
+"citation_count": 3,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Fire Detection and Safety Systems"
+],
+"institutions": [
+"Aalto University",
+"Tulane University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

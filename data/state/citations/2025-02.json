@@ -112,5 +112,50 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2502.10197": {
+"citation_count": 20,
+"reference_count": 26,
+"venue": "International Conference on Machine Learning",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 7.5,
+"citation_percentile": 0.979,
+"citations_by_year": {
+"2026": 13,
+"2025": 7
+},
+"oa_topics": [
+"Mathematics, Computing, and Information Processing",
+"Topic Modeling"
+],
+"institutions": [
+"ETH Zurich",
+"Sofia University \"St. Kliment Ohridski\""
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2502.08105": {
+"citation_count": 14,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 12,
+"2025": 2
+},
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"Zhejiang Normal University",
+"Huzhou Normal University",
+"Griffith University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

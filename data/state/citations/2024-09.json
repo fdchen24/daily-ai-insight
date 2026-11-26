@@ -57,5 +57,50 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2409.00696": {
+"citation_count": 7,
+"reference_count": 37,
+"venue": "International Conference on Learning Representations",
+"year": 2025,
+"work_type": "conference-paper",
+"fwci": 1.03,
+"citation_percentile": 0.812,
+"citations_by_year": {
+"2026": 6,
+"2025": 1
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"ETH Zurich"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2409.09045": {
+"citation_count": 24,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 11,
+"2025": 11
+},
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Electoral Systems and Political Participation"
+],
+"institutions": [
+"Munich Center for Machine Learning",
+"Ludwig-Maximilians-Universität München",
+"University of Mannheim",
+"Mannheim Centre for European Social Research"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

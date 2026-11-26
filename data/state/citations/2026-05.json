@@ -2268,5 +2268,452 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2605.06068": {
+"citation_count": 11,
+"reference_count": 49,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 1
+},
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Software System Performance and Reliability"
+],
+"institutions": [
+"University of Washington"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.10925": {
+"citation_count": 11,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 11
+},
+"oa_topics": [
+"Robot Manipulation and Learning",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"Dexmal",
+"Nanjing University of Aeronautics and Astronautics",
+"Chinese Academy of Sciences",
+"Institute of Automation",
+"Zhongguancun Academy"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.16582": {
+"citation_count": 2,
+"reference_count": 38,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Advanced Vision and Imaging"
+],
+"institutions": [
+"University of California San Diego",
+"University of North Texas"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.07155": {
+"citation_count": 1,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Bandit Algorithms Research",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Purdue University West Lafayette"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.11007": {
+"citation_count": 1,
+"reference_count": 11,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Neural Networks and Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Independent Researcher Los Angeles , CA"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.16598": {
+"citation_count": 1,
+"reference_count": 38,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"institutions": [
+"University of Wisconsin–Madison"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.18959": {
+"citation_count": 1,
+"reference_count": 99,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Galaxies: Formation, Evolution, Phenomena",
+"Astronomical Observations and Instrumentation"
+],
+"institutions": [
+"University of Washington",
+"Northern Arizona University",
+"University of Minnesota",
+"Carnegie Mellon University",
+"Yale University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.05876": {
+"citation_count": 0,
+"reference_count": 57,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"institutions": [
+"Institut national de recherche en sciences et technologies du numérique",
+"Université de Rennes"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.11497": {
+"citation_count": 0,
+"reference_count": 36,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Human Pose and Action Recognition",
+"Hand Gesture Recognition Systems"
+],
+"institutions": [
+"Kyungpook National University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.12951": {
+"citation_count": 0,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Purdue University West Lafayette"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.15923": {
+"citation_count": 0,
+"reference_count": 52,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Delft University of Technology",
+"German Research Centre for Artificial Intelligence"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.16442": {
+"citation_count": 0,
+"reference_count": 35,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Maritime Navigation and Safety",
+"Traffic Prediction and Management Techniques"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.17620": {
+"citation_count": 0,
+"reference_count": 100,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Intracranial Aneurysms: Treatment and Complications",
+"3D Shape Modeling and Analysis"
+],
+"institutions": [
+"Christian-Albrechts-Universität zu Kiel",
+"University Hospital Magdeburg",
+"Otto-von-Guericke-Universität Magdeburg",
+"University Hospital Schleswig-Holstein",
+"Adam Mickiewicz University in Poznań"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.22511": {
+"citation_count": 10,
+"reference_count": 46,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10
+},
+"oa_topics": [
+"Information Retrieval and Search Behavior",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.25535": {
+"citation_count": 5,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Speech and dialogue systems",
+"Information Retrieval and Search Behavior"
+],
+"institutions": [
+"Korea Advanced Institute of Science and Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.22374": {
+"citation_count": 4,
+"reference_count": 53,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Evolutionary Algorithms and Applications",
+"Metaheuristic Optimization Algorithms Research"
+],
+"institutions": [
+"University of Applied Sciences Upper Austria",
+"University of Oxford",
+"University of Portsmouth"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.23194": {
+"citation_count": 3,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Optimal Power Flow Distribution",
+"Power System Optimization and Stability"
+],
+"institutions": [
+"Argonne National Laboratory",
+"Oak Ridge National Laboratory"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.22940": {
+"citation_count": 2,
+"reference_count": 19,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Ethics and Social Impacts of AI",
+"Machine Learning and Algorithms"
+],
+"institutions": [
+"Université de Lille",
+"GEnie des Matériaux TEXtiles",
+"Dong A University",
+"École Nationale Supérieure des Arts et Industries Textiles"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.25759": {
+"citation_count": 1,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Multimodal Machine Learning Applications"
+],
+"institutions": [
+"Westlake University",
+"Chinese University of Hong Kong, Shenzhen"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.27879": {
+"citation_count": 1,
+"reference_count": 28,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Software Testing and Debugging Techniques"
+],
+"institutions": [
+"Pohang University of Science and Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.21171": {
+"citation_count": 0,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"ETH Zurich",
+"Swiss Center for Electronics and Microtechnology (Switzerland)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.25676": {
+"citation_count": 0,
+"reference_count": 43,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Korea University",
+"University of Copenhagen",
+"Samsung Electronics (South Korea)",
+"VAIV Company"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.24939": {
+"citation_count": 0,
+"reference_count": 32,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Adaptive Dynamic Programming Control"
+],
+"institutions": [
+"University of Edinburgh"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2605.28551": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Chinese University of Hong Kong"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

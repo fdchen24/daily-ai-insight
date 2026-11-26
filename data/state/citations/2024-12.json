@@ -59,5 +59,48 @@
 ],
 "fetched_at": "2026-11-24T06:09:44.491112+00:00",
 "v": 2
+},
+"2412.16780": {
+"citation_count": 11,
+"reference_count": 66,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7,
+"2025": 4
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"University of Illinois Chicago",
+"Illinois Institute of Technology",
+"Michigan State University",
+"Cisco Research"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2412.08534": {
+"citation_count": 3,
+"reference_count": 86,
+"venue": "King Abdullah University of Science and Technology Repository (King Abdullah University of Science and Technology)",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2,
+"2025": 1
+},
+"oa_topics": [
+"Security and Verification in Computing",
+"Privacy-Preserving Technologies in Data"
+],
+"institutions": [
+"King Abdullah University of Science and Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

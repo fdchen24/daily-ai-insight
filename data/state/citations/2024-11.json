@@ -132,5 +132,25 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2411.09459": {
+"citation_count": 10,
+"reference_count": 28,
+"venue": "arXiv",
+"year": 2024,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7,
+"2025": 3
+},
+"oa_topics": [
+"Hydrology and Watershed Management Studies",
+"Environmental Monitoring and Data Management"
+],
+"institutions": [
+"Google (United States)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

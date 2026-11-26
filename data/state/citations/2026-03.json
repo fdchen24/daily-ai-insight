@@ -908,7 +908,249 @@
 "Ant Group (China)",
 "Zhejiang University"
 ],
-"fetched_at": "2026-11-25T20:04:47.437755+00:00",
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.00318": {
+"citation_count": 4,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Blockchain Technology Applications and Security",
+"Cryptography and Data Security"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.02518": {
+"citation_count": 1,
+"reference_count": 15,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Functional Brain Connectivity Studies",
+"Autism Spectrum Disorder Research"
+],
+"institutions": [
+"National University of Computer and Emerging Sciences"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.14860": {
+"citation_count": 0,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Digital Media Forensic Detection"
+],
+"institutions": [
+"University of Shanghai for Science and Technology",
+"Singapore Management University",
+"Shanghai Jiao Tong University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.13603": {
+"citation_count": 0,
+"reference_count": 23,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Database Systems and Queries",
+"Logic, Reasoning, and Knowledge"
+],
+"institutions": [
+"Network Service Group"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.14110": {
+"citation_count": 0,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.16568": {
+"citation_count": 0,
+"reference_count": 34,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Topological and Geometric Data Analysis",
+"Neural Networks and Applications"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.21676": {
+"citation_count": 10,
+"reference_count": 11,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10
+},
+"oa_topics": [
+"Topic Modeling",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"National Central University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.23252": {
+"citation_count": 2,
+"reference_count": 17,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Satellite Communication Systems",
+"Software-Defined Networks and 5G"
+],
+"institutions": [
+"University of Florence"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.22305": {
+"citation_count": 2,
+"reference_count": 19,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Stock Market Forecasting Methods",
+"Financial Markets and Investment Strategies"
+],
+"institutions": [
+"Tsinghua Shenzhen International Graduate School",
+"E Fund Management Co. , Ltd",
+"Hong Kong Polytechnic University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.19218": {
+"citation_count": 1,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Peking University",
+"Baidu (China)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.24833": {
+"citation_count": 1,
+"reference_count": 28,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Statistical Methods and Inference",
+"Sparse and Compressive Sensing Techniques"
+],
+"institutions": [
+"Columbia University",
+"University of Rhode Island"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.18066": {
+"citation_count": 0,
+"reference_count": 13,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Neural Networks and Applications"
+],
+"institutions": [
+"University of California, Riverside"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.24296": {
+"citation_count": 0,
+"reference_count": 47,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Image Fusion Techniques",
+"Advanced Steganography and Watermarking Techniques"
+],
+"institutions": [
+"Macao Polytechnic University",
+"Shanghai Jiao Tong University",
+"East China Normal University",
+"Hefei University of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2603.26742": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
 "v": 2
 }
 }

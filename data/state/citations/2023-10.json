@@ -43,5 +43,26 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2310.10239": {
+"citation_count": 2,
+"reference_count": 36,
+"venue": "arXiv",
+"year": 2023,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1,
+"2025": 1
+},
+"oa_topics": [
+"Bayesian Modeling and Causal Inference",
+"Functional Brain Connectivity Studies"
+],
+"institutions": [
+"Chinese University of Hong Kong",
+"Shanghai University of Finance and Economics"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

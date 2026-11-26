@@ -737,5 +737,115 @@
     "pipeline_duration_seconds": 605.4,
     "status": "ok",
     "notes": []
+  },
+  "2026-11-26": {
+    "arxiv_announce_date": "2026-11-26",
+    "generated_at": "2026-11-26T19:48:57.932593+00:00",
+    "stage": "collect",
+    "collect_status": "ok",
+    "sources": {
+      "arxiv": {
+        "ok": true,
+        "count": 4468,
+        "stats": {
+          "fetched": 6380,
+          "deleted": 0,
+          "kept": 4468,
+          "requests": 10,
+          "days": [
+            "2026-11-26",
+            "2026-11-25",
+            "2026-11-24"
+          ],
+          "skipped_weekends": [],
+          "by_day": {
+            "2026-11-26": 1186,
+            "2026-11-25": 1243,
+            "2026-11-24": 2039
+          },
+          "by_set": {
+            "cs": 4441,
+            "stat": 27
+          },
+          "empty_days": []
+        }
+      },
+      "huggingface": {
+        "ok": true,
+        "count": 176,
+        "stats": {
+          "by_date": {
+            "2026-11-26": 50,
+            "2026-11-25": 50,
+            "2026-11-24": 50,
+            "2026-11-23": 26
+          },
+          "host": "https://huggingface.co",
+          "requests": 5
+        }
+      },
+      "github": {
+        "ok": true,
+        "count": 1010,
+        "stats": {
+          "trending": 29,
+          "baseline": 2573,
+          "authenticated": true,
+          "requests": 73,
+          "detail_failures": 0,
+          "kept": 1010
+        }
+      },
+      "openalex": {
+        "ok": true,
+        "count": 3435,
+        "stats": {
+          "requested": 4511,
+          "from_cache": 2373,
+          "queried": 2138,
+          "requests": 43,
+          "resolved": 1062,
+          "unindexed": 1076,
+          "failed_batches": 0,
+          "batches": 43,
+          "hit_rate": 0.497
+        }
+      },
+      "semanticscholar": {
+        "ok": true,
+        "count": 0,
+        "stats": {
+          "skipped": "no_api_key"
+        }
+      }
+    },
+    "normalize": {
+      "arxiv": 4468,
+      "hf_merged": 133,
+      "hf_new": 43,
+      "repo_merged": 1,
+      "repo_standalone": 1009,
+      "citations_attached": 3434,
+      "channels": {
+        "revision": 1122,
+        "stale": 1481,
+        "catchup": 78,
+        "primary": 2839
+      },
+      "topic_sources": {
+        "pending_llm": 1433,
+        "rule": 4087
+      },
+      "total": 5520
+    },
+    "dedup": {
+      "input": 5520,
+      "by_doi": 0,
+      "by_title": 2,
+      "by_project": 2,
+      "output": 5516,
+      "review_pairs": 2
+    },
+    "duration_seconds": 300.4
   }
 }

@@ -143,5 +143,74 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2505.12707": {
+"citation_count": 14,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 12,
+"2025": 2
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Reinforcement Learning in Robotics"
+],
+"institutions": [
+"University of British Columbia"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2505.06927": {
+"citation_count": 9,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Machine Learning and Data Classification",
+"Statistical Methods and Inference"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2505.13895": {
+"citation_count": 4,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Information and Cyber Security",
+"Web Application Security Vulnerabilities"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2505.12040": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Meteorological Phenomena and Simulations",
+"Model Reduction and Neural Networks"
+],
+"institutions": [
+"Norwegian University of Science and Technology",
+"King's College London"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

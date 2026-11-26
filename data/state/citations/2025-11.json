@@ -382,5 +382,159 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2511.05963": {
+"citation_count": 43,
+"reference_count": 85,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 42,
+"2025": 1
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Microsoft (United States)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.17843": {
+"citation_count": 9,
+"reference_count": 36,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"Autonomous Vehicle Technology and Safety",
+"Vehicular Ad Hoc Networks (VANETs)"
+],
+"institutions": [
+"University of Arizona",
+"North Carolina State University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.23113": {
+"citation_count": 7,
+"reference_count": 29,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Parallel Computing and Optimization Techniques",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Tsinghua University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.18467": {
+"citation_count": 4,
+"reference_count": 27,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Adversarial Robustness in Machine Learning",
+"Security and Verification in Computing"
+],
+"institutions": [
+"Renmin University of China",
+"Ant Group (China)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.02181": {
+"citation_count": 3,
+"reference_count": 48,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Recommender Systems and Techniques",
+"Advanced Graph Neural Networks"
+],
+"institutions": [
+"Wuhan University of Technology",
+"The University of Queensland"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.11320": {
+"citation_count": 1,
+"reference_count": 71,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Memory and Neural Computing",
+"Neural Networks and Applications"
+],
+"institutions": [
+"Pennsylvania State University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.01275": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Epilepsy research and treatment"
+],
+"institutions": [
+"Rensselaer Polytechnic Institute",
+"IBM (United States)",
+"IBM Research - Thomas J. Watson Research Center",
+"Icahn School of Medicine at Mount Sinai"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2511.22991": {
+"citation_count": 0,
+"reference_count": 47,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Generative Adversarial Networks and Image Synthesis",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Peking University",
+"Baidu (China)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

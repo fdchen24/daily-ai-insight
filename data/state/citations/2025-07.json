@@ -82,5 +82,28 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2507.13231": {
+"citation_count": 38,
+"reference_count": 50,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 17.61,
+"citation_percentile": 0.992,
+"citations_by_year": {
+"2026": 36,
+"2025": 2
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"University of California, Davis",
+"University of California, Berkeley"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

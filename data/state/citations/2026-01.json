@@ -622,5 +622,115 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2601.08689": {
+"citation_count": 21,
+"reference_count": 2,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 21
+},
+"oa_topics": [
+"Topic Modeling",
+"Stock Market Forecasting Methods"
+],
+"institutions": [
+"Peking University",
+"Tsinghua University",
+"University of California, Los Angeles",
+"Shanghai Jiao Tong University",
+"Imperial College London"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2601.00417": {
+"citation_count": 13,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 13
+},
+"oa_topics": [
+"Topic Modeling",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Princeton University",
+"University of California, Los Angeles"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2601.08070": {
+"citation_count": 3,
+"reference_count": 7,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Topic Modeling",
+"Explainable Artificial Intelligence (XAI)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2601.16976": {
+"citation_count": 7,
+"reference_count": 38,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Network Security and Intrusion Detection",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"Universidad Rey Juan Carlos"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2601.20152": {
+"citation_count": 4,
+"reference_count": 42,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Probability and Statistical Research",
+"Stochastic Gradient Optimization Techniques"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2601.18685": {
+"citation_count": 0,
+"reference_count": 45,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Artificial Intelligence in Education",
+"Intelligent Tutoring Systems and Adaptive Learning"
+],
+"institutions": [
+"University of Education Freiburg"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

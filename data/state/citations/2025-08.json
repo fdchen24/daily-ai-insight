@@ -154,5 +154,42 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2508.12931": {
+"citation_count": 7,
+"reference_count": 50,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6,
+"2025": 1
+},
+"oa_topics": [
+"Industrial Vision Systems and Defect Detection",
+"Anomaly Detection Techniques and Applications"
+],
+"institutions": [
+"Beijing University of Posts and Telecommunications",
+"Capital Normal University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2508.20637": {
+"citation_count": 2,
+"reference_count": 20,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Advanced Graph Neural Networks",
+"Topic Modeling"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

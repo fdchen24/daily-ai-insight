@@ -1621,5 +1621,250 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2606.27510": {
+"citation_count": 10,
+"reference_count": 32,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Advanced Causal Inference Techniques"
+],
+"institutions": [
+"University of Massachusetts Amherst",
+"Adobe Systems (United States)",
+"Boston University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.04511": {
+"citation_count": 7,
+"reference_count": 30,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Topic Modeling",
+"Advanced Neural Network Applications"
+],
+"institutions": [
+"Thinking Machines Lab",
+"ByteDance (China)",
+"Massachusetts Institute of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.06462": {
+"citation_count": 6,
+"reference_count": 57,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 6
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Chinese University of Hong Kong",
+"Centre for Perceptual and Interactive Intelligence",
+"Chinese University of Hong Kong, Shenzhen",
+"Shandong University",
+"Huawei Technologies (China)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.05474": {
+"citation_count": 3,
+"reference_count": 44,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Protein Structure and Dynamics",
+"Chemical Synthesis and Analysis"
+],
+"institutions": [
+"Chinese University of Hong Kong",
+"University of Pennsylvania"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.31126": {
+"citation_count": 3,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 3
+},
+"oa_topics": [
+"Computational Drug Discovery Methods",
+"Machine Learning in Bioinformatics"
+],
+"institutions": [
+"Commonwealth Scientific and Industrial Research Organisation"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.14325": {
+"citation_count": 2,
+"reference_count": 18,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Natural Language Processing Techniques"
+],
+"institutions": [
+"Universitat Politècnica de Catalunya"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.07007": {
+"citation_count": 1,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Explainable Artificial Intelligence (XAI)",
+"Neural Networks and Applications"
+],
+"institutions": [
+"University of Washington"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.17168": {
+"citation_count": 1,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"Independent",
+"University of Oxford"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.27603": {
+"citation_count": 1,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Reinforcement Learning in Robotics",
+"Aerospace Engineering and Control Systems"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.11390": {
+"citation_count": 0,
+"reference_count": 31,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"3D Shape Modeling and Analysis",
+"Computer Graphics and Visualization Techniques"
+],
+"institutions": [
+"University of Toronto",
+"Vector Institute"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.27954": {
+"citation_count": 0,
+"reference_count": 16,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Markov Chains and Monte Carlo Methods",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"Jinan University",
+"Xinjiang University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.29519": {
+"citation_count": 0,
+"reference_count": 60,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Neural Networks and Applications",
+"Neural Networks and Reservoir Computing"
+],
+"institutions": [
+"Open Institute of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2606.31521": {
+"citation_count": 0,
+"reference_count": 38,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced MRI Techniques and Applications",
+"Advanced Neuroimaging Techniques and Applications"
+],
+"institutions": [
+"TUM Klinikum",
+"Technical University of Munich"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

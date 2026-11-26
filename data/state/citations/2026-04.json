@@ -780,5 +780,151 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2604.23091": {
+"citation_count": 9,
+"reference_count": 22,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 9
+},
+"oa_topics": [
+"EEG and Brain-Computer Interfaces",
+"Emotion and Mood Recognition"
+],
+"institutions": [
+"University of California San Diego",
+"Swartz Center for Computational Neuroscience",
+"Centre National de la Recherche Scientifique",
+"Université Toulouse III - Paul Sabatier",
+"Centre de recherche cerveau et cognition"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.09431": {
+"citation_count": 7,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7
+},
+"oa_topics": [
+"Prosthetics and Rehabilitation Robotics",
+"Muscle activation and electromyography studies"
+],
+"institutions": [
+"Carnegie Mellon University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.19233": {
+"citation_count": 4,
+"reference_count": 75,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Visual Attention and Saliency Detection"
+],
+"institutions": [
+"Politecnico di Torino"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.03236": {
+"citation_count": 1,
+"reference_count": 8,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Intelligent Tutoring Systems and Adaptive Learning",
+"Artificial Intelligence in Education"
+],
+"institutions": [
+"University of Florida"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.19827": {
+"citation_count": 1,
+"reference_count": 37,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Advanced Software Engineering Methodologies",
+"Software Engineering Research"
+],
+"institutions": [
+"Aalborg University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.00533": {
+"citation_count": 0,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Domain Adaptation and Few-Shot Learning",
+"Data Stream Mining Techniques"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.15380": {
+"citation_count": 0,
+"reference_count": 47,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Machine Learning in Materials Science",
+"Advanced Chemical Physics Studies"
+],
+"institutions": [
+"Oak Ridge National Laboratory",
+"University of Tennessee at Knoxville",
+"Advanced Micro Devices (United States)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2604.21066": {
+"citation_count": 0,
+"reference_count": 39,
+"venue": "arXiv",
+"year": 2026,
+"work_type": "preprint",
+"oa_topics": [
+"Image and Signal Denoising Methods",
+"Generative Adversarial Networks and Image Synthesis"
+],
+"institutions": [
+"California Institute of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

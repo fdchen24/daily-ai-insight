@@ -339,5 +339,145 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2512.14166": {
+"citation_count": 5,
+"reference_count": 19,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 5
+},
+"oa_topics": [
+"Privacy-Preserving Technologies in Data",
+"Adversarial Robustness in Machine Learning"
+],
+"institutions": [
+"University of Science and Technology of China",
+"Beihang University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.00672": {
+"citation_count": 4,
+"reference_count": 37,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 4
+},
+"oa_topics": [
+"AI-based Problem Solving and Planning",
+"Artificial Intelligence Applications"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.12981": {
+"citation_count": 2,
+"reference_count": 16,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Machine Learning and Data Classification"
+],
+"institutions": [
+"University of Copenhagen"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.09015": {
+"citation_count": 2,
+"reference_count": 24,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 2
+},
+"oa_topics": [
+"Topic Modeling",
+"Text and Document Classification Technologies"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.05222": {
+"citation_count": 1,
+"reference_count": 21,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Influenza Virus Research Studies",
+"vaccines and immunoinformatics approaches"
+],
+"institutions": [
+"University of Liverpool"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.20688": {
+"citation_count": 1,
+"reference_count": 22,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 1
+},
+"oa_topics": [
+"Multi-Agent Systems and Negotiation",
+"Reinforcement Learning in Robotics"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.04198": {
+"citation_count": 0,
+"reference_count": 54,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Neural Network Applications",
+"Domain Adaptation and Few-Shot Learning"
+],
+"institutions": [
+"MIT Computer Science and Artificial Intelligence Laboratory",
+"Massachusetts Institute of Technology",
+"Johns Hopkins University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2512.15608": {
+"citation_count": 0,
+"reference_count": 25,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"oa_topics": [
+"Advanced Vision and Imaging",
+"3D Surveying and Cultural Heritage"
+],
+"institutions": [
+"Linköping University"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }

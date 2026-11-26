@@ -236,5 +236,72 @@
 ],
 "fetched_at": "2026-11-25T20:04:47.437755+00:00",
 "v": 2
+},
+"2506.21621": {
+"citation_count": 40,
+"reference_count": 40,
+"venue": "International Conference on Learning Representations",
+"year": 2026,
+"work_type": "conference-paper",
+"fwci": 37.12,
+"citation_percentile": 0.999,
+"citations_by_year": {
+"2026": 34,
+"2025": 6
+},
+"oa_topics": [
+"Mathematics, Computing, and Information Processing",
+"Topic Modeling"
+],
+"institutions": [
+"ETH Zurich",
+"Sofia University \"St. Kliment Ohridski\"",
+"Bulgarian Academy of Sciences",
+"Institute of Mathematics and Informatics",
+"Massachusetts Institute of Technology"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2506.00058": {
+"citation_count": 13,
+"reference_count": 40,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 10,
+"2025": 3
+},
+"oa_topics": [
+"AI and HR Technologies",
+"Information Systems Education and Curriculum Development"
+],
+"institutions": [
+"University of Oulu"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
+},
+"2506.01676": {
+"citation_count": 8,
+"reference_count": 26,
+"venue": "arXiv",
+"year": 2025,
+"work_type": "preprint",
+"citations_by_year": {
+"2026": 7,
+"2025": 1
+},
+"oa_topics": [
+"Multimodal Machine Learning Applications",
+"Topic Modeling"
+],
+"institutions": [
+"Peking University",
+"Baichuan (China)"
+],
+"fetched_at": "2026-11-26T19:48:20.333001+00:00",
+"v": 2
 }
 }
