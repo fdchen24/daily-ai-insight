@@ -574,5 +574,125 @@
     "angles": [
       "梳理时间与时空概率预测的模型无关和模型内生路线，按不确定性注入位置分为两支并细分，跨范式实验指出没有单一范式在校准、锐度与算力上全面占优。"
     ]
+  },
+  "arxiv-2106.09685": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "classic",
+    "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+    "count": 1,
+    "angles": [
+      "提出 LoRA，冻结预训练权重、在注意力投影旁学习低秩矩阵 $BA$ 作为权重更新，把可训练参数压到原模型的 0.01%、训练显存降 3 倍；合并后无推理延迟，至今是 PEFT 的默认基线。"
+    ]
+  },
+  "arxiv-2611.34923": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "Mixture-of-Loops Transformer",
+    "count": 1,
+    "angles": [
+      "提出 Mixture-of-Loops Transformer（MoLT），用 MoLA 让每层跨深度与循环在同一 softmax 中选择性读取 KV 记忆；U-MoLT 进一步分离记忆构建与预测读出，支持单次遍历解码，在 400B tok"
+    ]
+  },
+  "arxiv-2302.09019": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "survey",
+    "title": "Tensor Networks Meet Neural Networks: A Survey and Future Perspectives",
+    "count": 1,
+    "angles": [
+      "梳理 TNNs 这一 TN 与 NN 交叉方向，按数据处理与模型架构两条轴把它们分成压缩、融合、注意力张量化、图与量子几类，指出真正的取舍是表达力与可收缩性，而非选哪种分解格式。"
+    ]
+  },
+  "arxiv-2511.05963": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "Next-Latent Prediction Transformers Learn Compact World Models",
+    "count": 1,
+    "angles": [
+      "提出 NextLat，在 next-token 训练之外加入潜空间自监督预测：由当前隐状态与下一 token 预测下一隐状态，为 Transformer 注入循环归纳偏置而不改架构与推理，在世界建模、推理与规划任务上提升准确率与表示压缩，并"
+    ]
+  },
+  "arxiv-2611.28649": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "S-Mind: Internalizing Multi-View Geometry for Spatial Intelligence",
+    "count": 1,
+    "angles": [
+      "提出 S-Mind，用少量 spatial token 在模型序列内承载融合后的 3D 场景，并在推理每次切换视角时重新发射以重述该场景；Qwen3.5-9B 上四基准平均 74.03%，追平 GPT-6-Astra，且无需工具调用。"
+    ]
+  },
+  "arxiv-2611.30844": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers",
+    "count": 1,
+    "angles": [
+      "提出 DyLoMo-DiT，将共享权重的循环中间层与多头稀疏专家结合，并按噪声水平分配循环遍数，在匹配参数与计算下把 ImageNet-256 的 FID 相对 DiT 降低至多 24%。"
+    ]
+  },
+  "arxiv-2611.33144": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "PyRUA-Dex: Learning Programmatic Policies for Dexterous Bimanual Manipulation with Coding Agents",
+    "count": 1,
+    "angles": [
+      "提出 PyRUA-Dex，用编码智能体在仿真中两阶段开发多指灵巧手的程序化策略：八智能体并行探索并蒸馏成程序，再按阶段成功率定位瓶颈阶段做精修，冻结的 Python 程序在 Bench2Dex 得分 72.9。"
+    ]
+  },
+  "arxiv-2611.30207": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym",
+    "count": 1,
+    "angles": [
+      "提出 SWE-Gym-Verified：用执行验证逐条审计 SWE-Gym 隐藏测试的奖励标签，修复或剔除假阴性任务，并在同等规模与难度下使 held-out pass@1 提升 2.4–2.7 分。"
+    ]
+  },
+  "arxiv-2611.31094": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "Unlocking the Power of Loops in Pretrained LLMs with Loop Residuals",
+    "count": 1,
+    "angles": [
+      "提出 LoopRes，在预训练 LLM 的循环层间用可训练 loop-aware key 区分同一层的不同循环迭代，并把每个子层的注意力限制在最近 W 次循环，使模型在数学/代码任务上稳定超过 SFT，Qwen3-1.7B-Base 上平均"
+    ]
+  },
+  "arxiv-2611.31115": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "RUIBench: What Makes a Good Robot-Use Interface?",
+    "count": 1,
+    "angles": [
+      "提出 RUIBench 基准与 RUIKit 框架，在统一感知与控制下交叉六种动作抽象和两种交互形式构建 13 种机器人使用接口，系统评估接口如何改变具身智能体的成功率、成本与完成判定。"
+    ]
+  },
+  "arxiv-2611.27376": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "Composable Soft-Prompt Distillation of RL Experts: Toward Continual Post-Training",
+    "count": 1,
+    "angles": [
+      "提出 CSPD，在冻结的 pre-RL 骨干上把每个 RL 专家独立蒸馏成 256 向量的 soft prompt，推理时直接拼接组合，四领域组合平均分与 MOPD 持平（67.83 vs 67.79），域外泛化更好、服务开销接近骨干。"
+    ]
+  },
+  "arxiv-2611.29338": {
+    "last_recommended": "2026-11-26T20:02:25.171975+00:00",
+    "arxiv_announce_date": "2026-11-26",
+    "recommendation_type": "frontier",
+    "title": "A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation",
+    "count": 1,
+    "angles": [
+      "提出 nanoAstra，把机器人示教重组成带稠密进度描述的语义动作原语序列，并以能力保持的 CP-SFT 微调 VLM，在 RoboTwin 2.0 零样本随机化基准上取得 17.8% 成功率。"
+    ]
   }
 }

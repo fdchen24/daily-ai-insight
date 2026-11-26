@@ -1,0 +1,73 @@
+{
+  "title_zh": "Mixture-of-Loops Transformer：以 KV 记忆连接循环的 Transformer 架构",
+  "affiliations": [
+    "Huazhong University of Science & Technology",
+    "ByteDance Seed",
+    "University of Toronto"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "围绕 looped Transformer 的“表达力-效率”前沿重新定义循环间传什么，给出 700M/1.5B dense、3B MoE 三种规模 400B token 的同管线对照与 Qwen3.5-0.8B 续训迁移，对架构选型有直接参考价值。",
+    "novelty": 80,
+    "novelty_reason": "把跨层与跨循环 KV 复用统一进同一个注意力分布，并靠 embedding restart + strict-prefix memory KV 消除同位置跨循环依赖，从而得到训练循环视野之外的单次遍历 MoL 解码；思路与 MoDA/YOCO/LPT 有明显血缘，属于实质性重组而非换模块。",
+    "technical_depth": 88,
+    "technical_depth_reason": "32 组 S-size 消融逐一拆开 feedback 形式、depth source、放置密度与 decoder KV 投影方式，四套解码调度同时报告 CE 与 H20 实测时延，并有严格的稳定性命题与 traversal/KV 成本分解；扣分在于只训到 2 循环、稳定化只覆盖有限前缀。"
+  },
+  "reading": {
+    "why_read": "提出 Mixture-of-Loops Transformer（MoLT），用 MoLA 让每层跨深度与循环在同一 softmax 中选择性读取 KV 记忆；U-MoLT 进一步分离记忆构建与预测读出，支持单次遍历解码，在 400B token 预训练上稳定优于 OLMo3。",
+    "task": "循环 Transformer 复用共享层换取表达力，但标准做法把每个循环的输出整体压回同一条残差流送进下一循环：中间层表示无法被后续循环直接读取，跨层跨循环反复压缩造成信息稀释；同时每个 token 依赖自己上一循环的输出，推理必须串行跑满 N 个循环，解码遍历与持久 KV cache 随 N 线性增长。问题于是变成：循环之间到底该传什么。",
+    "findings": [
+      {
+        "point": "单一残差流承载全部跨循环计算",
+        "detail": "后续循环读不到前序循环的中间层表示，只能通过一次压缩后的残差间接继承，跨层跨循环反复压缩导致信息稀释与表示退化，作者因此把 KV 而非残差当作可选择性读取的记忆。"
+      },
+      {
+        "point": "同位置跨循环依赖迫使解码串行",
+        "detail": "每个 token 的输出依赖自己上一循环的状态，N 个循环只能顺序执行，解码遍历与持久 KV cache 都随 N 线性增长，循环带来的表达力增益被推理成本抵消。"
+      },
+      {
+        "point": "记忆构建与预测读出共用同一批深层状态",
+        "detail": "深层隐状态既要坍缩到 next-token 分布，又要作为 KV 为后续 token 保留干净上下文；在 MoLT-KV 中归一化循环输出同时供词表投影和下一循环 memory KV，这一冲突被放大。"
+      }
+    ],
+    "method": "统一接口是 MoLA：query 在同一个 softmax 里联合读取 sequence KV $S$ 与同位置 depth KV $D$，depth key 保留写者层的归一化与 RoPE，供后续读者直接复用。MoLT-R 保留残差流，把当前循环各层与前一循环全部层的 local KV 同位置读入，以可直读性换表达力。MoLT-KV 从 embedding 重启，序列侧只读前一循环输出逐层投影的 strict-prefix memory KV（$j<t$），同位置只由当前循环 local KV（含自身）提供，从而消除同位置跨循环依赖；loop forcing 并行监督每个循环，得单次遍历 MoL 解码，MoL-Hybrid 用少量循环并行 prefill 补回提示处理速度。U-MoLT 进一步拆分记忆与读出：$L_E$ 层 loop KV encoder 配 cross-only decoder，decoder 用独立 per-layer 投影读归一化 encoder 输出，可在中间循环与非末尾位置跳过 decoder 遍历而不改预测。$$\\mathcal{L}=\\sum_{r=1}^{N}\\alpha_r\\mathcal{L}_r,\\quad \\alpha_r=\\frac{w_r}{\\sum_{k=1}^{N}w_k}$$",
+    "results": "400B token 下 700M/1.5B dense 与 3B MoE 的 10 任务平均准确率各 +2.5/+1.4/+2.1 点；700M 以 1.7× token 效率追平 OLMo3；Qwen3.5-0.8B 续训 11 域 CE 全降。",
+    "limitations": "规模止于 1.5B dense / 3B MoE 与 400B token，更大模型上“加循环”和“加参数”如何取舍未验证；MoLT-R 仍需固定 N 循环解码与 N 倍 KV cache；hybrid 主干的 GDN 使 cross-only 假设不成立，encoder-only 记忆略逊于保留 decoder 递归。"
+  },
+  "claims": [
+    {
+      "claim": "400B token 预训练后，U-MoLT 在 700M dense、1.5B dense、3B MoE 上比 OLMo3 的 10 任务平均准确率分别高 2.5、1.4、2.1 个百分点",
+      "numbers": [
+        "2.5",
+        "1.4",
+        "2.1",
+        "700M",
+        "1.5B",
+        "3B"
+      ],
+      "source_span": "Section 4.3, 'Quality gains extend across model scales'",
+      "quote": "Relative to OLMo3, average accuracy increases by 2.5, 1.4, and 2.1 percentage points at 700M dense, 1.5B dense, and 3B MoE, respectively."
+    },
+    {
+      "claim": "700M 规模上 U-MoLT 在 232.8B token 即追平 OLMo3 的 400B token 平均验证 CE，相当于 1.7 倍 token 效率",
+      "numbers": [
+        "232.8",
+        "1.7",
+        "400"
+      ],
+      "source_span": "Section 4.3, 'Faster convergence with fewer training tokens'",
+      "quote": "at 232.8B tokens (1.7× token efficiency)"
+    },
+    {
+      "claim": "Qwen3.5-0.8B-Base 续训 100B token 后，两种 U-MoLT 适配在全部 11 个验证域上的 CE 都低于匹配基线 Qwen3.5-CT",
+      "numbers": [
+        "100",
+        "3.5",
+        "0.8",
+        "11"
+      ],
+      "source_span": "Section 4.5, 'MoLT improves all 11 domains over the matched baseline'",
+      "quote": "Both adaptations achieve lower CE than Qwen3.5-CT in every validation domain after 100B tokens."
+    }
+  ]
+}

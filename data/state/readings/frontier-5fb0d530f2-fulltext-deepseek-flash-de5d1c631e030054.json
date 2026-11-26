@@ -1,0 +1,163 @@
+{
+  "title_zh": "S-Mind：把多视角几何内化进 MLLM 的空间智能框架",
+  "affiliations": [
+    "The Hong Kong University of Science and Technology",
+    "Nanyang Technological University",
+    "National University of Singapore",
+    "Tongji University"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把“空间能力是否真的被内化”从准确率口号变成可用探针测量的命题，并给出免工具、可检查的轻量方案，对 MLLM 空间智能与具身方向都有直接推动。",
+    "novelty": 76,
+    "novelty_reason": "spatial token 加几何监督并非首创（3DThinker、GPD 同类），实质新意在于推理每换视角就重发 token，并用 z0 自身场景的刚体变换做监督，把“融合”与“变换”解耦。",
+    "technical_depth": 88,
+    "technical_depth_reason": "探针带 shuffle/zero/gray 三类对照、逐层重拟合定位融合发生在哪层、token 状态替换与扣留的因果干预、组件与 λ 消融、0.8B–27B 规模对照，证据链完整；不足在数据全来自 ScanNet/MindCube 系、单 seed、只测多选题。"
+  },
+  "reading": {
+    "why_read": "提出 S-Mind，用少量 spatial token 在模型序列内承载融合后的 3D 场景，并在推理每次切换视角时重新发射以重述该场景；Qwen3.5-9B 上四基准平均 74.03%，追平 GPT-6-Astra，且无需工具调用。",
+    "task": "多视角空间推理要求模型把几张室内照片拼成一个 3D 场景，再把场景旋转到没有图像覆盖的视角上回答——这是具身智能、自动驾驶落地的先决条件。现有两条路线各有问题：外部几何方法（3D 重建、几何编码器、工具型 agent）把场景建在模型之外，推理慢且能力没有内化；空间微调方法只优化输出文本，准确率涨了但内部表示没变。",
+    "findings": [
+      {
+        "point": "多视角融合缺失，且空间微调补不上",
+        "detail": "geometry probe 在 Qwen3.5-4B 上恢复 60.62% 的单视角点，跨视角融合点只有 11.23%；SFT/GRPO 仅提到 14.19%/16.02%，发布模型 3DThinker、GPD 也在 10% 量级。行为上两视角问题的错误全部把第二台相机放到镜像一侧。"
+      },
+      {
+        "point": "视角变换停在相机坐标系，没有跟随推理",
+        "detail": "SpinBench 上把状态外部旋转到查询视角后关系正确率 95.14%，直接在目标视角读出只有 33.44%（首次提及）/47.15%（末次）；推理自述视角的场景恢复仅 30.02%，勉强高于 25% 的随机水平。"
+      },
+      {
+        "point": "加大模型规模不解决这两点",
+        "detail": "Qwen3.5 从 0.8B 到 27B 平均准确率涨 18.04 点，但两视角问题与 viewpoint probe 分别只动 +3.65 与 +3.13 点；融合要到 9B 以上才略微出现，仍远不及 4B 的 S-Mind。"
+      }
+    ],
+    "method": "S-Mind 在模型自己的序列里插入 spatial token：每视角两个 scene token 加四个 camera token，其隐藏状态 $z_0$ 即融合后的场景。一个刻意做弱的 cross-attention readout（query 只含网格位置、不含图像内容）从 $z_0$ 解码每个 visual token 的全局/局部 3D 点与相机位姿；$L_{geo}=L_{global}+L_{local}+L_{cam}$ 三项几何上互相冗余，逼 $z_0$ 收敛到自洽场景。推理链每声明一个新视角，模型就重发一串 token 得到 $z_k$，$L_{view}$ 要求 $z_k$ 解码出 $z_0$ 的点经该视角刚体变换后的位置（对 $z_0$ 的点 stop-gradient），把“如何变换”与“感知什么”分开监督。三阶段为几何预训练、SFT（$L_{CE}+\\lambda(L_{geo}+L_{view})$）与 GRPO，readout 与损失在推理时全部丢弃。",
+    "results": "四基准平均 4B 版 72.83%、9B 版 74.03%；后者与 GPT-6-Astra 的 73.58 持平，4B 版超 ProSR 7.65 点。探针融合率 65.11%（基线至多 16.02%）、变换率 82.17%（至多 37.28%），推理单次生成、无需工具。",
+    "limitations": "监督只覆盖输入视角可见的几何，未做遮挡补全、跨交互持久化与动态场景；视角位姿由规则解析 teacher 链措辞加场景标注得到，误差直接进入 $L_{view}$；全部结果单一 seed。"
+  },
+  "claims": [
+    {
+      "claim": "9B 版四基准平均准确率 74.03%，较 GRPO 高 6.76 点",
+      "numbers": [
+        "74.03",
+        "6.76"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "S-MIND reaches 74.03%, 6.76 points above GRPO and 11.76 above SFT"
+    },
+    {
+      "claim": "4B 版平均 72.83%，高于同设定最强的 ProSR 7.65 点",
+      "numbers": [
+        "72.83",
+        "7.65"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "reaches an average accuracy of 72.83%, surpassing the strongest method trained in our setting, ProSR, by 7.65 points"
+    },
+    {
+      "claim": "9B 版与 GPT-6-Astra（73.58）、Qwen3.8-Flash（73.98）、Claude-Opus-5.5（74.15）持平",
+      "numbers": [
+        "73.58",
+        "73.98",
+        "74.15"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "at 9B, S-MIND matches GPT-6-Astra, Qwen3.8-Flash, and Claude-Opus-5.5 (73.58%, 73.98%, and 74.15%)"
+    },
+    {
+      "claim": "geometry probe 在 Qwen3.5-4B 上恢复 60.62% 的单视角点，跨视角融合点仅 11.23%",
+      "numbers": [
+        "60.62",
+        "11.23"
+      ],
+      "source_span": "Section 3, Finding 1",
+      "quote": "it recovers 60.62% of the first image’s own points (single-view) but only 11.23% of the other images’ points (fused)"
+    },
+    {
+      "claim": "SFT 与 GRPO 只把融合点提到 14.19% 与 16.02%",
+      "numbers": [
+        "14.19",
+        "16.02"
+      ],
+      "source_span": "Section 3, Finding 1",
+      "quote": "the + SFT and + GRPO (Shao et al., 2024) variants lift the fused points only to 14.19% and 16.02%"
+    },
+    {
+      "claim": "SpinBench 上外部旋转后关系正确率 95.14%，目标视角直接读出仅 33.44%（首次提及）与 47.15%（末次）",
+      "numbers": [
+        "95.14",
+        "33.44",
+        "47.15"
+      ],
+      "source_span": "Section 3, Finding 2",
+      "quote": "the decoded state gives the correct relation for 95.14% of them once rotated to the queried viewpoint, yet for only 33.44% when read directly in the target frame at the first mention of the objects, and 47.15% at the last"
+    },
+    {
+      "claim": "推理自述视角的场景恢复率仅 30.02%，勉强高于 25% 的随机水平",
+      "numbers": [
+        "30.02",
+        "25"
+      ],
+      "source_span": "Section 3, Finding 2",
+      "quote": "the scene read in the frame of each declared viewpoint is recovered with only 30.02% accuracy on average, barely above the chance level of 25%"
+    },
+    {
+      "claim": "0.8B 到 27B 平均准确率涨 18.04 点，但两视角问题与 viewpoint probe 只动 +3.65 与 +3.13 点",
+      "numbers": [
+        "18.04",
+        "3.65",
+        "3.13"
+      ],
+      "source_span": "Appendix A.4",
+      "quote": "the average accuracy gains at every step in size, 18.04 points from 0.8B to 27B, while the two-image questions and the viewpoint probe move little over the whole range (+3.65 and +3.13 points)"
+    },
+    {
+      "claim": "跨视角 3D 点恢复率从基线至多 16.02% 提升到 65.11%",
+      "numbers": [
+        "16.02",
+        "65.11"
+      ],
+      "source_span": "Introduction",
+      "quote": "Multi-view fusion raises the recovery rate of cross-view 3D points from at most 16.02% for the baselines to 65.11%"
+    },
+    {
+      "claim": "视角变换准确率从至多 37.28% 提升到 82.17%",
+      "numbers": [
+        "37.28",
+        "82.17"
+      ],
+      "source_span": "Introduction",
+      "quote": "perspective transformation lifts the accuracy of locating points relative to a new viewpoint from at most 37.28% to 82.17%"
+    },
+    {
+      "claim": "扣留全部 spatial token 后四基准平均掉 2.37 点（72.83% 降至 70.46%）",
+      "numbers": [
+        "2.37",
+        "72.83",
+        "70.46"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "Withholding all spatial tokens at inference likewise lowers the four-benchmark average by 2.37 points, from 72.83% to 70.46%"
+    },
+    {
+      "claim": "替换最后一次重发 token 的状态使 9.05% 的答案改变，同范数随机扰动只有 1.62%",
+      "numbers": [
+        "9.05",
+        "1.62"
+      ],
+      "source_span": "Section 5.3",
+      "quote": "this state swap changes 9.05% of the answers, mostly from correct to wrong, against only 1.62% for a random perturbation of the same norm"
+    },
+    {
+      "claim": "组件消融中几何监督把 MindCube-Tiny 从 74.00% 提到 81.81%，BLINK 从 68.25% 到 71.75%",
+      "numbers": [
+        "74.00",
+        "81.81",
+        "68.25",
+        "71.75"
+      ],
+      "source_span": "Section 5.4",
+      "quote": "raising MindCube-Tiny from 74.00% to 81.81% and BLINK from 68.25% to 71.75%"
+    }
+  ]
+}

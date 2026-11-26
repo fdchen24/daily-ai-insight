@@ -1,0 +1,65 @@
+{
+  "title_zh": "LoopRes：用循环残差释放预训练 LLM 的循环计算潜力",
+  "affiliations": [
+    "National University of Singapore",
+    "Independent Researcher"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 looped Transformer 从昂贵的从头训练转向低成本微调，并在多家族、多规模模型上验证循环深度可作为 test-time scaling 的新轴，问题重要且结果有实际可用性。",
+    "novelty": 82,
+    "novelty_reason": "针对 AttnRes 用于循环时暴露的三个机制性失效（迭代内容相似、连接模式早收敛、源集合随循环增长导致短路），提出 loop-aware key 与最近 W 次循环的残差窗口，不是简单换骨干或堆模块。",
+    "technical_depth": 86,
+    "technical_depth_reason": "给出余弦相似度、查询范数、路径权重等机制可视化，做了组件消融与窗口大小消融，在同骨干、同数据、同超参下重实现多个循环基线并报告训练开销；分析主要集中在单一 1.7B 骨干。"
+  },
+  "reading": {
+    "why_read": "提出 LoopRes，在预训练 LLM 的循环层间用可训练 loop-aware key 区分同一层的不同循环迭代，并把每个子层的注意力限制在最近 W 次循环，使模型在数学/代码任务上稳定超过 SFT，Qwen3-1.7B-Base 上平均分提升 29.1%。",
+    "task": "循环 Transformer 通过重复共享层增加每 token 计算而不加参数，理论上可提升推理并支持 test-time scaling；但从头训练循环 LLM 收益有限甚至为负，把预训练模型微调成循环也只比 SFT 略好。现有循环设计把历史循环压成狭窄通路，后续循环无法直接利用早期循环输出。",
+    "findings": [
+      {
+        "point": "循环迭代在内容上高度相似",
+        "detail": "同一 block 的不同循环输出余弦相似度远高于跨 block，content key 又由源导出，循环越深越难区分这些迭代，注意力分数趋于塌缩。"
+      },
+      {
+        "point": "连接模式过早固化",
+        "detail": "AttnRes 的查询范数在微调早期就接近终值，content key 只能经隐藏状态间接更新，模型来不及学会区分源就锁定连接。"
+      },
+      {
+        "point": "源集合随循环增长诱发短路",
+        "detail": "每个循环都向全注意力窗口加入新源，层可直接跳到早期循环而跳过中间循环，深层循环的有效深度被浪费。"
+      }
+    ],
+    "method": "把预训练 LLM 的层切成 prelude、core、coda，core 重复 $L$ 次；core 内每个子层用注意力残差聚合源集合：$$\\alpha_s=\\frac{\\exp(q_{\\text{loop}}^\\top k_s^{\\text{loop}}+q^\\top \\mathrm{RMSNorm}(v_s))}{\\sum_{s'}\\exp(q_{\\text{loop}}^\\top k_{s'}^{\\text{loop}}+q^\\top \\mathrm{RMSNorm}(v_{s'}))}.$$ 其中 $k_s^{\\text{loop}}$ 是每个 block、每个循环的可训练结构 key，解决迭代不可分；每个子层只读最近 $W$ 次循环，阻止跳连并把源数限制在 $(W+1)B+1$（$B$ 为 core 内 block 数），控制计算与显存；读取、加权、写回融合为单个 Triton kernel。",
+    "results": "在 Qwen3-1.7B-Base 的 2× 计算设定下，数学/代码平均分较 SFT 提升 29.1%，超过最强基线两倍以上；更深循环时提升 33.7%，更大 Qwen3 骨干的增益在 10.0% 到 37.7% 之间。",
+    "limitations": "作者承认仅覆盖数学/代码与 SFT，未验证通用指令遵循和 RL；每 token 循环增加推理能耗，且残差窗口只保留最近循环，跨远循环信息仍被截断。"
+  },
+  "claims": [
+    {
+      "claim": "Qwen3-1.7B-Base 在 2× 计算下数学/代码平均分较 SFT 提升 29.1%",
+      "numbers": [
+        "1.7",
+        "2",
+        "29.1"
+      ],
+      "source_span": "Introduction / Table 1",
+      "quote": "On Qwen3-1.7B-Base at 2× compute, it improves the average score by 29.1% over SFT"
+    },
+    {
+      "claim": "更深循环时平均分提升 33.7%",
+      "numbers": [
+        "33.7"
+      ],
+      "source_span": "Table 1, 4× compute, row 'LoopRes'",
+      "quote": "33.7%↑"
+    },
+    {
+      "claim": "更大 Qwen3 骨干的增益在 10.0% 到 37.7% 之间",
+      "numbers": [
+        "10.0",
+        "37.7"
+      ],
+      "source_span": "Introduction",
+      "quote": "LoopRes improves by 10.0% to 37.7% on the larger Qwen3-{4B,8B,30B-A3B}-Base"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "title_zh": "DyLoMo-DiT：动态循环专家混合扩散 Transformer",
+  "affiliations": [],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "在参数与计算双对齐的预算下系统对比 DiT/DiT-MoE/ProMoE 五个档位，并放大基线到 3× DiT 与 6.2× DiT-MoE，把\"高效扩展 DiT\"这一实际问题推进到可判定的程度。",
+    "novelty": 72,
+    "novelty_reason": "循环权重共享、多头稀疏专家、按噪声分专家均有先例（SMELT、MH-MoE、MAGI-2、eDiff-I），新意在于同时解开参数–计算与参数–深度两个耦合，并把循环遍数按噪声水平分配，属扎实的组合式创新。",
+    "technical_depth": 86,
+    "technical_depth_reason": "参数与计算分别对齐到约 2% 与 1%，逐项消融给出 16.06→5.28 的加性收益，另有逐时间步误差、路由切换与专家复用分析以及放大基线；不足是多数 ImageNet 配置只有单/双 seed，文本到图像仅一个模型且无消融。"
+  },
+  "reading": {
+    "why_read": "提出 DyLoMo-DiT，将共享权重的循环中间层与多头稀疏专家结合，并按噪声水平分配循环遍数，在匹配参数与计算下把 ImageNet-256 的 FID 相对 DiT 降低至多 24%。",
+    "task": "DiT 靠同时加宽、加层扩容量，参数、每 token 计算与深度被绑在同一条轴上，且每个去噪步都跑同一套 dense 层，深度在噪声维度上均匀。MoE 变体用稀疏专家扩大参数容量而近似固定每 token 计算，但参数存储仍大，已有工作报告 token-choice 稀疏专家在 active 参数对齐时不如 dense。单纯给 DiT 加权重共享循环虽能免费加深度，但在匹配预算下并不自动改善 FID。",
+    "findings": [
+      {
+        "point": "参数、计算、深度被同一组超参绑定",
+        "detail": "DiT 加宽或加层会同时抬高参数与每 token 计算；MoE-DiT 只解开了参数与计算的耦合，深度仍随参数增长，扩容量必然带来存储开销。"
+      },
+      {
+        "point": "循环带来的额外深度在噪声轴上被平摊",
+        "detail": "高噪声步主要建立全局结构、低噪声步细化细节，而每步遍数相同的循环把算力均匀撒开：DiT-MoE-B 预算下统一两遍循环 FID 停在 7.94，无循环版本已是 7.93。"
+      },
+      {
+        "point": "循环不提供 token 级容量，需与稀疏专家互补",
+        "detail": "共享层只是重复同一组参数，dense FFN 没有 MoE 的 token 相关容量；因此正确用法是把循环省下的参数预算转投更多专家与 routing head，而不是继续堆独立层。"
+      }
+    ],
+    "method": "中段 $m$ 层共享权重：一次前向执行前段一次、中段 $r$ 次、后段一次，中段子层写回残差时乘 $1/r$ 以免多遍更新累积，路由每遍重算，同一 token 在不同遍可选不同专家。省下的参数投给多头稀疏专家：FFN 输入拆成 $H$ 个 head，每个 head 有独立 router、$E$ 个专家与常开 shared expert，sigmoid 打分加 load-balancing bias 后取 top-k，不用辅助损失，bias 按路由计数更新。遍数按噪声水平分配（$t<500$ 取 $r=3$，否则 $r=1$），平均两遍，与\"每步两遍\"同计算但把深度集中在低噪声。配预算时宽度与层访问次数定计算、循环定物理层数、专家数填满参数。",
+    "results": "ImageNet 256×256 匹配预算下，FID 相对 DiT 降 11%/14%/24%，相对 DiT-MoE 降 36%/56%/56%；DiT-MoE-B 预算的消融使 FID 从 16.06 降到 5.28。文本到图像 GenEval 0.714 对 FLUX.1-schnell 0.673，active 参数 1.05B 对 12B。",
+    "limitations": "循环调度写进模型，推理改调度需重训；用随机遍数换推理可选深度要付代价（两遍 4.68 对固定两遍 4.36）。文本到图像只训了一个模型、无消融，DPG-Bench 上对 FLUX.1-schnell 的差距不显著。",
+    "claims": []
+  },
+  "claims": [
+    {
+      "claim": "匹配参数与计算时，DyLoMo-DiT 在 B/L/XL 三档相对 DiT 的 FID 分别降低 11%、14%、24%",
+      "numbers": [
+        "11",
+        "14",
+        "24"
+      ],
+      "source_span": "Sec. 5.1, first paragraph",
+      "quote": "reduces FID relative to DiT by 11%, 14%, and 24% in the B, L, and XL tiers"
+    },
+    {
+      "claim": "匹配参数与计算时，相对 DiT-MoE 在 S/B/L 三档的 FID 分别降低 36%、56%、56%",
+      "numbers": [
+        "36",
+        "56"
+      ],
+      "source_span": "Sec. 5.2, first paragraph",
+      "quote": "reduces FID by 36%, 56%, and 56% relative to DiT-MoE in the S, B, and L tiers"
+    },
+    {
+      "claim": "在 DiT-MoE-B 预算下逐项加入设计选择，使 FID 从 16.06 降到 5.28",
+      "numbers": [
+        "16.06",
+        "5.28"
+      ],
+      "source_span": "Sec. 1, contributions summary",
+      "quote": "progressively adding the design choices lowers FID from 16.06 to 5.28"
+    },
+    {
+      "claim": "去掉循环、把省下的参数用于独立层后，FID 从 16.06 降到 7.93",
+      "numbers": [
+        "16.06",
+        "7.93"
+      ],
+      "source_span": "Sec. 5.4, Table 4 row 'DyLoMo-DiT, no loop'",
+      "quote": "reduces FID from 16.06 to 7.93"
+    },
+    {
+      "claim": "统一两遍循环在匹配预算下几乎没有改善 FID（7.94）",
+      "numbers": [
+        "7.94"
+      ],
+      "source_span": "Sec. 5.4",
+      "quote": "A uniform two-pass loop leaves FID essentially unchanged (7.94)"
+    },
+    {
+      "claim": "按噪声水平分配遍数进一步把 FID 降低 12%",
+      "numbers": [
+        "12"
+      ],
+      "source_span": "Sec. 5.4",
+      "quote": "Noise-dependent pass allocation then lowers FID by 12%"
+    },
+    {
+      "claim": "默认遍数调度为 $t<500$ 时 $r=3$、$t\\ge 500$ 时 $r=1$",
+      "numbers": [
+        "3",
+        "500",
+        "1"
+      ],
+      "source_span": "Sec. 3.4, first paragraph",
+      "quote": "the recommended schedule runs r = 3 for t < 500 and r = 1 for t ≥500"
+    },
+    {
+      "claim": "缩放的 DyLoMo-DiT 在 GenEval 上得 0.714，高于 FLUX.1 的 0.673，active 参数为 1.05B 对 12B",
+      "numbers": [
+        "0.714",
+        "0.673",
+        "1.05",
+        "12"
+      ],
+      "source_span": "Abstract",
+      "quote": "achieves a higher GenEval score than FLUX.1 (0.714 vs. 0.673), with less than one tenth of its active parameters (1.05B vs. 12B)"
+    },
+    {
+      "claim": "用随机遍数训练的模型在两遍运行时 FID 为 4.68，比固定两遍训练的 4.36 差 7%",
+      "numbers": [
+        "4.68",
+        "4.36"
+      ],
+      "source_span": "Sec. 5.6, last paragraph",
+      "quote": "When run with two passes, this model reaches 4.68 FID, 7% worse than the model trained with two passes throughout (4.36)"
+    }
+  ]
+}

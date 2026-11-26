@@ -1,0 +1,105 @@
+{
+  "title_zh": "RUIBench：机器人使用接口如何塑造具身智能体的可靠性",
+  "affiliations": [
+    "National University of Singapore"
+  ],
+  "scores": {
+    "research_value": 89,
+    "research_value_reason": "该工作把机器人使用接口作为独立变量，系统测量其对成功率、成本和完成判定的影响，所研究的问题对具身智能体落地很重要。",
+    "novelty": 86,
+    "novelty_reason": "现有具身基准通常固定接口，接口研究也只比较个别设计选择；RUIKit 在共享感知与控制下交叉动作抽象和交互形式，并把智能体的完成声明与物理结果分开评估。",
+    "technical_depth": 88,
+    "technical_depth_reason": "在同一 harness 下只改变 RUI，控制 RGB-D 观测、8 秒延迟和独立评分，并对动作序列、动作级检查做消融；但真机只覆盖 5 个任务、单臂，部分仿真结果只使用单个 seed，这是证据边界。"
+  },
+  "reading": {
+    "why_read": "提出 RUIBench 基准与 RUIKit 框架，在统一感知与控制下交叉六种动作抽象和两种交互形式构建 13 种机器人使用接口，系统评估接口如何改变具身智能体的成功率、成本与完成判定。",
+    "task": "基础模型已能推理复杂物理任务，但把这种能力转成可靠机器人执行仍很难。现有具身基准通常在固定接口下比较模型，接口研究又只考察个别设计选择，动作粒度与交互形式的影响被混在模型差异里，无法回答“接口本身值多少”。",
+    "findings": [
+      {
+        "point": "执行碎片化：决策层级过细",
+        "detail": "逐动作接口把清晰计划拆成大量模型回复，时延、成本和出错机会随之上升；作者用动作序列与程序执行对比表明，减少决策次数本身就能提升成功率，而不只是换了一种动作表示。"
+      },
+      {
+        "point": "有效反馈必须能改变下一步动作",
+        "detail": "程序的增益一部分来自动作组合，另一部分来自执行中观察和条件分支；去掉中间观察后增益缩小，接触密集任务对两类机制都获益有限，说明反馈要放在能影响后续决策的位置。"
+      },
+      {
+        "point": "完成判定缺少任务级验证",
+        "detail": "失败回合中 82.1%（Claude Code）与 70.9%（Codex）仍以宣称完成结束；动作级抓取/放置检查虽与人工标签高度一致，却几乎不能提升任务成功率，暴露的是任务级验证缺口。"
+      }
+    ],
+    "method": "RUIBench 设 30 个操作任务，分属世界知识、上下文学习、发现、动态交互、接触密集五个套件；协议只用 RGB-D 与机器人状态，每次回复固定 8 秒且环境继续演化，成功由离线评分器独立判定且不回传。RUIKit 把动作抽象（Joint/Delta/Step/Pose/Point/Skill）与交互形式（逐动作/程序）交叉，另设自由选择接口，共 13 种，共享同一套感知、控制与工具；真机复用同一接口定义。",
+    "results": "仅更换 RUI 时，Claude Code 成功率从 45.3% 升到 80.7%；Qwen3.5-4B 零样本 1.9%，微调后平均 27.3%，per-action Pose 达 46.7%；650 回合真机中 Claude Code 的程序优势消失（36.0% vs 42.0%）。",
+    "limitations": "真机只覆盖 5 个任务、单臂、650 回合；接触密集与时限任务在多数接口下仍失败；任务级验证器只提出需求未实现，接口收益也明显依赖具体智能体。"
+  },
+  "claims": [
+    {
+      "claim": "RUIKit 在共享感知与控制下组合出 13 种机器人使用接口",
+      "numbers": [
+        "13"
+      ],
+      "source_span": "Abstract",
+      "quote": "yielding 13 interfaces"
+    },
+    {
+      "claim": "仅更换 RUI，Claude Code 成功率从 45.3% 升到 80.7%",
+      "numbers": [
+        "45.3",
+        "80.7"
+      ],
+      "source_span": "Sec. 5.2, Finding 1",
+      "quote": "from 45.3% to 80.7%"
+    },
+    {
+      "claim": "Qwen3.5-4B 零样本成功率仅 1.9%",
+      "numbers": [
+        "1.9"
+      ],
+      "source_span": "Sec. 5.2, Learning to use an interface",
+      "quote": "succeeds in only 1.9% of episodes across the 12 fixed RUIs"
+    },
+    {
+      "claim": "Qwen3.5-4B 微调后平均成功率为 27.3%",
+      "numbers": [
+        "27.3"
+      ],
+      "source_span": "Sec. 5.2, Learning to use an interface",
+      "quote": "raises its success to 27.3%"
+    },
+    {
+      "claim": "per-action Pose 下微调 Qwen3.5-4B 达到 46.7%，与 Claude Code per-action Step 的 45.3% 相当",
+      "numbers": [
+        "46.7",
+        "45.3"
+      ],
+      "source_span": "Sec. 5.2, Learning to use an interface",
+      "quote": "(46.7% vs. 45.3%)"
+    },
+    {
+      "claim": "真机评估包含 650 个 episode",
+      "numbers": [
+        "650"
+      ],
+      "source_span": "Abstract; Sec. 5.4",
+      "quote": "650 real-robot episodes"
+    },
+    {
+      "claim": "真机上 Claude Code 程序接口成功率为 36.0%，低于逐动作的 42.0%",
+      "numbers": [
+        "36.0",
+        "42.0"
+      ],
+      "source_span": "Sec. 5.4, Finding 3",
+      "quote": "lose this advantage on the real robot (36.0% vs. 42.0%)"
+    },
+    {
+      "claim": "失败回合中 82.1%（Claude Code）与 70.9%（Codex）仍以宣称完成结束",
+      "numbers": [
+        "82.1",
+        "70.9"
+      ],
+      "source_span": "Sec. 5.5, Finding 4",
+      "quote": "82.1% and 70.9% of failed episodes end in a completion claim"
+    }
+  ]
+}

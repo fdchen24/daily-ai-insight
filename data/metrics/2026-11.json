@@ -740,8 +740,8 @@
   },
   "2026-11-26": {
     "arxiv_announce_date": "2026-11-26",
-    "generated_at": "2026-11-26T19:48:57.932593+00:00",
-    "stage": "collect",
+    "generated_at": "2026-11-26T20:02:25.180136+00:00",
+    "stage": "daily",
     "collect_status": "ok",
     "sources": {
       "arxiv": {
@@ -846,6 +846,143 @@
       "output": 5516,
       "review_pairs": 2
     },
-    "duration_seconds": 300.4
+    "duration_seconds": 300.4,
+    "llm": {
+      "deepseek-flash": {
+        "calls": 22,
+        "failures": 0,
+        "tokens_in": 285891,
+        "tokens_out": 167455,
+        "cache_hit_tokens": 24192
+      }
+    },
+    "output": {
+      "classic": 1,
+      "frontier": 10,
+      "survey": 1
+    },
+    "stages": {
+      "filter": {
+        "input": 5516,
+        "passed_rules": 3999,
+        "dropped": {
+          "cooldown": 35,
+          "channel_stale": 1479,
+          "low_quality": 2,
+          "short_abstract": 1
+        },
+        "survey_matched": 5,
+        "pool_sizes": {
+          "frontier": 120,
+          "survey": 5,
+          "classic": 0
+        },
+        "classic_pool": 10
+      },
+      "rank": {
+        "frontier": {
+          "input": 120,
+          "batches": 8,
+          "failed_batches": 0,
+          "tiers": {
+            "A": 23,
+            "B": 81,
+            "C": 16
+          },
+          "kept": 40
+        },
+        "survey": {
+          "input": 5,
+          "batches": 1,
+          "failed_batches": 0,
+          "tiers": {
+            "A": 2,
+            "B": 3
+          },
+          "kept": 5
+        },
+        "classic": {
+          "input": 10,
+          "batches": 1,
+          "failed_batches": 0,
+          "tiers": {
+            "A": 3,
+            "B": 5,
+            "C": 2
+          },
+          "kept": 8
+        }
+      },
+      "select": {
+        "allowance": {
+          "frontier": 10,
+          "survey": 2,
+          "classic": 1
+        },
+        "dropped": {
+          "frontier": {
+            "topic": 6,
+            "affiliation": 0,
+            "similar": 0
+          },
+          "survey": {
+            "topic": 0,
+            "affiliation": 0,
+            "similar": 0
+          },
+          "classic": {
+            "topic": 0,
+            "affiliation": 0,
+            "similar": 0
+          }
+        },
+        "affiliation_constraint": "inactive_no_data"
+      },
+      "summarize": {
+        "input": 13,
+        "cached": 0,
+        "failed": 0,
+        "skipped_budget": 0,
+        "levels": {
+          "fulltext": 12
+        },
+        "degraded": [
+          {
+            "id": "arxiv-2302.09019",
+            "note": "全文超长已截断"
+          },
+          {
+            "id": "arxiv-2611.28649",
+            "note": "全文超长已截断"
+          },
+          {
+            "id": "arxiv-2611.30844",
+            "note": "全文超长已截断"
+          }
+        ]
+      },
+      "validate": {
+        "checked": 12,
+        "dropped": [],
+        "dropped_claims": 7,
+        "downgraded": [],
+        "link_failures": []
+      }
+    },
+    "validation": {
+      "items_dropped": 0,
+      "claims_dropped": 7,
+      "downgraded": 0,
+      "link_failures": 0,
+      "warnings": 2
+    },
+    "cost": {
+      "currency": "CNY",
+      "amount": 0.932,
+      "price_window": "off_peak"
+    },
+    "pipeline_duration_seconds": 782.0,
+    "status": "ok",
+    "notes": []
   }
 }

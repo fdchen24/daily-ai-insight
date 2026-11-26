@@ -1,0 +1,173 @@
+{
+  "title_zh": "可组合的 soft prompt 蒸馏：把 RL 专家变成可插拔模块的持续 post-training",
+  "affiliations": [
+    "University of California, Santa Barbara",
+    "Carnegie Mellon University",
+    "University of California, Santa Cruz",
+    "Northwestern University",
+    "NVIDIA"
+  ],
+  "scores": {
+    "research_value": 80,
+    "research_value_reason": "把持续 post-training 的整合代价从“重训整个模型”降到“只训一个新 prompt”，并用 23 个单专家设定、四领域逐次加入、六个域外基准与实机服务测量给出成体系证据，对 model merging 与 post-training 部署都有直接参考价值。",
+    "novelty": 76,
+    "novelty_reason": "soft prompt 与 prompt 拼接都不是新组件，新意在于把输入空间模块作为 RL 专家的整合形式，并给出“独立训练即可组合、且优于 progressive prompts”的完整论证。",
+    "technical_depth": 86,
+    "technical_depth_reason": "对比 TA、TIES、MOPD、LoRA 四类基线与合并系数扫描，含 prefix-robust 消融、拼接顺序、逐模块删除归因、progressive 训练对照、serving 与投机解码测量，以及 KL 归因与注意力通路分析。"
+  },
+  "reading": {
+    "why_read": "提出 CSPD，在冻结的 pre-RL 骨干上把每个 RL 专家独立蒸馏成 256 向量的 soft prompt，推理时直接拼接组合，四领域组合平均分与 MOPD 持平（67.83 vs 67.79），域外泛化更好、服务开销接近骨干。",
+    "task": "RL post-training 通常按领域分别进行，每个领域有自己的数据、verifier 与环境，产出的专家需要再合并进一个模型；新专家不断到来，合并因此变成持续过程。现有的权重合并与多教师 on-policy 蒸馏（MOPD）每加一个专家都要重新整合整个模型，把专家写进同一组参数还会侵蚀目标域之外的能力；按请求路由专家则要训练 router、无法在同一请求内组合专家、且每个专家要驻一份完整模型。",
+    "findings": [
+      {
+        "point": "权重空间的重新整合本身就是遗忘来源",
+        "detail": "只把 IF 专家做 TIES 合并就把 LiveCodeBench 从 58.61 压到 52.69；progressive 训练同样侵蚀已有 IFBench。写进同一组参数的更新互相抵消。"
+      },
+      {
+        "point": "RL 专家的增益可以被输入空间的少量向量承载",
+        "detail": "256 向量即恢复教师增益 ≥90%（22/23 设定），只留 32 向量仍有 90.0%，说明瓶颈在整合方式而非表示容量。"
+      },
+      {
+        "point": "prompt 学到的是推理行为而非可写出的指令",
+        "detail": "它关闭 86.8% 的 teacher–student KL 差距，主要让模型回头检查中间结果（?、But、Check 概率上升），同义书面指令最多 2.1%；80% 的改善来自 response token 直接注意 prompt。"
+      }
+    ],
+    "method": "每个专家 j 独立蒸馏到自己的 256 向量 prompt：教师对领域问题采样，只保留 verifier 通过的回答，在冻结骨干 $\\theta_0$ 上只训练 prompt，目标为长度归一化的 NLL $P_j^\\star=\\arg\\min_{P_j}\\mathbb{E}_{(x,y)\\sim\\mathcal{D}_j}\\left[-\\frac{1}{|y|}\\sum_t\\log p_{\\theta_0}(y_t\\mid I(P_j,x),y_{<t})\\right]$。为让单独训练的 prompt 能跟在别的 prompt 之后，一半样本在其前面拼 128–256 token 同域前缀（不计 loss、推理不用）。组合即拼接 $P_{1:k}=[P_1^\\star;\\dots;P_k^\\star]$，无联合训练、无合并系数、无 router；加专家只训新 prompt，删专家只丢 prompt。适配只在输入端，prompt 只需 prefill 一次并缓存 KV，不同 prompt 的请求可同批服务。",
+    "results": "23 个 math/code/agent 设定中 22 个恢复教师增益 ≥90%；四领域逐次加入平均分从 50.41 单调升到 67.83，与 MOPD 67.79 持平，域外六基准均值 56.6 对 53.5；B200 上吞吐在骨干 1.5% 内、为 rank-4 LoRA 的 2.40 倍。",
+    "limitations": "组合仅单一 backbone、四个领域验证，专家更多时未知；部分 checkpoint 与合并系数在评测集上选，recovery 存在噪声；每个 prompt 占 256 位置，KV cache 随专家数增长，换骨干需重蒸。"
+  },
+  "claims": [
+    {
+      "claim": "论文在 23 个 math/code/agent 设定上测试单专家蒸馏",
+      "numbers": [
+        "23"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "The 23 settings are deliberately diverse."
+    },
+    {
+      "claim": "其中 22 个设定恢复了教师增益的 90% 以上",
+      "numbers": [
+        "90",
+        "22"
+      ],
+      "source_span": "Section 3.2 / Table 1",
+      "quote": "recovers at least 90% of the teacher’s gain in 22 settings"
+    },
+    {
+      "claim": "每个专家被蒸馏成 256 个向量的 soft prompt",
+      "numbers": [
+        "256"
+      ],
+      "source_span": "Section 1",
+      "quote": "its own soft prompt (Lester et al., 2021) of 256 vectors"
+    },
+    {
+      "claim": "在 GPT-OSS math 上只用 32 向量仍有 90.0% 恢复率，低于 256 向量的 93.1%",
+      "numbers": [
+        "32",
+        "90.0",
+        "256",
+        "93.1"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "On GPT-OSS math, 32 vectors reach 90.0% recovery, below the 93.1% of 256 vectors in the same sweep."
+    },
+    {
+      "claim": "拼接四个领域的 prompt 把学生平均分从 50.41 提到 67.83",
+      "numbers": [
+        "50.41",
+        "67.83"
+      ],
+      "source_span": "Section 3.3 / Table 2",
+      "quote": "raises the student’s average score from 50.41 to 67.83"
+    },
+    {
+      "claim": "CSPD 的域内平均分与 MOPD 的 67.79 持平",
+      "numbers": [
+        "67.79"
+      ],
+      "source_span": "Section 3.3 / Table 2",
+      "quote": "on par with MOPD (67.79)"
+    },
+    {
+      "claim": "逐次加入专家时平均分依次为 50.41、60.99、61.67、63.67、67.83",
+      "numbers": [
+        "50.41",
+        "60.99",
+        "61.67",
+        "63.67",
+        "67.83"
+      ],
+      "source_span": "Section 3.4 / Figure 3a",
+      "quote": "The average rises from the student’s 50.41 to 60.99, 61.67, 63.67, and 67.83"
+    },
+    {
+      "claim": "域外六个基准上 CSPD 平均 56.6，MOPD 为 53.5",
+      "numbers": [
+        "56.6",
+        "53.5"
+      ],
+      "source_span": "Section 1 / Table 3",
+      "quote": "(56.6, versus 53.5 for MOPD)"
+    },
+    {
+      "claim": "soft prompt 的吞吐保持在未适配骨干的 1.5% 以内",
+      "numbers": [
+        "1.5"
+      ],
+      "source_span": "Section 3.6",
+      "quote": "SP throughput stays within 1.5% of the unadapted backbone"
+    },
+    {
+      "claim": "32 并发请求下 soft prompt 的吞吐是 rank-4 LoRA 的 2.40 倍",
+      "numbers": [
+        "2.40"
+      ],
+      "source_span": "Section 3.6 / Figure 5",
+      "quote": "SP delivers 2.40× the throughput of LoRA"
+    },
+    {
+      "claim": "soft prompt 关闭了 86.8% 的 teacher–student KL 差距",
+      "numbers": [
+        "86.8"
+      ],
+      "source_span": "Section 4 / Figure 6a",
+      "quote": "closes 86.8% of the teacher–student KL gap"
+    },
+    {
+      "claim": "同样意图的书面指令最多只关闭 2.1% 的差距",
+      "numbers": [
+        "2.1"
+      ],
+      "source_span": "Section 4 / Figure 6a",
+      "quote": "close at most 2.1% of the gap"
+    },
+    {
+      "claim": "仅允许 response token 注意 prompt 时仍保留 80% 的改善",
+      "numbers": [
+        "80"
+      ],
+      "source_span": "Section 4 / Figure 6c",
+      "quote": "80% of its improvement remains"
+    },
+    {
+      "claim": "单独合并 IF 专家把 LiveCodeBench 从 58.61 降到 52.69",
+      "numbers": [
+        "58.61",
+        "52.69"
+      ],
+      "source_span": "Section 3.4 / Figure 4",
+      "quote": "The IF expert alone lowers LiveCodeBench to 52.69, well below the student’s 58.61"
+    },
+    {
+      "claim": "prefix-robust 训练在一半样本的 prompt 前拼接 128–256 token 同域前缀",
+      "numbers": [
+        "128",
+        "256"
+      ],
+      "source_span": "Section 2.2",
+      "quote": "places a 128–256-token prefix, sampled from other questions in the same domain, before the soft prompt in half of the training examples"
+    }
+  ]
+}

@@ -1,0 +1,1089 @@
+Composable Soft-Prompt Distillation of RL
+Experts: Toward Continual Post-Training
+Zhen Zhang*,1, Changyi Yang*,2, Xuehai He3, Chengzhi Liu1, Yutong Yin4, Ziyue Liu1, Zhuoran
+Yin2, Yangmin Li5, Zhihan Liu4, Jisen Li6, Mingyu Jin7, Chuhan Li1, Zhaotian Weng1, Ruoyu He8,
+Wenyao Gao9, Jiaxin Deng10, Chenwei Wu11, Hui Shen11, Wenhao Chai12, Chenyang Zhao13,
+Zhuofan Ying14,15, Kieran Liu14, Andrew Chen14, Pony Ma14, Zhaoran Wang4, Alkesh Patel16, Zhe
+Gan16, and Xin Eric Wang1
+1University of California, Santa Barbara, 2Carnegie Mellon University, 3University of California, Santa
+Cruz, 4Northwestern University, 5NVIDIA, 6University of Illinois Urbana-Champaign, 7Independent
+Researcher, 8University of California, Los Angeles, 9SemiAnalysis, 10SGLang-Omni, 11University of
+Michigan, 12Princeton University, 13LMSYS Org, 14Mind Lab, 15Columbia University, 16Apple
+RL post-training typically produces domain experts that must then be consolidated into one model, and
+as new experts keep arriving, this consolidation becomes a continual process. Weight merging and multi-
+teacher on-policy distillation (MOPD) must re-consolidate the whole model whenever an expert is added,
+and can erode capabilities outside the target domains. We propose Composable Soft-Prompt Distillation
+(CSPD), which keeps the pre-RL model frozen, distills each RL expert independently into a soft prompt, and
+composes experts by concatenating their prompts without joint training. A single soft prompt suffices to
+distill an RL expert, recovering at least 90% of the teacher’s gain in 22 of 23 math, code, and agent settings.
+Independently trained prompts compose well. In a multi-expert setting, the average rises with every expert
+added, and the full composition matches MOPD (67.83 vs. 67.79). The composition generalizes best across six
+held-out benchmarks. Input-space adaptation adds little serving overhead, keeping throughput within 1.5%
+of the unadapted backbone and reaching 2.40× that of rank-4 LoRA. These results point toward continual
+post-training on a fixed backbone. Code is available at https://github.com/UCSB-AI/CSPD.
+MOPD
+EXPERTS
+I
+S
+C
+M
+TRAINED STUDENT
+CSPD (ours)
+I
+S
+C
+M
+ADD
+REMOVE
+SOFT PRO MPTS
+FROZEN STUDE NT
+Scores
+IN-DO MAI N MEAN
+4 TASKS
+STUDENT
+50.41
+MOPD
+67.79
+CSPD (OURS)
+67.72
+OUT-OF-DOMAIN MEAN
+6 TASKS
+STUDENT
+50.3
+MOPD
+53.5
+CSPD (OURS)
+56.6
+IN-DO MAI N MEAN
+4 TASKS
+STUDENT
++I
++S
++C
++M
+50.41
+CSPD 67.83
+MOPD 67.79
+OUT-OF-DOMAIN MEAN
+6 TASKS
+STUDENT
+MOPD
+CSPD (OURS)
+50.3
+53.5
+56.6
+M
+C
+S
+I
+M
+C
+S
+I
+Figure 1. MOPD consolidates domain experts into the weights of a trained student. CSPD instead distills each expert
+into a separate soft prompt on the frozen student, and prompts are added, removed, and concatenated at inference. As
+experts are added one at a time, the in-domain mean of CSPD rises with every addition and ends on par with MOPD,
+while its out-of-domain mean is the highest.
+∗Equal contribution.
+arXiv:2611.27376v2  [cs.LG]  24 Nov 2026
+Composable Soft-Prompt Distillation of RL Experts
+1. Introduction
+Reinforcement learning (RL) post-training is typically carried out one domain at a time, since each domain
+comes with its own data, verifier, and environment. A common recipe is therefore to train domain experts
+separately from a shared base model and then consolidate them into a single model (Wang et al., 2026b, Ma
+et al., 2026a). Because new domains and stronger experts keep arriving, this consolidation is not a one-time
+step but a continual process. Ideally, each new expert would be absorbed like an installed module, such
+that (i) the model gains what the expert learned in its domain, (ii) everything the model could already do,
+in the other experts’ domains and in general, is left intact, and (iii) the cost of the update depends only
+on the new expert, not on how many experts came before.
+Existing approaches fall into two groups. The first consolidates all experts into a single set of weights. Joint
+multi-task RL must rerun RL on every domain whenever one is added. Sequential RL (Wang et al., 2026a)
+trains only on the new domain, but earlier gains are susceptible to irreversible damage from later stages.
+Weight merging (Ilharco et al., 2023, Yadav et al., 2023) combines experts by parameter arithmetic, where
+their updates can interfere. Multi-teacher on-policy distillation (MOPD) (Wang et al., 2026b, Ma et al.,
+2026a) must retrain the student against all teachers. All four also apply one fixed mixture to every request
+and overwrite the base weights, which can degrade performance outside the target domains (Wang et al.,
+2026c). The second group keeps experts separate and selects them per request. Expert routing depends on a
+router that is hard to train and must be updated whenever an expert is added, cannot combine experts within
+a request, and must host a full model per expert. Merging LoRA experts per request (Huang et al., 2023,
+Prabhakar et al., 2024) avoids these issues but adds adapter computation to every layer at every decoding step.
+Both groups keep experts in model parameters. We instead make each expert part of the model’s input,
+and propose Composable Soft-Prompt Distillation (CSPD) (Figure 2). During training, CSPD keeps the
+pre-RL model frozen and distills each post-RL expert into its own soft prompt (Lester et al., 2021) of 256
+vectors, using only that expert’s verifier-filtered responses (Kim and Rush, 2016). Each soft prompt is trained
+independently. To prepare the prompts for later combination, half of the training examples place a random
+context prefix before the prompt, so that it works regardless of what precedes it. At inference, the prompts
+are composed directly by concatenating them in the system message, without any joint training. Adding an
+expert therefore requires training only its prompt, removing an expert requires only dropping its prompt, and
+the backbone is never modified. Unlike merged or routed LoRA experts, the prompts are plug-in modules,
+with no merging coefficient or router to refit when the set of experts changes.
+Merging experts in input space proves surprisingly effective. A single soft prompt suffices to distill an RL
+expert. Across 23 math, code, and agent settings, it recovers at least 90% of the teacher’s improvement over
+the pre-RL model in 22 of them, and matches or exceeds the teacher in 15. Independently trained prompts
+exhibit strong composability. In a multi-expert setting (Wang et al., 2026b), we distill soft prompts from
+experts in instruction following, science, code, and math, and add them to the frozen student one at a time,
+as in continual post-training. The four-domain average rises with every addition, from 50.41 to 67.83, and
+the full composition matches MOPD (67.79) without any joint training. The composition generalizes best
+beyond the training domains. Among the compared methods, it attains the highest mean score across six
+held-out benchmarks (56.6, versus 53.5 for MOPD). A soft prompt learns behavior rather than words. On a
+GPT-OSS math expert, the prompt closes 86.8% of the teacher–student KL gap, mainly by making the student
+check its intermediate results, while written instructions with the same intent close at most 2.1% (Section 4).
+Input-space adaptation adds little serving overhead. Each prompt only lengthens the context on a shared
+2
+Composable Soft-Prompt Distillation of RL Experts
+(a) Distill a new expert
+(b) Prompt library
+(c) Compose soft prompts
+(d) Batched serving
+Expert j
+Post-RL teacher
+trainable
+frozen
+distill
+Pj
+x
+Pre-RL student
+add
+ next expert: RL from the 
+↻
+same pre-RL student
+P1
+P2
+Pj
+new
+PN
+PN
+⋮
+⋮
+concatenate, no joint training
+trained independently
+mixed prompts
+Adaptation in context
+P1
+Pj
+x
+⋯
+⋯
+Same pre-RL student
+Shared
+pre-RL
+student
+Composable Soft-Prompt Distillation (CSPD): Toward Continual Post-Training
+Figure 2. Overview of composable soft-prompt distillation. Each RL expert is distilled into a separate prompt on the
+frozen pre-RL student (a). The resulting prompts form a library (b). Selected prompts are concatenated at inference
+(c), and requests with different prompts can share a batch on the same student (d).
+backbone, so requests with different prompts can be served efficiently in the same batch. On a single B200,
+soft-prompt throughput stays within 1.5% of the unadapted backbone across seven concurrency levels. With
+32 requests in flight, each using a distinct adapter, soft prompts deliver 2.40× the output throughput of
+rank-4 LoRA. These results suggest a path toward continual post-training on a fixed backbone.
+2. Composable Soft-Prompt Distillation
+In this section, we introduce Composable Soft-Prompt Distillation (CSPD), which distills the capabili-
+ties of post-RL experts into independently trained soft prompts on a shared frozen backbone. Figure 2
+illustrates the workflow.
+2.1. Distilling an RL Expert into a Soft Prompt
+Let pθ0 be the pre-RL model and pθj an expert post-trained from it, with domain questions Xj and a verifier.
+We distill the expert into a soft prompt Pj ∈RL×d, a sequence of L vectors in the backbone’s d-dimensional
+embedding space. The template I(Pj, x) inserts Pj into the system message, before the question x (see
+Appendix A for details). We use sequence-level distillation (Kim and Rush, 2016). We sample teacher
+responses to questions in Xj, keep those that pass the verifier, and train only Pj on the resulting dataset
+Dj with a length-normalized negative log-likelihood over response tokens:
+P⋆
+j = arg min
+Pj
+E(x,y)∼Dj
+[︁
+−1
+|y|
+|y|
+∑︁
+t=1
+log pθ0
+(︀
+yt | I(Pj, x), y<t
+)︀]︁
+.
+(1)
+The backbone θ0 stays frozen, and each prompt is trained using only its own teacher and data.
+2.2. Composing Soft Prompts
+To combine soft-prompt experts 1, . . . , k, we directly concatenate their soft tokens into P1:k = [P⋆
+1 ; . . . ; P⋆
+k ] ∈
+RkL×d and insert it into the same template:
+p(y | x) = pθ0
+(︀
+y | I(P1:k, x)
+)︀
+.
+(2)
+3
+Composable Soft-Prompt Distillation of RL Experts
+No joint training is involved. In continual post-training, experts arrive over time. When a new expert arrives,
+we distill its prompt as above and add it to the existing ones, leaving the earlier prompts and the backbone
+unchanged. Removing an expert amounts to dropping its prompt.
+Prefix-robust training for composition.
+A prompt is trained alone but follows other prompts at inference.
+To prepare it for this, we use prefix-robust training, which places a 128–256-token prefix, sampled from
+other questions in the same domain, before the soft prompt in half of the training examples. The prefix is
+excluded from the loss and is not used at inference. This makes composition more robust (Appendix C).
+3. Experiments
+We first evaluate whether a soft prompt can recover a single RL expert (Section 3.2). We then evaluate the
+composition of independently distilled prompts in-domain (Section 3.3) and in a continual post-training
+setting (Section 3.4), and evaluate out-of-domain generalization (Section 3.5). Finally, we measure the
+cost of serving a distinct prompt per request (Section 3.6).
+3.1. Evaluation Metrics
+We report absolute task scores and the fraction of the RL teacher’s performance gain recovered by the
+prompted student. Let AS, AT, and AS+P denote the student, teacher, and prompted-student scores, each
+either a single-task score or an average over multiple tasks. For AT > AS, recovery is
+R = AS+P −AS
+AT −AS
+× 100%.
+(3)
+A recovery of 100% indicates that the prompted student matches the teacher’s gain over the backbone. We
+report absolute scores alongside recovery because small teacher gains can produce large recovery ratios.
+3.2. Distilling Individual RL Experts
+Before composing experts, we first test whether a single soft prompt can recover an individual RL expert,
+using public pre-RL/post-RL model pairs in math, code, and agent tasks. For each pair, we distill the
+RL teacher into a 256-vector prompt on its frozen pre-RL checkpoint and compare the prompted student
+(Student+SP) with both (Table 1). The table also gives model links and references, and evaluation details
+are in Appendices B.3 and B.1.
+The 23 settings are deliberately diverse. They span math reasoning, code generation on LiveCodeBench, and
+multi-step agent tasks on SWE-bench Verified and Terminal-Bench 2.1. The models range from 7B to 35B
+parameters and include both dense and mixture-of-experts architectures from many model families, and their
+teachers were trained with different RL recipes and data. Across this range, the prompt recovers at least 90%
+of the teacher’s gain in 22 settings, and the prompted student matches or exceeds the teacher in 15 (Table 1).
+The trend holds for multi-step agent tasks as well, where the prompted student exceeds the teacher in five of
+six settings. For example, DeepSWE’s student improves from 24.90% to 45.65% on SWE-bench Verified,
+compared with 44.05% for its teacher. The lowest recovery, 88.08%, is for MiMo-7B on code. Its RL training
+data are not publicly available, so we distill on AReaL code questions instead. This suggests that CSPD
+4
+Composable Soft-Prompt Distillation of RL Experts
+remains effective without the expert’s original training data, although with some loss in recovery. Shorter
+prompts also recover much of the gain. On GPT-OSS math, 32 vectors reach 90.0% recovery, below the 93.1%
+of 256 vectors in the same sweep. Verifier filtering is also not strictly required. Training on responses of which
+only 69% are correct still recovers 90.5%, compared with 96.1% for correct-only responses (Appendix B.2).
+Table 1. Distilling individual RL experts into soft prompts in math, code, and agent tasks. Student+SP is the best
+evaluated prompted-student score, and recovery follows Equation (3). All values are percentages, and rows within
+each block are ordered by increasing recovery. Math: unmarked rows use AIME24/25 + MATH500; aAIME24 + AMC
++ MATH + Olympiad; bAIME24/25 + HMMT25; cAIME25/26 + MATH500. Code: unmarked rows use LiveCodeBench
+v5/v6, and MiMo uses AReaL training data; dOct24–Feb25; etest6 (1,055 questions); f v3. Agent: SWE-bench Verified
+uses 500 tasks, with avg@4 for Nemotron, DeepSWE, and Lego. Terminal-Bench 2.1 uses 89 tasks, avg@3. †The
+prompted student receives the teacher’s predicted bug locations (Appendix B.1).
+Pre-RL checkpoint
+RL expert
+Reference
+Student
+Teacher
+Student+SP
+Recovery (%)
+(a) Math
+MiMo-7B-SFT
+MiMo-7B-RL
+Xiaomi LLM-Core et al., 2025
+63.77
+73.18
+72.25
+90.15
+GPT-OSS-Swallow-20B-SFT
+GPT-OSS-Swallow-20B-RL
+Swallow LLM, 2026a
+76.53
+90.21
+89.67
+96.06
+Qwen3-Swallow-8B-SFT
+Qwen3-Swallow-8B-RL
+Swallow LLM, 2026b
+63.68
+83.01
+82.28
+96.22
+OLMo-3-7B-Instruct-DPO
+OLMo-3-7B-Instruct
+Team OLMo et al., 2026
+42.97
+60.72
+60.13
+96.70
+Nemotron-Cascade-8B-SFT
+Nemotron-Cascade-8B-MathRL
+Wang et al., 2026a
+85.25
+89.34
+89.30
+99.18
+Qwen3-Swallow-30B-A3B-SFT Qwen3-Swallow-30B-A3B-RL
+Swallow LLM, 2026b
+72.91
+86.25
+86.23
+99.79
+Eurus-2-7B-SFT
+Eurus-2-7B-PRIMEa
+Cui et al., 2025
+36.06
+49.63
+49.91
+102.07
+INTELLECT-MATH-SFT
+INTELLECT-MATHa
+Prime Intellect, 2025
+45.47
+54.11
+54.62
+105.89
+Poro-2-8B-Long-Math-SFT
+Poro-2-8B-Long-Math-RLc
+Hakala et al., 2026
+68.34
+72.43
+73.88
+135.47
+Klear-Reasoner-8B-SFT
+Klear-Reasoner-8Bb
+Su et al., 2026
+62.15
+65.00
+66.11
+139.02
+(b) Code (LiveCodeBench)
+MiMo-7B-SFT
+MiMo-7B-RL
+Xiaomi LLM-Core et al., 2025
+50.17
+52.87
+52.55
+88.08
+Nemotron-Cascade-8B-SFT
+Nemotron-Cascade-8B-CodeRL
+Wang et al., 2026a
+55.73
+69.39
+69.56
+101.21
+Klear-Reasoner-8B-SFT
+Klear-Reasoner-8B
+Su et al., 2026
+53.44
+57.27
+57.34
+101.83
+Qwen3-14B
+AReaL-boba-2-14B-Opend
+Fu et al., 2026
+64.86
+68.06
+68.14
+102.38
+Mellum2-12B-A2.5B-SFT
+Mellum2-12B-A2.5B-Instructe
+Kojic et al., 2026
+36.30
+39.05
+39.34
+110.34
+Qwen3-8B
+AReaL-boba-2-8B-Opend
+Fu et al., 2026
+58.54
+62.20
+62.96
+120.83
+OLMo-3-7B-Instruct-DPO
+OLMo-3-7B-Instructf
+Team OLMo et al., 2026
+28.50
+34.10
+36.54
+143.44
+(c) Agent: SWE-bench Verified
+Nemotron-Cascade-8B-SFT
+Nemotron-Cascade-8B
+Wang et al., 2026a
+23.60
+34.60
+33.75†
+92.27†
+Qwen3-32B
+DeepSWE-Preview
+Luo et al., 2025
+24.90
+44.05
+45.65
+108.36
+Qwen3.5-35B-A3B
+Lego-RL-35B-A3B
+Du et al., 2026
+64.00
+70.40
+72.25
+128.91
+SWE-Gym-OpenHands-7B
+SkyRL-Agent-7b-v0
+Cao et al., 2025
+11.40
+12.80
+13.60
+157.14
+(d) Agent: Terminal-Bench 2.1
+Qwen3.5-9B
+TMax-9B
+Ivison et al., 2026
+20.22
+28.09
+29.96
+123.81
+Qwen3.6-27B
+TMax-27B
+Ivison et al., 2026
+43.45
+46.07
+48.69
+200.00
+We next ask whether such prompts, trained independently for different domains, can be combined.
+3.3. Composing Experts from Different Domains
+We now further test whether soft prompts distilled independently from experts in different domains can
+be composed to combine their capabilities.
+5
+Composable Soft-Prompt Distillation of RL Experts
+Table 2. Single-domain and composition results. Full model, LoRA, and SP denote the adaptation representation.
+Scores and recovery are percentages. All rows use avg@K with K = 64/8/16/8 for AIME24/LCB/GPQA/IFBench.
+Method
+AIME24
+LCB v5
+GPQA-D
+IFBench
+Avg.
+Recovery (%)
+Student (no prompt)
+55.94
+58.61
+44.38
+42.71
+50.41
+0.0
+Individual domain experts (oracle routing)
+81.77
+66.92
+50.44
+67.33
+66.61
+100.0
+Full model
+Expert merge (TA, λ = 1.0)
+78.85
+64.52
+54.14
+71.58
+67.27
+104.1
+Expert merge (TIES)
+81.25
+65.42
+57.07
+66.12
+67.47
+105.2
+MOPD
+83.28
+66.24
+55.21
+66.42
+67.79
+107.2
+LoRA
+LoRA distill + TA (λ = 0.5)
+80.21
+63.10
+56.22
+62.46
+65.50
+93.1
+LoRA distill + TIES
+81.41
+64.00
+56.66
+62.67
+66.19
+97.3
+Soft prompt
+Single-domain SP
+80.89
+64.67
+49.24
+66.71
+65.38
+92.4
+CSPD w/o prefix-robust training
+76.98
+64.15
+51.89
+65.00
+64.50
+87.0
+CSPD (ISCM)
+79.90
+65.72
+57.92
+67.33
+67.72
+106.8
+CSPD (MCSI)
+80.47
+64.67
+57.77
+68.42
+67.83
+107.5
+Experimental setting.
+We follow M2RL (Wang et al., 2026b), which first applies supervised fine-tuning to
+Qwen3-4B-Base (Yang et al., 2025) and then trains a separate RL expert from this SFT model in each domain.
+We directly use their SFT model, M2RL-SFT, as the frozen student and their RL experts in four domains, math,
+code, science, and instruction following, as teachers. We do not retrain the SFT model or the RL experts, and
+we distill each soft prompt on the training data of the corresponding RL expert. These domains are evaluated
+on AIME24 (MAA, 2024), LiveCodeBench v5 (Jain et al., 2025), GPQA-Diamond (Rein et al., 2024), and
+IFBench (Pyatkin et al., 2025), respectively. Evaluation uses temperature 0.6, a maximum generation length
+of 32k tokens, and sampling counts of K = 64/8/16/8 across the four benchmarks.
+Each expert is distilled independently into a 256-vector prompt with prefix-robust training (Section 2.2),
+using the Muon optimizer for 200 updates, and we use the final checkpoint. We evaluate the same four
+prompts in two configurations. Single-domain SP attaches only the prompt of the domain being evaluated,
+and CSPD attaches all four prompts. We report two concatenation orders, MCSI (math, code, science,
+instruction following) and its reverse ISCM, and use MCSI by default. The input templates and training
+recipe are provided in Appendix A.
+Baselines.
+We compare against expert weight merging through Task Arithmetic (TA) (Ilharco et al., 2023)
+and TIES (Yadav et al., 2023), and against MOPD (Wang et al., 2026b). We also distill each expert into
+a LoRA adapter using the same data as the prompts and combine the adapters with TA or TIES. For TA,
+we report the best evaluated coefficient, which is 1.0 for the full-model RL experts and 0.5 for the LoRA
+adapters. Coefficient sweeps and baseline training settings are in Appendix D.
+6
+Composable Soft-Prompt Distillation of RL Experts
+Concatenated prompts recover the combined expert gain.
+Table 2 reports the single-domain and
+composition results. Composing the four prompts raises the student’s average score from 50.41 to 67.83,
+recovering approximately 107.5% of the aggregate expert gain and exceeding the average of the individual
+experts (66.61), which corresponds to an oracle router that sends each benchmark to its own domain expert.
+The same prompts evaluated individually average 65.38. Composition raises GPQA-Diamond from 49.24 to
+57.77 and IFBench from 66.71 to 68.42, while AIME24 decreases slightly from 80.89 to 80.47. The reverse
+order ISCM gives a similar average of 67.72. Independently learned modules can therefore contribute beyond
+their own training domains, although composition does not improve every domain uniformly.
+Training with varied context helps composition.
+Each prompt is trained alone but used after other
+prompts at inference. Prefix-robust training (Section 2.2) exposes it to varied preceding text during training.
+This makes the composition more stable (Table 2 and Appendix C).
+Input-space composition matches weight-space consolidation.
+CSPD achieves an average score on
+par with MOPD (67.79) and higher than expert TIES (67.47) and expert TA (67.27). It also exceeds LoRA
+distillation followed by TA (65.50) or TIES (66.19), where the LoRA adapters use the same distillation data
+as the soft prompts. Performance varies by domain. CSPD scores higher than MOPD on GPQA-Diamond
+and IFBench, while MOPD performs better on AIME24 and LiveCodeBench. Thus, composing in input space
+reaches the in-domain performance of consolidating in weight space, while every expert remains a separate
+module that was trained without access to the others.
+3.4. Adding and Removing Experts
+We next evaluate adding experts one at a time, using the four prompts from Section 3.3, keeping the
+backbone and all prompts fixed throughout.
+Continual addition.
+Starting from the unprompted student, experts arrive in the order instruction fol-
+lowing (I), science (S), code (C), and math (M). Each new prompt is placed before the existing ones,
+yielding the inputs
+Student →I →SI →CSI →MCSI,
+where the leftmost module is the most recent. The final input is the default composition of Table 2. We
+evaluate all four domains after each addition. The average rises from the student’s 50.41 to 60.99, 61.67,
+63.67, and 67.83 (Figure 3a), ending above the average of the individual experts (66.61), without retraining
+any existing module.
+Individual domains exhibit both positive and negative interactions. Adding code reduces IFBench from
+66.71 to 64.58, while subsequently adding math raises it to 68.42. Appending each new prompt instead
+gives a similar trajectory (Appendix C).
+Module removal and cross-domain contributions.
+To examine each module’s contribution, we remove
+one prompt at a time from the MCSI composition while preserving the relative order of the remaining
+7
+Composable Soft-Prompt Distillation of RL Experts
+Student
+I
+SI
+CSI
+MCSI
+Input order (new module prepended)
+40
+50
+60
+70
+80
+Score (%)
+50.4
+61.0
+61.7
+63.7
+67.8
+Expert
+avg.
+(a) Continual addition
+Math
+Code
+Science
+IF
+Overall
+AIME24
+LCB
+GPQA-D IFBench
+Avg.
+Evaluated benchmark
+w/o Math
+w/o Code
+w/o Science
+w/o IF
+-8.1
++1.9
+-6.5
+-3.8
+-4.2
+-3.5
+-4.4
++0.4
++0.3
+-1.8
++0.2
++1.1
+-1.1
+-2.5
+-0.6
++0.3
+-0.3
+-0.9
+-12.9
+-3.5
+(b) Removing one prompt from MCSI
+−10
+−5
+0
+5
+10
+Score change after removal (pp)
+Figure 3. Capability expansion and module interactions. (a) Independently trained prompts are prepended in arrival
+order I, S, C, M, starting from the unprompted student. The dashed line marks the average of the individual experts.
+Curves show each domain and the overall average. (b) Score change on each benchmark (columns) after removing one
+prompt (rows) from MCSI, preserving the remaining order. Negative values mean the removed prompt was helping.
+Both panels use the four prompts of Table 2.
+prompts (Figure 3b). Each row removes one prompt and each column is a benchmark. We report the score
+after removal minus the full-composition score, so a negative value means the removed prompt was helping.
+In this configuration, every module contributes positively to its own domain and to the four-domain average.
+Removing math causes the largest average drop, at 4.16 points, including a 6.54-point decrease on GPQA-
+Diamond. Removing instruction following reduces IFBench by 12.88 points. Contributions also include
+negative interactions, as removing math improves LiveCodeBench by 1.87 points. The reverse order ISCM
+shows the same pattern (Appendix C).
+Experts therefore interact: some transfer across domains, as math does to science, while others interfere,
+as code briefly does with instruction following. Individual domains can dip as experts are added, but the
+overall average rises with every addition.
+Comparison with progressive training and merging.
+A natural alternative is to train each new prompt
+in the context of the earlier ones, as in Progressive Prompts (Razdaibiedina et al., 2023), where each new
+prompt is trained with all previous prompts frozen in front of it, so it can adapt to the existing composition.
+Because progressive training places each new prompt in front of the previous ones, we compare it with
+independent prompts in the same prepended order (I, SI, CSI, MCSI), with the same optimizer and number
+of updates. Both start from the same I prompt. Independent training gives a higher average at every
+stage (Figure 4): 61.67 versus 56.44 after S, 63.67 versus 58.28 after C, and 67.83 versus 65.17 after
+M. Progressive training also erodes the earliest capability, reducing IFBench to 52.71, 50.88, and 61.42
+at these stages. Fitting a new module to a particular composition therefore does not help later joint use,
+and freezing earlier prompts alone does not preserve their behavior. Independent training is therefore
+both simpler and more effective in this setting. Figure 4 also shows expert TIES merging over the same
+8
+Composable Soft-Prompt Distillation of RL Experts
+domain subsets. Independent prompts score higher than TIES on average at every stage, ending at 67.83
+versus 67.47. The IF expert alone lowers LiveCodeBench to 52.69, well below the student’s 58.61, and
+merging it with the science expert keeps it at 52.54. Updating the weights for one domain thus degrades
+another, a form of catastrophic forgetting. Independent prompts leave the backbone unchanged and keep
+LiveCodeBench at 62.57 and 60.55 at these stages.
+Student
+I
+SI
+CSI
+MCSI
+55
+60
+65
+70
+75
+80
+Score (%)
+Math (AIME24)
+Student
+I
+SI
+CSI
+MCSI
+52.5
+55.0
+57.5
+60.0
+62.5
+65.0
+Code (LCB v5)
+Student
+I
+SI
+CSI
+MCSI
+45.0
+47.5
+50.0
+52.5
+55.0
+57.5
+Science (GPQA-D)
+Student
+I
+SI
+CSI
+MCSI
+45
+50
+55
+60
+65
+IF (IFBench)
+Student
+I
+SI
+CSI
+MCSI
+50
+55
+60
+65
+Overall
+Independent SP
+Progressive SP
+Expert TIES
+Figure 4. Independent SP training, progressive SP training, and expert TIES merging by domain and overall. Experts
+arrive as I, S, C, M, and each new SP is prepended. All curves start at the unprompted student. The two SP strategies
+share the initial I prompt. TIES merges the same domain subset at each stage (the first stage uses the IF expert).
+3.5. Out-of-Domain Generalization
+Consolidating experts into the weights can approach the experts in-domain while losing capabilities elsewhere
+(Wang et al., 2026c). We therefore evaluate the MCSI composition of all four prompts from Table 2 on
+six benchmarks outside its four training domains.
+We compare the composed prompts with the unprompted student, MOPD, expert TIES merging, and LoRA
+distillation with TA on six benchmarks (Table 3, setting in Appendix E). They cover refusal behavior on
+XSTest (Röttger et al., 2024), truthfulness on TruthfulQA (Lin et al., 2022), tool calling on BFCL (Patil et al.,
+2025), closed-book knowledge on TriviaQA (Joshi et al., 2017), difficult reasoning tasks on BBEH (Kazemi
+et al., 2025), and financial reasoning on FinQA (Chen et al., 2021).
+Table 3. Out-of-domain scores (%). CSPD uses the MCSI composition from Table 2. The mean weights each benchmark
+equally and is computed from the displayed scores. Bold marks each column maximum. Parentheses give changes
+from the student.
+Method
+XSTest
+TruthfulQA
+BFCL
+TriviaQA
+BBEH
+FinQA
+Mean
+Student (no prompt)
+80.4
+64.6
+47.6
+31.5
+11.1
+66.3
+50.3
+Full model
+Expert merge (TIES)
+82.4 (+2.0)
+63.7 (−0.9)
+48.5 (+0.9)
+33.6 (+2.1)
+25.6 (+14.5)
+70.9 (+4.6)
+54.1 (+3.9)
+MOPD
+84.2 (+3.8)
+61.0 (−3.6)
+49.4 (+1.8)
+31.9 (+0.4)
+23.9 (+12.8)
+70.8 (+4.5)
+53.5 (+3.3)
+LoRA
+LoRA distill + TA (λ = 0.5) 85.1 (+4.7)
+63.8 (−0.8)
+47.5 (−0.1)
+32.7 (+1.2)
+23.0 (+11.9)
+70.9 (+4.6)
+53.8 (+3.6)
+Soft prompt
+CSPD (MCSI)
+88.2 (+7.8)
+64.2 (−0.4)
+55.6 (+8.0)
+33.5 (+2.0)
+25.8 (+14.7)
+72.5 (+6.2)
+56.6 (+6.4)
+CSPD achieves the highest mean score (56.6) and leads on four of the six benchmarks. Its largest margin
+9
+Composable Soft-Prompt Distillation of RL Experts
+over the strongest comparison on each benchmark is on BFCL, where it scores 55.6 versus 49.4 for MOPD. It
+also leads on XSTest by 3.1 points over LoRA and on FinQA by 1.6 points over both expert TIES and LoRA. On
+BBEH, the gain over the student is large (25.8 versus 11.1), although expert merging achieves a similar score
+(25.6). The student retains the highest TruthfulQA score (64.6 versus 64.2 for CSPD), and expert merging
+leads on TriviaQA by 0.1 point. Overall, CSPD improves over the student on five of the six benchmarks and
+changes the sixth by only 0.4 points, whereas MOPD loses 3.6 points on TruthfulQA. Adding capabilities
+through the input, with the backbone frozen, thus largely preserves the student’s general capabilities.
+3.6. Serving Efficiency
+A soft prompt adds parameters only at the input. It is processed once during prefill, and every later decoding
+step only attends to its cached keys and values, so relative to the backbone the only cost is a slightly longer
+context (Appendix F). A LoRA adapter, by contrast, adds computation to every layer at every decoding step.
+Because every expert is an input to the same frozen model, requests that use different experts, or different
+combinations of them, can also share one batch. We measure the cost of this by assigning a distinct adapter
+to every request, the extreme case of per-user personalization, and comparing throughput and first-token
+latency against the same backbone served without adapters.
+Experimental setting.
+We serve GPT-OSS-20B in BF16 on a single NVIDIA B200 with SGLang. We compare
+the unadapted backbone, 256-vector soft prompts, and unmerged rank-4 LoRA adapters served with the
+CSGMV backend. Each request has 20,480 text input tokens and generates 512 tokens, simulating an agent
+setting. SP adds 256 vectors to the input. We use matched text inputs across configurations and register
+the synthetic adapters before timing generation.
+We vary the concurrency limit C over 1, 2, 4, 8, 16, 24, 32. After a warm-up burst of C requests, a closed-
+loop client issues 8C measured requests, starting a new one whenever a slot becomes available. All three
+configurations use the same KV-cache budget at each concurrency level, with 524,288 tokens through
+C = 16 and 1,048,576 at C = 24 and 32. We report aggregate output tokens per second from the first
+request submission to the last completion, and the 95th percentile of the time from request submission
+to receipt of the first token.
+Multi-adapter serving.
+SP throughput stays within 1.5% of the unadapted backbone across the seven
+concurrency levels (Figure 5). Relative to LoRA, the advantage is largest with one request in flight, where SP
+delivers 4.12× the output throughput of LoRA. At 32 concurrent requests, SP serves 715.4 output tokens/s,
+compared with 721.3 for the backbone and 298.5 for LoRA. At this operating point, SP delivers 2.40× the
+throughput of LoRA and reduces P95 time to first token from 39.21 to 17.26 seconds, a 2.27× reduction,
+close to the backbone’s 16.89 seconds.
+Speculative decoding.
+Soft prompts also remain compatible with draft models trained on the backbone.
+Adding a 256-vector prompt reduces the average acceptance length from 2.34 to 2.28 for EAGLE-3 (Li
+et al., 2025) (−2.6%) and from 2.96 to 2.82 for DFlash (Chen et al., 2026) (−4.7%). Acceptance length
+does not directly measure end-to-end latency.
+10
+Composable Soft-Prompt Distillation of RL Experts
+0
+200
+400
+600
+800
+Output tokens/s
+2.40×
+Output throughput ↑
+0
+10
+20
+30
+40
+Seconds
+2.27×
+P95 time to first token ↓
+1
+4
+8
+16
+24
+32
+Concurrent requests
+−2
+0
+2
+4
+SP vs. base (%) ↑
+-0.8%
+1
+4
+8
+16
+24
+32
+Concurrent requests
+−2
+0
+2
+4
+SP vs. base (%) ↓
++2.2%
+Backbone
+SP (256 vectors)
+LoRA (rank 4)
+Figure 5. Request-specific adapter serving on one B200. Higher throughput (left) and lower P95 time to first token
+(right) are better. At 32 concurrent requests, the arrows show the SP-to-LoRA throughput ratio and the LoRA-to-SP
+latency ratio. The lower panels show SP’s percentage change relative to the unadapted backbone, with zero indicating
+equal performance.
+4. What Does a Soft Prompt Learn?
+We analyze one expert from Table 1, the 256-vector soft prompt that distills GPT-OSS-Swallow-20B-RL
+into GPT-OSS-Swallow-20B-SFT for math. The teacher, the student, and the prompted student answer 100
+held-out AIME and MATH-500 questions. Each model then reads the same answers, and at every response
+position we compare its next-token distribution with the teacher’s. See Appendix G for details.
+The nearest word of a soft prompt vector does not tell what the vector learned. Across six models,
+84–100% of the vectors keep their initialization token as the nearest word, even though in five of them the
+vectors move far from that token (median cosine similarity 0.25–0.34).
+The soft prompt moves the student most of the way to the teacher, mainly by making it check its
+intermediate results. It closes 86.8% of the teacher–student KL gap. The tokens it raises most are ?, But,
+and Check, and those it lowers most are paragraph breaks, So, and Thus (Figure 6b). Instead of stating a
+result and moving on, the prompted student first questions or checks it, as the teacher does.
+Written instructions with the same intent do not reproduce the effect. Instructions asking the model to
+check and verify its work close at most 2.1% of the gap, and raising the reasoning effort closes none (Figure 6a).
+The soft prompt acts mainly through response tokens attending to it directly, rather than by changing
+how the model reads the question. When only response tokens may attend to the soft prompt, 80% of its
+improvement remains, but only 33% remains when only input tokens may attend to it (Figure 6c).
+Taken together, a soft prompt does not learn a message that can be put into words. It learns the teacher’s
+11
+Composable Soft-Prompt Distillation of RL Experts
+reasoning behavior, here checking intermediate results, and applies it through the attention of the re-
+sponse tokens.
+0
+25
+50
+75
+100
+KL gap closed (%)
+Soft prompt
+Verify instruction
+Check instruction
+Neutral instruction
+High reasoning effort
+86.8
+2.1
+1.6
+1.1
+0
+(a) Soft prompt vs. written instructions
+100
+0
+100
+200
+Positions (lowered | raised)
+?
+But
+Check
+Let's
+.\n\n
+␣So
+Thus
+Given
+205
+199
+107
+72
+95
+71
+24
+21
+(b) Most changed tokens
+0
+25
+50
+75
+100
+Improvement kept (%)
+Full
+Response only
+Input only
+Blocked
+100
+80
+33
+1
+(c) Attention pathways
+Figure 6. What the GPT-OSS math soft prompt does. (a) Share of the teacher–student KL gap closed by the soft prompt,
+written instructions, and high reasoning effort. (b) Tokens that appear most often among the 2,000 positions where
+the soft prompt raises (blue) or lowers (red) the probability of the trace token the most. ␣marks a leading space. (c)
+Share of the soft prompt’s improvement kept when only some tokens may attend to it. Details in Appendix G.
+5. Discussion
+Why compose in input space?
+Weight-space consolidation writes every expert into the same parameters,
+so adding an expert means re-consolidating the model, and the experts can interfere with one another and
+with the backbone’s general capabilities. CSPD separates acquiring a capability from combining capabilities.
+Each prompt is distilled using only its own teacher and data, prompts meet only at inference, and the
+backbone never changes. This separation lets experts be trained in parallel by different parties, added or
+replaced without revisiting earlier domains, and removed exactly by dropping their prompt. Our results
+show that this separation does not cost in-domain performance relative to MOPD, and that it better preserves
+out-of-domain behavior. The progressive-training comparison further suggests that composition does not
+require each module to be trained with knowledge of the others.
+Plug-in experts versus multi-LoRA.
+Combining LoRA experts from different domains usually takes one of
+two forms. Merging adds their weight updates with tuned coefficients (Ilharco et al., 2023, Yadav et al., 2023,
+Huang et al., 2023, Prabhakar et al., 2024), so all experts write into the same weights and can interfere.
+With the same distillation data, merged LoRA adapters reach 65.50 with TA and 66.19 with TIES, below the
+67.83 of composed soft prompts (Table 2). Mixture-style methods instead learn a router or gate over the
+adapters (Buehler and Buehler, 2024, Zadouri et al., 2024), which must be retrained whenever an expert is
+added. A soft prompt is a plug-in module. Adding an expert trains only its prompt, removing one drops its
+prompt exactly, and several experts act together within a request by concatenation, with no coefficient or
+router to fit. Different requests in one batch can also use different sets of prompts on the same unchanged
+backbone, which gives 2.40× the output throughput of rank-4 LoRA with 32 distinct adapters (Section 3.6).
+12
+Composable Soft-Prompt Distillation of RL Experts
+Limitations.
+Our composition study uses one backbone and four domains. Whether composition continues
+to improve as the number of experts grows, and how it depends on the relations between domains, remain
+open. Experts do interact, both positively and negatively (Section 3.4). Several reported numbers, including
+single-expert checkpoints and TA coefficients, are selected on the evaluation benchmarks, and small teacher
+gains make some recovery ratios noisy, so we report absolute scores throughout (Appendix B.3). Each prompt
+adds 256 positions to the context, so attention and KV-cache costs grow with the number of composed
+experts. Finally, prompts are tied to their backbone and require RL teachers for supervision, so moving
+to a new backbone requires re-distillation.
+Toward continual post-training.
+CSPD suggests a different shape for post-training, with a frozen backbone
+and a growing library of compact expert modules, each distilled when a new capability becomes available
+and composed as needed. Four directions follow. The first is scale, with more backbones, larger prompt
+libraries, and more arrival orders. The second is prompt selection, learning which prompts each request
+needs instead of choosing them by hand. The third is mechanism, understanding why prompts transfer
+across domains and how several prompts share attention. The fourth is cost, with shorter prompts for large
+libraries and a full training-cost comparison with MOPD and LoRA.
+6. Related Work
+Capacity requirements of post-training.
+LoRA can match full fine-tuning in selected post-training
+regimes (Schulman and Thinking Machines Lab, 2025). Single-layer training, sparse subnetworks, and
+low-dimensional adapters can also recover substantial RL gains (Zhang et al., 2026, Mukherjee et al., 2025,
+Morris et al., 2026), while SGD-based RL exhibits sparse updates (Mukherjee et al., 2026). These findings
+motivate studying input-space representations of expert capabilities.
+Distilling post-training capabilities. Sequence-level distillation transfers teacher-generated responses,
+including reasoning capabilities (Kim and Rush, 2016, DeepSeek-AI et al., 2025), whereas on-policy methods
+supervise student-generated trajectories (Agarwal et al., 2024, Gu et al., 2024, Yang et al., 2025, Lu and
+Thinking Machines Lab, 2025). Multi-teacher on-policy distillation consolidates several experts into one
+student (Wang et al., 2026b, Ma et al., 2026a). Approaching teacher performance in-domain can nevertheless
+accompany out-of-domain losses (Wang et al., 2026c), motivating evaluation beyond the distilled capabilities.
+Representations of adaptation. Adaptation can reside in weights, continuous inputs, layerwise prefixes, or
+hidden-state interventions (Hu et al., 2021, Lester et al., 2021, Li and Liang, 2021, Wu et al., 2024). PromptKD
+and soft-prompt teachers use learned prompts to guide distillation into student weights (Kim et al., 2024, Ma
+et al., 2026b). DDPT instead places demonstration-induced reasoning in dynamically selected prompts (Teng
+et al., 2026). Soft prompts can also receive distilled safety behavior (Alfarra et al., 2026). Cartridges train
+key–value cache prefixes to compress long contexts through self-study (Eyuboglu et al., 2025). Concurrent
+with our work, Hypertune trains key–value cache prefixes directly with RL or SFT, adding co-residence
+training so that several prefixes can be loaded together (Hyperstition, 2026). CSPD instead learns prompts
+in the input embedding space by distilling existing RL experts, trains each prompt in isolation, and composes
+them by concatenation. An input-space prompt can also be prefilled once into a key–value prefix for serving.
+Composition, continual learning, and efficient serving. Model soups, Task Arithmetic, and interference-
+aware merging combine weight updates (Wortsman et al., 2022, Ilharco et al., 2023, Yadav et al., 2023, Yu
+13
+Composable Soft-Prompt Distillation of RL Experts
+et al., 2024), with mixed results for RL experts (Wu et al., 2026, Wang et al., 2026b). Adapter composition
+combines updates or learns gates (Pfeiffer et al., 2021, Huang et al., 2023, Prabhakar et al., 2024, Buehler
+and Buehler, 2024, Zadouri et al., 2024), while BAR composes experts through a routed mixture-of-experts
+architecture (Morrison et al., 2026). In input space, APT learns composable prompts and ATTEMPT mixes
+source prompts (Bowman et al., 2023, Asai et al., 2022). Progressive Prompts freezes earlier prompts during
+continual learning (Razdaibiedina et al., 2023), and Skill Neologisms composes independently learned skill
+embeddings (Berthon et al., 2026). Deployment work optimizes concurrent adapters (Chen et al., 2023,
+Sheng et al., 2024), prefill-only adaptation (Lanpouthakoun et al., 2026), and speculative decoding (Li
+et al., 2025, Chen et al., 2026). CSPD connects these research directions by independently distilling RL
+experts into prompts on a shared frozen backbone, then evaluating their concatenation, out-of-domain
+behavior, and serving efficiency.
+7. Conclusion
+We presented CSPD, which distills each post-RL expert into an independently trained soft prompt on a
+frozen pre-RL backbone and composes experts by concatenating their prompts. A single prompt recovers
+at least 90% of the teacher’s gain in 22 of 23 math, code, and agent settings. Four prompts from different
+domains, trained without access to each other, compose to match MOPD in-domain, and the average rises
+with every expert added one at a time, as in continual post-training. The composition also attains the highest
+mean score on held-out benchmarks among the compared methods. Because the experts live in the input,
+serving them costs little more than serving the backbone alone. These results suggest input-space modules
+as a practical foundation for continual post-training.
+Impact Statement
+This work studies modular transfer of post-trained behavior. Compact, attachable modules may make
+specialized behaviors easier to distribute and serve, including behaviors that require safety evaluation.
+Freezing the backbone does not guarantee that an attached prompt, or a combination of prompts, preserves
+safety properties, and our XSTest evaluation covers only refusal behavior on the tested requests. Release
+decisions should consider model and dataset terms, generated training material, and the behavior of the
+resulting modules alone and in combination.

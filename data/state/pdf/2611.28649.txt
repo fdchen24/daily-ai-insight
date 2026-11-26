@@ -1,0 +1,3088 @@
+Internalizing Multi-View Geometry for Spatial Intelligence
+Muxin Fu1,2,∗, Peike Yu2,∗, Guibin Zhang3,‡, Wenrui Zhou1, Runze Liu1,
+Lang Feng2, Fuchao Yang2, Feng Chen2, Yixuan Li2, Mengao Zhang2, Shiying Zhang4,
+Wen Shen4, Ling Pan1, Shuicheng Yan3, Bo An2,†
+1The Hong Kong University of Science and Technology
+2Nanyang Technological University
+3National University of Singapore
+4Tongji University
+∗Equal contribution
+‡Project lead
+†Corresponding author
+Abstract
+Spatial intelligence, the ability to reason about 3D space from visual observations, becomes essential as
+multimodal large language models (MLLMs) move into the physical world. Beyond perceiving each view,
+it rests on two cornerstones of human cognition: fusing multiple views into one coherent 3D scene and
+mentally transforming that scene to new viewpoints as reasoning unfolds. Yet our spatial probes reveal
+that MLLMs largely lack both capabilities, even after spatial fine-tuning. We therefore present S-MIND,
+which internalizes multi-view geometry within the MLLM through a compact set of spatial tokens. It
+supervises these tokens to hold the fused 3D scene and re-emits them to re-express this scene from
+every viewpoint the reasoning adopts. Across four spatial benchmarks, S-MIND improves its Qwen3.5
+backbones by up to 22.26 points and surpasses frontier general models such as GPT-6-Astra (+0.45),
+Kimi-K3.1-Pro (+1.97), and GLM-5.3-Flash (+7.80) in average accuracy. Moreover, the same probes
+confirm that it acquires both capabilities, reaching fusion and transformation accuracies of 65.11% and
+82.17%, against at most 16.02% and 37.28% for the baselines. At inference, S-MIND also runs about
+100× faster than a tool-based agent on the same backbone. Instilled through these spatial tokens during
+training, spatial capability becomes intrinsic to the backbone and persists even when the tokens are
+withheld, offering a promising path toward spatial intelligence in MLLMs.
+ç Project Page
+https://kanaboon1.github.io/S-Mind/
+a GitHub
+https://github.com/KANABOON1/S-Mind
+î Hugging Face
+https://huggingface.co/KANABOON1/S-Mind
+Spatial reasoning across views
+facing the window
+facing the door
+Q Stand by the sofa and face the shelf.
+Is the window on your left or right?
+A. Left
+B. Right
+Multi-view fusion
+Perspective transformation
+sofa
+window
+door
+shelf
+viewer
+shelf: ahead
+window: left
+fuse
+turn
+50
+75
+100
+Hy4
+S-Mind-9B
+S-Mind-4B
+GPT-6-Astra
+Claude-Opus-5.5
+Qwen3.8-Flash
+Kimi-K3.1-Pro
+GLM-5.3-Flash
+Qwen3.5-9B
+Qwen3.5-4B
+90.6
+S
+88.7
+S
+88.0 84.2
+83.9
+78.2
+77.9
+67.9
+49.9
+46.3
+40
+50
+60
+S-Mind-9B
+Qwen3.8-Flash
+GPT-6-Astra
+Claude-Opus-5.5
+Hy4
+Kimi-K3.1-Pro
+GLM-5.3-Flash
+S-Mind-4B
+Qwen3.5-9B
+Qwen3.5-4B
+S
+58.1
+57.9
+57.0
+56.0
+55.8
+55.2
+54.8
+S
+54.3
+45.9
+41.6
+MindCube-Tiny
+ViewSpatial
+Figure 1: Spatial reasoning across views, and accuracy on representative benchmarks. Left: answering the
+question requires fusing the two snapshots into one scene and turning that scene to an observer standing by the
+sofa. Right: accuracy (%) on MindCube-Tiny and ViewSpatial (Table 1). By internalizing spatial capability through
+spatial tokens, S-MIND substantially improves its Qwen3.5 backbones at both scales and rivals frontier general
+models such as GPT-6-Astra and Claude-Opus-5.5.
+Work done while at NTU.
+1
+arXiv:2611.28649v1  [cs.CV]  21 Nov 2026
+1 Introduction
+Two snapshots of a room, one facing the window and one facing the door, are enough to walk through
+it in the mind: stand by the sofa, face the shelf, and the window is on the left (Figure 1). Behind this
+lie two operations: assembling the snapshots into one model of the room, and mentally rotating that
+model to the new standpoint (Shepard and Metzler, 1971). As multimodal large language models
+(MLLMs) (Huang et al., 2026a; Aneja et al., 2026; Qwen Team, 2026a) advance rapidly in visual
+understanding and reasoning, real-world tasks such as embodied AI (Wu et al., 2026; Shi et al.,
+2026a), autonomous driving (Luo et al., 2026; Huang et al., 2026b), and extended reality (Yang
+et al., 2026c; Li and Yao, 2026) increasingly hinge on such spatial intelligence.
+Despite its importance, spatial intelligence remains a major bottleneck for MLLMs (Wang et al.,
+2026b; Cai et al., 2025; Zhang et al., 2026b), requiring the model to mentally construct a coher-
+ent 3D scene rather than merely recognize 2D visual patterns. As Figure 2a illustrates, existing
+approaches generally fall into two paradigms: (i) External-geometry methods construct the scene
+outside the model, via 3D reconstruction and rendering (Zhang et al., 2026f; Yang et al., 2025; Cho
+et al., 2026) or an attached geometry encoder (Wu et al., 2025; Fan et al., 2026; Zhao et al., 2026).
+While providing explicit geometry, they fail to internalize spatial capability and incur high inference
+latency (Li et al., 2026g,e). (ii) Spatial fine-tuning methods aim to train the MLLM to construct
+the scene internally, with supervision progressing from the output text alone (Li et al., 2026d; Yang
+et al., 2026a; Li et al., 2026f) to latent states aligned with 3D geometry (Chen et al., 2026; Shi et al.,
+2026a; Wang and Huang, 2026; Oi et al., 2026; Li et al., 2026b). This paradigm has drawn growing
+attention for its promise of internalizing spatial capability within the model itself.
+However, the evidence for this promise rests largely on end-task accuracy. We therefore introduce
+spatial probes, extending recent analyses of the spatial representations inside MLLMs (Shi et al.,
+2026b), to decode the scene a model holds internally. Our probes reveal that, despite substantial
+gains in accuracy, spatially fine-tuned models retain two persistent deficiencies in spatial capability,
+as illustrated in Figure 2b. (i) Limited multi-view fusion: these models encode each view well
+but in isolation, and the views are barely fused into a coherent scene. (ii) Incomplete perspective
+transformation: as in base models (Shi et al., 2026b), their internal representation still largely fails
+to follow when the reasoning shifts to a new viewpoint. This mismatch raises a natural question:
+Research Question
+How can an MLLM truly internalize spatial capability, assembling its views
+into one scene and rotating that scene to a new viewpoint, as humans do?
+To address this question, we introduce S-MIND, a framework that endows an MLLM with an internal
+scene representation, built from its input views and transformed as its reasoning unfolds. (I) Multi-
+view fusion. S-MIND introduces a compact set of spatial tokens whose hidden states consolidate
+the views into a unified 3D scene, encoding both the geometry each image observes and the pose of
+each camera in a shared coordinate frame. (II) Perspective transformation. With the views fused
+into one scene, adopting a new viewpoint reduces to re-expressing that scene in a different frame
+of reference. Whenever the reasoning shifts to a new viewpoint, the model therefore re-emits the
+spatial tokens, which now encode the fused scene as observed from that viewpoint, and conditions
+its subsequent reasoning on them. By training the model to construct and manipulate an entire 3D
+scene, S-MIND internalizes genuine spatial capability rather than superficial heuristics.
+Extensive evaluations across four spatial reasoning benchmarks and two model scales demonstrate
+the effectiveness of S-MIND. (I) Strong performance: S-MIND reaches an average accuracy of up
+to 74.03%, surpassing the strongest fine-tuned baseline by 6.76 points and the best released spatial
+reasoning model by 19.11 points, and rivaling frontier general models such as GPT-6-Astra (+0.45)
+and Kimi-K3.1-Pro (+1.97). (II) Internalized spatial capability: At the representation level, S-MIND
+2
+(a) Paradigms for spatial intelligence
+External geometry
+3D reconstruction
+or geometry encoder
+MLLM
+answer
+Scene outside the model
+Spatial fine-tuning
+MLLM
+?
+answer
+Scene not guaranteed
+S-Mind (ours)
+MLLM
+turn
+answer
+Scene inside the model
+(b) Decoded internal scenes
+1 Multi-view fusion
+1
+2
+Q: In which direction did I
+move from image 1 to image 2?
+Qwen3.5-4B + SFT
+1
+2
+table
+Answer: forward-left
+Fails to fuse the two views
+S-Mind (ours)
+1
+2
+table
+Answer: forward-right
+Fuses the two views
+2 Perspective transformation
+1
+2
+3
+4
+Q: From image 2's viewpoint, what is to the right of the coffee table?
+Qwen3.5-4B + SFT
+2
+blue bin
+coffee table
+Answer: table and white chair
+Fails to turn the scene
+S-Mind (ours)
+2
+blue bin
+coffee table
+Answer: blue bin
+Turns the scene
+Figure 2: Internalizing spatial capability in MLLMs. The top panel (a) contrasts the two existing paradigms for
+spatial intelligence with S-MIND: external-geometry methods build the scene outside the model via 3D reconstruc-
+tion; spatial fine-tuning improves the answers without forming a coherent internal scene; and S-MIND explicitly
+fuses the views into an internal scene and rotates it as the reasoning proceeds. The bottom panel (b) shows top-
+down views of the internal scenes decoded on two questions: the spatially fine-tuned baseline (Qwen3.5-4B + SFT,
+read through the spatial probes) neither fuses the two views nor turns the scene to the stated viewpoint, whereas
+S-MIND does both. Dashed circles mark the baseline’s errors.
+overcomes both deficiencies. Multi-view fusion raises the recovery rate of cross-view 3D points from
+at most 16.02% for the baselines to 65.11%, and perspective transformation lifts the accuracy of
+locating points relative to a new viewpoint from at most 37.28% to 82.17%. (III) Efficient and
+internalized reasoning: Requiring no tool calls, S-MIND runs roughly 100× faster than an external-
+geometry agent on the same backbone. Moreover, spatial capability is instilled into the backbone
+through the spatial tokens during training: even with all of them withheld at inference, S-MIND loses
+only 2.37 points and still leads the strongest baseline on its backbone by 5.28 points.
+Contributions. Our contributions are summarized as follows:
+Representation-Level Diagnosis. Through our spatial probes, we identify two deficiencies in the
+spatial capability of current MLLMs, limited multi-view fusion and incomplete perspective trans-
+formation, which persist even after spatial fine-tuning substantially improves their accuracy.
+Practical Solution. We propose S-MIND, which addresses both deficiencies through spatial tokens
+that consolidate the views into a unified 3D scene and are re-emitted at each viewpoint shift to
+re-express that scene in the new frame.
+Experimental Validation. We validate S-MIND across four benchmarks and two model scales,
+showing that it internalizes spatial capability, achieves state-of-the-art accuracy among spatial rea-
+soning models, rivals frontier general models, and attains high inference efficiency.
+3
+2 Related Work
+External-Geometry Methods. External-geometry methods compute the scene outside the MLLM
+and supply it as input. Tool-based designs invoke specialist modules at inference: some build and
+operate on an explicit scene representation, such as a 3D reconstruction, an object-level abstraction,
+or a vector sketch (Zhang et al., 2026f; Cho et al., 2026; Lee et al., 2025; Lin et al., 2026); others
+synthesize views from new standpoints using generative models (Yang et al., 2025; Zhang et al.,
+2026c) or warp visual tokens toward them (Lee et al., 2026). Encoder-based designs instead integrate
+geometry into the architecture, pairing the visual encoder with a feed-forward reconstruction model
+such as VGGT (Wang et al., 2025) and fusing their features (Wu et al., 2025; Fan et al., 2026; Zhao
+et al., 2026); subsequent work refines where and how these features are injected (Wang et al., 2026a;
+Zhang et al., 2026a; Li et al., 2026c). However, both designs offload scene construction to external
+modules, failing to internalize genuine spatial capability while incurring extra inference overhead (Li
+et al., 2026g,e). S-MIND keeps the geometry but moves it from inference into training, where it
+teaches the model itself to fuse the views and transform the scene.
+Spatial Fine-Tuning Methods. Spatial fine-tuning methods train the MLLM to form the scene in-
+ternally, with no geometry at inference. Most methods shape only what the model says: they scale
+up spatial instruction data (Chen et al., 2024; Zhang et al., 2025; Yang et al., 2026b,a), train with
+progressive curricula, process-level rewards, or interaction trajectories (Li et al., 2026d,f; Yao et al.,
+2026), elicit textual cognitive maps or cross-view alignments before the answer (Wang et al., 2026b;
+Hua et al., 2026; Tao et al., 2026), or distill tool-using agents and privileged geometry (Li et al.,
+2026g,e). A growing body of work, closer in spirit to latent reasoning (Hao et al., 2025; Yang et al.,
+2026d; Zhang et al., 2026d), shapes what the model holds instead: it aligns latent states with 3D
+foundation models or across views (Chen et al., 2026; Shi et al., 2026a; Wang and Huang, 2026;
+Oi et al., 2026), or adds dedicated tokens for positions, directions, and an observer’s orientation (Li
+et al., 2026b; Leonard and Murray, 2026). Yet these targets largely encode the geometry of the input
+views, leaving viewpoint changes unsupervised. S-MIND instead supervises its spatial tokens to fuse
+the views into one frame and to re-express the scene at each viewpoint the reasoning adopts.
+3 Does Fine-Tuning Really Internalize Spatial Capability in MLLMs?
+Higher answer accuracy after fine-tuning does not by itself establish that a model has internalized
+spatial capability. We therefore propose spatial probes, which extend recent analyses of spatial rep-
+resentations in MLLMs (Shi et al., 2026b), to examine what a model encodes about a scene before
+and after spatial fine-tuning. They target two capabilities fundamental to spatial intelligence (Cai
+et al., 2025; Wang et al., 2026b): a geometry probe tests whether multiple views are fused into a uni-
+fied internal scene, and a viewpoint probe tests whether that scene is transformed to the viewpoints
+adopted during reasoning. More details are in Appendix A.
+Finding 1: Limited multi-view fusion. To isolate what the model itself encodes, the geometry
+probe appends learnable tokens to the frozen model and decodes from their hidden states the 3D
+point of every visual token, expressed in the first image’s frame. As Figure 3a shows, on Qwen3.5-4B
+(Base) it recovers 60.62% of the first image’s own points (single-view) but only 11.23% of the other
+images’ points (fused), which can be placed only by relating the views. Fine-tuning barely closes
+this gap: the + SFT and + GRPO (Shao et al., 2024) variants lift the fused points only to 14.19%
+and 16.02%, and the released 3DThinker and GPD reach 10.65% and 11.82%. Crucially, the probe’s
+verdict is borne out by behavior. Questions on how the camera moved between two views hinge on
+exactly this fusion, yet as the top of Figure 3c shows, SFT and GRPO are right on only 53.28% and
+56.57% of such questions in MindCube-Tiny, every error placing the second camera on the mirrored
+4
+(a) Limited fusion
+60.62
+57.83
+58.69
+51.01
+60.48
+11.23
+14.19
+16.02
+10.65
+11.82
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+0
+25
+50
+75
+100
+points recovered (%)
+single-view
+fused
+0
+25
+50
+75
+100
+accuracy (%)
+(b) Stalled transformation
+decoded
+first last
+declared
+state
+target frame viewpoint
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+(c) Impact on answers
+Which way did I move? (MindCube-Tiny)
+Is the state in the target frame? (SpinBench)
+coin flip
+correct
+mirrored
+other wrong
+0
+25
+50
+75
+100
+answers (%)
+Base
+40.88
++ SFT
+53.28
++ GRPO
+56.57
+Spatial-Interactor-4B
+72.26
+GeoVR-4B
+8.39
+GPD-4B
+37.59
+SpatialLadder-3B
+41.24
+HATCH-3B
+48.91
+state in the target frame
+94.34
+state not in it
+51.54
+Figure 3: Diagnosis of multi-view fusion and perspective transformation in MLLMs. (a) The geometry probe
+recovers the 3D points of the first image (single-view) and of the other images in its frame (fused). (b) The viewpoint
+probe reads the relation in the decoded state and directly in the target frame at the first and last mention of the
+objects, and the scene at the declared viewpoint. (c) The same deficiencies in the answers; mirrored answers place
+the second camera on the opposite side. Bars are means over models; markers are individual models.
+side. Overall, multi-view fusion remains a persistent challenge for MLLMs, one that current spatial
+fine-tuning does little to overcome.
+Finding 2: Incomplete perspective transformation. Shi et al. (2026b) find that base MLLMs fall
+short in transforming spatial representations across viewpoints. We further use the viewpoint probe
+to test whether spatial fine-tuning closes this gap: the probe reads the relation between two objects
+directly in the queried target frame and after an external rotation into it, separating transformation
+from perception. As Figure 3b shows, the model perceives the scene but largely fails to transform
+it. On SpinBench’s single-image relation questions (Zhang et al., 2026e), the decoded state gives the
+correct relation for 95.14% of them once rotated to the queried viewpoint, yet for only 33.44% when
+read directly in the target frame at the first mention of the objects, and 47.15% at the last. The
+same holds when the reasoning itself declares the viewpoint: the scene read in the frame of each
+declared viewpoint is recovered with only 30.02% accuracy on average, barely above the chance level
+of 25%. The failure is reflected in the answers: as the bottom of Figure 3c shows, the Qwen3.5-4B
+models reach 85.71–98.73% accuracy on questions whose final state lies in the target frame, but only
+42.11–57.14%, near chance, on the rest. Spatial fine-tuning thus does not close the gap: the scene
+stays largely anchored to the camera instead of following the reasoning to new viewpoints.
+4 S-MIND: Fusing Views, Transforming Perspectives
+In this section, we detail the two components of S-MIND, each together with its training: multi-view
+fusion (⊲Section 4.1), which consolidates the input views into one scene held by a compact set of
+spatial tokens, and perspective transformation (⊲Section 4.2), which re-expresses that scene in the
+frame of every viewpoint the reasoning adopts. The overall pipeline is illustrated in Figure 4.
+4.1 Multi-View Fusion
+Multi-view fusion integrates all views into a single scene, which hardly emerges spontaneously
+(Section 3). S-MIND therefore reserves dedicated positions in the model’s own sequence for the
+5
+1
+2
+3
+4
+Q: If I was positioned where the wooden
+chair is and facing the same direction, what
+would be to my left?
+A. Office area
+B. Cabinet desk
+C. Grey sofa
+D. Two chairs
+… From the viewpoint of image 4, 
+ I look
+past the chair’s back to the desk … Standing at the
+chair and facing the way it faces, 
+ I have the
+cabinet desk ahead and the grey sofa to my left.
+<answer>C</answer>
+1 1
+2 2
+3 3
+4 4
+visual tokens
+scene tokens
+camera tokens
+1 1
+2 2
+3 3
+4 4
+self-inserted by the model
+Multimodal LLM
+states \({z_0\:{\in}\:\mathbb{R}^{(2N\mkern3.5mu{+}\mkern3.5mu 4)\mkern5mu{\times}\mkern5mu d}}\)
+states \({z_k\:{\in}\:\mathbb{R}^{(2N\mkern3.5mu{+}\mkern3.5mu 4)\mkern5mu{\times}\mkern5mu d}}\)
+\(N\) views
+fuse
+turn
+answer
+Geometry readout
+Geometry readout
+Cross-attention
+\(\boldsymbol{\times 1}\)
+hidden states \(z\)
+layer mix
+query per visual token
+\(i\)
+query per camera
+\(p\)
+global point
+\(p\)
+local point
+i
+camera pose
+1
+2
+3
+4
+sofa
+desk
+1
+2
+3
+4
+sofa
+desk
+1
+2
+3
+4
+sofa: left
+desk: ahead
+viewer
+redundant supervision
+\(p\)
+1
+\(i\)
+global
+point
+local
+point
+camera pose
+\(\mathcal{L}\)geo
+\({\mkern4mu}\)\({\mathcal{L}}\)global\({\mkern7mu{+}\mkern7mu}\)\({\mathcal{L}}\)local\({\mkern7mu{+}\mkern7mu}\)\({\mathcal{L}}\)cam
+\(\mathcal{L}\)view
+\(z_0\)’s scene at
+the stated viewpoint
+\(\mathcal{L}\)CE
+\(\mathcal{L}\)CE
+reward
+Notation
+visual token
+scene token
+camera token
+i
+camera \(i\), facing
+trained
+frozen
+training only
+1 Multi-view fusion
+2 Perspective transformation
+...
+...
+...
+...
+...
+...
+Geometry pre-training
+readout
+\({\mathcal{L}}\)geo
+Chain-of-thought SFT
+readout
+\({\mathcal{L}}\)CE
+\({\mathcal{L}}\)view
+\({\mathcal{L}}\)geo
+Reinforcement learning (GRPO)
+readout
+reward
+1
+2
+Figure 4: Overview of S-MIND. 1 Multi-view fusion: the spatial tokens appended after the 𝑁views hold the fused
+scene z0, from which a geometry readout decodes, under Lgeo, the 3D point of every visual token and the pose of
+every camera. 2 Perspective transformation: whenever the reasoning adopts a viewpoint, the model re-emits the
+spatial tokens, and Lview trains their states z𝑘to hold the scene of z0 as seen from that viewpoint. The bottom row
+shows the three training stages; neither the readout nor the losses are used at inference.
+fused scene and supervises their hidden states directly: since these states are computed by the model
+itself, the supervision compels it to fuse the views and internalize the observed spatial structure.
+Spatial tokens. Given 𝑁views {𝐼𝑖}𝑁
+𝑖=1, we append 𝐾𝑠𝑁+𝐾𝑐spatial tokens after the images, factorizing
+the scene into what each view sees and where each camera stands: 𝐾𝑠scene tokens per view and 𝐾𝑐
+camera tokens shared by all views. Their hidden states serve as the scene representation,
+z0 =
+z(1); . . . ; z(𝑁); zcam
+∈ℝ(𝐾𝑠𝑁+𝐾𝑐)×𝑑,
+(1)
+where z(𝑖) belongs to view 𝑖and zcam to the cameras. Residing in the sequence itself, these states are
+visible to all subsequent reasoning through ordinary attention and require no architectural change.
+Token-level geometry. We ground the scene at the granularity the MLLM perceives: every visual
+token is assigned the 3D point it observes. Whereas M-RoPE (Wang et al., 2024) encodes where each
+visual token lies in time and in the image plane, token-level geometry endows it with 3D coordinates.
+A single cross-attention readout R𝜙mixes the hidden states of z0 across layers with learned weights
+and decodes geometry and camera poses from them:
+ ˆpg
+𝑖,𝑢, ˆpl
+𝑖,𝑢
+ = R𝜙
+ q𝑢; [z(𝑖); zcam]
+,
+ˆT𝑖= R𝜙
+ qcam
+𝑖
+; z0
+
+,
+(2)
+where the query q𝑢encodes only the grid position 𝑢of a visual token in view 𝑖, and qcam
+𝑖
+is derived
+from z(𝑖). ˆpg
+𝑖,𝑢and ˆpl
+𝑖,𝑢denote the observed point in the frame of the first view (global) and of its own
+camera (local), and ˆT𝑖the pose of camera 𝑖. Since the queries carry no image content, the readout
+can decode only the geometry that z0 already holds. More details are provided in Appendix B.
+6
+Geometry objective. To instill the fused scene in z0, we pre-train on posed image sets and regress
+the decoded points and poses onto their targets under Lgeo = Lglobal + Llocal + Lcam, with
+Lglobal = 1
+|Ω|
+Õ
+(𝑖,𝑢)∈Ω
+
+𝑐g
+𝑖,𝑢𝜌(ˆpg
+𝑖,𝑢−pg
+𝑖,𝑢) −𝛼log 𝑐g
+𝑖,𝑢
+
+,
+Lcam =
+1
+𝑁−1
+𝑁
+Õ
+𝑖=2
+𝜌( ˆT𝑖−T𝑖),
+(3)
+where Ω is the set of visual tokens with a valid target, 𝜌is the Huber loss, 𝑐g
+𝑖,𝑢≥1 is a per-point
+confidence predicted by the readout, and 𝛼weights the confidence regularizer (Wang et al., 2025).
+Through Llocal, the counterpart of Lglobal on the local points, we deliberately make the supervision
+redundant, as global points, local points, and camera poses each follow from the other two, so that
+the points and poses decoded from z0 are driven toward one coherent scene (Appendix D.3).
+4.2 Perspective Transformation
+A fused scene is tied to the frame of the first view, whereas spatial reasoning routinely leaves
+that frame for another viewpoint.
+S-MIND therefore carries the scene along with the reasoning,
+re-expressing it in the model’s own sequence at each new viewpoint.
+Re-emitting spatial tokens. A reasoning chain traverses viewpoints 𝑣1, . . . , 𝑣𝑀. Upon declaring 𝑣𝑘,
+the model emits the spatial tokens anew, whose hidden states form z𝑘, the counterpart of z0 at 𝑣𝑘.
+Emitted right after the declaration, these tokens attend to the fused scene in z0 and the viewpoint just
+declared, so the model steers z0 with its own words, turning the scene by merely naming a viewpoint.
+Viewpoint objective. We supervise z𝑘to hold the very scene of z0, re-expressed in the frame of 𝑣𝑘.
+Concretely, the readout R𝜙, now frozen, decodes from z𝑘a point ˆp𝑘
+𝑖,𝑢for every visual token, which is
+regressed onto its counterpart in z0 under the rigid transformation to 𝑣𝑘:
+Lview =
+1
+𝑀|Ω|
+𝑀
+Õ
+𝑘=1
+Õ
+(𝑖,𝑢)∈Ω
+𝜌 ˆp𝑘
+𝑖,𝑢−sg
+ ˆT−1
+𝑣𝑘ˆpg
+𝑖,𝑢
+
+,
+(4)
+where ˆpg
+𝑖,𝑢is the global point decoded from z0, ˆT𝑣𝑘is the pose of 𝑣𝑘in the first view’s frame, decoded
+from z0 when 𝑣𝑘is an input camera and otherwise built from the cameras and objects named in
+its declaration (Appendix C.3), and sg[·] denotes the stop-gradient operator. With z0 supplying the
+scene, Lview supervises only how the scene transforms, separating manipulation from perception.
+Training with reasoning. Perspective transformation is learned in concert with reasoning. Starting
+from the geometry pre-trained model, SFT on reasoning chains minimizes
+LSFT = LCE + 𝜆 Lgeo + Lview
+
+,
+(5)
+where the cross-entropy LCE over the chain also teaches the model when to emit the spatial tokens,
+Lview trains the re-emitted tokens to hold the scene as seen from each declared viewpoint, and Lgeo
+anchors z0 to the fused scene, with 𝜆weighting the two spatial terms. GRPO (Shao et al., 2024) then
+refines the model with the correctness of the final answer as the reward (Appendix D.5), letting the
+end task govern how the reasoning draws on the transformed scene.
+7
+Table 1: Accuracy (%) on spatial reasoning benchmarks. Bold and underline mark the best and the
+second-best results among the spatial reasoning models and the Qwen3.5-4B-based models, and separately
+among the Qwen3.5-9B-based models; the general models (in gray) are listed for reference and not ranked.
+†Evaluated by us through the provider’s API. ‡Released weights evaluated by us. §Taken from the EASI
+leaderboard (Cai et al., 2025). More details are in Appendix C.2.
+Average
+MindCube-Tiny
+SPAR-Bench BLINK
+ViewSpatial
+Model
+Avg.
+Among Around Rotation Overall
+R&V
+Spatial Camera Person Overall
+General Models
+GPT-6-Astra†
+73.58
+78.33
+86.80
+98.50
+84.19
+70.17
+83.00
+53.16
+60.55
+56.97
+Claude-Opus-5.5†
+74.15
+79.83
+82.40
+98.00
+83.90
+71.95
+84.75
+50.49
+61.19
+56.00
+Hy4†
+77.39
+89.83
+86.80
+97.50
+90.57
+71.92
+91.25
+53.88
+57.63
+55.81
+Qwen3.8-Flash†
+73.98
+69.83
+84.40
+95.50
+78.19
+69.84
+90.00
+55.87
+59.77
+57.88
+GLM-5.3-Flash†
+66.23
+56.67
+73.20
+95.00
+67.90
+67.49
+74.75
+54.86
+54.67
+54.76
+Kimi-K3.1-Pro†
+72.06
+69.33
+84.00
+96.00
+77.90
+66.85
+88.25
+54.35
+56.07
+55.23
+Spatial Reasoning Models
+SpatialLadder-3B‡
+45.25
+44.33
+58.40
+29.50
+44.86
+36.68
+60.50
+36.29
+41.49
+38.97
+Cambrian-S-7B§
+47.12
+38.98
+39.20
+33.00
+37.88
+45.31
+64.00
+40.45
+42.07
+41.28
+HATCH-3B‡
+54.89
+52.33
+64.00
+34.00
+51.62
+57.99
+71.75
+40.92
+35.64
+38.20
+GeoVR-4B‡
+44.16
+39.50
+46.80
+31.00
+39.62
+43.60
+52.50
+32.86
+48.49
+40.91
+Spatial-Interactor-4B‡
+54.92
+83.00
+85.20
+61.00
+79.33
+39.71
+58.25
+44.56
+40.30
+42.37
+GPD-4B‡
+53.59
+42.33
+63.20
+27.50
+44.48
+54.93
+69.50
+46.55
+44.44
+45.47
+Qwen3.5-4B Based Models
+Qwen3.5-4B
+50.57
+39.83
+57.20
+52.00
+46.29
+46.17
+68.25
+43.48
+39.79
+41.58
++ SFT
+62.74
+73.67
+76.80
+65.00
+72.76
+64.85
+68.75
+46.84
+42.51
+44.61
++ GRPO
+65.08
+78.00
+79.20
+70.00
+76.76
+67.47
+68.25
+50.09
+45.70
+47.83
++ ProSR
+65.18
+78.00
+80.40
+66.50
+76.38
+67.93
+68.75
+50.24
+45.26
+47.67
++ 3DThinker
+62.86
+75.00
+76.00
+67.00
+73.71
+64.69
+66.75
+47.71
+44.95
+46.29
++ S-MIND (SFT)
+66.92
+88.33
+90.00
+54.50
+82.29
+64.24
+75.00
+47.45
+44.95
+46.17
++ S-MIND (RL)
+72.83
+92.00
+88.40
+75.50
+88.00
+71.03
+78.00
+55.07
+53.52
+54.27
+Qwen3.5-9B Based Models
+Qwen3.5-9B
+54.23
+43.67
+55.20
+62.00
+49.90
+47.68
+73.50
+47.74
+44.07
+45.85
++ SFT
+62.27
+71.33
+76.40
+56.00
+69.62
+65.00
+67.50
+48.61
+45.40
+46.95
++ GRPO
+67.27
+79.83
+78.80
+83.00
+80.19
+70.67
+66.00
+52.22
+52.19
+52.21
++ S-MIND (SFT)
+66.94
+88.33
+86.00
+64.00
+83.14
+66.14
+70.75
+48.47
+47.03
+47.72
++ S-MIND (RL)
+74.03
+91.83
+86.80
+81.50
+88.67
+71.64
+77.75
+58.58
+57.56
+58.05
+5 Experiments
+5.1 Setup
+Evaluation Benchmarks. We evaluate S-MIND on four benchmarks, each targeting a distinct aspect
+of spatial intelligence: mental modeling with MindCube-Tiny (Wang et al., 2026b), relational rea-
+soning with SPAR-Bench (Zhang et al., 2025), spatial perception with BLINK (Fu et al., 2024), and
+perspective taking with ViewSpatial-Bench (Li et al., 2026a). Together, these benchmarks span spa-
+tial intelligence from perceiving a scene to reasoning about it from viewpoints that no image shows.
+Following EASI (Cai et al., 2025), we report the accuracy on each benchmark and the average over
+the four, with the evaluated subsets and the protocol detailed in Appendix C.1.
+Baselines. We compare S-MIND against three groups of baselines: (I) general models, including
+GPT-6-Astra (OpenAI, 2026), Claude-Opus-5.5 (Anthropic, 2026), Hy4 (Tencent, 2026), Qwen3.8-
+Flash (Qwen Team, 2026b), GLM-5.3-Flash (GLM-5-Team et al., 2026), and Kimi-K3.1-Pro (Moon-
+shot AI, 2026); (II) spatial reasoning models with released weights, including SpatialLadder (Li
+et al., 2026d), Cambrian-S (Yang et al., 2026b), HATCH (Oi et al., 2026), GeoVR (Wang and Huang,
+8
+Table 2: Inference cost per question on Qwen3.5-4B, with eight
+concurrent questions on one H100 GPU: the calls to the back-
+bone and to external tools, the wall-clock time, the speed-up over
+SpatialClaw (Cho et al., 2026), and the accuracy (%). The timing
+protocol and the full setup are in Appendix C.5.
+Model
+Model
+calls
+Tool
+calls
+Time (s)
+↓
+Speed-up
+↑
+Acc.
+↑
+MindCube-Tiny (1,050 questions)
+SpatialClaw
+7.74
+4.68
+111.74
+1×
+56.95
+S-MIND
+1
+0
+1.38
+81×
+88.00
+ViewSpatial (850 questions)
+SpatialClaw
+6.32
+3.74
+100.75
+1×
+46.71
+S-MIND
+1
+0
+0.88
+115×
+55.88
+1×
+10×
+100×
+1,000×
+10,000×
+relative to Ours (log scale)
+Values supervised per image
+1,600× fewer
+2.8M
+1.8K
+Supervision data on disk
+4,400× less
+192 GB
+44 MB
+Geometry module parameters
+19× fewer
+36.2M
+1.9M
+3DThinker
+Ours
+Figure 5: Training S-MIND is far lighter
+than training 3DThinker. Each row com-
+pares one cost of training geometry into
+the model, as measured in Appendix C.5.
+2026), Spatial-Interactor (Yao et al., 2026), and GPD (Li et al., 2026e); and (III) methods trained in
+our setting, including SFT, GRPO (Shao et al., 2024), ProSR (Li et al., 2026f), and 3DThinker (Chen
+et al., 2026). Further details of the baselines and their configurations are provided in Appendix C.2.
+Training Data. All methods trained on our backbone draw on the same three sources, Mind-
+Cube (Wang et al., 2026b), SpatialLadder (Li et al., 2026d), and SPAR (Zhang et al., 2025). S-MIND
+uses them in three stages: geometry pre-training on posed image sets from ScanNet (Dai et al.,
+2017) and MindCube, SFT on reasoning chains written by a teacher model for questions of the three
+sources, and RL on multiple-choice question pools built from the same sources and from ScanNet
+training scenes. Details of the SFT data are provided in Appendix C.3.
+Implementation Details. We build S-MIND on Qwen3.5-4B (Qwen Team, 2026a), and additionally
+on Qwen3.5-9B to examine its scalability, with 𝐾𝑠=2 scene tokens per view and 𝐾𝑐=4 camera tokens.
+We set 𝜆=0.1 and train LoRA (Hu et al., 2022) adapters in all stages. We report S-MIND after its SFT
+stage and after its RL stage, denoted S-MIND (SFT) and S-MIND (RL). Detailed training setups and
+parameter configurations are listed in Appendix C.4.
+5.2 Main Results
+S-MIND Achieves the Strongest Performance among Spatial Reasoning Models. Table 1 shows
+that S-MIND built on Qwen3.5-4B reaches an average accuracy of 72.83%, surpassing the strongest
+method trained in our setting, ProSR, by 7.65 points and the best released spatial reasoning model,
+Spatial-Interactor-4B, by 17.91 points. The gains are consistent: S-MIND ranks first on all four bench-
+marks, ahead of the strongest baseline on each by 8.67 points on MindCube-Tiny, 3.10 on SPAR-Bench,
+6.25 on BLINK, and 6.44 on ViewSpatial.
+S-MIND Scales to a Larger Backbone and Rivals Frontier General Models. Trained with the same
+recipe on Qwen3.5-9B, S-MIND reaches 74.03%, 6.76 points above GRPO and 11.76 above SFT, and
+again ranks first on all four benchmarks, by up to 8.48 points on MindCube-Tiny. As Table 1 shows, a
+compact open model stands on par with frontier general models: at 9B, S-MIND matches GPT-6-Astra,
+Qwen3.8-Flash, and Claude-Opus-5.5 (73.58%, 73.98%, and 74.15%), and even at 4B it surpasses
+GLM-5.3-Flash and Kimi-K3.1-Pro (66.23% and 72.06%).
+S-MIND Is Efficient in Both Inference and Training. Table 2 compares the inference cost of S-MIND
+with that of SpatialClaw (Cho et al., 2026), an agent on the same backbone that reconstructs the scene
+and segments objects with external tools, calling the backbone 7.74 times and the tools 4.68 times
+9
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+Ours
+25
+50
+75
+single view 86.32
+fused
+65.11
+2 images
+75.15
+3 images
+64.55
+8 images
+50.52
+bearing
+85.35
+facing
+93.55
+single view
++25.70
+fused
++49.09
+2 images
++44.87
+3 images
++50.25
+8 images
++45.64
+bearing
++37.32
+facing
++26.64
+ahead
+behind
+right
+left
+0
+25
+50
+75
+100
+accuracy (%)
+77.38
+85.29
+69.51
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+Ours
+declared viewpoint
+82.17
+another viewpoint
+30.10
+before declaring
+29.43
+shuffled targets
+32.08
+zeroed states
+25.54
+chance
+(c) Geometry by layer
+3
+7
+11
+15
+19
+23
+27
+31
+all
+layer
+0
+25
+50
+75
+100
+recovered (%)
++14.58
++14.06
++12.13
+single view
+fused
+all-zero states
+(a) Geometry probe
+(b) Viewpoint probe
+Figure 6: Analysis of multi-view fusion and perspective transformation in S-MIND. (a) shows the geometry
+probe on the baselines and S-MIND after SFT (left) and the lead of S-MIND over the strongest baseline on each
+measure (right). (b) shows the viewpoint probe by the direction of a point from the declared viewer (left) and
+against four controls (right). (c) refits the readout of S-MIND after geometry pre-training at each layer and on the
+learned mix of all layers (all); vertical lines mark the full-attention layers and dashed lines the level of all.
+per MindCube-Tiny question. Holding the scene in its spatial tokens, S-MIND needs no tools and
+answers in a single generation: it is 81× faster and 31.05 points more accurate on MindCube-Tiny,
+and 115× faster and 9.17 points more accurate on ViewSpatial. This efficiency extends from inference
+to training: as Figure 5 shows, compared with 3DThinker, which also trains geometry into the model’s
+states, S-MIND supervises 1,600× fewer values per image, stores 4,400× less supervision data, and
+trains a 19× smaller geometry module, yet it scores 9.97 points higher on average in Table 1.
+5.3 Framework Analysis
+Beyond accuracy, we further examine whether the gains of S-MIND stem from the two capabilities
+that Section 3 identifies as lacking, namely multi-view fusion and perspective transformation. We
+first probe whether the model acquires both capabilities and where its backbone fuses the views,
+then intervene on the spatial tokens to test whether these capabilities causally affect the answers.
+The Views Are Fused into One Scene. As in Section 3, we retrain the geometry probe on the frozen
+backbone of S-MIND for a fair comparison with the baselines. Figure 6a shows that S-MIND recovers
+65.11% of the fused points and 86.32% of the single-view points, whereas the baselines recover at
+most 16.02% and 60.62%. Cross-view bearing and camera facing improve accordingly, reaching
+85.35% and 93.55%. This lead persists as views accumulate: with two images the baselines recover
+at most 30.28% of the fused points and with eight fewer than 5%, while S-MIND still recovers 50.52%
+with eight. More importantly, Figure 8b shows that this fusion carries over to the model’s answers,
+raising the accuracy on the 274 two-view questions of Section 3, which hinge on relating the two
+views, from only 53.28% and 56.57% for SFT and GRPO to 96.35% for S-MIND.
+10
+All
+Input
+Imag.
+Among Around
+Rot.
+0
+10
+20
+30
+answers changed (%)
+9.0
+6.5
+20.9
+4.7
+4.4
+28.0
+(a) State swap
+correct → wrong
+other change
+same-norm noise
+Tiny
+SPAR
+BLINK
+ViewSp.
+Avg.
+0
+2
+4
+6
+8
+10
+lead over best baseline (pts)
+8.7
+6.5
+3.1
+1.9
+6.2
+0.2
+6.4
+6.4
+7.6
+5.3
+(b) Token knockout
+Ours
+no tokens
+Figure 7: Interventions on the spatial tokens of S-MIND. Both panels show S-MIND after RL. (a) shows the share
+of MindCube-Tiny answers that change when the states of the last run of re-emitted spatial tokens are replaced with
+those of z0, the scene before any transformation, against a random perturbation of the same norm; questions are
+grouped by whether the last viewpoint is an input view (Input) or an imagined standpoint (Imag.), and by setting
+(Rot.: rotation). (b) shows the lead over the best baseline on each benchmark with and without the spatial tokens
+at inference. Full results are in Tables 6 and 7.
+The Scene Turns with the Reasoning. As in Section 3, we retrain the viewpoint probe on the frozen
+backbone of S-MIND for a fair comparison with the baselines. S-MIND reaches 82.17% accuracy,
+whereas the baselines remain between 25.22% and 37.28%, close to the probe’s controls. Figure 6b
+breaks this gap down by direction: all models recover the points ahead of the declared viewer, but
+the baselines recover at most 10.29%, 9.78%, and 40.69% of those behind it, to its left, and to its
+right, compared with 77.38%, 69.51%, and 85.29% for S-MIND. The decoded scene is bound to the
+declaration: as the controls in Figure 6b show, the accuracy falls to 30.10% when another viewpoint
+of the chain is the target and to 29.43% when the probe reads tokens before the declaration.
+The Backbone Fuses the Views in Its Middle Layers. The readout leaves the fusion to the backbone
+by design: its queries carry no image content, and each point query attends only to the scene tokens
+of its own view and to the camera tokens (Appendix B). To locate where the backbone fuses the views,
+we take S-MIND on Qwen3.5-4B after geometry pre-training and refit its readout on the states of z0 at
+one layer at a time, scoring it on the 416 ScanNet image sets of the geometry probe. Figure 6c shows
+that the fused points stay at the level of a readout fit on all-zero states through layer 8 (7.64–11.12%
+against 9.21%) and then rise through the middle layers, with their three largest gains, of 12.13 to
+14.58 points, at the full-attention layers 11, 15, and 19 of the hybrid backbone. From layer 19 on,
+every single layer recovers nearly as many fused points as the learned mix of all layers (57.33–63.54%
+against 63.99%), so the fused scene, once formed, is carried through to the last layer.
+The Answers Depend on the Scene. Decodability, however, does not imply use. We therefore in-
+tervene on the RL model at inference, replacing the states of the last re-emitted spatial tokens in its
+own generation with those of z0. As Figure 7a shows, this state swap changes 9.05% of the answers,
+mostly from correct to wrong, against only 1.62% for a random perturbation of the same norm (Ap-
+pendix D.1). The effect is strongest where no input image can substitute for the transformed scene:
+20.86% of the answers change at imagined standpoints and 28.00% in the rotation setting, whose
+views barely overlap. Withholding all spatial tokens at inference likewise lowers the four-benchmark
+average by 2.37 points, from 72.83% to 70.46%. Despite this drop, Figure 7b shows that S-MIND
+without the tokens outperforms the best baseline on every benchmark, by 5.28 points on average, in-
+dicating that the capability is internalized in the backbone, not merely carried by the spatial tokens.
+11
+60
+70
+80
+90
+accuracy (%)
+(a) Component ablation
+MindCube-Tiny
+72.8
+74.0
+81.8
+82.3
+BLINK
+68.8
+68.2
+71.8
+75.0
+text SFT
++ tokens
++ geometry
++ viewpoint
+64
+66
+68
+acc. (%)
+(c) Geometry weight λ
+65.54
+66.92
+66.45
+64.01
+0
+0.1
+0.25
+1
+geometry weight λ
+25
+50
+75
+100
+readout (%)
+transformed (rel.)
+transformed (abs.)
+geometry
+MindCube-Tiny
+two-view
+BLINK
+multi-view
+0
+25
+50
+75
+100
+accuracy (%)
+(b) Cross-view questions
+53.3 56.6
+94.9 96.4
+42.9 40.6
+52.6
+59.4
+Figure 8: Ablation and sensitivity analysis. All variants are built on Qwen3.5-4B and evaluated after SFT on
+the same data.
+(a) adds components to text SFT one at a time: spatial tokens trained only through the lan-
+guage loss (+ tokens), geometry pre-training and loss on z0 (+ geometry), and the view loss on every re-emitted z𝑘
+(+ viewpoint). (b) repeats (a) on the questions that relate the views. (c) varies the geometry weight 𝜆, with the
+average accuracy at the top and the geometry and transformation readouts below; the shaded band marks 𝜆=0.1.
+5.4 Ablation Study and Sensitivity Analysis
+Geometry and Viewpoint Supervision Each Contribute. Figure 8a builds S-MIND from text SFT
+one component at a time. (i) Unsupervised spatial tokens, trained solely through the language
+loss, alter the accuracy by at most 1.24 points, indicating that extra tokens and computation alone
+contribute little. (ii) Geometry supervision, in contrast, yields the largest gain, raising MindCube-
+Tiny from 74.00% to 81.81% and BLINK from 68.25% to 71.75%. (iii) Viewpoint supervision of
+every re-emitted z𝑘improves both benchmarks further and is most beneficial on BLINK, whose multi-
+view questions hinge on how the cameras relate, lifting it to 75.00%. Figure 8b further shows the
+gains on the questions that relate the views: geometry supervision alone lifts accuracy on the 274
+two-view questions of MindCube-Tiny from 56.57% to 94.89% and on the 133 multi-view questions
+of BLINK from 40.60% to 52.63%, which viewpoint supervision then raises to 59.40%.
+Preserving the Scene Requires Only a Small Geometry Weight. Figure 8c varies the weight 𝜆on
+the two spatial losses during SFT. Without these losses (𝜆=0), SFT erodes the geometry acquired in
+pre-training: the 3D points recovered from z0 fall to 48.79%, against 76.13% at 𝜆=0.1. The re-emitted
+spatial tokens are not transformed either: only 39.85% decode nearest the declared camera’s view of
+the scene in z0, against 97.49%, and 42.55% nearest its view of the true scene, against 96.67%. The
+average accuracy drops accordingly, to 65.54%, 1.38 points below that at 𝜆=0.1. Any positive weight
+preserves the geometry (76.13–76.41%), but larger weights steadily lower accuracy, from 66.92% at
+𝜆=0.1 to 64.01% at 𝜆=1. We adopt 𝜆=0.1, the smallest weight that preserves the scene.
+6 Conclusion and Future Work
+Conclusion. We introduced S-MIND, a framework that internalizes multi-view geometry in MLLMs
+through a compact set of spatial tokens. Our spatial probes first showed that the accuracy gains
+of spatially fine-tuned models conceal two persistent deficiencies: the views are barely fused into
+a unified internal scene, and this scene rarely follows the reasoning to new viewpoints. S-MIND
+addresses both by supervising the spatial tokens to hold the fused 3D scene and re-emitting them
+to re-express this scene from every viewpoint the reasoning adopts. Across four spatial benchmarks
+and two model scales, S-MIND achieves the strongest performance among spatial reasoning models,
+12
+rivals frontier general models, and remains highly efficient at inference. The same probes and causal
+interventions trace these gains to their source: both capabilities take shape within the model and
+directly steer its predictions. These results establish internalized multi-view geometry as a learnable,
+efficient, and inspectable source of spatial intelligence in MLLMs.
+Future Work. We view internalized geometry as a cornerstone of spatial intelligence, and S-MIND
+as one step toward models that think in space. The present work supervises only the geometry that
+the input views observe. A natural next step is an internal scene that reaches beyond these views,
+completing unseen regions, persisting across interactions, and evolving with dynamic environments,
+so that the same tokens can support embodied agents over long horizons. As this paradigm matures,
+spatial intelligence may shift from geometry computed outside the model to a property that models
+carry within themselves, opening a research agenda around internal world models, inspectable spatial
+states, and the joint scaling of perception and reasoning.
+Acknowledgments
+We express our deepest gratitude to Jianing Ju and Wentao Zhang for the many extensive and in-
+sightful discussions throughout this project. Their thoughtful feedback and constructive suggestions
+were invaluable, sharpening our ideas and substantially improving this work.
+References
+Jyoti Aneja, Michael Harrison, Neel Joshi, Tyler LaBonte, John Langford, and Eduardo Salinas. Phi-
+4-reasoning-vision-15B technical report. arXiv preprint arXiv:2603.03975, 2026.
+Anthropic. Introducing Claude Opus 5.5. anthropic.com/news/claude-opus-5-5, 2026.
+Zhongang Cai, Yubo Wang, Qingping Sun, Ruisi Wang, Chenyang Gu, Wanqi Yin, Zhiqian Lin, Zhitao
+Yang, Chen Wei, Oscar Qian, et al. Holistic evaluation of multimodal LLMs on spatial intelligence.
+arXiv preprint arXiv:2508.13142, 2025.
+Boyuan Chen, Zhuo Xu, Sean Kirmani, Brian Ichter, Dorsa Sadigh, Leonidas Guibas, and Fei Xia.
+SpatialVLM: Endowing vision-language models with spatial reasoning capabilities. In Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 14455–14465, 2024.
+Zhangquan Chen, Manyuan Zhang, Xinlei Yu, Xufang Luo, Mingze Sun, Zihao Pan, Xiang An, Yan
+Feng, Peng Pei, Xunliang Cai, et al. Think with 3D: Geometric imagination grounded spatial reason-
+ing from limited views. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition, pages 2613–2624, 2026.
+Seokju Cho, Ryo Hachiuma, Abhishek Badki, Hang Su, Byung-Kwan Lee, Chan Hee Song, Sifei Liu,
+Subhashree Radhakrishnan, Seungryong Kim, Yu-Chiang Frank Wang, and Min-Hung Chen. Spa-
+tialClaw: Rethinking action interface for agentic spatial reasoning. In Advances in Neural Informa-
+tion Processing Systems, 2026.
+Angela Dai, Angel X Chang, Manolis Savva, Maciej Halber, Thomas Funkhouser, and Matthias
+Nießner. ScanNet: Richly-annotated 3D reconstructions of indoor scenes. In Proceedings of the
+IEEE Conference on Computer Vision and Pattern Recognition, pages 2432–2443. IEEE, 2017.
+Mengfei Du, Binhao Wu, Zejun Li, Xuanjing Huang, and Zhongyu Wei. EmbSpatial-Bench: Bench-
+marking spatial understanding for embodied tasks with large vision-language models. In Proceed-
+ings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 2: Short
+Papers), pages 346–355, 2024.
+13
+Zhiwen Fan, Jian Zhang, Renjie Li, Junge Zhang, Runjin Chen, Hezhen Hu, Kevin Wang, Peihao Wang,
+Huaizhi Qu, Shijie Zhou, Dilin Wang, Zhicheng Yan, Hongyu Xu, Justin Theiss, Tianlong Chen,
+Jiachen Li, Zhengzhong Tu, Zhangyang Wang, and Rakesh Ranjan.
+VLM-3R: Vision-language
+models augmented with instruction-aligned 3D reconstruction.
+In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition, pages 31054–31065, 2026.
+Xingyu Fu, Yushi Hu, Bangzheng Li, Yu Feng, Haoyu Wang, Xudong Lin, Dan Roth, Noah A Smith,
+Wei-Chiu Ma, and Ranjay Krishna. BLINK: Multimodal large language models can see but not
+perceive. In European Conference on Computer Vision, pages 148–166. Springer, 2024.
+GLM-5-Team, Aohan Zeng, Xin Lv, Zhenyu Hou, Zhengxiao Du, Qinkai Zheng, Bin Chen, Da Yin,
+Chendi Ge, Chenghua Huang, et al.
+GLM-5: from vibe coding to agentic engineering.
+arXiv
+preprint arXiv:2602.15763, 2026.
+Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason Weston, and Yuandong Tian.
+Training large language models to reason in a continuous latent space. In Conference on Language
+Modeling, 2025.
+Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and
+Weizhu Chen. LoRA: Low-rank adaptation of large language models. In International Conference
+on Learning Representations, 2022.
+Jiacheng Hua, Yishu Yin, Yuhang Wu, Tai Wang, Yifei Huang, and Miao Liu. Unleashing spatial
+reasoning in multimodal large language models via textual representation guided reasoning. In
+Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1:
+Long Papers), pages 13616–13637, 2026.
+Ailin Huang, Chengyuan Yao, Chunrui Han, Fanqi Wan, Hangyu Guo, Haoran Lv, Hongyu Zhou,
+Jia Wang, Jian Zhou, Jianjian Sun, et al.
+STEP3-VL-10B technical report.
+arXiv preprint
+arXiv:2601.09668, 2026a.
+Zhiyu Huang, Johnson Liu, Rui Song, Zewei Zhou, Ruining Yang, Yun Zhang, Tianhui Cai, Hanyin
+Zhang, Mingxuan Gao, Valeria Xu, et al. nuReasoning: A reasoning-centric dataset and benchmark
+for long-tail autonomous driving. In Advances in Neural Information Processing Systems (Evaluations
+and Datasets Track), 2026b.
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph Gon-
+zalez, Hao Zhang, and Ion Stoica. Efficient memory management for large language model serving
+with PagedAttention. In Proceedings of the 29th Symposium on Operating Systems Principles, pages
+611–626, 2023.
+Phillip Y Lee, Jihyeon Je, Chanho Park, Mikaela Angelina Uy, Leonidas Guibas, and Minhyuk Sung.
+Perspective-aware reasoning in vision-language models via mental imagery simulation. In Proceed-
+ings of the IEEE/CVF International Conference on Computer Vision, pages 9241–9251, 2025.
+Phillip Y Lee, Chanho Park, Mingue Park, Seungwoo Yoo, Juil Koo, and Minhyuk Sung. Token warping
+helps MLLMs look from nearby viewpoints. In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition, pages 3476–3488, 2026.
+Bridget Leonard and Scott O Murray. Cognitively-inspired tokens overcome egocentric bias in multi-
+modal models. arXiv preprint arXiv:2601.16378, 2026.
+Dingming Li, Hongxing Li, Zixuan Wang, Yuchen Yan, Hang Zhang, Siqi Chen, Guiyang Hou, Sheng-
+pei Jiang, Wenqi Zhang, Yongliang Shen, et al. ViewSpatial-Bench: Evaluating multi-perspective
+spatial localization in vision-language models. In European Conference on Computer Vision, pages
+95–111. Springer, 2026a.
+14
+Hao Li, Han Fang, Zixin Pan, Xin Wei, Hongbo Sun, Jinglin Xu, Zhiyu Lin, Ye Yuan, Zhongjiang
+He, Yu Yu, and Hao Sun. GeoAnchor: Collaborative reasoning via latent decomposition for 3D
+spatial understanding.
+In Proceedings of the 34th ACM International Conference on Multimedia,
+pages 4603–4612, 2026b.
+Haoyuan Li, Qihang Cao, Tao Tang, Kun Xiang, Zihan Guo, Jianhua Han, Jia-Wang Bian, Hang Xu,
+and Xiaodan Liang. Thinking with geometry: Active geometry integration for spatial reasoning. In
+International Conference on Machine Learning, 2026c.
+Hongxing Li, Dingming Li, Zixuan Wang, Yuchen Yan, Hang Wu, Wenqi Zhang, Yongliang Shen,
+Weiming Lu, Jun Xiao, and Yueting Zhuang. SpatialLadder: Progressive training for spatial rea-
+soning in vision-language models. In International Conference on Learning Representations, volume
+2026, pages 76566–76592, 2026d.
+Hongxing Li, Yixin Li, Dingming Li, Zixuan Wang, Yuchen Yan, Wenqi Zhang, Weiming Lu, and
+Yongliang Shen. Distilling routed 3D privilege for spatial reasoning in vision-language models.
+arXiv preprint arXiv:2610.12355, 2026e.
+Jiangyang Li, Cong Wan, Changjie Wu, Songlin Dong, Lingjun Zhang, Linzhe Shi, Xu Wang, Zhiheng
+Ma, Hang Zhang, Mu Xu, and Yihong Gong. ProSR: Process-shaped spatial reasoning for reliable
+chain-of-thought in VLMs. arXiv preprint arXiv:2605.25524, 2026f.
+Mengzhang Li and Yuan Yao. OpenGlass: A sensing-computing split architecture for local MLLM-
+Driven real-time visual assistance. In Proceedings of the 64th Annual Meeting of the Association for
+Computational Linguistics (Volume 3: System Demonstrations), pages 829–839, 2026.
+Rongxue Li, Meng Yang, Yiru Mao, Yongliang Tao, Lulu Hu, Bin Yang, Zhao Xu, Weihua Luo, and
+Bowen Xu. SpatialOPSD: Self-distilling spatial intelligence from verified coding agent traces. arXiv
+preprint arXiv:2610.11366, 2026g.
+Kangheng Lin, Jisheng Yin, Dingming Li, En Yu, Yana Wei, Han Zhou, Liang Zhao, Hongyu Zhou,
+Hongbo Peng, Jianjian Sun, et al. MentalThink: Shaping thoughts in mental SVG world. arXiv
+preprint arXiv:2607.03530, 2026.
+Yuechen Luo, Fang Li, Zheng Liu, Yang Ji, Zehan Zhang, Bing Wang, Yuannan Shen, Jianwei Cui,
+Long Chen, Guang Chen, Hangjun Ye, Zhi-Xin Yang, and Fuxi Wen. LaST-VLA: Thinking in latent
+spatio-temporal space for vision-language-action in autonomous driving. In Advances in Neural
+Information Processing Systems, 2026.
+Moonshot AI. Introducing Kimi K3.1 Pro. kimi.ai/blog/kimi-k3-1-pro, 2026.
+Masanari Oi, Koki Maeda, Ryuto Koike, Daisuke Oba, Nakamasa Inoue, and Naoaki Okazaki. From
+correspondence to actions: Human-like multi-image spatial reasoning in multi-modal large lan-
+guage models. In International Conference on Machine Learning, 2026.
+OpenAI. GPT-6 Astra: A new generation of intelligence. openai.com/index/gpt-6-astra, 2026.
+Qwen Team. Qwen3.5: Towards native multimodal agents, February 2026a. URL https://qwen.ai/
+blog?id=qwen3.5.
+Qwen Team.
+Qwen3.8-Flash-Next: A new architecture, towards ultimate cost-efficiency, August
+2026b. URL https://qwen.ai/blog?id=qwen3.8-flash-next.
+Nikhila Ravi, Valentin Gabeur, Yuan-Ting Hu, Ronghang Hu, Chaitanya Ryali, Tengyu Ma, Haitham
+Khedr, Roman Rädle, Chloe Rolland, Laura Gustafson, Eric Mintun, Junting Pan, Kalyan Vasudev
+Alwala, Nicolas Carion, Chao-Yuan Wu, Ross Girshick, Piotr Dollár, and Christoph Feichtenhofer.
+15
+SAM 2: Segment anything in images and videos. In International Conference on Learning Represen-
+tations, volume 2025, pages 28085–28128, 2025.
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan
+Zhang, Y. K. Li, Y. Wu, and Daya Guo. DeepSeekMath: Pushing the limits of mathematical reason-
+ing in open language models. arXiv preprint arXiv:2402.03300, 2024.
+Roger N Shepard and Jacqueline Metzler. Mental rotation of three-dimensional objects. Science, 171
+(3972):701–703, 1971.
+Jiaxin Shi, Xidong Zhang, Fucai Zhu, Zhe Li, Siyu Zhu, and Weihao Yuan. 3DThinkVLA: Endowing
+vision-language-action models with latent 3D priors via 3D-Thinking-Guided co-training. arXiv
+preprint arXiv:2606.04436, 2026a.
+Zhiyuan Shi, Xiang Li, Xingzhuo Guo, Shangchen Miao, Weiliang Chen, Qiyu Dai, Jinshan Ren, Jian-
+gran Lyu, Fangfu Liu, Mingsheng Long, et al. S-Space: Exploring spatial workspace in multimodal
+language models. arXiv preprint arXiv:2610.13527, 2026b.
+Xingjian Tao, Yiwei Wang, Yujun Cai, Yifan Song, and Jing Tang. ViewFusion: Structured spatial
+thinking chains for multi-view reasoning. In European Conference on Computer Vision, pages 135–
+151. Springer, 2026.
+Tencent.
+Tencent launches Hy4, joining the ranks of the world’s leading open-source AI mod-
+els.
+tencent.com/tencent-launches-hy4-joining-the-ranks-of-the-worlds-leading-open-source-ai-
+models, 2026.
+Chongyu Wang, Ting Huang, Chunyu Sun, Xinyu Ning, Di Wang, and Hao Tang. Let geometry GUIDE:
+Layer-wise unrolling of geometric priors in multimodal LLMs. arXiv preprint arXiv:2604.05695,
+2026a.
+Haibo Wang and Lifu Huang. Learning geometric representations from videos for spatial intelligent
+multimodal large language models. arXiv preprint arXiv:2606.05833, 2026.
+Jianyuan Wang, Minghao Chen, Nikita Karaev, Andrea Vedaldi, Christian Rupprecht, and David
+Novotny. VGGT: Visual geometry grounded transformer. In 2025 IEEE/CVF Conference on Computer
+Vision and Pattern Recognition (CVPR), pages 5294–5306. IEEE, 2025.
+Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin
+Wang, Wenbin Ge, et al. Qwen2-VL: Enhancing vision-language model’s perception of the world
+at any resolution. arXiv preprint arXiv:2409.12191, 2024.
+Qineng Wang, Baiqiao Yin, Pingyue Zhang, Jianshu Zhang, Kangrui Wang, Zihan Wang, Jieyu Zhang,
+Keshigeyan Chandrasegaran, Han Liu, Ranjay Krishna, Saining Xie, Jiajun Wu, Li Fei-Fei, and
+Manling Li. MindCube: Spatial mental modeling from limited views. In International Conference
+on Learning Representations, volume 2026, pages 82559–82622, 2026b.
+Diankun Wu, Fangfu Liu, Yi-Hsin Hung, and Yueqi Duan. Spatial-MLLM: Boosting MLLM capabilities
+in visual-based spatial intelligence. Advances in Neural Information Processing Systems, 38:13569–
+13597, 2025.
+Wei Wu, Fan Lu, Yunnan Wang, Shuai Yang, Shi Liu, Fangjing Wang, Qian Zhu, He Sun, Yong Wang,
+Shuailei Ma, et al. A pragmatic VLA foundation model. arXiv preprint arXiv:2601.18692, 2026.
+Rui Yang, Ziyu Zhu, Yanwei Li, Jingjia Huang, Shen Yan, Siyuan Zhou, Zhe Liu, Xiangtai Li, Shuangye
+Li, Wenqian Wang, et al. Visual Spatial Tuning. In European Conference on Computer Vision, pages
+192–211. Springer, 2026a.
+16
+Shusheng Yang, Jihan Yang, Pinzhi Huang, Ellis Brown, Zihao Yang, Yue Yu, Shengbang Tong, Zihan
+Zheng, Yifan Xu, Muhan Wang, Rob Fergus, Yann LeCun, Li Fei-Fei, and Saining Xie. Cambrian-
+S: Towards spatial supersensing in video. In International Conference on Learning Representations,
+volume 2026, pages 78185–78225, 2026b.
+Sicheng Yang, Yukai Huang, Weitong Cai, Shitong Sun, Fengyi Fang, You He, Yiqiao Xie, Jiankang
+Deng, Hang Zhang, Jifei Song, et al. Egocentric Co-Pilot: Web-native smart-glasses agents for
+assistive egocentric AI. In Proceedings of the ACM Web Conference 2026, pages 8862–8873, 2026c.
+Yuncong Yang, Jiageng Liu, Zheyuan Zhang, Siyuan Zhou, Reuben Tan, Jianwei Yang, Yilun Du, and
+Chuang Gan. MindJourney: Test-time scaling with world models for spatial reasoning. Advances
+in Neural Information Processing Systems, 38:109855–109885, 2025.
+Zeyuan Yang, Xueyang Yu, Delin Chen, Maohao Shen, and Chuang Gan. Machine mental imagery:
+Empower multimodal reasoning with latent visual tokens. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 33510–33520, 2026d.
+Kaixiang Yao, Xu Wang, Miao Pan, Hu Xiyue, Jiaxin Li, Weishi Wang, Daniel Dahlmeier, Jintao Chen,
+Yongliang Shen, Xuhong Zhang, et al. Spatial-Interactor: Learning spatial reasoning through in-
+teraction with the observable physical world. arXiv preprint arXiv:2609.23038, 2026.
+Jiahui Zhang, Yurui Chen, Yueming Xu, Ze Huang, Jilin Mei, Chunhui Chen, Yanpeng Zhou, Yu-Jie
+Yuan, Xinyue Cai, Guowei Huang, et al. From Flatland to space: Teaching vision-language models
+to perceive and reason in 3D. Advances in Neural Information Processing Systems, 38, 2025.
+Jian Zhang, Shijie Zhou, Bangya Liu, Achuta Kadambi, and Zhiwen Fan.
+SpatialStack: Layered
+geometry-language fusion for 3D VLM spatial reasoning. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 38678–38688, 2026a.
+Pingyue Zhang, Zihan Huang, Yue Wang, Jieyu Zhang, Letian Xue, Zihan Wang, Qineng Wang,
+Keshigeyan Chandrasegaran, Ruohan Zhang, Yejin Choi, et al.
+Theory of Space: Can founda-
+tion models construct spatial beliefs through active exploration? In The Fourteenth International
+Conference on Learning Representations, volume 2026, pages 136983–137020, 2026b.
+Xuejun Zhang, Aditi Tiwari, Zhenhailong Wang, and Heng Ji. Predicting camera pose from perspec-
+tive descriptions for spatial reasoning. arXiv preprint arXiv:2602.06041, 2026c.
+Yiming Zhang, Qiangyu Yan, Borui Jiang, and Kai Han. Multimodal latent reasoning via hierarchical
+visual cues injection. arXiv preprint arXiv:2602.05359, 2026d.
+Yuyou Zhang, Radu Corcodel, Chiori Hori, Anoop Cherian, and Ding Zhao. SpinBench: Perspec-
+tive and rotation as a lens on spatial reasoning in VLMs. In International Conference on Learning
+Representations, volume 2026, pages 70072–70141, 2026e.
+Zaibin Zhang, Yuhan Wu, Lianjie Jia, Yifan Wang, Zhongbo Zhang, Yijiang Li, Binghao Ran, Fuxi
+Zhang, Zhuohan Sun, Yizhuang Peng, et al. Think3D: Thinking with space for spatial reasoning.
+arXiv preprint arXiv:2601.13029, 2026f.
+Ruosen Zhao, Zhikang Zhang, Jialei Xu, Jiahao Chang, Dong Chen, Lingyun Li, Weijian Sun, and
+Zizhuang Wei. SpaceMind: Camera-guided modality fusion for spatial reasoning in vision-language
+models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+pages 16811–16822, 2026.
+17
+A Diagnosis Details
+This appendix details the probes of Section 3 and reports their full results.
+A.1 Probe Setup
+In this section, we describe the models we diagnose and the probes we apply to them:
+• Models. Base is Qwen3.5-4B (Qwen Team, 2026a). + SFT is Base fine-tuned with LoRA (Hu et al.,
+2022) on reasoning chains written by a teacher model, and + GRPO is trained for 375 steps of
+GRPO (Shao et al., 2024) with a reward on the final answer. They stand for the two common ways
+of teaching an MLLM spatial reasoning from text and answers alone. We also probe two released
+spatial reasoning models: 3DThinker (Chen et al., 2026) (its released MindCube checkpoint), built
+on Qwen2.5-VL-3B, and GPD (Li et al., 2026e), built on Qwen3-VL-4B. For them, the S-Space axes
+are those of each model’s backbone, and each model answers in its own reasoning format, decoded
+greedily with at most 4,096 new tokens and a strict extraction of the answer.
+• Geometry probe. We freeze the whole model and append probe tokens after the images, two per
+image and four for the cameras. Only the input embeddings of these tokens are trained, together
+with a readout of a single cross-attention layer, on posed image sets, with the 3D point behind every
+visual token and the pose of every camera in the frame of the first image as targets. Whatever is read
+from the states of the probe tokens was therefore computed by the frozen layers from the images.
+We then refit a fresh readout on the frozen states and score it on 416 held-out ScanNet (Dai et al.,
+2017) image sets, 364 of them with more than one view. We report four quantities. Single-view
+points are the points of the first image, counted as recovered when they fall within a quarter of the
+set’s mean point distance. Fused points are the points of the later images under the same criterion,
+which can be recovered only by relating those images to the first. Cross-view bearing is the floor-
+plane direction, in four classes, between the points seen at the same grid position in the first image
+and in another one. Camera facing records whether the optical axis of a later camera is recovered
+within 45◦. Three controls bound what a readout achieves without the geometry, namely shuffling
+the targets among sets that share source, task, and number of views, setting the states to zero, and
+replacing the images with gray ones.
+• Viewpoint probe on SpinBench. S-Space (Shi et al., 2026b) finds three linear axes in a middle
+layer of an MLLM along which the positions of objects are encoded. We take the axes of Base
+at layer 15 and use them unchanged for all three models, so that a difference between models
+is not a difference between axes. SpinBench (Zhang et al., 2026e) asks for the relation between
+two objects as seen from a viewpoint other than the camera’s, with or without a stated premise
+(144 and 146 questions). On it we compare two answers to the same question: the readout, which
+decodes the coordinates of the two objects from the state and rotates them to the queried viewpoint
+outside the model, and the model’s own answer. We then replay each model’s own reasoning and
+read the state at every mention of the two objects. A camera-frame readout is right when the
+state gives the answer after the external rotation, whereas a target-frame readout is right when the
+state gives the answer with no rotation, that is, when the model has already transformed it to the
+queried viewpoint. This part uses the questions on which the reasoning mentions both objects at
+least twice, so that the first and the last mention can be compared.
+• Viewpoint probe on reasoning chains. Reasoning chains are teacher-forced through the frozen
+model, and the probe tokens of the geometry probe, which were never fit to a transformed target,
+are inserted after every viewpoint a chain declares. A fresh readout is fit to the scene in the frame
+of the declared viewpoint and scored on 296 held-out chains with 653 declared viewpoints. We
+score the points that come from the images other than the viewer’s own by the egocentric quadrant
+they fall in, as a balanced accuracy over the four quadrants. The controls are the targets of the
+18
+other viewpoints declared in the same chain, the tokens before any declaration, zero states, and
+targets shuffled among chains. Table 3 gives each model’s strongest control in parentheses.
+A.2 Results on Multi-View Fusion
+Table 3 gives the full results of the geometry probe behind Finding 1, for the Qwen3.5-4B models
+and for the released 3DThinker and GPD, with S-MIND, discussed in Section 5.3, in its last column.
+From Base it recovers 60.62% of the points of the first image, against 53.79% for its strongest control,
+but only 11.23% of the points of the later images, against 9.06%, while cross-view bearing (34.41%
+against 33.43%) and camera facing (57.59% against 56.73%) stay within a point of their controls.
+Since the probe tokens were free to gather anything the frozen layers offer, the frozen model computes
+hardly any fused geometry that can be read out. SFT and GRPO raise the fused points to 14.19%
+and 16.02% and the bearing to 45.31% and 48.03%. The gain sits in the sets of two images (25.94%
+and 30.28%, against controls of 12.19% and 13.22%). With three images it is within five points of
+the control, and with eight images all three models are at control. The held-out ScanNet sets number
+100 with two images, 250 with three, and 14 with eight. Fusion is expected to get harder as images
+are added, and the question is how much of it a model keeps. For the released models, the fused
+points recovered from 3DThinker and GPD, 10.65% and 11.82%, likewise stay close to their strongest
+controls, 9.57% and 9.59%.
+Table 3: The probes of Section 3 on the Qwen3.5-4B models, released spatial reasoning models, and S-MIND after
+its SFT stage (%), each followed in parentheses by the strongest of its controls (Appendix A.1). Top: the frozen-
+backbone geometry probe; for S-MIND, its own spatial tokens are discarded and fresh probe tokens trained in their
+place. Bottom: the viewpoint probe, which reads the points of the other images in the frame of the viewpoint just
+declared (balanced accuracy over the four egocentric quadrants).
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+Ours
+Single-view points
+60.62 (53.79) 57.83 (53.79) 58.69 (53.79) 51.01 (53.43) 60.48 (53.79) 86.32 (53.79)
+Fused points
+11.23 (9.06)
+14.19 (9.16)
+16.02 (9.46)
+10.65 (9.57)
+11.82 (9.59)
+65.11 (9.03)
+2 images
+19.21 (13.38) 25.94 (12.19) 30.28 (13.22) 18.54 (14.03) 20.36 (14.91) 75.15 (12.01)
+3 images
+10.26 (8.99)
+12.88 (9.21)
+14.30 (9.36)
+9.68 (9.36)
+10.92 (9.19)
+64.55 (8.99)
+8 images
+4.88 (3.47)
+3.73 (3.47)
+4.63 (4.42)
+4.46 (3.70)
+3.69 (3.47)
+50.52 (4.12)
+Cross-view bearing
+34.41 (33.43) 45.31 (34.25) 48.03 (34.49) 44.17 (36.44) 36.08 (33.37) 85.35 (30.47)
+Camera facing
+57.59 (56.73) 63.90 (54.30) 66.91 (56.73) 58.60 (54.01) 61.89 (55.16) 93.55 (56.45)
+Declared viewpoint
+32.40 (29.13) 29.72 (26.92) 25.22 (29.48) 37.28 (28.78) 25.49 (29.74) 82.17 (32.08)
+camera viewpoints
+31.76 (30.46) 28.91 (27.44) 25.07 (30.71) 35.03 (30.17) 25.10 (31.13) 85.46 (33.38)
+imagined standpoints 33.61 (25.68) 31.37 (25.50) 25.57 (26.10) 41.92 (25.97) 26.26 (25.90) 73.90 (28.69)
+Table 4a shows that the single-image readout of S-Space is likewise unchanged by fine-tuning: it gives
+the relation between two objects of one image on 86.50% of the 1,200 EmbSpatial (Du et al., 2024)
+questions for Base, 86.75% after SFT, and 87.17% after GRPO, neither significantly different from
+Base. That the state can be read view by view does not contradict the missing fusion. On a two-view
+set of the S-Space suite whose questions name one of the views, the readout is right on 82.50% for
+Base (78.17% and 76.83% after SFT and GRPO, both significantly lower), but it reads each object in
+the frame of its own image and needs no relation between the two. The readouts of 3DThinker and
+GPD give 78.42% and 86.83% on EmbSpatial and 72.33% and 71.00% on the two-view set.
+A.3 Results on Perspective Transformation
+Table 4 gives the full results behind Finding 2 for the same models. The main text uses the questions
+with a premise, which state the relation as the camera sees it. The questions without one, the setting
+of the original experiment (Shi et al., 2026b), show the same pattern in Table 4c. On both variants
+the readout with the external rotation is right on 89.73–97.92% of the questions, while the models’
+19
+own answers are right on 67.12–79.86%, a gap of 15.97–25.70 points for every model. SFT and
+GRPO do not close it: their readouts stay within 2.08 points of Base, and their answers differ from
+those of Base by −7.53 to +7.64 points, every interval including zero.
+From the first to the last mention of the objects the target-frame readout rises significantly for every
+model (exact McNemar test), and the camera-frame readout falls significantly after SFT and GRPO
+but not for Base. On the questions a model answers wrong, the camera-frame readout at the first
+mention is right in 96.00–100.00% of the cases with premise and in 81.08–89.36% without, so the
+scene was perceived correctly. For Base the target-frame readout at the last mention is still right in
+26.47% of them (48.15% without premise): its answer often does not follow its state, and the two
+agree on only 64.71% of all questions. SFT and GRPO make the answer follow the state (81.62%
+and 74.02% agreement), and their wrong answers are then the questions on which the state was not
+transformed (2.94% and 4.00%, and 8.51% and 13.51% without premise). The columns of (b) and
+(c) cover different questions for each model, those on which its own reasoning mentions both objects
+at least twice, so they describe each model separately and are not paired across models.
+The released models show the same pattern. Their own answers on SpinBench remain 19.18–36.80
+points below what the state gives after the external rotation, a gap at least as large as for the Qwen3.5-
+4B models. Replaying their reasoning on the questions with premise, the share of states in the target
+frame goes from 36.36% at the first mention to 33.33% at the last for 3DThinker (33 questions) and
+from 31.21% to 35.46% for GPD (141). The viewpoint probe on reasoning chains in Table 3 agrees:
+GPD stays below its strongest control (25.49% against 29.74%), and 3DThinker exceeds its own by
+8.50 points (37.28% against 28.78%), far short of the 82.17% of S-MIND.
+20
+Table 4: Perspective transformation in the Qwen3.5-4B models and in released spatial reasoning models: the
+viewpoint probe on SpinBench (accuracy, %), each model read along the S-Space axes of its backbone (layer 15
+of Qwen3.5-4B, layer 22 of Qwen2.5-VL-3B for 3DThinker, layer 17 of Qwen3-VL-4B for GPD). Readout decodes
+the two objects’ coordinates from the state; on SpinBench it then rotates them to the queried viewpoint outside
+the model. Answer is the model’s own answer after reasoning. (b) and (c) read the state at the first and the last
+mention of the objects in the model’s own reasoning: target frame is the share of states that give the answer with
+no rotation (already transformed to the queried viewpoint), camera frame the share that give it after the external
+rotation (still in the camera’s frame).
+Qwen3.5-4B
+Released models
+Base
++ SFT
++ GRPO
+3DThinker
+GPD
+(a) Readout, and the model’s own answer
+Single image (EmbSpatial): readout
+86.50
+86.75
+87.17
+78.42
+86.83
+Named view of two: readout
+82.50
+78.17
+76.83
+72.33
+71.00
+SpinBench with premise: readout
+97.92
+97.22
+95.83
+84.72
+100.00
+SpinBench with premise: answer
+72.22
+76.39
+79.86
+47.92
+69.44
+SpinBench without premise: readout
+91.10
+89.73
+91.78
+70.55
+78.77
+SpinBench without premise: answer
+74.66
+67.12
+71.23
+51.37
+55.48
+(b) Along the model’s own reasoning, SpinBench with premise
+Questions
+119
+136
+127
+33
+141
+Target frame, first mention
+31.93
+33.82
+33.86
+36.36
+31.21
+Target frame, last mention
+52.94
+58.09
+55.91
+33.33
+35.46
+Camera frame, first mention
+94.96
+99.26
+99.21
+78.79
+100.00
+Camera frame, last mention
+93.28
+87.50
+88.98
+81.82
+100.00
+Last state agrees with answer
+64.71
+81.62
+74.02
+60.61
+45.39
+Wrongly answered questions
+34
+34
+25
+19
+42
+camera frame, first mention
+100.00
+97.06
+96.00
+73.68
+100.00
+target frame, last mention
+26.47
+2.94
+4.00
+26.32
+33.33
+(c) Along the model’s own reasoning, SpinBench without premise
+Questions
+105
+140
+132
+15
+126
+Target frame, first mention
+40.95
+37.86
+44.70
+33.33
+38.89
+Target frame, last mention
+59.05
+52.86
+55.30
+53.33
+40.48
+Camera frame, first mention
+88.57
+89.29
+88.64
+86.67
+90.48
+Camera frame, last mention
+81.90
+69.29
+75.76
+73.33
+87.30
+Last state agrees with answer
+59.05
+80.71
+75.76
+60.00
+48.41
+Wrongly answered questions
+27
+47
+37
+5
+60
+camera frame, first mention
+85.19
+89.36
+81.08
+80.00
+86.67
+target frame, last mention
+48.15
+8.51
+13.51
+40.00
+41.67
+A.4 Results across Model Scale
+We ask whether the two deficiencies of Section 3 recede as the model grows. We take the Base models
+of the Qwen3.5 family (Qwen Team, 2026a) at 0.8B, 2B, 4B, 9B, and 27B parameters, train nothing,
+and evaluate each on the four benchmarks under the protocol of Table 1 and with the geometry
+and viewpoint probes of Appendix A.1, run with the arguments of the 4B probe. Figure 9 sets the
+benchmark accuracy beside the measures of what the model holds across views, on one scale.
+Benchmarks. As Figure 9a shows, the average accuracy rises steadily with size, from 38.90% at 0.8B
+to 47.85%, 50.57%, 54.23%, and 56.94%. The rise is uneven within a benchmark, as Figure 9b shows:
+on the 274 questions of MindCube-Tiny that show only two images, the accuracy stays between
+35.77% and 41.61% and is 39.42% at 27B, while the whole benchmark rises from 31.62% to 53.90%.
+Geometry probe. Fusion stays near the control up to 4B, where the fused points are 11.23% against
+9.06%, and emerges only from 9B on: the fused points reach 14.70% at 9B and 23.09% at 27B, with
+cross-view bearing at 49.55% and 59.39% and camera facing at 66.33% and 70.49%, all far below
+the 65.11%, 85.35%, and 93.55% of S-MIND at 4B.
+21
+0.8B
+2B
+4B
+9B
+27B
+parameters
+0
+20
+40
+60
+80
+100
+accuracy (%)
+(a) Benchmark accuracy
+38.90
+47.85
+50.57
+54.23
+56.94
+BLINK
+MindCube-Tiny
+SPAR-Bench
+ViewSpatial
+Average
+0.8B
+2B
+4B
+9B
+27B
+parameters
+0
+20
+40
+60
+80
+100
+accuracy (%)
+96.35
+93.55
+85.35
+82.17
+65.11
+camera facing  70.49
+cross-view bearing  59.39
+Tiny, two-image  39.42
+viewpoint probe  34.06
+fused points  23.09
+Ours (4B)
+(b) Cross-view measures
+Figure 9: Qwen3.5 Base models from 0.8B to 27B parameters, without any training. (a) Accuracy on the four
+benchmarks and their average (bold, with its values). (b) On the same scale, what the model holds across views:
+the two-image questions of MindCube-Tiny, the cross-view measures of the geometry probe (fused points, cross-view
+bearing, and camera facing), and the viewpoint probe. Each line is labeled with its value at 27B. Stars: S-MIND on
+Qwen3.5-4B after its SFT stage, on the same five measures.
+Viewpoint probe. At no size does the state follow the declared viewpoint: the balanced accuracy is
+30.93%, 29.04%, 32.40%, 28.05%, and 34.06% from 0.8B to 27B, far below the 82.17% of S-MIND.
+Summary. Scale alone thus does not resolve the two deficiencies. While the average accuracy gains
+at every step in size, 18.04 points from 0.8B to 27B, the two-image questions and the viewpoint
+probe move little over the whole range (+3.65 and +3.13 points), and the cross-view measures of
+the geometry probe rise only from 9B on (+11.86, +24.98, and +12.90 points from 4B to 27B for the
+fused points, cross-view bearing, and camera facing). For reference, the stars in Figure 9b mark our
+4B model after SFT, well above the Base model of every size, 27B included, on all five measures.
+B Geometry Readout
+1 Layer mixing
+linear \(\,d\to 512\)
+layer mix
+1
+1 … i
+i … N N
+hidden states of \(\mathbf{z}_0\)
+at all \(L\) layers
+2 Geometry decoding
+Cross-attention \(\boldsymbol{\times 1}\)
+8 heads, width 256
+keys and values
+1
+1 … i
+i … N N
+\([\mathbf{z}^{(i)};\,\mathbf{z}^{\mathrm{cam}}]\)
+1
+1 … i
+i … N N
+\(\mathbf{z}_0\)
+position \(u\)
+in view \(i\)
+Fourier features
++ linear
+no image content
+\(\mathbf{q}_u\)
+i
+i
+\(\mathbf{z}^{(i)},\ i\geq 2\)
+mean + MLP
+\(\mathbf{q}^{\mathrm{cam}}_i\)
+linear
+\(p\) global \(\hat{\mathbf{p}}^{\mathrm{g}}_{i,u},\,c^{\mathrm{g}}_{i,u}\)
+\(p\) local \(\hat{\mathbf{p}}^{\mathrm{l}}_{i,u},\,c^{\mathrm{l}}_{i,u}\)
+\(\mathcal{L}\)global
+\(\mathcal{L}\)local
+linear
+i
+pose \(\hat{\mathbf{T}}_i\)
+position, heading
+\(\mathcal{L}\)cam
+Figure 10: Architecture of the geometry readout R𝜙. 1 Layer mixing: the hidden states of z0 at all 𝐿layers are
+mixed and projected into the keys and values of a single cross-attention layer. 2 Geometry decoding: point queries
+built from the grid position of a visual token and camera queries built from the scene tokens of a view share this
+layer. In each row of the layer, the colored tokens are the keys and values that the corresponding query attends to.
+Linear heads decode the points and poses supervised by Lglobal, Llocal, and Lcam.
+Architecture. As Figure 10 shows, the readout R𝜙of Section 4.1 first mixes the hidden states of z0
+across all 𝐿layers of the backbone with learned softmax weights and projects them from the hidden
+width 𝑑to 512. The projected states supply the keys and values of a single cross-attention layer
+with 8 heads and width 256, shared by two kinds of queries. The point query q𝑢encodes only the
+grid position 𝑢of a visual token, through sinusoidal features at six frequencies and a linear layer, and
+attends to [z(𝑖); zcam], the scene tokens of its own view together with the camera tokens. The camera
+query qcam
+𝑖
+is computed by an MLP from the mean of z(𝑖) and attends to all of z0, for every camera
+except the first, which defines the reference frame. No parameter is tied to a view index, so the same
+22
+readout serves any number of views. Linear heads map the attention outputs to the global and local
+points of every visual token, each with a confidence 𝑐= 1+ 𝑒𝑠from a predicted logit 𝑠, and to the floor
+position and heading of every decoded camera. All coordinates lie in floor-aligned frames, with 𝑥
+pointing right, 𝑦forward, and 𝑧up, and are normalized by the mean point distance of the image set,
+as in VGGT (Wang et al., 2025). The readout is deliberately weak, with queries that carry no image
+content, a single attention layer without a residual connection, and 1.9M parameters on Qwen3.5-4B
+and 2.7M on Qwen3.5-9B. The intent is to leave the composition of per-view depth with camera
+poses to the spatial tokens rather than to the readout.
+C Experimental Details
+C.1 Benchmark Descriptions
+In this section, we describe the four benchmarks used in our experiments:
+• MindCube-Tiny (Wang et al., 2026b) has 1,050 questions over two to four views of a scene, in
+three settings: among (600), around (250), and rotation (200).
+• SPAR-Bench (Zhang et al., 2025) is evaluated on its relational and viewpoint-reasoning tasks
+(R&V): 11 of its 20 tasks, 3,969 questions, covering spatial relation, spatial imagination, position
+matching, camera motion, and distance comparison. As in its official overall score, we report the
+mean of the per-task accuracies.
+• BLINK (Fu et al., 2024) is evaluated on its three spatial tasks, multi-view reasoning, relative depth,
+and spatial relation, on the validation split (400 questions), whose answers are public.
+• ViewSpatial-Bench (Li et al., 2026a) has 5,712 questions that ask for spatial relations from the
+perspective of the camera (2,769) and of a person in the scene (2,943). Each group is scored by
+the accuracy over its questions, as in the benchmark’s own results.
+Evaluation Protocol. Every model in Table 1 that we run from its weights answers without thinking
+mode, with greedy decoding and at most 4,096 new tokens, and Appendix C.2 gives the settings
+of the general models. The answer is read by strict matching of the option letter in the requested
+answer format, without an LLM judge, and an answer that cannot be read is counted as incorrect.
+This follows the protocol of EASI (Cai et al., 2025), and the cited numbers are taken from its public
+leaderboard1. The average in Table 1 is the mean of the four overall scores.
+C.2 Baseline Setup
+In this section, we provide details on the three groups of baselines in Table 1:
+• General models, marked † in Table 1, are evaluated through their providers’ APIs with our prompts
+and answer extraction, where a reply that consists of an option letter alone is also accepted. GPT-6-
+Astra and Claude-Opus-5.5 think at low effort, GLM-5.3-Flash at its default reasoning effort (max),
+Hy4 and Qwen3.8-Flash run in their default modes via OpenRouter, served by Tencent and Alibaba,
+and Kimi-K3.1-Pro thinks at low effort and samples at its fixed temperature of 1. The output cap
+is 32,768 tokens for GLM-5.3-Flash and Qwen3.8-Flash, 16,384 for Kimi-K3.1-Pro, and 65,536 for
+Hy4; a reply cut at the cap is counted as incorrect.
+• Spatial reasoning models are listed only if their reported numbers are complete or their final
+weights are released. In the latter case we evaluate the weights (‡) under the decoding above,
+1https://easi.lmms-lab.com/leaderboard/, as of July 1, 2026.
+23
+with their official prompts and formats, except that SpatialLadder-3B and Spatial-Interactor-4B
+answer our unified prompt. Cambrian-S’s numbers are from the EASI leaderboard.
+• Methods trained in our setting are reproduced on Qwen3.5-4B from their papers and, where
+available, their official code, on the same training sources as S-MIND. Among them, SFT and
+GRPO are the key controls: they are trained on the same reasoning chains as S-MIND and differ
+from S-MIND in the absence of the spatial tokens and their supervision. On Qwen3.5-9B we repeat
+the comparison with the base model, SFT, and GRPO.
+C.3 SFT Data Construction
+In this section, we describe how the data of the SFT stage are constructed: the questions, the reasoning
+chains, and the viewpoints that the chains declare, which give the targets of the view loss:
+• Question bank.
+All methods trained on our backbones draw their questions from one bank
+of 16,808 multiple-choice questions, namely 8,808 questions from the training set of Mind-
+Cube (Wang et al., 2026b) over two to four views, 4,000 questions of SpatialLadder (Li et al.,
+2026d) on relative direction and relative distance over a single image or eight views, and 4,000
+multi-view questions of SPAR-7M (Zhang et al., 2025) in seven task types spanning object relation,
+spatial imagination, camera motion, position matching, and distance comparison. The questions
+of SpatialLadder and SPAR come from ScanNet (Dai et al., 2017) training scenes. SpatialLadder’s
+are sampled round-robin over scenes, with the multi-view direction questions stratified so that
+no option holds more than 35% of the answers, and SPAR’s with at most five questions per scene
+and task type. The boxes and points that a SPAR question refers to are drawn onto its images
+with SPAR’s official script. All questions share one format: the wording of the source, one option
+per line, and a single instruction to reason first and then answer with an option letter, with every
+image resized to at most 640 × 480 pixels. For development we hold out 560 MindCube, 200
+SpatialLadder, and 350 SPAR questions by scene, which no training stage uses.
+• Reasoning chains. The reasoning chains are written by GPT-6-Astra. For each question the teacher
+receives the images, the question as the student sees it, and a top-down map of the scene in text:
+the official layout of MindCube or, on ScanNet, the floor positions and extents of the annotated
+objects visible in the images together with the camera poses. The student never sees the map. The
+teacher writes one sentence per viewpoint: each sentence opens with a phrase, free of commas,
+that states where the viewer stands and which way it faces, followed after a comma by what is
+seen from there, and a final sentence starting with “So” draws the conclusion and gives the answer.
+A chain may mention neither the map nor any coordinate, and may use only the numbers that
+the question and its options contain. A chain is kept if its answer is correct and it obeys these
+rules, and each question is sampled at most three times. Of the 7,824 questions sent to the teacher,
+7,500 chains are kept, 2,500 per source. For S-MIND, a run of spatial tokens is placed after the first
+comma of every sentence but the last, i.e., right after each declared viewpoint, without changing
+the teacher’s words, and the same chains without spatial tokens are the SFT data of the baselines.
+• Declared viewpoints. The pose of a declared viewpoint is a position and a heading on the floor
+plane of the first image’s frame, and the view target is z0’s points re-expressed around it: the origin
+moves to the position and the forward axis to the heading, while heights are unchanged. When
+the chain adopts the viewpoint of an input image, the pose is that camera’s pose as decoded from
+z0. When it stands at a camera but faces elsewhere, the position is the decoded camera’s and the
+heading points to the named object, or follows another camera’s decoded heading turned by the
+stated angle. When it imagines a standpoint, e.g., standing at one object and facing another, the
+position is the first object’s and the heading points to the second. The floor positions of objects
+come from the annotations of the training scenes, scaled to z0’s frame, and are the only ground
+truth in the view target. When it turns relative to where it stands, the previous pose is rotated by
+24
+the stated angle. The viewpoint is read from the declaring phrase by rules, using only the phrase,
+the question, and the scene’s annotations, never the rest of the chain or the answer, and it serves
+only as a training target: it never enters the model’s input.
+C.4 Training Details
+This section details the three training stages of S-MIND, whose SFT data are described in Appendix C.3.
+The parameter settings of all stages are in Table 5, and every model is trained once. All experiments
+are conducted on four NVIDIA H100 GPUs.
+• Geometry pre-training. The spatial tokens of an image set are placed after the images and before
+the question. Their input embeddings, the readout, and a LoRA (Hu et al., 2022) on every linear
+layer of the language model are trained together on 16,292 posed image sets from ScanNet and
+MindCube. The readout is described in Appendix B. After training, the readout is refit on the
+frozen model, and this refit readout is the one that SFT keeps frozen.
+• SFT. SFT starts from the geometry pre-trained model and trains a new LoRA on the reasoning
+chains, whose viewpoint phrases are each followed by a run of spatial tokens. The loss is the
+chain’s cross-entropy, which leaves out the inserted tokens except the first of every run, plus the
+geometry loss on z0 and the view loss of every z𝑘against z0’s own scene seen from the declared
+viewpoint (Appendix C.3), both weighted by 𝜆. Since the first token of every run is predicted, the
+model learns to write it, and at inference the rest of the run is appended wherever it does.
+• RL. GRPO (Shao et al., 2024) starts from the SFT model with a fresh LoRA, on multiple-choice
+questions from the same sources and from ScanNet training scenes. The reward is the correctness
+of the final answer under strict extraction, with group-normalized advantages and a KL penalty to
+the starting model. The spatial tokens inserted during a rollout are context and are not trained.
+25
+Table 5: The detailed parameter settings when implementing S-MIND.
+Parameter
+Setting
+All stages
+Scene tokens per view 𝐾𝑠
+2
+Camera tokens 𝐾𝑐
+4
+LoRA rank
+64
+LoRA alpha
+128
+LoRA target modules
+all linear layers
+Random seed
+17
+Evaluation temperature
+0.0
+Geometry pre-training
+Number of training epochs
+4
+Training batch size
+64
+Learning rate of the token embeddings
+3e-4
+Learning rate of the LoRA
+2e-4
+Learning rate of the readout
+1e-3
+Learning rate of the layer-mixing weights
+0.05
+Confidence weight 𝛼
+0.5
+SFT
+Number of training epochs
+2
+Training batch size
+64
+Learning rate
+2e-4
+Warmup ratio
+0.1
+Weight of the geometry and view losses 𝜆
+0.1
+RL
+Questions per step
+16
+Rollouts per question
+8
+Training temperature
+1.0
+Token limit for responses
+2048
+Reward for a correct / wrong answer
+1 / 0
+Weight of KL penalty
+0.01
+Learning rate
+1e-5
+Warmup steps
+4
+Gradient clipping
+1.0
+C.5 Efficiency Setup
+Inference. We time SpatialClaw and S-MIND end to end on the same GPU, one NVIDIA H100 PCIe,
+with eight questions in flight, the default of SpatialClaw’s official code (Cho et al., 2026). The time of a
+question runs from its start to its final answer, the span that SpatialClaw’s runner records. SpatialClaw
+runs its official code in its default configuration: Qwen3.5-4B is served by vLLM (Kwon et al., 2023)
+with thinking enabled at temperature 0.6, and its 3D reconstruction and segmentation tools run on
+the same GPU. S-MIND decodes greedily as in Table 1, and its accuracies are those of Table 1 on the
+same questions. As SpatialClaw takes about 100 s per question, ViewSpatial is scored on the first 850
+of its 5,712 questions in a fixed random order interleaving its five tasks in proportion to their sizes.
+Training cost. Among the methods trained in our setting, 3DThinker (Chen et al., 2026) is the one
+that also trains geometry into the model’s states, and its supervision is far heavier than ours. It aligns
+latent states in the reasoning with the full aggregator features of VGGT (Wang et al., 2025) for every
+training image, 1,374 tokens of 2,048 channels per image (2.8M numbers), which take 192 GB for
+our reproduction, through a projector of 36.2M parameters. Its latent steps feed the last hidden state
+back as the next input, which standard serving engines do not support, so its rollouts and its inference
+decode step by step. S-MIND supervises two 3D points per visual token, global and local, and one
+26
+pose per camera, at most about 1.8K numbers per image and 44 MB for all 16,292 pre-training sets,
+through a readout of 1.9M parameters, and it runs natively in vLLM.
+D Additional Experimental Results
+This appendix complements Section 5 with the state swap, the per-benchmark token knockout, the
+design choices behind the two supervised stages, and the geometry along training. All runs are single
+runs (seed 17) on Qwen3.5-4B.
+D.1 State Swap
+The swap of Section 5.3 tests whether the answer depends on the content of the transformed scene
+rather than on the mere presence of the spatial tokens. It runs on S-MIND after RL over all 1,050
+questions of MindCube-Tiny. The model first answers greedily with its own reasoning. Its sequence
+is then cut right after the last run of re-emitted spatial tokens, the run that follows the last viewpoint
+the reasoning declares, and the model continues greedily from there under one of three conditions,
+which change the states of that run in every layer and never the text. In the first, the states are left
+unchanged. In the second, they are replaced by those of z0 at the same layer and position, i.e., the
+same scene not re-expressed in the declared frame. In the third, they are moved by random vectors of
+the same norm as that replacement, a change of the same size that carries no scene. The last position
+of the run is left unchanged in all three. Table 6 reports the accuracy and the share of answers that
+differ from the model’s own under each condition.
+Table 6: Swapping the transformed scene at inference (%, S-MIND after RL on Qwen3.5-4B, MindCube-Tiny). After
+the model has answered, its sequence is cut at the last run of re-emitted spatial tokens and continued with the states
+of that run unchanged (None), replaced in every layer by those of z0 (Swap), or moved by random vectors of the
+same norm as the swap (Noise). Changed: answers that differ from the model’s own. With the states unchanged,
+the continuation reproduces 99.71% of them. Δ: Swap minus Noise in that share, with its 95% interval from a
+paired bootstrap over questions (2,000 draws), in bold where the interval excludes zero. The replay decodes with
+a different inference implementation from that of Table 1, so its accuracies with the states unchanged differ from
+those in Table 1 by at most 0.80 points.
+None
+Swap
+Noise
+Questions
+𝑛
+Acc.
+Acc. Changed
+Acc. Changed
+Δ changed [95% interval]
+All questions
+1,050 88.19 83.33
+9.05 88.00
+1.62 +7.43 [+5.62, +9.14]
+By the viewpoint of the last run
+an input image
+863 89.92 86.56
+6.49 90.03
+1.27 +5.21 [+3.59, +6.95]
+a standpoint no image shows
+187 80.21 68.45
+20.86 78.61
+3.21 +17.65 [+11.76, +23.53]
+By setting
+among
+600 91.83 89.00
+4.67 92.33
+0.83 +3.83 [+2.17, +5.67]
+around
+250 89.20 88.80
+4.40 88.80
+1.60 +2.80 [+0.40, +5.60]
+rotation
+200 76.00 59.50
+28.00 74.00
+4.00 +24.00 [+17.50, +30.50]
+D.2 Token Knockout
+Table 7 gives the knockout of Section 5.3 per benchmark. The weights are never changed, and only
+the input at inference differs: all spatial tokens are withheld, so the same weights answer the plain
+question. Each knocked-out run is paired with the full model question by question. After SFT, with-
+holding the spatial tokens costs 2.87 points of the four-benchmark average, with significant losses on
+MindCube-Tiny, SPAR-Bench, and BLINK. After RL, it costs 2.37 points, again with significant losses
+on the same three benchmarks, while the knocked-out model still leads every spatial reasoning model
+and every Qwen3.5-4B baseline of Table 1 on each benchmark.
+27
+Table 7: Withholding all spatial tokens at inference, with the weights unchanged (%, S-MIND on Qwen3.5-4B after
+its SFT stage at the top and after RL at the bottom). Δ: the change against the full model, with 95% intervals from
+a paired bootstrap of 2,000 draws that resamples scenes for the rows after SFT, and questions within each task
+(question groups for MindCube-Tiny) for the rows after RL. Bold marks intervals that exclude zero.
+Benchmark
+Questions
+Full w/o spatial tokens
+Δ [95% interval]
+After SFT
+MindCube-Tiny
+1,050 82.29
+79.14 −3.14 [−5.35, −0.75]
+SPAR-Bench (R&V)
+3,969 64.24
+62.58 −1.66 [−3.08, −0.25]
+BLINK (Spatial)
+400 75.00
+69.00 −6.00 [−10.25, −2.00]
+ViewSpatial
+5,712 46.17
+45.47 −0.70 [−1.75, +0.39]
+Average
+– 66.92
+64.05 −2.87
+After RL
+MindCube-Tiny
+1,050 88.00
+85.81 −2.19 [−3.77, −0.69]
+SPAR-Bench (R&V)
+3,969 71.03
+69.81 −1.22 [−2.11, −0.32]
+BLINK (Spatial)
+400 78.00
+72.00 −6.00 [−9.50, −2.50]
+ViewSpatial
+5,712 54.27
+54.20 −0.07 [−1.00, +0.82]
+Average
+– 72.83
+70.46 −2.37 [−3.39, −1.34]
+D.3 Design Choices in Geometry Pre-training
+Figure 11 and Table 8 compare the design choices of geometry pre-training by the geometry that
+the spatial tokens hold on held-out image sets, with differences paired over the same sets and 95%
+intervals from resampling them:
+• A separate geometry stage with a trainable backbone. Geometry is learned in a stage of its
+own, before the reasoning chains, so that the tokens are fit to the images rather than shaped by
+the language loss. Pre-training also trains a LoRA on the backbone: with the backbone frozen the
+tokens cannot relate the views to each other, as the probe of Section 3 shows for the baselines.
+• A light readout that can only read the tokens. The readout is one cross-attention layer without a
+residual path. Its queries encode only a grid position or derive from the scene tokens of a view, and
+its keys and values are the spatial tokens alone (Appendix B). Whatever it decodes must therefore
+be in the tokens, and a stronger readout would only make that less certain.
+• Tokens per image instead of a fixed set. A fixed set of 16 tokens is shared by every image of a set,
+so each image gets fewer of them as images are added, and the number of images a model can take
+is bounded by what the tokens were trained on. With two tokens per image plus a camera group,
+every image has its own tokens, carrying the same two ids, and any number of images uses trained
+embeddings only. Figure 11a shows where sharing hurts most: on the sets of eight images, two
+tokens per image recover 10.11 more points than 16 shared tokens (95% interval 3.47 to 17.73),
+and on the sets of three images, where they are 8 tokens in all, they still recover more (55.44%
+against 53.02%). It is sharing, not the count, that hurts: halving the shared tokens to 8 costs 2.36
+points (−3.31 to −1.32). Four camera tokens instead of two leave the camera position and heading
+essentially unchanged and raise the cross-view bearing by 1.05 points.
+• More image sets. Figure 11b shows that widening pre-training from 7.3k to 16.3k ScanNet and
+MindCube sets, without changing the reasoning data, is the largest single gain: 16.66 more points
+on held-out ScanNet sets (15.28 to 18.05), 34.52 more on the sets of eight images, and 5.16 more
+on MindCube rooms not seen in training.
+• Redundant per-view targets. Besides each visual token’s point in the first image’s frame, the
+readout also predicts the same point in the frame of that token’s own camera. The extra target
+is redundant, since the first follows from the second and the camera, but it gives the tokens a
+supervision of depth that does not depend on the camera being right. On 7.3k sets it raises the
+28
+recovered points by 5.83 (4.75 to 6.97) and far depth by 9.87 points. In the final setting, both
+point targets are weighted by a learned confidence.
+1
+2
+3
+8
+images in the set (ScanNet held-out sets)
+0
+20
+40
+60
+80
+100
+points recovered (%)
+(a) Geometry as images are added
+16 shared tokens
+8 shared tokens
+2 per image + 2
+2 per image + 4
+Ours (16.3k sets)
+0
+10
+20
+30
+paired difference (points), 95% interval
+2 per image + 2 vs. 16 shared
+(sets of 8 images)
+8 vs. 16 shared tokens
+16.3k vs. 7.3k image sets
++ per-view targets (7.3k sets)
+(b) Effect of each pre-training choice
+ScanNet points
+far depth
+cross-view bearing
+MindCube points (unseen rooms)
+Figure 11: Design choices in geometry pre-training, read from the spatial tokens by the refit readout on held-out
+image sets. (a) Visible points recovered in the first image’s frame, by the number of images in a ScanNet set: tokens
+shared by all images lose the most as images are added. Ours is trained on 16.3k sets with per-view targets, the
+other layouts on 7.3k. (b) Paired difference of each choice on the same held-out sets, with 95% intervals from
+resampling the sets. Metrics are defined in Table 8.
+Table 8: Design choices in geometry pre-training, read from the spatial tokens by the refit readout on held-out
+image sets (%). Local: the per-view point targets, weighted by a learned confidence in the final setting. Points:
+visible points recovered in the first image’s frame (within a quarter of the set’s mean point distance), on all 416
+ScanNet sets and by the number of images in the set; far depth: points beyond 1.5 mean distances whose depth
+is within 20%; bearing, facing, camera: the later images’ relation to the first, their heading within 45◦and their
+position within a quarter mean distance (sets with more than one image). MindCube: points on unseen rooms.
+ScanNet-x: held-out sets of the wider ScanNet split, scored for the 16.3k runs only.
+Tokens
+Sets
+Local
+ScanNet points
+Far
+MindCube
+ScanNet-x
+all 1 img. 3 img. 8 img.
+depth Bearing Facing Camera
+points
+points
+Geometry trained on 7.3k image sets
+16 (shared)
+7.3k
+–
+55.81
+87.45
+53.02
+23.09
+25.49
+72.90
+88.68
+55.01
+73.18
+–
+8 (shared)
+7.3k
+–
+53.45
+86.64
+50.46
+23.14
+27.93
+70.23
+88.54
+49.71
+74.07
+–
+2/img + 2
+7.3k
+–
+58.23
+85.45
+55.44
+33.20
+29.40
+75.54
+87.39
+57.02
+75.41
+–
+2/img + 4
+7.3k
+–
+56.14
+84.55
+53.51
+27.47
+29.54
+73.79
+88.25
+56.30
+73.59
+–
+4/img + 4
+7.3k
+–
+58.80
+86.92
+56.69
+29.39
+31.42
+74.72
+88.54
+61.60
+74.83
+–
+2/img + 4
+7.3k
+points
+61.97
+87.47
+59.62
+36.15
+39.40
+77.67
+89.40
+56.45
+78.43
+–
+Geometry trained on 16.3k image sets
+2/img + 2
+16.3k –
+72.19
+90.75
+69.94
+61.58
+52.09
+83.40
+94.13
+74.79
+78.67
+50.28
+2/img + 4
+16.3k –
+72.79
+91.61
+70.48
+61.99
+53.78
+84.44
+93.70
+74.64
+78.76
+51.38
+Ours: 2/img + 4 16.3k points + conf. 75.63
+92.84
+73.63
+61.37
+62.75
+85.26
+93.55
+74.36
+81.62
+53.37
+D.4 Design Choices in SFT
+Figure 12 and Table 9 read two things after SFT: whether z0 still holds the geometry of pre-training,
+and how often a re-emitted z𝑘after a camera’s viewpoint decodes to z0’s scene seen from that camera,
+i.e., how often it is transformed.
+Supervision of the re-emitted tokens. We first compare the supervision variants in a preliminary
+setting (4,800 chains, 16 shared tokens, one epoch). Without any geometry or view loss, SFT over-
+writes the geometry: the ScanNet points read from z0 fall from 55.81% to 22.00%. The geometry
+loss alone keeps the geometry but leaves z𝑘untransformed (34.24%). Supervising z𝑘with z0’s own
+29
+scene transforms it as well as supervising it with the true scene (83.33% against 80.91%), and with
+z0 supplying the scene, the loss supervises only how that scene transforms. Weighting that target by
+z0’s confidence transforms it less (69.39%), and training the readout during SFT adds nothing.
+The final setting. With two tokens per image, two epochs, and 𝜆=0.1, the geometry even improves
+during SFT (75.63% to 76.13%). The view loss is what transforms it: z𝑘is transformed in 97.49%
+of the camera viewpoints with it and in only 40.81% without it.
+0
+50
+100
+% of pre-trained points
+No geometry, no view loss
+Geometry only
+View target: true scene
+View target: z0's own scene
+    weighted by z0's confidence
+    readout trained too
+39
+99
+99
+99
+99
+97
+(a) z0 geometry kept
+0
+50
+100
+% of camera viewpoints
+37
+34
+81
+83
+69
+82
+zk transformed
+0
+100
+200
+SFT step
+0
+20
+40
+60
+80
+100
+% of camera viewpoints
+(b) zk transformed
+Ours
+no view loss
+0
+100
+200
+SFT step
+60
+65
+70
+75
+80
+85
+ScanNet points (%)
+(c) z0 geometry
+Figure 12: Design choices in SFT. (a) Supervision variants in the preliminary setting: the share of the pre-trained
+ScanNet points that z0 still holds after SFT, and how often a re-emitted z𝑘after a camera’s viewpoint decodes to
+z0’s scene seen from that camera. The indented rows change one thing in the row “z0’s own scene”. Red marks
+the run without supervision and violet the target we keep. (b, c) The final setting along SFT, with and without the
+view loss: the view loss transforms z𝑘within the first half of training and leaves z0’s geometry where it was.
+Table 9: Design choices in SFT, on held-out data. z0 points: the held-out geometry of pre-training read from z0
+by the frozen readout before SFT and after it (%), where a falling number means SFT overwrote the geometry. z𝑘
+transformed: the share of re-emitted runs after a camera’s viewpoint whose decoded scene is closest to z0’s scene
+seen from that camera (chance is one over the number of images).
+Variant
+View loss z0 points ScanNet z0 points MindCube z𝑘transformed
+before
+after before
+after
+Preliminary setting: 4,800 chains, 16 shared tokens, 1 epoch
+No geometry, no view loss
+–
+55.81
+22.00
+73.54
+40.45
+37.27
+Geometry only (z𝑘free)
+–
+55.81
+55.35
+73.54
+74.36
+34.24
+View target: true scene
+✓
+55.81
+55.15
+73.54
+73.97
+80.91
+View target: z0’s own scene
+✓
+55.81
+54.99
+73.54
+74.29
+83.33
+weighted by z0’s confidence
+✓
+55.81
+55.06
+73.54
+74.22
+69.39
+readout trained too
+✓
+55.81
+54.25
+73.54
+74.00
+82.12
+Final setting: 2 tokens per image, 2 epochs
+Ours
+✓
+75.63
+76.13
+82.51
+83.26
+97.49
+without the view loss (z𝑘free) –
+75.63
+76.36
+82.51
+83.63
+40.81
+D.5 Geometry along Training
+Figure 13 follows the geometry held by the spatial tokens through the three training stages.
+Four epochs of geometry pre-training. In Figure 13a, the points recovered on held-out ScanNet
+sets rise from 49.22% after one epoch to 73.02% after four, the last still adding 2.46 points.
+No geometry loss in RL. RL optimizes the answer’s reward only. Figure 13b and c follow an RL run
+from SFT in which the geometry was read along training: the training reward rises from 70.28% to
+82.75% over 300 steps (first and last 25 steps), while the geometry read from z0 does not move, with
+30
+the recovered ScanNet points changing by −0.07 points, the MindCube points by less than 0.01, and
+the cameras’ positions by −0.14. Under the KL penalty to the SFT model and the low learning rate,
+the geometry stays in place without any geometry term. The RL model of Table 1 behaves alike: on
+the held-out sets, its z0 holds nearly as many of the ScanNet points as after SFT, and its re-emitted
+z𝑘are transformed nearly as often.
+1
+2
+3
+4
+pre-training epoch
+0
+20
+40
+60
+80
+100
+points recovered (%)
+(a) Geometry pre-training
+ScanNet
+MindCube
+100
+200
+300
+RL step
+40
+50
+60
+70
+80
+90
+100
+reward (%, last 25 steps)
+(b) RL: reward
+MindCube
+SPAR
+SpatialLadder
+all
+0
+100
+200
+300
+RL step
+50
+60
+70
+80
+90
+100
+recovered from z0 (%)
+(c) RL: z0 geometry
+ScanNet points
+MindCube points
+ScanNet cameras
+Figure 13: The geometry through training. (a) Geometry pre-training, epoch by epoch (readout as trained, before
+the refit): the points recovered on held-out ScanNet and MindCube sets. (b) Reward by question source, averaged
+over the last 25 steps, along an RL run from SFT. (c) The geometry read from z0 along the same run, which has no
+geometry loss: points on held-out ScanNet and MindCube sets and the cameras’ positions stay unchanged.
+E A Benchmark for Spatial Capability beyond Answer Accuracy
+We construct a compact benchmark that measures, independently of the answers a model generates,
+how accurately object positions can be read from its representations and whether they follow a change
+of reference view. Figure 14 summarizes the protocol: the model stays frozen, and a linear probe
+reads the position of each object from the hidden state of its name.
+Scenes. The test set contains 100 scenes, 50 real rooms and 50 synthetic scenes, each with six
+objects and three views. The real rooms use the RGB views released with SpatialLadder (Li et al.,
+2026d), with object centers and camera frames from the ScanNet (Dai et al., 2017) annotations. The
+synthetic scenes hold compound objects on platforms and shelves, with partitions, height differences,
+and partial occlusion, and their geometry and cameras are recorded by the renderer. Objects are
+identified by name in the real rooms and by the labels A–F in the synthetic scenes.
+Paired inputs. The central comparison presents the same ordered images and object list twice,
+changing only the instruction from “Use image 1 as the reference view” to “Use image 2 as the ref-
+erence view”, and examines the object pairs whose front–back relation reverses between the two
+camera frames. Further pairs keep the geometry and reorder the images or the object mentions;
+synthetic pairs also recolor the objects, relabel them, or move one of them.
+Readout. Following the object-token readout of S-Space (Shi et al., 2026b), we take the hidden state
+at the last subword of each object name and fit a linear ridge probe to the object’s 3D position in the
+right–up–forward frame of the reference camera:
+bp(𝑟)
+𝑖
+= 𝑊eh(𝑟)
+ℓ,𝑖+ b,
+(6)
+where 𝑟is the reference view and eh is the state at layer ℓ, standardized on the probe-fit set. One
+probe is fitted per model and domain on 96 real rooms or 300 synthetic scenes; a separate set of 20
+real rooms or 50 synthetic scenes selects the layer among 3, 7, . . . , 31 and the ridge penalty among
+0.1, 1, 10, 100 by mean absolute coordinate error, and the selected probe is frozen for the test scenes.
+31
+1 Scene inputs
+2 Frozen readout
+3 Geometry evaluation
+50 real rooms
+50 synthetic scenes
+view 1
+view 2
+view 3
+view 1
+view 2
+view 3
+3 views · 6 named objects
+Use image 1 as reference.
+Use image 2 as reference.
+Two passes; only the
+reference instruction changes
+Frozen multimodal
+model
+weights unchanged
+Object-name hidden states
+E
+C
+B
+D
+F
+A
+Fixed linear probe
+hidden state → 3D position
+Target layouts (top view)
+Reference 1
+C
+D
+right
+forward
+Reference 2
+C
+D
+right
+forward
+C behind D → C in front of D
+Same scene, different reference frame
+Layout error ↓
+Normalized 3D position RMSE
+Reference-view consistency ↑
+Both relations must be correct
+XYZ
+Probe preparation on separate scenes
+Apply to test scenes
+Hidden states + true XYZ
+from probe-fit scenes
+Fit ridge probes
+Calibration selects
+layer + ridge penalty
+Freeze probe
+Figure 14: Protocol of the benchmark. The same three views and six object names are presented under two
+reference-view instructions; a frozen model produces the states of the object names, and a fixed linear probe
+decodes their camera-relative positions. The top views show the true layouts of one synthetic scene, in which
+objects C and D reverse their front–back order between the two references. The probe is fitted and selected on
+scenes disjoint from the test set.
+Physical rooms, including rescans, are disjoint across probe fitting, calibration, and testing. All models
+receive the same images and instruction, and the input of S-MIND retains its initial spatial tokens.
+Metrics. Layout error compares the decoded configuration with the true one in the first reference
+frame. Each configuration is centered and divided by its root-mean-square object spread, and for the
+normalized configurations b𝑃and 𝑃of 𝑛objects,
+𝐸layout =
+v
+t
+1
+𝑛
+𝑛
+Õ
+𝑖=1
+bp𝑖−p𝑖
+2
+2.
+(7)
+Reference-view consistency (RVC) is the share of object pairs whose front–back relation is decoded cor-
+rectly in both reference frames, among the pairs whose true relation reverses and whose coordinate
+gap exceeds 0.08 of the normalized spread in both frames. Scores are averaged over the eligible pairs
+of a scene and then over scenes.
+Models and controls. We evaluate five Qwen3.5-4B models: Base, SFT, GRPO, and S-MIND after
+SFT and after RL. The SFT baseline is an independent reproduction of the recipe in Appendix C.4
+(LoRA rank 64, 7,500 teacher-written chains, two epochs). Two controls check the readout: blank
+images under the fixed probe, and a probe refitted on labels permuted across training scenes.
+The readout follows the reference view. Table 10 reports the results on the 100 test scenes. SFT
+raises RVC over Base from 19.72% to 26.64% on real rooms and from 18.76% to 30.89% on synthetic
+scenes, whereas S-MIND reaches 35.18% and 44.38% after SFT and 38.10% and 47.26% after RL,
+11.46 and 16.37 points above SFT. Its layout error is lower as well, 0.839 against 0.959 for SFT on real
+rooms and 0.791 against 0.817 on synthetic scenes. The readout also rests on the images and on the
+32
+learned correspondence between states and geometry: for the RL model, blank images and shuffled
+labels each bring RVC below every model in Table 10 on both domains. The advantage of S-MIND
+thus extends from its answers to the states of ordinary object tokens under a neutral instruction.
+Table 10: Spatial representations on the 100 test scenes, 50 per domain. 𝐸layout: the layout error of the normalized
+configuration; RVC: reference-view consistency (%), which requires the front–back relation to be correct in both
+reference frames. Bold marks the best model in each column.
+Real rooms
+Synthetic scenes
+Model
+𝐸layout↓
+RVC ↑
+𝐸layout↓
+RVC ↑
+Base
+1.001
+19.72
+0.839
+18.76
++ SFT
+0.959
+26.64
+0.817
+30.89
++ GRPO
+0.949
+24.97
+0.838
+22.12
+Ours (SFT)
+0.844
+35.18
+0.800
+44.38
+Ours (RL)
+0.839
+38.10
+0.791
+47.26
+The relations hold under input and scene changes. Table 11 scores paired relations under changes
+to the input and to the scene; a relation counts when it is decoded correctly in both observations,
+averaged over the eligible relations on the three axes of a scene. Both models of S-MIND exceed all
+three baselines in every column, most clearly on the relations that an object move changes (29.20%
+and 27.31% against at most 25.13%).
+Table 11: Paired spatial relations under input and scene changes (%). Real rooms: the images or the object
+mentions are reordered under the same reference camera. Synthetic scenes: the objects are recolored or relabeled
+A–F, or one object is moved, with the relations it changes and those between the unmoved objects scored separately.
+Bold marks the best model in each column.
+Real rooms
+Synthetic scenes
+Model
+Images
+Mentions
+Colors
+Labels
+Moved
+Unmoved
+Base
+63.70
+66.22
+64.91
+56.18
+24.42
+69.17
++ SFT
+65.05
+68.31
+66.18
+57.98
+25.13
+70.59
++ GRPO
+64.64
+69.94
+67.03
+54.22
+24.08
+70.15
+Ours (SFT)
+67.01
+72.11
+67.76
+60.20
+29.20
+72.07
+Ours (RL)
+66.61
+72.15
+68.86
+59.90
+27.31
+72.28
+F S-MIND as a Spatial Expert for General Models
+We further examine whether S-MIND can serve a larger general model through language: as Figure 15
+outlines, the 4B RL model acts as a spatial tool for Qwen3.5-27B, with both models frozen.
+Pipeline. Qwen3.5-27B first routes the question in a separate pass, given its text, answer choices,
+and number of images. For a visual spatial question, S-MIND receives the question, the choices, and
+the ordered images, runs once, and returns its spatial analysis with the final answer selection removed.
+The 27B model then reads this analysis alongside the original inputs, checks the reference viewpoint
+and the object identities, and produces the answer itself; if the analysis is unusable, it answers from
+the original inputs alone. Any other question is answered by the 27B model with its original prompt
+and decoding settings, outside the routing conversation.
+The spatial analysis transfers to the larger model. We compare Qwen3.5-27B alone and with
+S-MIND on 64 questions from each of the four benchmarks, sampled by task before inference and
+aggregated as in Appendix C.1, with thinking disabled, greedy decoding, and at most 4,096 new to-
+kens. The router calls the tool on all 256 questions. As Table 12 shows, the average rises from 58.67%
+33
+Question
+image 1
+image 2
+text + answer choices
+Qwen3.5-27B
+routes the question
+spatial
+other
+S-Mind (4B)
+spatial tool, one run
+Qwen3.5-27B
+checks it and answers
+spatial analysis
+answer removed
+answer
+original images and question
+Four spatial benchmarks: 58.67% → 68.70% on average
+Qwen3.5-27B
+answers as it would alone
+answer
+GPQA Diamond, LiveCodeBench:
+answers unchanged
+Figure 15: S-MIND as a spatial tool for a general model. Qwen3.5-27B routes each question: a spatial question
+goes to S-MIND, whose analysis returns to the 27B model with its answer selection removed, and the 27B model
+answers from it and from the original inputs; any other question it answers as it would alone.
+to 68.70%, with gains on all four benchmarks and the largest on MindCube-Tiny, from 59.59% to
+81.30%, where reasoning across views is central.
+Table 12: S-MIND as a spatial tool for Qwen3.5-27B: accuracy (%) on 64 questions per benchmark. The 27B model
+produces every final answer.
+MindCube-Tiny
+SPAR-Bench
+BLINK
+ViewSpatial
+Avg.
+Qwen3.5-27B
+59.59
+50.30
+70.12
+54.66
+58.67
++ S-MIND analysis
+81.30
+59.09
+73.26
+61.14
+68.70
+General tasks are unaffected. On the 198 questions of GPQA Diamond2 and the 175 code-
+generation problems of the incremental v6 split of LiveCodeBench3, the router sends every question
+to the 27B model itself. Its answers, generated independently with thinking disabled at temperature
+zero, match those of the standalone model question by question on both benchmarks.
+G Case Study
+Figures 16 and 17 show two questions of MindCube-Tiny from two different rooms that S-MIND
+answers correctly while Qwen3.5-4B, SFT, and GRPO all answer wrongly; each fuses four views
+around a table and asks from another image’s viewpoint. The scenes of S-MIND are decoded by its
+frozen readout from the spatial tokens of its own reasoning, z0 after the images and z𝑘at the run after
+its 𝑘-th viewpoint phrase; the baselines have no spatial tokens, so their z0 is read by the geometry
+probe of Section 3 from probe tokens placed after their images. Each scene is drawn as on the project
+page, in dots: every z0 from straight above, with image 1’s camera at the bottom facing up, its field
+of view shaded, and each camera as a wedge in its photo’s color that opens the way the camera faces;
+every z𝑘from behind and above its viewer. Where the photos overlap, each surface is drawn from
+one photo only, the viewer’s first, so that the copies of an object decoded from different photos do
+not hide one another. Three objects per question are outlined in the same color in the photos and in
+every scene, with masks from SAM 2 (Ravi et al., 2025) prompted with boxes we drew; each name
+stands beside the decoded points of the object’s patches. Under each scene is what we measure on
+it: the headings at which z0 places the later cameras (/: within 45◦of what the question’s setup
+implies or not), and for each z𝑘the median distance of its points from z0 re-expressed at the declared
+viewpoint, against z0 re-expressed at any other camera.
+2https://huggingface.co/datasets/Idavidrein/gpqa
+3https://github.com/LiveCodeBench/LiveCodeBench
+34
+In both cases, every run that S-MIND re-emits holds the scene re-expressed at its declared viewpoint,
+with the named objects around the viewer where the photos show them. The z0 of S-MIND places
+every camera as the setup implies, whereas the probe places at least one camera of every baseline
+wrongly; the baselines’ scenes pile the photos up in front of image 1, within its field of view, where
+objects from opposite sides of the room fall together.
+Question. Based on these four images (image
+1, 2, 3, and 4) showing the coffee table from
+different viewpoints (front, left, back, and
+right), with each camera aligned with room
+walls and partially capturing the
+surroundings: From the viewpoint presented
+in image 2, what is to the right of the coffee
+table?
+(A) Cream-colored cabinet
+(B) Table and white chair
+(C) Two blue leather armchairs
+(D) Blue bin
+Answers. S-MIND: D 
+Qwen3.5-4B: B 
++ SFT: B 
++ GRPO: B 
+S-MIND’s reasoning. From the viewpoint of image 3, z1 I see the blue bin beyond the coffee table near the table
+and white chair. From the viewpoint of image 2, z2 I face the two blue leather armchairs with the coffee table
+ahead, and the blue bin side of the room is to my right. So the blue bin is to the right of the coffee table.
+z0: all four views fused
+blue bin
+coffee table
+armchairs
+headings +89◦, −176◦, −88◦
+z1: from image 3’s viewpoint
+blue bin
+coffee table
+armchairs
+match error 0.16 (others ≥0.82)
+z2: from image 2’s viewpoint
+blue bin
+coffee table
+armchairs
+match error 0.23 (others ≥0.77)
+Qwen3.5-4B: z0 from the probe
+coffee table
+armchairs
+headings +12◦, −53◦, −73◦
++ SFT: z0 from the probe
+coffee table
+armchairs
+headings +75◦, −119◦, −87◦
++ GRPO: z0 from the probe
+coffee table
+armchairs
+headings +54◦, +50◦, −66◦
+Figure 16: Four views around a coffee table. The question asks what lies to the right of the coffee table as seen
+from image 2. Top: S-MIND’s z0 and its scenes at the runs it re-emits, decoded by its frozen readout; bottom: the
+z0 that the geometry probe reads from each baseline. Each z0 is seen from straight above, each camera as a wedge
+in its photo’s color opening the way it faces and image 1’s field of view shaded; each z𝑘from behind its viewer.
+35
+Question. Based on these four images (image
+1, 2, 3, and 4) showing the blue table from
+different viewpoints (front, left, back, and
+right), with each camera aligned with room
+walls and partially capturing the
+surroundings: From the viewpoint presented
+in image 3, what is to the right of the blue
+table?
+(A) Plain white wall
+(B) Sofa
+(C) Wall with an air conditioning unit
+(D) Seating bench
+Answers. S-MIND: D 
+Qwen3.5-4B: A 
++ SFT: B 
++ GRPO: B 
+S-MIND’s reasoning. From the viewpoint of image 4, z1 I see the seating bench beyond the blue table against the
+far wall. From the viewpoint of image 3, z2 I face the table with the wall with an air conditioning unit ahead, and
+the seating bench lies to my right toward the far side of the room. So the seating bench is to the right of the blue
+table.
+z0: all four views fused
+seating bench
+blue table
+air conditioner
+headings +86◦, +180◦, −78◦
+z1: from image 4’s viewpoint
+seating bench
+blue table
+air conditioner
+match error 0.18 (others ≥0.68)
+z2: from image 3’s viewpoint
+seating bench
+blue table
+air conditioner
+match error 0.20 (others ≥0.75)
+Qwen3.5-4B: z0 from the probe
+seating bench
+blue table
+headings +9◦, −45◦, −72◦
++ SFT: z0 from the probe
+seating bench
+blue table
+air conditioner
+headings +59◦, −89◦, −81◦
++ GRPO: z0 from the probe
+seating bench
+blue table
+headings +36◦, +26◦, −4◦
+Figure 17: Four views around a blue table. The question asks what lies to the right of the blue table as seen from
+image 3. Top: S-MIND’s z0 and its scenes at the runs it re-emits, decoded by its frozen readout; bottom: the z0
+that the geometry probe reads from each baseline. Each z0 is seen from straight above, each camera as a wedge in
+its photo’s color opening the way it faces and image 1’s field of view shaded; each z𝑘from behind its viewer.
+36

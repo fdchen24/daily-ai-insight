@@ -67,7 +67,30 @@
         "世界模型作为原生潜在动作模型",
         "超越点预测：时间序列与时空数据的概率预测综述"
       ]
+    },
+    "2026-11-26": {
+      "counts": {
+        "classic": 1,
+        "frontier": 10,
+        "survey": 1
+      },
+      "total": 12,
+      "generated_at": "2026-11-26T20:02:25.171975+00:00",
+      "titles": [
+        "LoRA：大语言模型的低秩适配",
+        "Mixture-of-Loops Transformer：以 KV 记忆连接循环的 Transformer 架构",
+        "张量网络遇上神经网络：TNNs 综述与展望",
+        "下一潜状态预测让 Transformer 学得紧凑世界模型",
+        "S-Mind：把多视角几何内化进 MLLM 的空间智能框架",
+        "DyLoMo-DiT：动态循环专家混合扩散 Transformer",
+        "PyRUA-Dex：用编码智能体学习灵巧双臂操作的程序化策略",
+        "什么使编码智能体的训练数据优质？基于 SWE-Gym 的系统研究",
+        "LoopRes：用循环残差释放预训练 LLM 的循环计算潜力",
+        "RUIBench：机器人使用接口如何塑造具身智能体的可靠性",
+        "可组合的 soft prompt 蒸馏：把 RL 专家变成可插拔模块的持续 post-training",
+        "把 VLM 训练成机器人操作基础模型的一次尝试"
+      ]
     }
   },
-  "updated_at": "2026-11-25T20:16:03.991583+00:00"
+  "updated_at": "2026-11-26T20:02:25.171975+00:00"
 }

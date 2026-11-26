@@ -1,0 +1,922 @@
+What Makes Good Data for Training Coding Agents?
+A Systematic Study on SWE-Gym
+Yikai Zhang 1 Mai Xu 2 Yunbei Zhang 3 Qirui Jin 4 Kenan Li 5 Yuwen Jia 6 Jinwei Yao 1 Xiangyu Zhang 1
+Jielun Tan 1 Jin Pan 1 Zijian Jin 7 Xiao Sun 1
+§ Code
+õ Dataset
+U Blog
+Abstract
+Reinforcement learning (RL) trains coding agents
+on software tasks whose hidden tests decide the
+reward, yet task collections check these tests only
+against the reference fix. We ask what makes a
+task good training data, focusing on the correct-
+ness of its reward labels. We audit SWE-Gym
+with two LLM families, and a suspected error
+counts only if execution reproduces it. We find
+that unsolved often means mislabelled: 74% of
+the tasks that a 9B base model never solves have
+a test that rejects correct fixes (a false negative),
+versus 20% of those it sometimes solves. We re-
+pair or remove such tasks, and the audited tasks
+that remain train better policies. At equal size
+and matched difficulty, models trained on them
+score 2.4 and 2.7 points higher on held-out tasks
+from SWE-bench Verified and SWE-bench Pro
+than models trained on the original tasks, whereas
+simply dropping the never-solved tasks shows no
+such gain. We further find that wrong patches that
+pass (false positives) make up about a quarter of
+all passing patches, and that new tests that catch a
+quarter of them do not change held-out scores de-
+tectably. A pass rate shows whether a task yields
+reward, not whether that reward is right, so the
+reward labels themselves must be checked. To
+this end, we release SWE-Gym-Verified with its
+1,087 audited tasks, every verdict with its exe-
+cuted evidence, our training sets, and the full audit
+pipeline.
+1AMD 2University of Michigan 3Tulane University 4Georgia
+Institute of Technology 5University College London 6University of
+California, Los Angeles 7New York University. Correspondence
+to: Yikai Zhang <yikzhang@amd.com>.
+Preprint. November 23, 2026.
+1. Introduction
+Reinforcement learning (RL) has become a standard way to
+train coding agents (Luo et al., 2025; Yang et al., 2026), and
+task collections such as SWE-Gym, R2E-Gym, SWE-smith,
+and SWE-rebench supply the training tasks (Pan et al., 2025;
+Jain et al., 2025; Yang et al., 2025; Badertdinov et al., 2025).
+In collections mined from GitHub, a task pairs a repository
+and an issue with the tests of the pull request that resolved
+it (Jimenez et al., 2024). The agent sees the issue but not the
+tests, and its patch is rewarded only if the tests pass. The
+hidden tests are therefore the reward labels. Yet a collection
+admits a task after checking only that the reference fix passes
+the tests and the original code fails them. This check shows
+that the reward is attainable. It does not show that every
+correct fix obtains it, or that only correct fixes do.
+Tests can mislabel a patch in two ways (Fig. 1a, b). A
+false negative (FN) is a correct fix that the tests reject, for
+example because a test calls a private helper that the issue
+never mentions. A false positive (FP) is a wrong patch that
+the tests accept, for example one that handles the reported
+case but breaks a nearby code path that no test covers. Both
+are well documented in evaluation benchmarks, where even
+human screening misses many of them (Chowdhury et al.,
+2024; OpenAI, 2026b; Wang et al., 2026c). Training data
+receives coarser checks. RL recipes drop the tasks that the
+model never solves (Yang et al., 2026) or the groups of
+samples without reward variance (Yu et al., 2025b), without
+looking at the tests. A pass rate tells whether a task yields
+reward, not whether that reward is right. LLM judges label
+each task’s issue and tests only as a whole (Oliva et al.,
+2025; Badertdinov et al., 2025; 2026). What is missing is
+an execution-backed measurement of both error types in a
+real training set and a controlled test of their effect on RL.
+We ask what makes a task good training data for a coding
+agent, and answer in two steps (Fig. 2). First, we audit
+SWE-Gym (Pan et al., 2025) one fail-to-pass assertion at a
+time. Claude Opus 5.5 and GPT-6.1 Sol judge each assertion
+against the issue. A flagged assertion counts as an error only
+if the tests reject an executed alternative fix that follows the
+issue, and a passing patch counts as a false positive only if
+1
+arXiv:2611.30207v1  [cs.CL]  23 Nov 2026
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+(c) Where the errors occur
+(a) False negative: a correct fix is rejected
+Issue
+Make collecting every stage before an operation optional.
+Hidden test
+mocker.patch("dvc.repo.Repo._collect_graph")
+dvc._skip_graph_checks = True
+assert not mock_collect_graph.called
+Reward
+for a correct fix that uses other internal names
+(b) False positive: a wrong patch is accepted
+Patch
++return [dict(zip(df.columns, map(..., t)))
++        for t in df.itertuples(...)]
+Counter-
+example
+df.to_dict('records', into=OrderedDict)
+gold fix: OrderedDict rows
+patch: plain dict rows
+Reward
+from the original tests, which never check the row type
+reward 0
+reward 1
+0
+1
+2
+3
+4
+5
+6
+7
+8
+base model solves k of 8 samples
+0
+20
+40
+60
+80
+share (%)
+74% of never-solved
+tasks are FN-flawed
+false positives: 19–36% of
+passing patches at every k
+Figure 1. Hidden tests mislabel patches in two ways, and the two error types occur in different places. (a) A false negative in
+iterative/dvc-3490: the test relies on a private method and a private flag that the issue never names. (b) A false positive in pandas-
+dev/pandas-50796: a base-model patch passes every original test but ignores into=, which a counterexample exposes. (c) Share of Orig
+tasks that are FN-flawed and share of passing patches on Clean tasks that are false positives, by the number k of eight base-model samples
+that pass. For false positives, k counts passes among the eight samples drawn for that measurement.
+an executed counterexample exposes it. Tasks with a false
+negative are repaired by adding the missing requirement
+to the issue, or removed. The 1,087 remaining tasks form
+SWE-Gym-Verified. Second, we train a 9B base model with
+GRPO on three sets of 512 tasks with matched difficulty:
+original tasks (Orig), audited tasks (Clean), and audited
+tasks with added tests against false positives (Clean+FP).
+A fourth set, Orig+Filter, applies a pass-rate filter to the
+original tasks, dropping the never-solved ones. We evaluate
+every run on held-out tasks from SWE-bench Verified and
+SWE-bench Pro (Deng et al., 2026). We organize the study
+around four research questions:
+• RQ1: Where do label errors occur? Unsolved often
+means mislabelled (§5.2). In Orig, 74% of the never-
+solved tasks have a test that rejects correct fixes, versus
+20% of the sometimes-solved ones. False positives make
+up about a quarter of all passing patches and are common
+at every difficulty level (Fig. 1c).
+• RQ2: Which label errors reach the training signal?
+Pass-rate filters keep the label errors that train the pol-
+icy (§5.3). GRPO learns from a task only if its sam-
+ples’ rewards differ. Never-solved flawed tasks almost
+never carry gradient, so dropping them changes little.
+Sometimes-solved flawed tasks contribute a fifth of the
+gradient-carrying groups, with or without the filter.
+• RQ3: Do audited tasks train better policies? Yes, and
+a pass-rate filter does not substitute for the audit (§5.4).
+At equal size and matched difficulty, Clean scores 2.4
+points above Orig on SWE-bench Verified and 2.7 on
+SWE-bench Pro over three seeds. Averaged over both
+benchmarks, Orig+Filter scores no higher than Orig.
+• RQ4: Does hardening against false positives change
+the policy? Not detectably (§5.5). New tests that catch a
+quarter of the false positives lower the training reward on
+the hardened tasks by 13 points, but re-grading Clean’s
+own patches with the same tests lowers its reward by
+about as much. Held-out pass@1 does not change de-
+tectably.
+These answers indicate that a good training task is one
+whose tests reward exactly the correct fixes. Neither pass
+rate nor training reward can certify this. Of the factors
+that make data good, we study only the correctness of the
+reward labels, and control for size and difficulty. We release
+SWE-Gym-Verified, every audit verdict with its evidence,
+the training sets, and the full audit pipeline (Appendix A).
+2. Related Work
+Label errors in software tasks.
+Label errors are perva-
+sive even in the test sets of standard benchmarks (Northcutt
+et al., 2021). In supervised learning, the examples that
+a model finds hard to learn are often the mislabelled
+ones (Swayamdipta et al., 2020). We find the same pat-
+tern in the reward labels of RL tasks. SWE-bench (Jimenez
+et al., 2024) accepts a task if the reference fix passes its tests
+and the original code fails them, and training collections
+apply the same check to thousands of tasks (Pan et al., 2025;
+Jain et al., 2025; Yang et al., 2025; Badertdinov et al., 2025).
+Agentic pipelines now build the environments across lan-
+guages and operating systems, but they still take tasks from
+issues and the tests of their pull requests and admit them by
+the same check (Li et al., 2026). This check cannot detect
+a test that rejects other correct fixes. Human screening has
+2
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+focused on evaluation sets and has proved hard to get right.
+SWE-bench Verified drops tasks whose tests may reject
+valid solutions (Chowdhury et al., 2024), yet a later audit
+finds such tests in most of the Verified tasks that models
+often fail (OpenAI, 2026b). SWE-bench Pro’s issues carry
+human-written requirements (Deng et al., 2026), but an audit
+estimates that about 30% of its tasks are broken (OpenAI,
+2026a). For training sets, PAIChecker’s annotators label
+SWE-Gym’s tasks for misalignment between the pull re-
+quest and the issue (Wang et al., 2026b). LLM judges (Oliva
+et al., 2025; Badertdinov et al., 2025; 2026; Li et al., 2026)
+label each task’s issue and tests as a whole. Such task-level
+labels can justify dropping a task, but they do not say which
+assertion is at fault. Tests that accept wrong programs are a
+known problem in code generation (Liu et al., 2023). Many
+patches accepted on SWE-bench are wrong (Aleithan et al.,
+2024; Yu et al., 2025a; Wang et al., 2026c), and strength-
+ened tests reject a fifth of the patches that pass SWE-bench
+Verified (Yu et al., 2026). Coding agents also exploit tests
+that conflict with the task statement (Zhong et al., 2026).
+Reward errors in RL.
+Analyses of noisy verifiers assume
+that errors are random or of one fixed type. Under random
+noise, whether GRPO learns depends on the gap between
+the verifier’s true- and false-positive rates (Rad et al., 2026).
+With systematic errors, false negatives mainly delay learn-
+ing, while false positives can stall or collapse it (Egashira
+et al., 2026). Recovering a verifier’s false negatives im-
+proves GRPO on math (Xu et al., 2026). Even random
+rewards raise the math accuracy of some base models (Shao
+et al., 2026), so a gain over the base model does not show
+that the labels are correct. We therefore compare training
+sets with each other. In competitive programming, where the
+statement fully specifies which outputs are correct, tests with
+fewer errors improve RL (Wang et al., 2025; He et al., 2026).
+In repository-level tasks, false negatives arise from what the
+issue leaves unsaid, so we repair the statement instead of the
+tests. SWE-rebench V2 leaves the comparison of filtered
+and unfiltered training to future work (Badertdinov et al.,
+2026).
+Closest studies.
+The Verification Horizon (Wang et al.,
+2026a) rates whole tasks with an agentic judge, finds that
+never-solved tasks are more often of low quality, and reports
+gains from filtering. The concurrent Arctic-SWE (Liu et al.,
+2026) curates three collections with executed counterfactual
+patches, rewrites underspecified issues, and reports gains
+from curation and from stronger tests, in single runs. Unlike
+both, we judge individual assertions and release the executed
+evidence behind every verdict, so that each verdict can be
+checked. We break the errors down by whether they carry
+gradient, which shows why a pass-rate filter keeps the errors
+that train the policy, and we compare sets of equal size and
+matched difficulty over three seeds.
+3. Hidden Tests as Reward Labels
+Tasks and rewards.
+A task τ consists of a repository
+snapshot, a statement s (the issue, plus any requirements
+we add), hidden tests, and a reference fix (the gold patch).
+A fix must make the fail-to-pass (F2P) tests pass without
+breaking the pass-to-pass (P2P) tests, so a patch p receives
+reward Rτ(p) = 1 if all tests pass after applying it, and 0
+otherwise. The agent sees s and the repository, but not the
+tests. A task’s difficulty is its pass count k, the number of
+passes among eight base-model samples: a task is never
+solved (k = 0), sometimes solved (1 ≤k ≤7), or always
+solved (k = 8). We call p correct if it resolves the problem
+as s describes it and breaks no existing behaviour. The tests
+can mislabel p in two ways. Appendix H lists our terms.
+False negatives.
+A false negative is a correct patch with
+reward 0. We trace false negatives to individual assertions
+of the F2P tests: an assert, a pytest.raises block,
+a call that must not fail, or an expected line of output. An
+assertion rejects correct patches when passing it requires
+information that neither s nor the repository provides, such
+as an interface that the statement does not specify, an exact
+string, an arbitrary design choice, or behaviour beyond the
+issue. A task with such an assertion is either repaired, if
+adding the missing requirement to s removes the error, or
+FN-flawed, if it does not. A test that requires the upstream
+wording of a message is a fair regression test but a wrong
+reward label for the task as stated, since it separates patches
+by information the agent never had. Details inferable from
+the repository, such as a naming convention, are not errors.
+False positives.
+A false positive is a wrong patch with
+reward 1. We count a passing patch p as a false positive
+only if two LLMs label it incorrect and an executed coun-
+terexample confirms the label. A counterexample is a script
+whose output is the same for the original code and the gold
+patch but differs for p, revealing a regression. This rule is
+conservative, because it misses incomplete fixes and wrong
+patches without a runnable counterexample.
+How label errors reach GRPO.
+GRPO computes each
+sample’s advantage relative to the other samples of the same
+task, so a group of samples carries gradient only if its
+rewards are not all equal. Label errors can therefore affect
+training in three ways. (i) If the tests reject every reasonable
+patch, all samples receive reward 0, and the task consumes
+compute without yielding gradient (Xu et al., 2026). (ii) If
+the tests reject only some reasonable patches, the reward
+separates correct patches by details that the statement never
+specifies, and the gradient favours the patches that happen
+to match them. (iii) A false positive rewards a wrong patch,
+which can stall or derail learning (Egashira et al., 2026).
+3
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+(a) Label audit: every suspected error is reproduced by execution
+FN audit
+FP audit
+(b) Outcome of the 2,265 audited tasks
+471 FN detection
+404 failed repair
+903 unchanged
+184
+1,176 removed
+1,087 released as SWE-Gym-Verified
+262 environment, screen
+39 flawed, always solved
+repaired
+(c) Training sets
+512 tasks each, matched difficulty
+Orig
+original statements and tests
+Clean
+sampled from SWE-Gym-Verified
+Clean+FP
+Clean + 493 new tests
+RQ3
+do audited tasks train better?
+RQ4
+does hardening help?
+Judge
+rate every F2P assertion
+Witness
+on an alternative fix
+Repair or remove
+add missing requirements
+Judge
+review every passing patch
+Counterexample
+compare gold fix and patch
+Harden
+from the counterexamples
+1
+Claude
+GPT
+2
+$ run tests
+3
+repair
+remove
+1
+Claude
+GPT
+2
+$ run script
+3
+493 tests
+143 tasks
+Figure 2. From SWE-Gym to SWE-Gym-Verified and three matched training sets. (a) The audit reproduces every suspected
+label error by execution: a flagged assertion must reject an executed witness fix, and a suspected wrong patch must fail an executed
+counterexample. (b) Outcomes of the 2,265 tasks that enter the audit, in pipeline order (two unfinished audits are omitted). (c) Orig is
+sampled from screened original tasks. Clean and Clean+FP are drawn from SWE-Gym-Verified with Orig’s difficulty quotas (§5.1).
+4. SWE-Gym-Verified: An Execution-Backed
+Audit of SWE-Gym
+We audit the 2,265 usable, de-duplicated tasks among SWE-
+Gym’s 2,438 with Claude Opus 5.5 and GPT-6.1 Sol (Fig. 2).
+Each model and its coding agent form a family, Claude or
+GPT (Appendix B). After screening each task’s environment
+and statement, the audit follows one principle: no error
+verdict rests on judgment alone. Every suspected error must
+be reproduced by execution. The tests must reject a concrete
+alternative fix, or a counterexample must expose a concrete
+patch. Whether the alternative is reasonable remains an
+LLM judgment, made by the family that wrote it and, when
+the two families disagree, by both.
+4.1. False Negatives: Judge Every Assertion, Then
+Execute a Witness
+Both families rate every F2P assertion against the statement.
+They see the test code, the gold patch, and the relevant
+repository code, but never a task’s pass rate or difficulty
+(Appendix B). An assertion is flagged if either family judges
+that it may reject a correct patch, and unflagged assertions
+are cleared without execution. For every flagged assertion,
+each family’s coding agent writes a witness, a patch that
+follows the statement but differs from the gold patch in the
+flagged detail. The agent then runs the tests on the witness
+in the task container. A task receives an FN verdict when
+one of its flagged assertions rejects a witness that the author-
+ing family considers a reasonable reading of the statement.
+On 374 tasks, in most cases because the families’ ratings
+disagree or are unsure, each family reviews the other’s wit-
+ness and the two debate, which clears 171 of them. Of the
+1,091 tasks with an FN verdict, 963 are confirmed by both
+families and 128 are contested, upheld by only one. In 810
+of the confirmed verdicts, witnesses from both families fail
+the same test (Table 5, Appendix C).
+Repair.
+We repair a task with an FN verdict rather than
+drop it, unless no change of the statement can repair it or the
+base model always solves it. As in SWE-bench Pro (Deng
+et al., 2026), a repair appends a Requirements block that
+states the missing requirement without revealing the solu-
+tion. The F2P tests stay unchanged (one task has a relaxed
+test instead). A repair is accepted only if Claude Opus 5.5
+and GPT-5.6 Sol, a second GPT model, find no leak (Ap-
+pendix B) and the repaired task passes the audit again (184
+of 588 attempts). Otherwise the task is removed as FN-
+flawed.
+4.2. False Positives: Confirm by Counterexample,
+Then Harden
+On Clean’s tasks, we collect the distinct passing patches
+among eight base-model samples. Both families label each
+patch without seeing the gold patch or the tests, and we
+count false positives as defined in §3. For Clean+FP, we
+harden the tests by turning the confirming counterexamples
+into new tests. A test is kept only if it passes with the gold
+patch and with every patch not labelled a false positive,
+which leaves 493 tests on 143 tasks (Appendix B).
+4.3. The Release and the Quality of Its Verdicts
+SWE-Gym-Verified contains 1,087 tasks, 184 of them with
+a repaired statement. Verified means that two LLM families
+rated every F2P assertion and that flagged assertions were
+tested by execution. Humans checked a sample of the ver-
+dicts, not every task as in SWE-bench Verified. Each task
+records its pass count on its final statement and tests: 138
+released tasks are never solved, 570 sometimes solved, and
+379 always solved.
+4
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+Table 1. Checks of the audit verdicts. Humans: two of the au-
+thors, blind to the verdicts (“3, 1”: one count per annotator). Open:
+not determined by the statement or the repository. PAIChecker-
+marked: its annotators mark tests or patches that go beyond the
+issue (Wang et al., 2026b).
+Check
+Items
+Result
+Claude and GPT flag the same tasks
+2,001
+κ = 0.80
+Both humans: flagged assertion open
+45
+33
+never / sometimes solved
+8 / 37
+8 / 25
+Each human: unflagged control open
+30
+3, 1
+Each human: false positive incorrect
+15
+10, 12
+FN verdict, PAIChecker-marked tasks
+726
+82%
+FN verdict, other tasks
+1,149
+37%
+FN in a random sample of cleared tasks
+79
+2
+Verdict quality.
+Table 1 summarizes four checks of the
+verdicts (Appendix C).
+5. Experiments
+5.1. Setup
+Training sets.
+We compare three matched training sets of
+512 tasks (Fig. 2c). Orig is a sample of screened SWE-Gym
+tasks with their original statements and tests, stratified by
+difficulty. Clean is drawn from SWE-Gym-Verified with
+the same random ranking of tasks as Orig and Orig’s quota
+of tasks in each difficulty range. Clean and Orig there-
+fore match in size and in base-model pass rate (49.8% and
+48.3%). They share 314 tasks. Clean+FP is Clean plus
+the new tests. Orig is a strong baseline. Its sampling pool
+already excludes unusable and duplicate tasks, pull requests
+labelled defective, and statements rated underspecified. In
+addition, Orig’s share of never-solved tasks is fixed at 15%,
+versus 54% in the pool. Only 42 Clean tasks have a repaired
+statement, so comparing Clean with Orig mainly tests the
+removal and replacement of flawed tasks (Appendix D). A
+fourth set, Orig+Filter, applies a pass-rate filter to Orig: it re-
+places Orig’s 77 never-solved tasks with further sometimes-
+solved tasks from the same pool. It is easier than the other
+sets (base-model pass rate 56.8%), and 97 of its tasks are
+FN-flawed.
+Training and evaluation.
+We train the base model,
+Qwen3.5-9B (Qwen Team, 2026), with GRPO (Shao et al.,
+2024) in the SWE-agent scaffold (Yang et al., 2024). Each
+run consists of 80 steps of 16 tasks with 8 samples each (2.5
+passes over a set), and every set uses the same three seeds
+(Table 7, Appendix E). We report pass@1, the fraction of at-
+tempts that resolve a task, on two held-out benchmarks that
+share no repository with the training tasks. Verified-397
+consists of the 397 scored tasks of SWE-bench Verified
+outside our 100-task development split, dev-100. For SWE-
+bench Pro, we use the public set of version 2 (Dan et al.,
+2026), which also differs from training in languages, scaf-
+fold, and budget. For each run we report the checkpoint
+with the best dev-100 pass@1. Results are means over three
+seeds, with differences in percentage points (pp).
+5.2. RQ1: Where Do Label Errors Occur?
+False negatives are common and concentrate on never-
+solved tasks.
+Of the 2,001 audited tasks whose assertions
+were judged, 1,091 (55%) receive an FN verdict. About
+half of these verdicts involve behaviour that the issue does
+not ask for. Interfaces that the statement does not specify,
+exact strings, and arbitrary design choices each appear in
+about a fifth (a verdict can have several causes). The er-
+rors are far from uniform across difficulty. In Orig, 74%
+of the never-solved tasks are FN-flawed, versus 20% of the
+sometimes-solved ones, and the share falls as the pass count
+rises (Fig. 1c). The contrast does not hinge on the LLM ver-
+dicts being exact. It holds with only the verdicts confirmed
+by both families (68% versus 13%) and under PAIChecker’s
+human labels of Orig’s pool (61% versus 21%; Wang et al.,
+2026b). It also holds when the tasks that we repair later
+count as flawed (83% versus 28%), with a larger sampling
+budget, and among tasks with the same number of F2P tests
+(Table 4, Appendix C). Repairs test the verdicts directly.
+Once the missing requirement is stated, the base model’s
+pass count on the repaired tasks rises by 2.1 out of eight on
+average, versus 0.0 on unchanged tasks that are re-measured.
+One appended sentence takes getmoto/moto-4846 from zero
+to seven of eight (Appendix G).
+False positives are common at every difficulty level.
+Of
+the 1,854 distinct patches that pass on Clean’s tasks, 26.1%
+are false positives under our conservative rule, and another
+37.3% are undetermined (not labelled correct by both fami-
+lies). At every pass count, false positives are 19–36% of the
+passing patches (Fig. 1c), and they are spread across tasks:
+224 of the 432 tasks with a passing patch have at least one.
+Takeaway 1: Unsolved often means mislabelled.
+A never-solved task is more likely than not to have a
+test that rejects correct fixes, so a zero pass rate cannot
+be read as hardness alone. False positives are common
+at every difficulty level.
+5.3. RQ2: Which Label Errors Reach
+the Training Signal?
+We trace Orig’s FN-flawed tasks through its three GRPO
+runs: 3,840 groups of eight samples, 2,365 of which carry
+gradient (Fig. 3, Appendix F).
+Never-solved flawed tasks are silent.
+The 57 never-
+solved FN-flawed tasks make up 11.1% of Orig’s groups
+5
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+(a) Never-solved tasks: reward during RL
+Orig tasks with flawed tests
+57 removed by the audit
+0.8%
+7 repaired later
+2.5%
+Tasks that the audit keeps
+8 in Orig
+13.0%
+77 in Clean
+7.6%
+(b) A never-solved filter on Orig’s FN-flawed tasks
+142 FN-flawed tasks
+40% removed
+their 482 gradient groups
+4% removed
+(c) One GRPO group on a flawed task: 8 samples
+Issue
+deprecate literal JSON input; gives no warning text
+Hidden test
+requires the upstream warning text verbatim
+2 samples reproduce the upstream sentence
+To read from a literal string, wrap it in a 'StringIO' object.
+4 pass every other test, with another wording
+To read from a literal string, wrap it in a StringIO object.
+To read from a string, wrap it in a StringIO object.
+To read from a string, use a 'StringIO' object instead.
+To read from a string, wrap the JSON string in 'StringIO'.
+2 samples fail other tests
+85 kept
+461 kept
+reward 1
+reward 0
+reward 0
+Figure 3. Never-solved flawed tasks are silent, but the flawed tasks that survive a pass-rate filter train the policy. (a) Training
+reward on never-solved tasks by audit outcome (mean over seeds). Tasks that the audit finds flawed stay unsolved, while tasks that it
+keeps receive reward. The five never-solved Orig tasks removed for other reasons are not shown. (b) Orig’s 142 FN-flawed tasks and their
+482 gradient-carrying GRPO groups, split by whether a filter that drops never-solved tasks keeps them or removes them (hatched). The
+flawed tasks that the filter keeps are 16.6% of Orig’s tasks and receive 19.5% of its gradient-carrying groups. (c) One GRPO group of
+pandas-dev/pandas-53409: the second sentence of the warning that each sample adds. Tinted words differ from the upstream sentence.
+but only 0.9% of its gradient-carrying groups. Training does
+not rescue them. Their training reward stays at 0.8%, while
+the never-solved tasks that the audit keeps do receive reward
+(7.6% in Clean, Fig. 3a). The FN raters never saw a pass
+rate, yet their verdicts separate the never-solved tasks that
+receive no reward in training from those that do. The gra-
+dient that such a task does carry can point the wrong way.
+In getmoto/moto-5137, the test also requires a second API
+that the issue never mentions. Of 40 training samples, 30 do
+what the issue asks but get no reward, and the only rewarded
+sample goes beyond the issue (Appendix G).
+Sometimes-solved flawed tasks train the policy.
+The
+85 sometimes-solved FN-flawed tasks make up 16.6% of
+Orig’s tasks and contribute 19.5% of its gradient-carrying
+groups (12.2% counting only verdicts confirmed by both
+families). To see what the flagged assertions do in these
+groups, we mask them in the tests and re-run the tests on the
+zero-reward samples of the two runs with test-level records.
+On the 20 of these tasks where every flagged assertion can
+be masked, 30% of the zero-reward samples then pass, and
+26 of the 49 gradient-carrying groups contain such a sample
+(Appendix F).
+A pass-rate filter removes only the silent errors.
+Drop-
+ping never-solved tasks (Yang et al., 2026) would discard
+40% of Orig’s FN-flawed tasks, which looks effective. But it
+removes none of the sometimes-solved ones, and so only 4%
+of the gradient-carrying groups on FN-flawed tasks (Fig. 3b).
+Filters on pass rate or on reward variance (Yu et al., 2025b)
+see whether a task is solved, not why it fails. Training on
+Orig+Filter confirms this. All-zero groups fall from 20.7%
+to 8.3%, yet sometimes-solved FN-flawed tasks still con-
+tribute 19.9% of the gradient-carrying groups.
+What the surviving errors reward.
+Fig. 3c shows one
+sometimes-solved FN-flawed task. The issue asks to dep-
+recate literal JSON input and gives no warning text, but
+the hidden test requires the upstream text verbatim. In one
+GRPO group, every sample adds the warning. The two that
+pass reproduce the upstream sentence, and four others fail
+only this test, so the GRPO advantage favours reproducing
+the upstream text over fixing the issue (Appendix G).
+Takeaway 2: Pass-rate filters keep the errors that
+train the policy.
+Dropping never-solved tasks removes label errors that
+carry almost no gradient. The flawed tasks that do carry
+gradient are found only by checking the labels.
+5.4. RQ3: Do Audited Tasks Train Better Policies?
+Audited data scores higher on both held-out benchmarks.
+Clean outperforms Orig by 2.4 pp on Verified-397 and by
+2.7 pp on SWE-bench Pro (Table 2, Fig. 4a). On Pro, Orig
+does not improve over the base model (−0.2 pp). The runs
+of Clean and Orig overlap on each benchmark, but aver-
+aged over the two benchmarks every Clean run gains more
+than every Orig run (Appendix F). On each benchmark,
+Clean −Orig remains at least 1.4 pp when any single run
+is left out. A pass-rate filter yields no such gain, although
+Orig+Filter’s tasks are easier. Orig+Filter is 1.1 pp above
+Orig on Verified-397 and 2.1 pp below it on Pro. On average
+over both, Orig+Filter gains +0.9 pp over the base model,
+versus +1.4 pp for Orig and +3.9 pp for Clean.
+6
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+(a) Held-out gain over the base model
+(b) dev-100 pass@1 during training
+−2
+0
+2
+4
+6
+8
+gain in pass@1 (pp)
++3.0
+Orig
++4.1
++Filter
++5.4
+Clean
++2.4 pp
+SWE-bench Verified
+397 held-out tasks
+−0.2
+Orig
+−2.4
++Filter
++2.5
+Clean
++2.7 pp
+SWE-bench Pro
+638 tasks
+base
+10
+20
+30
+40
+50
+60
+70
+80
+training step
+45
+50
+55
+pass@1 (%)
+Clean 53.0
+Orig+Filter 49.3
+Orig 48.0
+base model 46.8
+Figure 4. Audited data scores higher on both held-out benchmarks, whereas a pass-rate filter shows no such gain. (a) Gain in
+pass@1 over the base model at each run’s selected checkpoint, mean over seeds (+Filter: Orig+Filter). Brackets give Clean −Orig.
+(b) dev-100 pass@1 at every checkpoint (lines: mean over seeds; shading: ± one standard deviation for Orig and Clean; labels: mean at
+step 80).
+(a) Hardened tasks (143)
+(b) Other tasks (369)
+(c) Clean’s passes rejected
+0
+20
+40
+60
+80
+training step
+50
+60
+70
+80
+training reward (%)
+≈ −13 pp
+Clean
+Clean+FP
+Clean, re-graded
+0
+20
+40
+60
+80
+training step
+30
+40
+50
+60
+70
+training reward (%)
+same scale as (a)
+0
+20
+40
+60
+80
+training step
+0
+10
+20
+30
+40
+rejected by new tests (%)
+dashed: pooled, 18.9%
+seed 1
+seed 2
+Figure 5. Hardening lowers the reward where tests were added, about as much as re-grading predicts. (a) Training reward on the
+143 hardened tasks in 20-step bins (mean ± one standard deviation over seeds). Re-graded: Clean’s patches under the new tests (two
+seeds). (b) The same for the 369 other tasks. (c) Share of Clean’s passing patches on the hardened tasks that the new tests reject, by the
+ten-step bin in which a patch first appears.
+Table 2. Held-out pass@1 (%) at each run’s selected checkpoint:
+mean ± standard deviation over three seeds. Gain: each run’s gain
+over the base model, averaged over the two benchmarks (pp).
+Training set
+Verified-397
+SWE-bench Pro
+Gain
+Base model
+57.2
+53.8
+–
+Orig
+60.2 ± 2.1
+53.5 ± 2.1
++1.4 ± 0.9
+Orig+Filter
+61.3 ± 2.1
+51.4 ± 3.0
++0.9 ± 2.5
+Clean
+62.6 ± 1.1
+56.2 ± 1.3
++3.9 ± 1.2
+Clean+FP
+62.6 ± 1.0
+57.3 ± 3.7
++4.5 ± 2.2
+The gap emerges late in training.
+On dev-100, where
+every run is evaluated at the same steps, the sets stay close
+through step 40 (Fig. 4b). Orig peaks at step 30 (52.5%)
+and falls to 48.0% by step 80, while Clean ends at 53.0%
+and Orig+Filter at 49.3%. At step 80, every Clean run
+scores higher than every Orig run (Appendix F). Checkpoint
+selection therefore picks Orig at steps 20–30, near its peak,
+and Clean at 60–70 (Table 8).
+What explains the gain.
+The gain does not come from
+more gradient-carrying groups. Orig+Filter has the most
+(70.8%, versus 65.9% for Clean and 61.6% for Orig), yet it
+gains no more than Orig. Among the remaining differences
+(Table 6), two follow from the audit. First, a fifth of Orig’s
+and of Orig+Filter’s gradient-carrying groups fall on tasks
+whose tests reject correct fixes (§5.3). Second, Clean’s
+never-solved tasks are audited tasks with attainable reward.
+They contribute 6.9% of its gradient-carrying groups, versus
+2.6% for Orig’s never-solved tasks and none in Orig+Filter.
+Our runs cannot disentangle the two.
+Takeaway 3: Audited tasks train better policies.
+At equal size and matched difficulty, audited tasks score
+higher on both held-out benchmarks. A pass-rate filter
+shows no such gain, so in our runs it does not substitute
+for auditing the labels.
+7
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+5.5. RQ4: Does Hardening Against False Positives
+Change the Policy?
+We train on Clean+FP with Clean’s seeds and task order.
+The new tests target regressions, cover 143 of the 512 tasks,
+and catch 25% of the false positives in a sample of passing
+training patches (Appendix F).
+The policy barely adapts to the new tests.
+On the hard-
+ened tasks, Clean+FP’s training reward is about 13 pp below
+Clean’s throughout training, while the reward on other tasks
+stays close to Clean’s (Fig. 5a, b). A drop is expected even if
+the policy does not change, since the new tests reject patches
+that the old ones accept. We therefore re-grade the passing
+patches of the Clean runs, which never saw the new tests.
+Re-grading lowers Clean’s reward by about as much, so
+averaged over training the Clean+FP policy passes the new
+tests only 0.4 and 1.8 pp more often than the Clean policy
+would (two seeds). Nor do false positives fade. The new
+tests reject about 19% of Clean’s passing patches on the
+hardened tasks throughout training (Fig. 5c).
+Held-out pass@1 does not change detectably, and can-
+not show fewer false positives.
+Clean+FP −Clean is
+−0.1 pp on Verified-397 and +1.1 pp on Pro (Table 2), well
+within seed-to-seed variation, but three seeds cannot es-
+tablish that the two sets are equivalent. Held-out pass@1
+is graded by the benchmarks’ original tests, which accept
+false positives, so it cannot reveal whether the policy writes
+fewer wrong patches that pass. The concurrent Arctic-SWE
+reports a held-out gain from strengthening tests, in single
+runs on 4,889 tasks whose tests it had found too loose (Liu
+et al., 2026), whereas our new tests cover about a quarter of
+Clean+FP’s tasks.
+Takeaway 4: Training reward cannot rank datasets.
+New tests that catch a quarter of the false positives lower
+the training reward, but the Clean+FP policy passes
+them only 0.4 and 1.8 pp more often than the Clean
+policy would. Held-out pass@1 does not change de-
+tectably. Training reward is computed with the labels
+under study, so it cannot show which labels are better.
+6. Discussion: What Makes Good
+Training Data?
+For reward labels, the four answers yield three criteria. Ev-
+ery correct fix must obtain the reward. Most tasks that
+the base model never solves have a test that rejects correct
+fixes, so filters and curricula that read a zero pass rate as
+hardness act largely on label errors. The reward must vary
+for the right reason. The label errors that train the policy
+lie in tasks whose samples receive different rewards, so fil-
+ters on pass rate or on reward variance (Yu et al., 2025b)
+cannot detect them. Quality must be measured on held-
+out tasks, at matched size and difficulty. Orig+Filter attains
+the highest training reward of all sets (Table 6) but shows no
+held-out gain over Orig on average. Clean’s training reward
+exceeds Orig’s partly because flawed tests cap Orig’s re-
+ward. Clean+FP attains a lower training reward than Clean
+(Fig. 5a) but shows no detectable held-out difference.
+Two questions stand out. The first is how to remove false
+positives. Counterexample tests catch a quarter of them, and
+our 484 false positives with executed counterexamples can
+serve as a benchmark for verifiers that go beyond tests. The
+second is how cheap an audit can be. Without execution,
+Claude’s rating alone matches the final verdict on 91% of
+the tasks and GPT’s on 95% (Appendix C), but whether one
+such pass suffices for RL is untested.
+Limitations.
+We study one base model, scaffold, RL
+recipe, and task source, with three seeds per set and an
+80-step budget. A task’s difficulty is relative to this model
+and its sampling budget. Clean and Orig differ in the tasks
+that the audit removes, repairs, and replaces, so RQ3 mea-
+sures these effects jointly. The verdicts are LLM judgments
+backed by execution and checked on 105 items by two of
+the authors (Appendix C). FN detection covers only F2P
+assertions, and the counts of false positives cover only re-
+gressions. The held-out benchmarks can still contain label
+errors of both kinds (OpenAI, 2026b; Dan et al., 2026). We
+assume that these errors affect all training sets alike.
+7. Conclusion
+In RL for coding agents, the hidden tests label every patch,
+and in SWE-Gym these labels are often wrong. Of the
+tasks that we judged, 55% have a test that rejects correct
+fixes. The errors that a pass-rate filter keeps are the ones that
+carry gradient. Models trained on audited tasks score 2.4
+and 2.7 points higher on the two held-out benchmarks than
+models trained on the original tasks, whereas filtering the
+original tasks by pass rate shows no such gain. It remains
+open whether these findings hold at larger scale and for
+other models, whether repair outperforms removal, and how
+to remove false positives. SWE-Gym-Verified, its audit
+records, our training sets, and the audit pipeline support
+work on these questions.
+Impact Statement
+This work aims to make RL data for coding agents more
+reliable. Removing FN-flawed tasks avoids spending roll-
+outs on tasks whose tests reject correct patches, and hard-
+ening tests against false positives reduces the reward that
+a policy can obtain with patches that only look correct, a
+form of reward hacking. Releasing per-task audit records
+8
+What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym
+lets others check and contest individual verdicts instead of
+trusting aggregate filters. Like other work on training cod-
+ing agents, ours carries the usual dual-use concerns: more
+capable agents can write harmful code or automate work
+with economic consequences for developers. Our tasks
+come from public open-source repositories and their public
+issues, as in SWE-Gym, and we add no personal data. The
+audit relies on LLM judges whose biases we cannot fully
+characterize, so we release every verdict with its evidence
+and report contested cases neutrally (Appendix G).

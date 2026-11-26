@@ -1,0 +1,2759 @@
+{
+  "arxiv_announce_date": "2026-11-26",
+  "generated_at": "2026-11-26T20:02:25.171975+00:00",
+  "counts": {
+    "classic": 1,
+    "frontier": 10,
+    "survey": 1
+  },
+  "notes": [],
+  "items": [
+    {
+      "id": "arxiv-2106.09685",
+      "content_type": "classic",
+      "source": [
+        "classics"
+      ],
+      "arxiv_id": "2106.09685",
+      "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+      "title_zh": "LoRA：大语言模型的低秩适配",
+      "authors": [
+        "Edward J. Hu",
+        "Yelong Shen",
+        "Phillip Wallis"
+      ],
+      "abstract": "低秩增量替代全参数微调，使单卡适配大模型成为常规操作。",
+      "published_at": "2021-06-17",
+      "updated_at": null,
+      "arxiv_announce_date": "2026-11-26",
+      "channel": "classic",
+      "topics": [
+        "架构/训练/推理加速"
+      ],
+      "topics_source": "manual",
+      "primary_category": null,
+      "categories": [],
+      "category_tier": "high",
+      "doi": null,
+      "links": {
+        "paper": "https://arxiv.org/abs/2106.09685",
+        "pdf": "https://arxiv.org/pdf/2106.09685"
+      },
+      "signals": {
+        "citation_count": 38671,
+        "reference_count": 52,
+        "venue": "International Conference on Learning Representations",
+        "year": 2022,
+        "work_type": "conference-paper",
+        "fwci": 1262.93,
+        "citation_percentile": 1.0,
+        "citations_by_year": {
+          "2026": 17230,
+          "2025": 12792
+        },
+        "oa_topics": [
+          "Domain Adaptation and Few-Shot Learning",
+          "Topic Modeling"
+        ],
+        "institutions": [
+          "Microsoft (United States)"
+        ]
+      },
+      "year": 2021,
+      "quality": {
+        "dimensions": {
+          "research_value": 95.0,
+          "novelty": 88.0,
+          "technical_depth": 78.0,
+          "impact": 100.0,
+          "completeness": null
+        },
+        "tier": "A",
+        "l1_reason": "低秩适配仍是当前最常用的 PEFT 手段，读完直接理解参数高效微调的全部后续演进。",
+        "evidence_level": "fulltext",
+        "score": 90.1,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "「冻结权重 + 可合并的低秩增量」这一形式，至今仍是参数高效适配与多任务服务化部署的默认实现对象，后续大量工作直接以它作为基线或积木。",
+          "novelty": "把适配的增量本身约束为低秩分解 $BA$，并利用线性结构使增量能在推理前并回原权重，这既区别于 adapter 增加网络深度，也不同于 prefix tuning 占用序列长度。",
+          "technical_depth": "方法本体只是一个线性重参数化，但配套了 GPT-3 175B 量级的对照实验、按权重类型与 rank 的消融，以及基于 Grassmann 距离的子空间相似度与 $\\Delta W$ 投影分析。"
+        }
+      },
+      "recommendation_type": "classic",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 14549,
+        "tokens_out": 11509,
+        "cache_hit_tokens": 1280
+      },
+      "claims": [
+        {
+          "claim": "论文以 GPT-3 175B 为例说明独立部署多份微调模型不可行。",
+          "numbers": [
+            "175B"
+          ],
+          "source_span": "Abstract / Section 1",
+          "quote": "GPT-3 175B",
+          "verified": true
+        },
+        {
+          "claim": "在 GPT-3 175B 上可训练参数量可小到原模型的 0.01%。",
+          "numbers": [
+            "0.01%"
+          ],
+          "source_span": "Section 2",
+          "quote": "can be as small as 0.01% of",
+          "verified": true
+        },
+        {
+          "claim": "相比 GPT-3 175B 的 Adam 全量微调，LoRA 把可训练参数减少 10,000 倍、GPU 显存需求降低 3 倍。",
+          "numbers": [
+            "10,000",
+            "3"
+          ],
+          "source_span": "Abstract",
+          "quote": "by 10,000 times and the GPU memory requirement by 3 times",
+          "verified": true
+        },
+        {
+          "claim": "GPT-3 175B 上训练显存从 1.2TB 降到 350GB。",
+          "numbers": [
+            "1.2TB",
+            "350GB"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "from 1.2TB to 350GB",
+          "verified": true
+        },
+        {
+          "claim": "只适配 query、value 且 $r=4$ 时，checkpoint 从 350GB 缩小到 35MB。",
+          "numbers": [
+            "4",
+            "10,000",
+            "350GB",
+            "35MB"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "With r = 4 and only the query and value projection matrices being adapted, the checkpoint size is reduced by roughly 10,000× (from 350GB to 35MB)",
+          "verified": true
+        },
+        {
+          "claim": "GPT-3 175B 上 LoRA 训练比全量微调快 25%。",
+          "numbers": [
+            "25"
+          ],
+          "source_span": "Section 4.2",
+          "quote": "a 25% speedup during training on GPT-3 175B",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Microsoft Corporation"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "arxiv_version": "v2",
+      "content": {
+        "why_today": "提出 LoRA，冻结预训练权重、在注意力投影旁学习低秩矩阵 $BA$ 作为权重更新，把可训练参数压到原模型的 0.01%、训练显存降 3 倍；合并后无推理延迟，至今是 PEFT 的默认基线。",
+        "historical_context": "GPT-3 175B 之后，全量微调的代价从「不方便」变成部署难题：每个下游任务都要存一份完整 checkpoint。当时的替代路线是 adapter 层与 prefix/prompt tuning，前者增加深度，在 batch size 为 1 的在线场景带来额外延迟；后者占用序列长度，且训练不稳定。",
+        "problem_then": "在冻结大模型的前提下，用极少的任务专属参数达到与全量微调相当的模型质量，同时不增加推理延迟、不挤占输入序列长度，并让多任务存储与切换变得便宜。",
+        "contributions": [
+          {
+            "point": "低秩增量重参数化",
+            "detail": "把任务更新写成 $\\Delta W = BA$，$B\\in\\mathbb{R}^{d\\times r}$、$A\\in\\mathbb{R}^{r\\times k}$，$r \\ll \\min(d,k)$；$W_0$ 冻结，只训练 $A$、$B$。"
+          },
+          {
+            "point": "推理前合并，零额外延迟",
+            "detail": "部署时显式算出 $W_0 + BA$，前向路径与全量微调完全相同；切任务只需换一组 $BA$，而 adapter 必须串行增加深度。"
+          },
+          {
+            "point": "参数与存储的大幅压缩",
+            "detail": "GPT-3 175B 上训练显存从 1.2TB 降到 350GB，$r=4$ 且只适配 $W_q$、$W_v$ 时 checkpoint 从 350GB 缩到 35MB。"
+          }
+        ],
+        "core_idea": "对每个冻结的权重 $W_0\\in\\mathbb{R}^{d\\times k}$，把适配后的权重写成 $W_0 + BA$，其中 $r \\ll \\min(d,k)$。前向为 $h = W_0x + \\frac{\\alpha}{r}BAx$；$A$ 取高斯初始化、$B$ 取零，使训练起点 $\\Delta W = 0$，不扰动预训练模型，$\\alpha/r$ 的缩放让改变 $r$ 时无需重调学习率。Adam 的梯度与优化器状态只需为 $A$、$B$ 维护，显存与 checkpoint 因此大幅缩小；部署时把 $BA$ 加回 $W_0$，前向图与全量微调一致，故无额外延迟。实验只在注意力权重上施加，MLP 与 LayerNorm 保持冻结。",
+        "influence": "把「冻结共享底座 + 每任务一个小模块」变成可部署形态：同一底座服务多个下游任务，切换只换 $BA$。论文指出 LoRA 与 prefix-tuning 等方法正交、可组合，并放出 PyTorch 集成包；它对 $\\Delta W$ 低秩子空间的度量，也成为后续 rank 选择与子空间分析类工作的起点。",
+        "modern_reading": "今天 LoRA 的用法已超出原文设定：原文只在 GPT-3 上验证适配 $W_q$、$W_v$ 足够且 $r$ 取很小即可，实践中常施加到全部线性层并调大 rank。「零延迟」依赖推理前合并权重，代价是同一 batch 内难以混跑不同任务的 $BA$，这点原文已自认。本解读基于全文。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.34923",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.34923",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "Mixture-of-Loops Transformer",
+      "title_zh": "Mixture-of-Loops Transformer：以 KV 记忆连接循环的 Transformer 架构",
+      "authors": [
+        "Lianghui Zhu",
+        "Shijie Wang",
+        "Xinggang Wang",
+        "Jinze Bai",
+        "Bo Wang",
+        "Xiang Bai"
+      ],
+      "abstract": "Looped Transformers boost expressivity by reusing shared layers across loops, yet at the cost of efficiency. Pushing their expressivity-efficiency frontier requires rethinking the core mechanism connecting adjacent loops: What should be passed as a Transformer loops? We introduce Mixture-of-Loops Transformer (MoLT), whose Mixture-of-Loops Attention (MoLA) uses keys and values (KV) as memory for selective reuse across depths and loops. Under loop residual, MoLT-R retains the residual stream and reads local KV across loops for expressivity. Under loop KV, MoLT-KV instead restarts from embeddings and reads current-loop local KV with preceding-loop memory KV at earlier positions for efficiency. MoLT-KV eliminates same-position cross-loop dependence and, paired with loop forcing for parallel training, unlocks single-traversal Mixture-of-Loops (MoL) decoding beyond the training loop horizon. To balance efficiency and quality, we introduce U-shaped MoLT (U-MoLT), which separates memory construction from prediction readout and skips unused decoder traversals without changing predictions. In 400B-token pretraining, U-MoLT outperforms OLMo3 across 700M/1.5B dense and 3B MoE models, achieving 1.7x validation cross-entropy (CE) token efficiency at 700M while improving 3B MoE 10-domain perplexity by 0.75 and 10-task accuracy by 2.1 percentage points. In 100B-token continued pretraining of Qwen3.5-0.8B-Base, our U-MoLT adaptation lowers CE on all 11 domains over the matched baseline with 1.4x mean token efficiency. At inference, U-MoLT with MoL-Hybrid-2 matches non-looped OLMo3 latency at 996.6 vs. 1,000.6 ms on S-size (~113M) models. Code is available at https://github.com/hustvl/MoLT",
+      "published_at": "2026-11-25T18:58:53+00:00",
+      "updated_at": "2026-11-25T18:58:53+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": "Code is available at https://github.com/hustvl/MoLT",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.34923",
+        "pdf": "https://arxiv.org/pdf/2611.34923",
+        "code": "https://github.com/hustvl/MoLT",
+        "project": "https://github.com/hustvl/MoLT"
+      },
+      "signals": {
+        "hf_upvotes": 57,
+        "hf_num_comments": 1,
+        "hf_trending": true,
+        "citation_count": null,
+        "influential_citation_count": null,
+        "reference_count": null,
+        "venue": null,
+        "work_type": null,
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 44,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "架构/训练/推理加速",
+        "LLM 与推理"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 84.0,
+          "novelty": 80.0,
+          "technical_depth": 88.0,
+          "impact": 88.0,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "以KV作跨loop记忆重定义looped Transformer，400B token预训练在700M-3B全尺度超OLMo3，架构与证据都硬",
+        "evidence_level": "fulltext",
+        "score": 85.0,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "围绕 looped Transformer 的“表达力-效率”前沿重新定义循环间传什么，给出 700M/1.5B dense、3B MoE 三种规模 400B token 的同管线对照与 Qwen3.5-0.8B 续训迁移，对架构选型有直接参考价值。",
+          "novelty": "把跨层与跨循环 KV 复用统一进同一个注意力分布，并靠 embedding restart + strict-prefix memory KV 消除同位置跨循环依赖，从而得到训练循环视野之外的单次遍历 MoL 解码；思路与 MoDA/YOCO/LPT 有明显血缘，属于实质性重组而非换模块。",
+          "technical_depth": "32 组 S-size 消融逐一拆开 feedback 形式、depth source、放置密度与 decoder KV 投影方式，四套解码调度同时报告 CE 与 H20 实测时延，并有严格的稳定性命题与 traversal/KV 成本分解；扣分在于只训到 2 循环、稳定化只覆盖有限前缀。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 25147,
+        "tokens_out": 11758,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "400B token 预训练后，U-MoLT 在 700M dense、1.5B dense、3B MoE 上比 OLMo3 的 10 任务平均准确率分别高 2.5、1.4、2.1 个百分点",
+          "numbers": [
+            "2.5",
+            "1.4",
+            "2.1",
+            "700M",
+            "1.5B",
+            "3B"
+          ],
+          "source_span": "Section 4.3, 'Quality gains extend across model scales'",
+          "quote": "Relative to OLMo3, average accuracy increases by 2.5, 1.4, and 2.1 percentage points at 700M dense, 1.5B dense, and 3B MoE, respectively.",
+          "verified": true
+        },
+        {
+          "claim": "700M 规模上 U-MoLT 在 232.8B token 即追平 OLMo3 的 400B token 平均验证 CE，相当于 1.7 倍 token 效率",
+          "numbers": [
+            "232.8",
+            "1.7",
+            "400"
+          ],
+          "source_span": "Section 4.3, 'Faster convergence with fewer training tokens'",
+          "quote": "at 232.8B tokens (1.7× token efficiency)",
+          "verified": true
+        },
+        {
+          "claim": "Qwen3.5-0.8B-Base 续训 100B token 后，两种 U-MoLT 适配在全部 11 个验证域上的 CE 都低于匹配基线 Qwen3.5-CT",
+          "numbers": [
+            "100",
+            "3.5",
+            "0.8",
+            "11"
+          ],
+          "source_span": "Section 4.5, 'MoLT improves all 11 domains over the matched baseline'",
+          "quote": "Both adaptations achieve lower CE than Qwen3.5-CT in every validation domain after 100B tokens.",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Huazhong University of Science & Technology",
+        "ByteDance Seed",
+        "University of Toronto"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 Mixture-of-Loops Transformer（MoLT），用 MoLA 让每层跨深度与循环在同一 softmax 中选择性读取 KV 记忆；U-MoLT 进一步分离记忆构建与预测读出，支持单次遍历解码，在 400B token 预训练上稳定优于 OLMo3。",
+        "task": "循环 Transformer 复用共享层换取表达力，但标准做法把每个循环的输出整体压回同一条残差流送进下一循环：中间层表示无法被后续循环直接读取，跨层跨循环反复压缩造成信息稀释；同时每个 token 依赖自己上一循环的输出，推理必须串行跑满 N 个循环，解码遍历与持久 KV cache 随 N 线性增长。问题于是变成：循环之间到底该传什么。",
+        "findings": [
+          {
+            "point": "单一残差流承载全部跨循环计算",
+            "detail": "后续循环读不到前序循环的中间层表示，只能通过一次压缩后的残差间接继承，跨层跨循环反复压缩导致信息稀释与表示退化，作者因此把 KV 而非残差当作可选择性读取的记忆。"
+          },
+          {
+            "point": "同位置跨循环依赖迫使解码串行",
+            "detail": "每个 token 的输出依赖自己上一循环的状态，N 个循环只能顺序执行，解码遍历与持久 KV cache 都随 N 线性增长，循环带来的表达力增益被推理成本抵消。"
+          },
+          {
+            "point": "记忆构建与预测读出共用同一批深层状态",
+            "detail": "深层隐状态既要坍缩到 next-token 分布，又要作为 KV 为后续 token 保留干净上下文；在 MoLT-KV 中归一化循环输出同时供词表投影和下一循环 memory KV，这一冲突被放大。"
+          }
+        ],
+        "method": "统一接口是 MoLA：query 在同一个 softmax 里联合读取 sequence KV $S$ 与同位置 depth KV $D$，depth key 保留写者层的归一化与 RoPE，供后续读者直接复用。MoLT-R 保留残差流，把当前循环各层与前一循环全部层的 local KV 同位置读入，以可直读性换表达力。MoLT-KV 从 embedding 重启，序列侧只读前一循环输出逐层投影的 strict-prefix memory KV（$j<t$），同位置只由当前循环 local KV（含自身）提供，从而消除同位置跨循环依赖；loop forcing 并行监督每个循环，得单次遍历 MoL 解码，MoL-Hybrid 用少量循环并行 prefill 补回提示处理速度。U-MoLT 进一步拆分记忆与读出：$L_E$ 层 loop KV encoder 配 cross-only decoder，decoder 用独立 per-layer 投影读归一化 encoder 输出，可在中间循环与非末尾位置跳过 decoder 遍历而不改预测。$$\\mathcal{L}=\\sum_{r=1}^{N}\\alpha_r\\mathcal{L}_r,\\quad \\alpha_r=\\frac{w_r}{\\sum_{k=1}^{N}w_k}$$",
+        "results": "400B token 下 700M/1.5B dense 与 3B MoE 的 10 任务平均准确率各 +2.5/+1.4/+2.1 点；700M 以 1.7× token 效率追平 OLMo3；Qwen3.5-0.8B 续训 11 域 CE 全降。",
+        "limitations": "规模止于 1.5B dense / 3B MoE 与 400B token，更大模型上“加循环”和“加参数”如何取舍未验证；MoLT-R 仍需固定 N 循环解码与 N 倍 KV cache；hybrid 主干的 GDN 使 cross-only 假设不成立，encoder-only 记忆略逊于保留 decoder 递归。",
+        "reading_minutes": 4
+      }
+    },
+    {
+      "id": "arxiv-2302.09019",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2302.09019",
+      "arxiv_version": "v4",
+      "version_count": 4,
+      "title": "Tensor Networks Meet Neural Networks: A Survey and Future Perspectives",
+      "title_zh": "张量网络遇上神经网络：TNNs 综述与展望",
+      "authors": [
+        "Maolin Wang",
+        "Yu Pan",
+        "Zenglin Xu",
+        "Guangxi Li",
+        "Xiangli Yang",
+        "Danilo Mandic",
+        "Andrzej Cichocki"
+      ],
+      "abstract": "Tensor networks (TNs) and neural networks (NNs) are two fundamental data modeling approaches. TNs were introduced to solve the curse of dimensionality in large-scale tensors by converting an exponential number of dimensions to polynomial complexity. As a result, they have attracted significant attention in the fields of quantum physics and machine learning. Meanwhile, NNs have displayed exceptional performance in various applications, e.g., computer vision, natural language processing, and robotics research. Interestingly, although these two types of networks originate from different observations, they are inherently linked through the typical multilinearity structure underlying both TNs and NNs, thereby motivating a significant number of developments regarding combinations of TNs and NNs. In this paper, we refer to these combinations as tensorial neural networks~(TNNs) and present an introduction to TNNs from both data processing and model architecture perspectives. From the data perspective, we explore the capabilities of TNNs in multi-source fusion, multimodal pooling, data compression, multi-task training, and quantum data processing. From the model perspective, we examine TNNs' integration with various architectures, including Convolutional Neural Networks, Recurrent Neural Networks, Graph Neural Networks, Transformers, Large Language Models, and Quantum Neural Networks. Furthermore, this survey also explores methods for improving TNNs, examines flexible toolboxes for implementing TNNs, and documents TNN development while highlighting potential future directions. To the best of our knowledge, this is the first comprehensive survey that bridges the connections among NNs and TNs. We provide a curated list of TNNs at https://github.com/tnbar/awesome-tensorial-neural-networks.",
+      "published_at": "2023-01-22T17:35:56+00:00",
+      "updated_at": "2026-11-25T04:23:56+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": "10.1109/JPROC.2026.3756230",
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2302.09019",
+        "pdf": "https://arxiv.org/pdf/2302.09019",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 97,
+        "influential_citation_count": null,
+        "reference_count": 235,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": {
+          "2026": 33,
+          "2025": 32
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null,
+        "institutions": [
+          "City University of Hong Kong"
+        ]
+      },
+      "channel": "revision",
+      "topics": [
+        "架构/训练/推理加速",
+        "图像/视频/多模态生成"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 87.0,
+          "novelty": 76.0,
+          "technical_depth": 86.0,
+          "impact": 100.0,
+          "completeness": 70.0
+        },
+        "tier": "A",
+        "l1_reason": "从数据与模型架构两视角构建TNNs分类，覆盖压缩/融合/量子数据，指出未来方向",
+        "evidence_level": "fulltext",
+        "score": 84.3,
+        "rank_in_pool": 1,
+        "l2_reasons": {
+          "research_value": "把 TN 与 NN 的交叉整理成数据处理与模型架构两条主轴，并附 Dense/Tucker-2/CP 的同预算解析与实测对照，回答的是“该不该张量化、张量化在哪一层”的全局问题。",
+          "novelty": "以 tensorization 形状、rank、拓扑、收缩代价与部署约束如何耦合为组织问题，提出四条跨架构结论与工具箱三级分类，而非按应用领域罗列文献。",
+          "technical_depth": "逐格式给出 CP/Tucker/BTT/TT-MPO/TR/HT/PEPS 的秩与收缩性质，把 PEPS 精确收缩为 #P-hard、CP 的秩一约束与实测 MAC/显存差异对到机制层面。"
+        }
+      },
+      "recommendation_type": "survey",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 29407,
+        "tokens_out": 6921,
+        "cache_hit_tokens": 1280
+      },
+      "claims": [
+        {
+          "claim": "作者引述的解析 3×3 卷积例子中，Tucker-2 的 rank 由 32 提到 128，压缩比从 23.04× 降到 2.77×。",
+          "numbers": [
+            "3",
+            "32",
+            "128",
+            "23.04",
+            "2.77"
+          ],
+          "source_span": "Section 4.1 / Table 4",
+          "quote": "changes the compression ratio from 23.04× to 2.77×",
+          "verified": true
+        },
+        {
+          "claim": "作者自建的 CIFAR-10 对照实验中，CP 在 rank 64 下只保住 74.56% 的测试精度。",
+          "numbers": [
+            "10",
+            "64",
+            "74.56"
+          ],
+          "source_span": "Section 4.1 / Table 5",
+          "quote": "CP with rank 64 retains 74.56% accuracy",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Harbin Institute of Technology Shenzhen",
+        "Fudan University",
+        "Shanghai Academy of AI for Science"
+      ],
+      "evidence_level": "fulltext",
+      "material_note": "全文超长已截断",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "梳理 TNNs 这一 TN 与 NN 交叉方向，按数据处理与模型架构两条轴把它们分成压缩、融合、注意力张量化、图与量子几类，指出真正的取舍是表达力与可收缩性，而非选哪种分解格式。",
+        "scope": "范围限于张量网络与神经网络的结合：先给 CP、Tucker、BTT、TT/MPO、TR、HT、PEPS 的记号与收缩性质，再从数据处理（多源融合、多模态池化、压缩、多任务、量子态表示）与模型架构（CNN、RNN、Transformer、GNN、QNN、LLM/MoE）两侧梳理，并覆盖训练稳定性、rank 搜索、硬件加速、工具箱与可解释性。不展开纯量子多体算法，也不细讲剪枝、量化、蒸馏等非张量化压缩。",
+        "evolution": "CP/Tucker 出身信号处理，MPS/TT 出身量子物理，两条脉络因多线性结构合流。数据处理侧，TFL 用外积显式建模模态交互，参数随模态数指数膨胀，LMF 改用 BTT 层把复杂度换到与隐层维度线性相关，PTP/HPFN 再用多项式张量补回被截断的高阶交互。模型侧从压缩单个卷积核与循环权重，扩展到分解注意力与 FFN 权重、压 KV Cache、做 LLM 的 PEFT 与 MoE 跨专家共享。作者的判断是重心已从“把某种分解塞进某个网络”转向构造、搜索、收缩与调度的算法层。",
+        "approaches": [
+          {
+            "point": "分解即压缩：稠密权重换成低秩核",
+            "detail": "CP/Tucker/BTT/TT/TR 直接替换卷积通道、RNN 的 $W$ 与 $[W,U]$、Transformer 的 $W_Q,W_K,W_V,W_O$；换来参数与显存下降，代价是 rank 需人工设定、精度随压缩比下滑。"
+          },
+          {
+            "point": "多线性融合层：显式建模跨模态交互",
+            "detail": "TFL 用外积、LMF 用 BTT、PTP 用 CP/TR 层处理多项式特征张量，MCB/MLB/MUTAN 分别对应 Tucker、CP 与低秩 Tucker 双线性池化；换掉拼接式融合的表达力不足，代价是张量尺寸随模态数增长。"
+          },
+          {
+            "point": "张量化注意力与长上下文",
+            "detail": "MPO-Transformer、Hypoformer 的 TT 加稠密混合、Tucker-Bert 的整模型拼接分解、Tuformer 把 MHSA 推广为 Tucker 形式；换注意力权重与 KV Cache 的显存，代价是纯低秩掉点，必须保留稠密分支。"
+          },
+          {
+            "point": "拓扑即归纳偏置：把结构本身当先验",
+            "detail": "TGNN 用对称 CP 聚合建模置换不变的多线性邻居交互，RTGNN 用 Tucker 抓多视图相关性，多任务用 PEPS 式软共享替代硬共享；换鲁棒性与高阶相关，代价是 loopy 结构精确收缩不可行，只能近似。"
+          },
+          {
+            "point": "训练与结构搜索：把 rank 当架构超参",
+            "detail": "Yu 初始化按张量卷积超图推初始方差、混合精度缓解高阶收缩的数值不稳，PSTRN/贝叶斯/RL 搜索 rank，TIE/ETTE 做收缩调度与 kernel 协同设计；换可用性，代价是搜索与调参开销。"
+          }
+        ],
+        "key_differences": "关键不在分解家族，而在 tensorization 形状、rank 与拓扑三者的耦合：TT/HT 这类链树结构可精确收缩，但远距离交互路径少；PEPS 一类 loopy 结构表达力强，精确收缩却一般不可行；CP 压缩最激进但秩一约束伤精度，Tucker/BTT 居中。作者引述的解析卷积例子里，rank 从 32 调到 128，压缩比就从 23.04× 掉到 2.77×，可见单一压缩比不可比。",
+        "bottlenecks": "省算力不等于省时间：重排与收缩调度使访存主导，作者的同预算对照中 CP rank 64 只有 74.56% 精度、训练时间反而未缩短；rank 选择仍 NP-hard，并与 tensorization 形状、模式顺序耦合。",
+        "future_directions": "作者主张把 tensorization、拓扑、rank 与收缩顺序联合优化，并在固定收缩预算下报告峰值显存与近似收缩误差。我判断短期收益更可能来自硬件感知的 rank 分配与 kernel 融合，而非新分解格式。",
+        "reading_minutes": 4
+      }
+    },
+    {
+      "id": "arxiv-2511.05963",
+      "content_type": "paper",
+      "source": [
+        "arxiv"
+      ],
+      "arxiv_id": "2511.05963",
+      "arxiv_version": "v7",
+      "version_count": 7,
+      "title": "Next-Latent Prediction Transformers Learn Compact World Models",
+      "title_zh": "下一潜状态预测让 Transformer 学得紧凑世界模型",
+      "authors": [
+        "Jayden Teoh",
+        "Manan Tomar",
+        "Kwangjun Ahn",
+        "Edward S. Hu",
+        "Tim Pearce",
+        "Pratyusha Sharma",
+        "Akshay Krishnamurthy",
+        "Riashat Islam",
+        "Alex Lamb",
+        "John Langford"
+      ],
+      "abstract": "Transformers replace recurrence with a memory that grows with sequence length and self-attention that enables ad-hoc lookups over past tokens. Consequently, they lack an inherent incentive to compress history into compact latent states with consistent transition rules. This often leads to learning solutions that generalize poorly. We introduce Next-Latent Prediction (NextLat), which extends standard next-token training with self-supervised predictions in the latent space. Specifically, NextLat trains a transformer to learn latent representations that are predictive of its next latent state given the next token. Theoretically, we show that these latents converge towards belief states, compressed information about the history necessary to predict the future. This simple auxiliary objective injects a recurrent inductive bias into transformers while leaving their architecture, parallel training efficiency, and inference unchanged. NextLat effectively encourages transformers to form compact internal world models with coherent belief states and transition dynamics -- crucial properties not guaranteed by standard next-token prediction alone. Empirically, across benchmarks in world modeling, reasoning, planning, and language modeling, NextLat demonstrates significant gains over standard next-token prediction and other baselines in downstream accuracy, representation compression, and lookahead planning. Furthermore, NextLat enables variable-length self-speculative decoding, accelerating inference by up to 3.3x in language modeling. NextLat offers a simple yet effective paradigm for learning compact, predictive representations in transformers that generalize better. Our code is available at https://github.com/JaydenTeoh/NextLat.",
+      "published_at": "2025-11-08T10:41:26+00:00",
+      "updated_at": "2026-11-25T02:10:53+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": "Accepted to NeurIPS 2026",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2511.05963",
+        "pdf": "https://arxiv.org/pdf/2511.05963",
+        "code": null,
+        "project": null
+      },
+      "signals": {
+        "hf_upvotes": 0,
+        "hf_num_comments": 0,
+        "hf_trending": false,
+        "citation_count": 43,
+        "influential_citation_count": null,
+        "reference_count": 85,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": {
+          "2026": 42,
+          "2025": 1
+        },
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null,
+        "institutions": [
+          "Microsoft (United States)"
+        ]
+      },
+      "channel": "revision",
+      "topics": [
+        "架构/训练/推理加速",
+        "Agent 与工具使用"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 84.0,
+          "novelty": 76.0,
+          "technical_depth": 79.0,
+          "impact": 96.2,
+          "completeness": 60.0
+        },
+        "tier": "A",
+        "l1_reason": "用 latent 预测辅助目标给 Transformer 注入循环归纳偏置，理论证其收敛到 belief state，架构与并行训练不变，思路清晰可迁移",
+        "evidence_level": "fulltext",
+        "score": 80.4,
+        "rank_in_pool": 2,
+        "l2_reasons": {
+          "research_value": "把 belief state 这一有形式化定义的目标做成可训练的辅助损失，并在世界建模、推理、规划、语言建模四个方向给出证据，对「Transformer 内部世界模型是否自洽」这一争议给出可操作的改进路径。",
+          "novelty": "相对 JTP/BST 的关键差别是把预测搬到 final hidden state 上、做成 Markovian 且以 token 为条件的转移预测，从而不受 horizon 覆盖可观测量的限制；变长自推测解码是这条目标的直接副产品，但机制本身借鉴自 self-predictive RL。",
+          "technical_depth": "给出 belief state 收敛的定理与证明思路，实验覆盖四个域并与 JTP/MTP 对齐 horizon、报告训练成本；但语言建模增益不一致，$p_\\psi$ 结构与损失权重的设计空间未系统研究，作者自陈部分结论依赖小规模消融。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 17442,
+        "tokens_out": 9555,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "在 Manhattan 出租车轨迹世界建模中，NextLat 的 valid trajectories 为 98.7%",
+          "numbers": [
+            "98.7"
+          ],
+          "source_span": "Table 1, NextLat 行, Valid Trajectories 列",
+          "quote": "98.7%",
+          "verified": true
+        },
+        {
+          "claim": "GPT 在 valid trajectories 上为 97.0%",
+          "numbers": [
+            "97.0"
+          ],
+          "source_span": "Table 1, GPT 行, Valid Trajectories 列",
+          "quote": "97.0%",
+          "verified": true
+        },
+        {
+          "claim": "NextLat 的序列压缩为 0.71，是各方法中最高",
+          "numbers": [
+            "0.71"
+          ],
+          "source_span": "Section 4.1 Results",
+          "quote": "NextLat achieves the highest sequence compression of 0.71",
+          "verified": true
+        },
+        {
+          "claim": "NextLat 的有效潜秩为 52.7，比 GPT 小 3 倍以上",
+          "numbers": [
+            "52.7"
+          ],
+          "source_span": "Section 4.1 Results",
+          "quote": "NextLat has the lowest effective latent rank of 52.7",
+          "verified": true
+        },
+        {
+          "claim": "在 Countdown 上 NextLat 最高准确率为 58.7%",
+          "numbers": [
+            "58.7"
+          ],
+          "source_span": "Table 2, NextLat 行",
+          "quote": "58.7",
+          "verified": true
+        },
+        {
+          "claim": "GPT 在 Countdown 上准确率为 33.1%",
+          "numbers": [
+            "33.1"
+          ],
+          "source_span": "Table 2, GPT 行",
+          "quote": "33.1",
+          "verified": true
+        },
+        {
+          "claim": "语言建模实验用 1.3B 参数模型在 100B FineWeb-Edu token 上预训练",
+          "numbers": [
+            "1.3",
+            "100"
+          ],
+          "source_span": "Section 4.4 Setup",
+          "quote": "we pretrain 1.3B-parameter models on 100B tokens from the FineWeb-Edu dataset",
+          "verified": true
+        },
+        {
+          "claim": "NextLat (d=2) 下游平均准确率 59.21%，GPT 为 58.82%",
+          "numbers": [
+            "2",
+            "59.21",
+            "58.82"
+          ],
+          "source_span": "Section 4.4 Results, 对应 Table 3",
+          "quote": "NextLat (d = 2) is the only multi-step prediction objective that meaningfully improves average accuracy over GPT (59.21 vs. 58.82)",
+          "verified": true
+        },
+        {
+          "claim": "自推测解码最高带来 3.3 倍推理加速",
+          "numbers": [
+            "3.3"
+          ],
+          "source_span": "Abstract / Figure 8",
+          "quote": "accelerating inference by up to 3.3x",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Microsoft Research"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 NextLat，在 next-token 训练之外加入潜空间自监督预测：由当前隐状态与下一 token 预测下一隐状态，为 Transformer 注入循环归纳偏置而不改架构与推理，在世界建模、推理与规划任务上提升准确率与表示压缩，并支持变长自推测解码。",
+        "task": "Transformer 用随序列长度增长的内存与 self-attention 替代循环，可以直接检索过去 token，因此没有把历史压缩成紧凑 latent state 的内在压力。结果是模型在训练分布上 next-token 准确率接近满分，学到的内部世界模型却不自洽：在 Manhattan 出租车轨迹上重建出的街道方向错误、出现不可能的天桥。已有的多 token 预测（MTP、JTP）与 belief state 方法（BST）试图缓解 next-token 目标的短视，但监督仍停留在 token 空间或代价高昂。",
+        "findings": [
+          {
+            "point": "self-attention 取消了压缩历史的压力",
+            "detail": "过去 token 可直接检索，最小化 next-token 损失并不要求 $h_t$ 成为历史的充分统计量，因此标准自回归训练不保证 belief state，作者以此作为定理的反面参照。"
+          },
+          {
+            "point": "token 空间监督既稀疏又短视",
+            "detail": "one-hot 目标只锚定紧随其后的 token，梯度信号窄；MTP/JTP 受固定 horizon 约束且仍在 token 空间，容易利用局部 n-gram 规律，在 Path-Star 上表现为 Clever Hans 式捷径。"
+          },
+          {
+            "point": "已有 belief state 方法代价高或条件苛刻",
+            "detail": "BST 需对所有前缀–后缀对累积梯度并训练两个编码器，训练显著更慢；JTP 只在预测 horizon 覆盖可观测量时才保证 belief state，长上下文下不现实。"
+          }
+        ],
+        "method": "核心是把「预测未来」从 token 空间挪到 latent 空间：作者先证明，若 next-token 一致性与 transition 一致性同时成立，$h_t$ 必为 belief state，于是把后者做成可训练目标。实现上在交叉熵外加两项：轻量 MLP $p_\\psi$ 由 $(h_t, X_{t+1})$ 回归 $\\hat{h}_{t+1}$，对 $d$ 步 teacher-forcing rollout 的每个中间状态取 Smooth L1，目标端加 stop-gradient 抑制表示坍缩；再用冻结输出头做 KL，对齐预测与真实隐状态的 token 分布。总损失 $\\mathcal{L}=\\mathcal{L}_{\\text{next-token}}+\\lambda_{\\text{next-h}}\\mathcal{L}_{\\text{next-h}}+\\lambda_{\\text{KL}}\\mathcal{L}_{\\text{KL}}$。$p_\\psi$ 只在训练期使用，架构与推理不变；因其可递归复合，推理时能越过训练 horizon 变长起草做自推测解码。",
+        "results": "Manhattan 轨迹上 valid trajectories 98.7%（GPT 97.0%）、压缩 0.71、有效潜秩 52.7（远小于 GPT）；Countdown 58.7% 对 GPT 33.1%；1.3B 模型下游均值 59.21% 对 58.82%，作者承认增益有限；自推测解码最高 3.3 倍加速。",
+        "limitations": "潜动态模型只用 MLP，损失权重与 stop-gradient 靠小规模消融确定；语言建模增益不一致且幅度小；训练中 Smooth L1 损失出现上升、对优化器敏感；草稿长度实际仍固定，未实现自适应。",
+        "reading_minutes": 4
+      }
+    },
+    {
+      "id": "arxiv-2611.28649",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.28649",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "S-Mind: Internalizing Multi-View Geometry for Spatial Intelligence",
+      "title_zh": "S-Mind：把多视角几何内化进 MLLM 的空间智能框架",
+      "authors": [
+        "Muxin Fu",
+        "Peike Yu",
+        "Guibin Zhang",
+        "Wenrui Zhou",
+        "Runze Liu",
+        "Lang Feng",
+        "Fuchao Yang",
+        "Feng Chen",
+        "Yixuan Li",
+        "Mengao Zhang",
+        "Shiying Zhang",
+        "Wen Shen",
+        "Ling Pan",
+        "Shuicheng Yan",
+        "Bo An"
+      ],
+      "abstract": "Spatial intelligence, the ability to reason about 3D space from visual observations, becomes essential as multimodal large language models (MLLMs) move into the physical world. Beyond perceiving each view, it rests on two cornerstones of human cognition: fusing multiple views into one coherent 3D scene and mentally transforming that scene to new viewpoints as reasoning unfolds. Yet our spatial probes reveal that MLLMs largely lack both capabilities, even after spatial fine-tuning. We therefore present S-Mind, which internalizes multi-view geometry within the MLLM through a compact set of spatial tokens. It supervises these tokens to hold the fused 3D scene and re-emits them to re-express this scene from every viewpoint the reasoning adopts. Across four spatial benchmarks, S-Mind improves its Qwen3.5 backbones by up to 22.26 points and surpasses frontier general models such as GPT-6-Astra (+0.45), Kimi-K3.1-Pro (+1.97), and GLM-5.3-Flash (+7.80) in average accuracy. Moreover, the same probes confirm that it acquires both capabilities, reaching fusion and transformation accuracies of 65.11% and 82.17%, against at most 16.02% and 37.28% for the baselines. At inference, S-Mind also runs about 100x faster than a tool-based agent on the same backbone. Instilled through these spatial tokens during training, spatial capability becomes intrinsic to the backbone and persists even when the tokens are withheld, offering a promising path toward spatial intelligence in MLLMs.",
+      "published_at": "2026-11-21T08:22:21+00:00",
+      "updated_at": "2026-11-21T08:22:21+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.28649",
+        "pdf": "https://arxiv.org/pdf/2611.28649",
+        "code": "https://github.com/KANABOON1/S-Mind",
+        "project": "https://kanaboon1.github.io/S-Mind/"
+      },
+      "signals": {
+        "hf_upvotes": 41,
+        "hf_num_comments": 3,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 13,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "Agent 与工具使用",
+        "LLM 与推理"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 86.0,
+          "novelty": 76.0,
+          "technical_depth": 88.0,
+          "impact": 81.0,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "用少量spatial token内化多视角几何，融合65%、视角变换82%远超基线，四benchmark平均超GPT-6-Astra",
+        "evidence_level": "fulltext",
+        "score": 83.5,
+        "rank_in_pool": 3,
+        "l2_reasons": {
+          "research_value": "把“空间能力是否真的被内化”从准确率口号变成可用探针测量的命题，并给出免工具、可检查的轻量方案，对 MLLM 空间智能与具身方向都有直接推动。",
+          "novelty": "spatial token 加几何监督并非首创（3DThinker、GPD 同类），实质新意在于推理每换视角就重发 token，并用 z0 自身场景的刚体变换做监督，把“融合”与“变换”解耦。",
+          "technical_depth": "探针带 shuffle/zero/gray 三类对照、逐层重拟合定位融合发生在哪层、token 状态替换与扣留的因果干预、组件与 λ 消融、0.8B–27B 规模对照，证据链完整；不足在数据全来自 ScanNet/MindCube 系、单 seed、只测多选题。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 37124,
+        "tokens_out": 13696,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "9B 版四基准平均准确率 74.03%，较 GRPO 高 6.76 点",
+          "numbers": [
+            "74.03",
+            "6.76"
+          ],
+          "source_span": "Section 5.2",
+          "quote": "S-MIND reaches 74.03%, 6.76 points above GRPO and 11.76 above SFT",
+          "verified": true
+        },
+        {
+          "claim": "4B 版平均 72.83%，高于同设定最强的 ProSR 7.65 点",
+          "numbers": [
+            "72.83",
+            "7.65"
+          ],
+          "source_span": "Section 5.2",
+          "quote": "reaches an average accuracy of 72.83%, surpassing the strongest method trained in our setting, ProSR, by 7.65 points",
+          "verified": true
+        },
+        {
+          "claim": "9B 版与 GPT-6-Astra（73.58）、Qwen3.8-Flash（73.98）、Claude-Opus-5.5（74.15）持平",
+          "numbers": [
+            "73.58",
+            "73.98",
+            "74.15"
+          ],
+          "source_span": "Section 5.2",
+          "quote": "at 9B, S-MIND matches GPT-6-Astra, Qwen3.8-Flash, and Claude-Opus-5.5 (73.58%, 73.98%, and 74.15%)",
+          "verified": true
+        },
+        {
+          "claim": "geometry probe 在 Qwen3.5-4B 上恢复 60.62% 的单视角点，跨视角融合点仅 11.23%",
+          "numbers": [
+            "60.62",
+            "11.23"
+          ],
+          "source_span": "Section 3, Finding 1",
+          "quote": "it recovers 60.62% of the first image’s own points (single-view) but only 11.23% of the other images’ points (fused)",
+          "verified": true
+        },
+        {
+          "claim": "SFT 与 GRPO 只把融合点提到 14.19% 与 16.02%",
+          "numbers": [
+            "14.19",
+            "16.02"
+          ],
+          "source_span": "Section 3, Finding 1",
+          "quote": "the + SFT and + GRPO (Shao et al., 2024) variants lift the fused points only to 14.19% and 16.02%",
+          "verified": true
+        },
+        {
+          "claim": "SpinBench 上外部旋转后关系正确率 95.14%，目标视角直接读出仅 33.44%（首次提及）与 47.15%（末次）",
+          "numbers": [
+            "95.14",
+            "33.44",
+            "47.15"
+          ],
+          "source_span": "Section 3, Finding 2",
+          "quote": "the decoded state gives the correct relation for 95.14% of them once rotated to the queried viewpoint, yet for only 33.44% when read directly in the target frame at the first mention of the objects, and 47.15% at the last",
+          "verified": true
+        },
+        {
+          "claim": "推理自述视角的场景恢复率仅 30.02%，勉强高于 25% 的随机水平",
+          "numbers": [
+            "30.02",
+            "25"
+          ],
+          "source_span": "Section 3, Finding 2",
+          "quote": "the scene read in the frame of each declared viewpoint is recovered with only 30.02% accuracy on average, barely above the chance level of 25%",
+          "verified": true
+        },
+        {
+          "claim": "跨视角 3D 点恢复率从基线至多 16.02% 提升到 65.11%",
+          "numbers": [
+            "16.02",
+            "65.11"
+          ],
+          "source_span": "Introduction",
+          "quote": "Multi-view fusion raises the recovery rate of cross-view 3D points from at most 16.02% for the baselines to 65.11%",
+          "verified": true
+        },
+        {
+          "claim": "视角变换准确率从至多 37.28% 提升到 82.17%",
+          "numbers": [
+            "37.28",
+            "82.17"
+          ],
+          "source_span": "Introduction",
+          "quote": "perspective transformation lifts the accuracy of locating points relative to a new viewpoint from at most 37.28% to 82.17%",
+          "verified": true
+        },
+        {
+          "claim": "扣留全部 spatial token 后四基准平均掉 2.37 点（72.83% 降至 70.46%）",
+          "numbers": [
+            "2.37",
+            "72.83",
+            "70.46"
+          ],
+          "source_span": "Section 5.3",
+          "quote": "Withholding all spatial tokens at inference likewise lowers the four-benchmark average by 2.37 points, from 72.83% to 70.46%",
+          "verified": true
+        },
+        {
+          "claim": "替换最后一次重发 token 的状态使 9.05% 的答案改变，同范数随机扰动只有 1.62%",
+          "numbers": [
+            "9.05",
+            "1.62"
+          ],
+          "source_span": "Section 5.3",
+          "quote": "this state swap changes 9.05% of the answers, mostly from correct to wrong, against only 1.62% for a random perturbation of the same norm",
+          "verified": true
+        },
+        {
+          "claim": "组件消融中几何监督把 MindCube-Tiny 从 74.00% 提到 81.81%，BLINK 从 68.25% 到 71.75%",
+          "numbers": [
+            "74.00",
+            "81.81",
+            "68.25",
+            "71.75"
+          ],
+          "source_span": "Section 5.4",
+          "quote": "raising MindCube-Tiny from 74.00% to 81.81% and BLINK from 68.25% to 71.75%",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "The Hong Kong University of Science and Technology",
+        "Nanyang Technological University",
+        "National University of Singapore",
+        "Tongji University"
+      ],
+      "evidence_level": "fulltext",
+      "material_note": "全文超长已截断",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 1,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 S-Mind，用少量 spatial token 在模型序列内承载融合后的 3D 场景，并在推理每次切换视角时重新发射以重述该场景；Qwen3.5-9B 上四基准平均 74.03%，追平 GPT-6-Astra，且无需工具调用。",
+        "task": "多视角空间推理要求模型把几张室内照片拼成一个 3D 场景，再把场景旋转到没有图像覆盖的视角上回答——这是具身智能、自动驾驶落地的先决条件。现有两条路线各有问题：外部几何方法（3D 重建、几何编码器、工具型 agent）把场景建在模型之外，推理慢且能力没有内化；空间微调方法只优化输出文本，准确率涨了但内部表示没变。",
+        "findings": [
+          {
+            "point": "多视角融合缺失，且空间微调补不上",
+            "detail": "geometry probe 在 Qwen3.5-4B 上恢复 60.62% 的单视角点，跨视角融合点只有 11.23%；SFT/GRPO 仅提到 14.19%/16.02%，发布模型 3DThinker、GPD 也在 10% 量级。行为上两视角问题的错误全部把第二台相机放到镜像一侧。"
+          },
+          {
+            "point": "视角变换停在相机坐标系，没有跟随推理",
+            "detail": "SpinBench 上把状态外部旋转到查询视角后关系正确率 95.14%，直接在目标视角读出只有 33.44%（首次提及）/47.15%（末次）；推理自述视角的场景恢复仅 30.02%，勉强高于 25% 的随机水平。"
+          },
+          {
+            "point": "加大模型规模不解决这两点",
+            "detail": "融合要到 9B 以上才略微出现，仍远不及 4B 的 S-Mind。"
+          }
+        ],
+        "method": "S-Mind 在模型自己的序列里插入 spatial token：每视角两个 scene token 加四个 camera token，其隐藏状态 $z_0$ 即融合后的场景。一个刻意做弱的 cross-attention readout（query 只含网格位置、不含图像内容）从 $z_0$ 解码每个 visual token 的全局/局部 3D 点与相机位姿；$L_{geo}=L_{global}+L_{local}+L_{cam}$ 三项几何上互相冗余，逼 $z_0$ 收敛到自洽场景。推理链每声明一个新视角，模型就重发一串 token 得到 $z_k$，$L_{view}$ 要求 $z_k$ 解码出 $z_0$ 的点经该视角刚体变换后的位置（对 $z_0$ 的点 stop-gradient），把“如何变换”与“感知什么”分开监督。三阶段为几何预训练、SFT（$L_{CE}+\\lambda(L_{geo}+L_{view})$）与 GRPO，readout 与损失在推理时全部丢弃。",
+        "results": "四基准平均 4B 版 72.83%、9B 版 74.03%；后者与 GPT-6-Astra 的 73.58 持平，4B 版超 ProSR 7.65 点。探针融合率 65.11%（基线至多 16.02%）、变换率 82.17%（至多 37.28%），推理单次生成、无需工具。",
+        "limitations": "监督只覆盖输入视角可见的几何，未做遮挡补全、跨交互持久化与动态场景；视角位姿由规则解析 teacher 链措辞加场景标注得到，误差直接进入 $L_{view}$；全部结果单一 seed。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.30844",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.30844",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "DyLoMo-DiT: Dynamic Looped Mixture-of-Experts Diffusion Transformers",
+      "title_zh": "DyLoMo-DiT：动态循环专家混合扩散 Transformer",
+      "authors": [
+        "Lernie Li",
+        "Yuanliu Liu",
+        "Pengfei Xiong",
+        "Wei Zhang"
+      ],
+      "abstract": "Diffusion Transformers (DiTs) scale model capacity by increasing both parameter count and computation. Mixture-of-Experts (MoE) variants expand parameter capacity while keeping per-token computation roughly fixed, but still require substantial parameter storage. In this paper, we propose Dynamic Looped MoE DiT (DyLoMo-DiT), which reuses parameters rather than adding them: a weight-shared loop repeatedly applies the middle layers, while sparse experts allocate parameter capacity across tokens. This design deepens the network without adding parameters, freeing the parameter budget for other uses, such as more experts or more distinct layers. It also allocates compute dynamically, varying the number of passes across noise levels. Experiments show that DyLoMo-DiT makes more effective use of parameter and compute budgets, with further gains from assigning more passes to low-noise steps. On ImageNet $256\\times256$, DyLoMo-DiT reduces FID by 11-24% relative to DiT and 36-56% relative to DiT-MoE at matched parameter and compute budgets. For text-to-image generation, a scaled DyLoMo-DiT achieves a higher GenEval score than FLUX.1 (0.714 vs. 0.673), with less than one tenth of its active parameters (1.05B vs. 12B).",
+      "published_at": "2026-11-23T15:27:20+00:00",
+      "updated_at": "2026-11-23T15:27:20+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": "46 pages, 29 figures, 33 tables. Code, weights and project page: https://oneboxcream.github.io/DyLoMo-DiT/",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.30844",
+        "pdf": "https://arxiv.org/pdf/2611.30844",
+        "code": "https://github.com/OneBoxCream/DyLoMo-DiT",
+        "project": "https://oneboxcream.github.io/DyLoMo-DiT/"
+      },
+      "signals": {
+        "hf_upvotes": 54,
+        "hf_num_comments": 3,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 41,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "LLM 与推理",
+        "扩散模型与 Flow Matching"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 84.0,
+          "novelty": 72.0,
+          "technical_depth": 86.0,
+          "impact": 86.8,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "权重共享loop+稀疏专家复用参数，等预算下FID降11-24%，用1/10激活参数GenEval超FLUX.1",
+        "evidence_level": "fulltext",
+        "score": 82.4,
+        "rank_in_pool": 4,
+        "l2_reasons": {
+          "research_value": "在参数与计算双对齐的预算下系统对比 DiT/DiT-MoE/ProMoE 五个档位，并放大基线到 3× DiT 与 6.2× DiT-MoE，把\"高效扩展 DiT\"这一实际问题推进到可判定的程度。",
+          "novelty": "循环权重共享、多头稀疏专家、按噪声分专家均有先例（SMELT、MH-MoE、MAGI-2、eDiff-I），新意在于同时解开参数–计算与参数–深度两个耦合，并把循环遍数按噪声水平分配，属扎实的组合式创新。",
+          "technical_depth": "参数与计算分别对齐到约 2% 与 1%，逐项消融给出 16.06→5.28 的加性收益，另有逐时间步误差、路由切换与专家复用分析以及放大基线；不足是多数 ImageNet 配置只有单/双 seed，文本到图像仅一个模型且无消融。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 39689,
+        "tokens_out": 11531,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "匹配参数与计算时，DyLoMo-DiT 在 B/L/XL 三档相对 DiT 的 FID 分别降低 11%、14%、24%",
+          "numbers": [
+            "11",
+            "14",
+            "24"
+          ],
+          "source_span": "Sec. 5.1, first paragraph",
+          "quote": "reduces FID relative to DiT by 11%, 14%, and 24% in the B, L, and XL tiers",
+          "verified": true
+        },
+        {
+          "claim": "匹配参数与计算时，相对 DiT-MoE 在 S/B/L 三档的 FID 分别降低 36%、56%、56%",
+          "numbers": [
+            "36",
+            "56"
+          ],
+          "source_span": "Sec. 5.2, first paragraph",
+          "quote": "reduces FID by 36%, 56%, and 56% relative to DiT-MoE in the S, B, and L tiers",
+          "verified": true
+        },
+        {
+          "claim": "在 DiT-MoE-B 预算下逐项加入设计选择，使 FID 从 16.06 降到 5.28",
+          "numbers": [
+            "16.06",
+            "5.28"
+          ],
+          "source_span": "Sec. 1, contributions summary",
+          "quote": "progressively adding the design choices lowers FID from 16.06 to 5.28",
+          "verified": true
+        },
+        {
+          "claim": "统一两遍循环在匹配预算下几乎没有改善 FID（7.94）",
+          "numbers": [
+            "7.94"
+          ],
+          "source_span": "Sec. 5.4",
+          "quote": "A uniform two-pass loop leaves FID essentially unchanged (7.94)",
+          "verified": true
+        },
+        {
+          "claim": "默认遍数调度为 $t<500$ 时 $r=3$、$t\\ge 500$ 时 $r=1$",
+          "numbers": [
+            "3",
+            "500",
+            "1"
+          ],
+          "source_span": "Sec. 3.4, first paragraph",
+          "quote": "the recommended schedule runs r = 3 for t < 500 and r = 1 for t ≥500",
+          "verified": true
+        },
+        {
+          "claim": "缩放的 DyLoMo-DiT 在 GenEval 上得 0.714，高于 FLUX.1 的 0.673，active 参数为 1.05B 对 12B",
+          "numbers": [
+            "0.714",
+            "0.673",
+            "1.05",
+            "12"
+          ],
+          "source_span": "Abstract",
+          "quote": "achieves a higher GenEval score than FLUX.1 (0.714 vs. 0.673), with less than one tenth of its active parameters (1.05B vs. 12B)",
+          "verified": true
+        },
+        {
+          "claim": "用随机遍数训练的模型在两遍运行时 FID 为 4.68，比固定两遍训练的 4.36 差 7%",
+          "numbers": [
+            "4.68",
+            "4.36"
+          ],
+          "source_span": "Sec. 5.6, last paragraph",
+          "quote": "When run with two passes, this model reaches 4.68 FID, 7% worse than the model trained with two passes throughout (4.36)",
+          "verified": true
+        }
+      ],
+      "affiliations": [],
+      "evidence_level": "fulltext",
+      "material_note": "全文超长已截断",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 2,
+        "downgraded_reason": null,
+        "warnings": [
+          {
+            "kind": "extra_field",
+            "note": "模板 frontier 之外的字段已删除：claims"
+          },
+          {
+            "kind": "length",
+            "note": "results 字数 23 超出 [30, 100]"
+          }
+        ]
+      },
+      "content": {
+        "why_read": "提出 DyLoMo-DiT，将共享权重的循环中间层与多头稀疏专家结合，并按噪声水平分配循环遍数，在匹配参数与计算下把 ImageNet-256 的 FID 相对 DiT 降低至多 24%。",
+        "task": "DiT 靠同时加宽、加层扩容量，参数、每 token 计算与深度被绑在同一条轴上，且每个去噪步都跑同一套 dense 层，深度在噪声维度上均匀。MoE 变体用稀疏专家扩大参数容量而近似固定每 token 计算，但参数存储仍大，已有工作报告 token-choice 稀疏专家在 active 参数对齐时不如 dense。单纯给 DiT 加权重共享循环虽能免费加深度，但在匹配预算下并不自动改善 FID。",
+        "findings": [
+          {
+            "point": "参数、计算、深度被同一组超参绑定",
+            "detail": "DiT 加宽或加层会同时抬高参数与每 token 计算；MoE-DiT 只解开了参数与计算的耦合，深度仍随参数增长，扩容量必然带来存储开销。"
+          },
+          {
+            "point": "循环带来的额外深度在噪声轴上被平摊",
+            "detail": ""
+          },
+          {
+            "point": "循环不提供 token 级容量，需与稀疏专家互补",
+            "detail": "共享层只是重复同一组参数，dense FFN 没有 MoE 的 token 相关容量；因此正确用法是把循环省下的参数预算转投更多专家与 routing head，而不是继续堆独立层。"
+          }
+        ],
+        "method": "中段 $m$ 层共享权重：一次前向执行前段一次、中段 $r$ 次、后段一次，中段子层写回残差时乘 $1/r$ 以免多遍更新累积，路由每遍重算，同一 token 在不同遍可选不同专家。省下的参数投给多头稀疏专家：FFN 输入拆成 $H$ 个 head，每个 head 有独立 router、$E$ 个专家与常开 shared expert，sigmoid 打分加 load-balancing bias 后取 top-k，不用辅助损失，bias 按路由计数更新。遍数按噪声水平分配（$t<500$ 取 $r=3$，否则 $r=1$），平均两遍，与\"每步两遍\"同计算但把深度集中在低噪声。配预算时宽度与层访问次数定计算、循环定物理层数、专家数填满参数。",
+        "results": "ImageNet 256×256 匹配预算下，FID 相对 DiT 降 11%/14%/24%，相对 DiT-MoE 降 36%/56%/56%；",
+        "limitations": "循环调度写进模型，推理改调度需重训；用随机遍数换推理可选深度要付代价（两遍 4.68 对固定两遍 4.36）。文本到图像只训了一个模型、无消融，DPG-Bench 上对 FLUX.1-schnell 的差距不显著。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.33144",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.33144",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "PyRUA-Dex: Learning Programmatic Policies for Dexterous Bimanual Manipulation with Coding Agents",
+      "title_zh": "PyRUA-Dex：用编码智能体学习灵巧双臂操作的程序化策略",
+      "authors": [
+        "Feixiang Ruan",
+        "Guodong Lv",
+        "Kewei Zhang",
+        "Wenbo Huang",
+        "Yintianrun Zhang",
+        "Qiang Wang",
+        "Ruiyang Si",
+        "Shunyu Yang",
+        "Shulong Jiang",
+        "Weicheng Duan",
+        "Rui Ni",
+        "Jianxin Bi",
+        "Lekai Wang",
+        "Yuze Fan",
+        "Haobo Li",
+        "Zeliang Fu",
+        "Jiankun Zhang",
+        "Duomin Wang",
+        "Enze Xie",
+        "Daquan Zhou"
+      ],
+      "abstract": "Learning for dexterous manipulation is limited by the scarcity of high-quality demonstrations: retargeting from human video is imprecise, teleoperation gives no force feedback to the operator, and exoskeleton-based collection is hard to scale up. We present PyRUA-Dex, a framework that enables coding agents to develop dexterous manipulation through programmatic policy, without the need of demonstrations. The programmatic policy is developed in two stages: during exploration, multiple agents explore in parallel for task skills and ways to compose them, and a distilling agent condenses the successful attempts into a task library and one program. During refinement, this program is improved through randomized layouts for enhanced robustness and execution efficiency. In simulated environments, PyRUA-Dex achieves SOTA on Bench2Dex with a score of 72.9 and reaches 81.0% success on DexJoCo under full randomization, ahead of every trained policy on both benchmarks. In real world experiments on a bimanual platform with two 22-DoF hands, PyRUA-Dex learns to play piano, write calligraphy, and other tasks efficiently: learning a new piece from sheet music takes as little as 30 minutes. These results suggest that PyRUA-Dex is an effective framework for developing dexterous manipulation policies with coding agents in the absence of high quality dexterous manipulation demonstrations.",
+      "published_at": "2026-11-24T18:56:44+00:00",
+      "updated_at": "2026-11-24T18:56:44+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "category_tier": "medium",
+      "comment": "23 pages, 9 figures, 7 tables. Project page: https://vme0522.github.io/PyRUA-Dex/",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.33144",
+        "pdf": "https://arxiv.org/pdf/2611.33144",
+        "code": null,
+        "project": "https://vme0522.github.io/PyRUA-Dex/"
+      },
+      "signals": {
+        "hf_upvotes": 43,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": null,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "World Models 与具身智能",
+        "Agent 与工具使用"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 85.0,
+          "novelty": 74.0,
+          "technical_depth": 82.0,
+          "impact": 82.0,
+          "completeness": 70.0
+        },
+        "tier": "A",
+        "l1_reason": "coding agent 无示教探索并蒸馏为程序化策略，双基准 SOTA，真机弹琴/书法验证",
+        "evidence_level": "fulltext",
+        "score": 79.7,
+        "rank_in_pool": 5,
+        "l2_reasons": {
+          "research_value": "把多指灵巧操作的示教依赖换成由编码智能体开发、冻结后零 LLM 调用的程序化策略，在 Bench2Dex 与 DexJoCo 上超过全部训练策略，并落到双臂 22-DoF 真机上弹琴写字，给出了可检验的替代路线。",
+          "novelty": "「程序即策略 + 编码智能体自我改进」在这条线上已有 pHL、RAX、PyRUA 等工作，本文的实质新增是面向多指手的阶段成功率分解驱动精修、并行探索加共享记忆蒸馏，以及跨 12 种手共用的 primitive 层。",
+          "technical_depth": "给出成功率沿阶段分解的形式化目标与探索/精修消融（成功率 44.6%→60.6%）、失败归因统计、换手换仿真器的第二基准以及真机 system identification；但只用单一 LLM 且未报多次运行方差，真机只做演示、未在硬件上重复统计成功率。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 14452,
+        "tokens_out": 27831,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "PyRUA-Dex 在 Bench2Dex 上得分 72.9，为该榜 SOTA",
+          "numbers": [
+            "72.9"
+          ],
+          "source_span": "Section 4.2 / Table 1, row 'PyRUA-Dex'",
+          "quote": "PyRUA-Dex scores 72.9 on Bench2Dex, a new SOTA",
+          "verified": true
+        },
+        {
+          "claim": "精修把四通道成功率从 44.6% 提到 60.6%",
+          "numbers": [
+            "44.6",
+            "60.6"
+          ],
+          "source_span": "Section 4.3",
+          "quote": "Refinement raises the success rate from 44.6% to 60.6%",
+          "verified": true
+        },
+        {
+          "claim": "DexJoCo 全随机化（rand-full）成功率 81.0%，最强训练策略 π0.5 为 40.3%",
+          "numbers": [
+            "81.0",
+            "40.3"
+          ],
+          "source_span": "Section 4.5 / Table 2",
+          "quote": "81.0% of the rand-full ones, against 54.1% and 40.3%",
+          "verified": true
+        },
+        {
+          "claim": "真机六个任务在仿真的验证布局上从 119 升到 168（共 192 个）",
+          "numbers": [
+            "119",
+            "168",
+            "192"
+          ],
+          "source_span": "Section 5 / Table 3",
+          "quote": "the six tasks rise from 119 to 168 of their 192 validation layouts",
+          "verified": true
+        },
+        {
+          "claim": "五个阶段各 80% 成功率时整体只有 33%",
+          "numbers": [
+            "80",
+            "33"
+          ],
+          "source_span": "Section 1",
+          "quote": "five stages at 80% each give an overall success rate of only 33%",
+          "verified": true
+        },
+        {
+          "claim": "探索后的程序在 22 个任务上有 341 次失败验证 run",
+          "numbers": [
+            "341",
+            "22"
+          ],
+          "source_span": "Section 4.3, Figure 4a",
+          "quote": "We classify the 341 failed validation runs of the programs after exploration on the 22 tasks",
+          "verified": true
+        },
+        {
+          "claim": "失败 run 中 68% 还剩至少 30% 步数，59% 是单个阶段函数失败导致后续全跳过，仅 2% 耗尽步数",
+          "numbers": [
+            "68",
+            "30",
+            "59",
+            "2"
+          ],
+          "source_span": "Section 4.3, Figure 4a",
+          "quote": "In 68% of them the program had returned with at least 30% of the step budget unused, and in 59% one stage function had failed once and every later function had returned at once; only 2% ran out of steps.",
+          "verified": true
+        },
+        {
+          "claim": "GPT-6 Astra 在线智能体在基准步数预算下 Full 通道成功率 26.2%",
+          "numbers": [
+            "26.2"
+          ],
+          "source_span": "Table 1, row 'GPT-6 Astra agent, 1×'",
+          "quote": "26.2†",
+          "verified": true
+        },
+        {
+          "claim": "在线智能体要十倍步数预算、每 episode 33.7M token 才达到 61.5%",
+          "numbers": [
+            "61.5",
+            "33.7"
+          ],
+          "source_span": "Section 4.4",
+          "quote": "The online agent reaches 61.5% only with ten times the step budget, at 33.7M tokens per episode.",
+          "verified": true
+        },
+        {
+          "claim": "精修前在 32 个新训练布局上做阶段级失败分析",
+          "numbers": [
+            "32"
+          ],
+          "source_span": "Section 3.4",
+          "quote": "the program runs without the agent on 32 fresh training layouts",
+          "verified": true
+        },
+        {
+          "claim": "每 160 个训练布局做一次程序复评与选择",
+          "numbers": [
+            "160"
+          ],
+          "source_span": "Section 3.4",
+          "quote": "After every 160 training layouts, the current version is evaluated without the agent",
+          "verified": true
+        },
+        {
+          "claim": "DexJoCo 装配任务最低，物体随机化下只有 34.0%",
+          "numbers": [
+            "34.0"
+          ],
+          "source_span": "Section 6",
+          "quote": "assembly is the lowest of the DexJoCo tasks (34.0% under object randomization)",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Peking University",
+        "National University of Singapore",
+        "NVIDIA",
+        "Tongji University",
+        "University of Chicago"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 PyRUA-Dex，用编码智能体在仿真中两阶段开发多指灵巧手的程序化策略：八智能体并行探索并蒸馏成程序，再按阶段成功率定位瓶颈阶段做精修，冻结的 Python 程序在 Bench2Dex 得分 72.9。",
+        "task": "多指灵巧操作目前几乎全靠示教：从人类视频 retarget 不精确，遥操作没有力反馈，外骨骼采集难扩展，数据还与具体的手绑定，换手就要重采重训。代价是 Bench2Dex 上最强训练策略成功率刚过半，布局外观或物体位置一变就明显退化；而让 LLM 智能体在测试时逐 episode 闭环，又受 token 与步数预算制约。",
+        "findings": [
+          {
+            "point": "成功率沿有序阶段连乘，整体被最不可靠的阶段封顶",
+            "detail": "任务被拆成 K 个有序阶段，$SR=s\\prod_{k} r_k$；五个阶段各 80% 也只有 33%，所以单布局上成功的程序在多数布局都会失败，鲁棒性必须逐阶段在大量布局上测量、只修最差的那个。"
+          },
+          {
+            "point": "探索后的失败源于某个阶段不可靠，而不是步数预算不够",
+            "detail": "341 次失败验证 run 中，68% 还剩 30% 以上步数就返回，59% 是一个阶段函数失败后后续阶段直接跳过，仅 2% 耗尽步数。"
+          },
+          {
+            "point": "把 LLM 留在测试回路里既贵又不准",
+            "detail": "同一模型在线跑时每个 episode 都要重新观测决策，基准步数下 Full 通道仅 26.2%，要 61.5% 就得把步数预算提到十倍、每 episode 33.7M token。"
+          }
+        ],
+        "method": "程序是固定骨架的 Python 代码（setup + 每阶段一个 $f_k$，失败可重试），所有手经统一 primitive 库控制。Stage 1：八个 Codex 智能体并行探索，各占一布局与一未解阶段，状态重置只重试该阶段并共享 memory，无智能体评估后由蒸馏智能体编成任务库。Stage 2：单智能体按 32 新布局的阶段级失败率找瓶颈，用 partial rollout 只跑到该阶段测量，精修期步数翻倍，每 160 布局在留出布局上复评、无退化才替换；真机在标定仿真中跑同样两阶段并逐轮写回差异。",
+        "results": "Bench2Dex 得分 72.9 居首，精修把成功率 44.6%→60.6%；DexJoCo 全随机化 81.0%（π0.5 40.3%）；真机六任务验证布局 119/192→168/192。",
+        "limitations": "弱在持续力控与滑移（倒液、拼图落后，DexJoCo 装配仅 34.0%）；触觉仿真粗糙、接触靠关节滞后推断；精修救不了从未成功的阶段；每任务单独学习，真机可靠性只在标定仿真中测。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.30207",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.30207",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "What Makes Good Data for Training Coding Agents? A Systematic Study on SWE-Gym",
+      "title_zh": "什么使编码智能体的训练数据优质？基于 SWE-Gym 的系统研究",
+      "authors": [
+        "Yikai Zhang",
+        "Mai Xu",
+        "Yunbei Zhang",
+        "Qirui Jin",
+        "Kenan Li",
+        "Yuwen Jia",
+        "Jinwei Yao",
+        "Xiangyu Zhang",
+        "Jielun Tan",
+        "Jin Pan",
+        "Zijian Jin",
+        "Xiao Sun"
+      ],
+      "abstract": "Reinforcement learning (RL) trains coding agents on software tasks whose hidden tests decide the reward, yet task collections check these tests only against the reference fix. We ask what makes a task good training data, focusing on the correctness of its reward labels. We audit SWE-Gym with two LLM families, and a suspected error counts only if execution reproduces it. We find that unsolved often means mislabelled: 74% of the tasks that a 9B base model never solves have a test that rejects correct fixes (a false negative), versus 20% of those it sometimes solves. We repair or remove such tasks, and the audited tasks that remain train better policies. At equal size and matched difficulty, models trained on them score 2.4 and 2.7 points higher on held-out tasks from SWE-bench Verified and SWE-bench Pro than models trained on the original tasks, whereas simply dropping the never-solved tasks shows no such gain. We further find that wrong patches that pass (false positives) make up about a quarter of all passing patches, and that new tests that catch a quarter of them do not change held-out scores detectably. A pass rate shows whether a task yields reward, not whether that reward is right, so the reward labels themselves must be checked. To this end, we release SWE-Gym-Verified with its 1,087 audited tasks, every verdict with its executed evidence, our training sets, and the full audit pipeline.",
+      "published_at": "2026-11-23T07:45:13+00:00",
+      "updated_at": "2026-11-23T07:45:13+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG",
+        "cs.SE"
+      ],
+      "category_tier": "high",
+      "comment": "18 pages, 5 figures, 9 tables. Code at https://github.com/Arist12/SWE-Gym-Verified and dataset at https://huggingface.co/datasets/Arist12/SWE-Gym-Verified",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.30207",
+        "pdf": "https://arxiv.org/pdf/2611.30207",
+        "code": "https://github.com/Arist12/SWE-Gym-Verified",
+        "project": "https://arist12.github.io/writing/swe-gym-verified/"
+      },
+      "signals": {
+        "hf_upvotes": 19,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 4,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "LLM 与推理",
+        "强化学习与后训练"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 88.0,
+          "novelty": 82.0,
+          "technical_depth": 86.0,
+          "impact": 64.9,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "审计SWE-Gym奖励标签，74%未解任务为假阴性，修复后held-out提升2.4/2.7分",
+        "evidence_level": "fulltext",
+        "score": 82.8,
+        "rank_in_pool": 6,
+        "l2_reasons": {
+          "research_value": "在真实 RL 训练集上以执行证据逐条量化奖励标签错误，并用等规模、匹配难度的训练验证审计收益，对 coding agent 的数据构建有直接意义。",
+          "novelty": "把审计粒度从任务级 LLM 评分降到单条 F2P 断言，并要求 witness/counterexample 执行复现；同时追踪错误是否进入 GRPO 梯度，区别于仅做过滤或任务级打分的工作。",
+          "technical_depth": "执行背书的判定、FN/FP 双向审计、等规模匹配难度多种子训练和多项消融较扎实；但单一模型与 scaffold、有限训练预算及 Clean 与 Orig 的多因素混合限制了因果拆解。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 12684,
+        "tokens_out": 10574,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "在同等规模与匹配难度下，Clean 在 SWE-bench Verified 与 SWE-bench Pro 上分别比 Orig 高 2.4 和 2.7 分。",
+          "numbers": [
+            "2.4",
+            "2.7"
+          ],
+          "source_span": "§5.4, Table 2",
+          "quote": "Clean outperforms Orig by 2.4 pp on Verified-397 and by 2.7 pp on SWE-bench Pro",
+          "verified": true
+        },
+        {
+          "claim": "原始任务中，从未被解出的任务 74% 含拒绝正确修复的 F2P 断言，而有时解出的仅 20%。",
+          "numbers": [
+            "74",
+            "20"
+          ],
+          "source_span": "§5.2, RQ1",
+          "quote": "74% of the never-solved tasks are FN-flawed, versus 20% of the sometimes-solved ones",
+          "verified": true
+        },
+        {
+          "claim": "从未解出的 FN 缺陷任务仅贡献 0.9% 的带梯度组。",
+          "numbers": [
+            "0.9"
+          ],
+          "source_span": "§5.3, RQ2",
+          "quote": "only 0.9% of its gradient-carrying groups",
+          "verified": true
+        },
+        {
+          "claim": "85 个有时解出的 FN 缺陷任务占 Orig 任务的 16.6%、带梯度组的 19.5%。",
+          "numbers": [
+            "85",
+            "16.6",
+            "19.5"
+          ],
+          "source_span": "§5.3, RQ2",
+          "quote": "The 85 sometimes-solved FN-flawed tasks make up 16.6% of Orig’s tasks and contribute 19.5% of its gradient-carrying groups",
+          "verified": true
+        },
+        {
+          "claim": "Clean 任务上通过的补丁中 26.1% 为假阳性。",
+          "numbers": [
+            "26.1"
+          ],
+          "source_span": "§5.2, RQ1",
+          "quote": "26.1% are false positives under our conservative rule",
+          "verified": true
+        },
+        {
+          "claim": "新增测试抓住 25% 的假阳性，但 held-out pass@1 无可检测变化。",
+          "numbers": [
+            "25"
+          ],
+          "source_span": "§5.5, RQ4",
+          "quote": "catch 25% of the false positives in a sample of passing training patches",
+          "verified": true
+        },
+        {
+          "claim": "Clean+FP 策略在新测试上的通过率仅比 Clean 策略高 0.4 和 1.8 pp。",
+          "numbers": [
+            "0.4",
+            "1.8"
+          ],
+          "source_span": "§5.5, RQ4",
+          "quote": "passes the new tests only 0.4 and 1.8 pp more often than the Clean policy would",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "AMD",
+        "University of Michigan",
+        "Tulane University",
+        "Georgia Institute of Technology",
+        "University College London"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 SWE-Gym-Verified：用执行验证逐条审计 SWE-Gym 隐藏测试的奖励标签，修复或剔除假阴性任务，并在同等规模与难度下使 held-out pass@1 提升 2.4–2.7 分。",
+        "task": "RL 训练编码智能体时，隐藏测试就是奖励标签；现有任务集只验证参考修复能通过、原始代码失败，无法保证所有正确修复都得分、错误修复不得分。通过率过滤和丢弃从未解出任务把零通过率当作难度，可能保留甚至奖励标签错误。",
+        "findings": [
+          {
+            "point": "未解不等于难，往往是奖励标签错",
+            "detail": "原始任务中，从未被解出的任务 74% 含拒绝正确修复的 F2P 断言，而有时解出的仅 20%；测试依赖 issue 未说明的接口、精确字符串或任意设计选择。"
+          },
+          {
+            "point": "通过率过滤只删掉不携带梯度的错误",
+            "detail": "从未解出的 FN 缺陷任务仅占 0.9% 的带梯度组；有时解出的缺陷任务占 16.6% 任务、19.5% 带梯度组，过滤后仍在，梯度会奖励复现隐藏测试文本的补丁。"
+          },
+          {
+            "point": "假阳性普遍，强化测试也难以改变策略",
+            "detail": "Clean 上 26.1% 的通过补丁是假阳性；新增测试抓住 25% 后，Clean+FP 在新测试上的通过率仅高 0.4 和 1.8 pp，held-out pass@1 无可检测变化。"
+          }
+        ],
+        "method": "审计 SWE-Gym 的可用去重任务：两族 LLM 对每条 F2P 断言逐条评分，只有执行 witness 复现才判为假阴性；可追加 Requirements 修复的保留，否则剔除；对通过补丁用双模型标记并由 counterexample 执行确认假阳性，再把 counterexample 转成新测试。发布 SWE-Gym-Verified，并用 Qwen3.5-9B + GRPO 在匹配难度的原始、审计、加固和通过率过滤四组任务上训练，以 held-out 基准评估。",
+        "results": "在同等规模与匹配难度、多种子训练下，Clean 在 SWE-bench Verified 与 SWE-bench Pro 上分别比 Orig 高 2.4 和 2.7 分；按通过率过滤的 Orig+Filter 无同等增益，Clean+FP 对 held-out 无可检测变化。",
+        "limitations": "仅一个 base model、单一 scaffold 与有限训练预算；Clean 与 Orig 同时混合修复、剔除和替换，RQ3 无法拆分各因素；审计由 LLM 判定，仅少量人工抽查，FN 只覆盖 F2P 断言，FP 只覆盖回归。",
+        "reading_minutes": 2
+      }
+    },
+    {
+      "id": "arxiv-2611.31094",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.31094",
+      "arxiv_version": "v2",
+      "version_count": 2,
+      "title": "Unlocking the Power of Loops in Pretrained LLMs with Loop Residuals",
+      "title_zh": "LoopRes：用循环残差释放预训练 LLM 的循环计算潜力",
+      "authors": [
+        "Xuanlei Zhao",
+        "Hailun Xu",
+        "Kai Wang",
+        "Yang Luo",
+        "Yingxuan Ren",
+        "Zirui Zhu",
+        "Yuxuan Lou",
+        "Kun Xu",
+        "Yan Wang",
+        "Kanchan Sarkar",
+        "Yang You"
+      ],
+      "abstract": "Looped Transformers iterate a shared block of layers to increase computation without adding parameters, offering stronger performance and test-time scaling. However, this power has so far required training from scratch and yielded only modest gains for LLMs. Finetuning existing models into loops is far cheaper, yet also brings only marginal gains over SFT. We propose LoopRes, an effective, scalable, and simple approach that turns loops into significant and consistent gains for pretrained LLMs. Building on Attention Residuals, LoopRes lets each looped layer attend directly to the outputs of earlier loops. Since these outputs are iterates of the same layers and become harder to tell apart, we give each a trainable loop-aware key that encodes its structural identity. Attending to all earlier loops also lets layers skip intermediate ones, so we restrict each layer to a residual window of the latest W loops, forcing every loop to build incrementally on recent ones. Across 6 pretrained LLMs from 3 model families and 9 benchmarks, LoopRes delivers significant and consistent gains: at 2x compute, it improves Qwen3-1.7B-Base by 29.1% over SFT, more than doubling the gain of the state-of-the-art baseline. The gains hold on larger models up to 30B and across all three families. More importantly, from 1.7B to 8B, LoopRes scales more steeply than SFT as compute grows, reaching a higher ceiling while needing less compute on long outputs. These results establish LoopRes as an effective looping approach, delivering both better performance and better test-time scaling.",
+      "published_at": "2026-11-23T17:38:43+00:00",
+      "updated_at": "2026-11-24T17:16:14+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.31094",
+        "pdf": "https://arxiv.org/pdf/2611.31094",
+        "code": "https://github.com/NUS-HPC-AI-Lab/LoopRes",
+        "project": "https://oahzxl.github.io/LoopRes/"
+      },
+      "signals": {
+        "hf_upvotes": 24,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 80,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "架构/训练/推理加速"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 86.0,
+          "novelty": 82.0,
+          "technical_depth": 86.0,
+          "impact": 69.7,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "Looped 层间残差加 loop-aware key 与窗口限制，把预训练 LLM 改造成循环结构，6 模型 3 家族 9 基准一致提升 29.1%",
+        "evidence_level": "fulltext",
+        "score": 83.0,
+        "rank_in_pool": 7,
+        "l2_reasons": {
+          "research_value": "把 looped Transformer 从昂贵的从头训练转向低成本微调，并在多家族、多规模模型上验证循环深度可作为 test-time scaling 的新轴，问题重要且结果有实际可用性。",
+          "novelty": "针对 AttnRes 用于循环时暴露的三个机制性失效（迭代内容相似、连接模式早收敛、源集合随循环增长导致短路），提出 loop-aware key 与最近 W 次循环的残差窗口，不是简单换骨干或堆模块。",
+          "technical_depth": "给出余弦相似度、查询范数、路径权重等机制可视化，做了组件消融与窗口大小消融，在同骨干、同数据、同超参下重实现多个循环基线并报告训练开销；分析主要集中在单一 1.7B 骨干。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 13562,
+        "tokens_out": 9197,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "Qwen3-1.7B-Base 在 2× 计算下数学/代码平均分较 SFT 提升 29.1%",
+          "numbers": [
+            "1.7",
+            "2",
+            "29.1"
+          ],
+          "source_span": "Introduction / Table 1",
+          "quote": "On Qwen3-1.7B-Base at 2× compute, it improves the average score by 29.1% over SFT",
+          "verified": true
+        },
+        {
+          "claim": "更深循环时平均分提升 33.7%",
+          "numbers": [
+            "33.7"
+          ],
+          "source_span": "Table 1, 4× compute, row 'LoopRes'",
+          "quote": "33.7%↑",
+          "verified": true
+        },
+        {
+          "claim": "更大 Qwen3 骨干的增益在 10.0% 到 37.7% 之间",
+          "numbers": [
+            "10.0",
+            "37.7"
+          ],
+          "source_span": "Introduction",
+          "quote": "LoopRes improves by 10.0% to 37.7% on the larger Qwen3-{4B,8B,30B-A3B}-Base",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "National University of Singapore",
+        "Independent Researcher"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 LoopRes，在预训练 LLM 的循环层间用可训练 loop-aware key 区分同一层的不同循环迭代，并把每个子层的注意力限制在最近 W 次循环，使模型在数学/代码任务上稳定超过 SFT，Qwen3-1.7B-Base 上平均分提升 29.1%。",
+        "task": "循环 Transformer 通过重复共享层增加每 token 计算而不加参数，理论上可提升推理并支持 test-time scaling；但从头训练循环 LLM 收益有限甚至为负，把预训练模型微调成循环也只比 SFT 略好。现有循环设计把历史循环压成狭窄通路，后续循环无法直接利用早期循环输出。",
+        "findings": [
+          {
+            "point": "循环迭代在内容上高度相似",
+            "detail": "同一 block 的不同循环输出余弦相似度远高于跨 block，content key 又由源导出，循环越深越难区分这些迭代，注意力分数趋于塌缩。"
+          },
+          {
+            "point": "连接模式过早固化",
+            "detail": "AttnRes 的查询范数在微调早期就接近终值，content key 只能经隐藏状态间接更新，模型来不及学会区分源就锁定连接。"
+          },
+          {
+            "point": "源集合随循环增长诱发短路",
+            "detail": "每个循环都向全注意力窗口加入新源，层可直接跳到早期循环而跳过中间循环，深层循环的有效深度被浪费。"
+          }
+        ],
+        "method": "把预训练 LLM 的层切成 prelude、core、coda，core 重复 $L$ 次；core 内每个子层用注意力残差聚合源集合：$$\\alpha_s=\\frac{\\exp(q_{\\text{loop}}^\\top k_s^{\\text{loop}}+q^\\top \\mathrm{RMSNorm}(v_s))}{\\sum_{s'}\\exp(q_{\\text{loop}}^\\top k_{s'}^{\\text{loop}}+q^\\top \\mathrm{RMSNorm}(v_{s'}))}.$$ 其中 $k_s^{\\text{loop}}$ 是每个 block、每个循环的可训练结构 key，解决迭代不可分；每个子层只读最近 $W$ 次循环，阻止跳连并把源数限制在 $(W+1)B+1$（$B$ 为 core 内 block 数），控制计算与显存；读取、加权、写回融合为单个 Triton kernel。",
+        "results": "在 Qwen3-1.7B-Base 的 2× 计算设定下，数学/代码平均分较 SFT 提升 29.1%，超过最强基线两倍以上；更深循环时提升 33.7%，更大 Qwen3 骨干的增益在 10.0% 到 37.7% 之间。",
+        "limitations": "作者承认仅覆盖数学/代码与 SFT，未验证通用指令遵循和 RL；每 token 循环增加推理能耗，且残差窗口只保留最近循环，跨远循环信息仍被截断。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.31115",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.31115",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "RUIBench: What Makes a Good Robot-Use Interface?",
+      "title_zh": "RUIBench：机器人使用接口如何塑造具身智能体的可靠性",
+      "authors": [
+        "Yanzhe Chen",
+        "Zhijun Cao",
+        "Zechen Bai",
+        "Wenzheng Zeng",
+        "Kevin Yuchen Ma",
+        "Yiqi Lin",
+        "Guoqiang Liang",
+        "Xiaokang Liu",
+        "Ke Sun",
+        "Kevin Qinghong Lin",
+        "Mike Zheng Shou"
+      ],
+      "abstract": "Foundation models can reason about complex physical tasks, yet translating this intelligence into reliable robot execution remains challenging. We argue that a critical, often overlooked factor is the robot-use interface (RUI), which determines how agents express and execute physical actions. To systematically study its impact, we introduce RUIBench, comprising 30 manipulation tasks across five suites spanning world knowledge, in-context learning, discovery, dynamic interaction, and contact-rich manipulation. We further develop RUIKit, a unified framework that crosses six action abstractions with two interaction forms, yielding 13 interfaces under shared perception and control. In simulation, changing only the RUI shifts a frontier agent's success rate from 45% to 81%, and that of a fine-tuned 4B model from 13% to 47%. Our analysis reveals that effective interfaces reduce unnecessary decisions while preserving essential feedback, with their benefits shaped by agent behavior and physical uncertainty. We further uncover a verification gap, where agents frequently declare success despite observable failures, revealing the need for task-level verification beyond individual actions. Together, these findings establish RUI design as a critical factor in embodied agent reliability.",
+      "published_at": "2026-11-23T17:52:55+00:00",
+      "updated_at": "2026-11-23T17:52:55+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.MM"
+      ],
+      "category_tier": "high",
+      "comment": "Project website: https://showlab.github.io/RUIBench",
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.31115",
+        "pdf": "https://arxiv.org/pdf/2611.31115",
+        "code": "https://github.com/showlab/RUIBench",
+        "project": "https://showlab.github.io/RUIBench/"
+      },
+      "signals": {
+        "hf_upvotes": 22,
+        "hf_num_comments": 3,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 18,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "World Models 与具身智能",
+        "Agent 与工具使用"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 89.0,
+          "novelty": 86.0,
+          "technical_depth": 88.0,
+          "impact": 67.9,
+          "completeness": 90.0
+        },
+        "tier": "A",
+        "l1_reason": "仅改robot-use interface即把前沿agent成功率45%→81%，30任务13接口证据强",
+        "evidence_level": "fulltext",
+        "score": 85.0,
+        "rank_in_pool": 8,
+        "l2_reasons": {
+          "research_value": "该工作把机器人使用接口作为独立变量，系统测量其对成功率、成本和完成判定的影响，所研究的问题对具身智能体落地很重要。",
+          "novelty": "现有具身基准通常固定接口，接口研究也只比较个别设计选择；RUIKit 在共享感知与控制下交叉动作抽象和交互形式，并把智能体的完成声明与物理结果分开评估。",
+          "technical_depth": "在同一 harness 下只改变 RUI，控制 RGB-D 观测、8 秒延迟和独立评分，并对动作序列、动作级检查做消融；但真机只覆盖 5 个任务、单臂，部分仿真结果只使用单个 seed，这是证据边界。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 12354,
+        "tokens_out": 8604,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "RUIKit 在共享感知与控制下组合出 13 种机器人使用接口",
+          "numbers": [
+            "13"
+          ],
+          "source_span": "Abstract",
+          "quote": "yielding 13 interfaces",
+          "verified": true
+        },
+        {
+          "claim": "仅更换 RUI，Claude Code 成功率从 45.3% 升到 80.7%",
+          "numbers": [
+            "45.3",
+            "80.7"
+          ],
+          "source_span": "Sec. 5.2, Finding 1",
+          "quote": "from 45.3% to 80.7%",
+          "verified": true
+        },
+        {
+          "claim": "Qwen3.5-4B 零样本成功率仅 1.9%",
+          "numbers": [
+            "1.9"
+          ],
+          "source_span": "Sec. 5.2, Learning to use an interface",
+          "quote": "succeeds in only 1.9% of episodes across the 12 fixed RUIs",
+          "verified": true
+        },
+        {
+          "claim": "Qwen3.5-4B 微调后平均成功率为 27.3%",
+          "numbers": [
+            "27.3"
+          ],
+          "source_span": "Sec. 5.2, Learning to use an interface",
+          "quote": "raises its success to 27.3%",
+          "verified": true
+        },
+        {
+          "claim": "per-action Pose 下微调 Qwen3.5-4B 达到 46.7%，与 Claude Code per-action Step 的 45.3% 相当",
+          "numbers": [
+            "46.7",
+            "45.3"
+          ],
+          "source_span": "Sec. 5.2, Learning to use an interface",
+          "quote": "(46.7% vs. 45.3%)",
+          "verified": true
+        },
+        {
+          "claim": "真机评估包含 650 个 episode",
+          "numbers": [
+            "650"
+          ],
+          "source_span": "Abstract; Sec. 5.4",
+          "quote": "650 real-robot episodes",
+          "verified": true
+        },
+        {
+          "claim": "真机上 Claude Code 程序接口成功率为 36.0%，低于逐动作的 42.0%",
+          "numbers": [
+            "36.0",
+            "42.0"
+          ],
+          "source_span": "Sec. 5.4, Finding 3",
+          "quote": "lose this advantage on the real robot (36.0% vs. 42.0%)",
+          "verified": true
+        },
+        {
+          "claim": "失败回合中 82.1%（Claude Code）与 70.9%（Codex）仍以宣称完成结束",
+          "numbers": [
+            "82.1",
+            "70.9"
+          ],
+          "source_span": "Sec. 5.5, Finding 4",
+          "quote": "82.1% and 70.9% of failed episodes end in a completion claim",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "National University of Singapore"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 RUIBench 基准与 RUIKit 框架，在统一感知与控制下交叉六种动作抽象和两种交互形式构建 13 种机器人使用接口，系统评估接口如何改变具身智能体的成功率、成本与完成判定。",
+        "task": "基础模型已能推理复杂物理任务，但把这种能力转成可靠机器人执行仍很难。现有具身基准通常在固定接口下比较模型，接口研究又只考察个别设计选择，动作粒度与交互形式的影响被混在模型差异里，无法回答“接口本身值多少”。",
+        "findings": [
+          {
+            "point": "执行碎片化：决策层级过细",
+            "detail": "逐动作接口把清晰计划拆成大量模型回复，时延、成本和出错机会随之上升；作者用动作序列与程序执行对比表明，减少决策次数本身就能提升成功率，而不只是换了一种动作表示。"
+          },
+          {
+            "point": "有效反馈必须能改变下一步动作",
+            "detail": "程序的增益一部分来自动作组合，另一部分来自执行中观察和条件分支；去掉中间观察后增益缩小，接触密集任务对两类机制都获益有限，说明反馈要放在能影响后续决策的位置。"
+          },
+          {
+            "point": "完成判定缺少任务级验证",
+            "detail": "失败回合中 82.1%（Claude Code）与 70.9%（Codex）仍以宣称完成结束；动作级抓取/放置检查虽与人工标签高度一致，却几乎不能提升任务成功率，暴露的是任务级验证缺口。"
+          }
+        ],
+        "method": "RUIBench 设 30 个操作任务，分属世界知识、上下文学习、发现、动态交互、接触密集五个套件；协议只用 RGB-D 与机器人状态，每次回复固定 8 秒且环境继续演化，成功由离线评分器独立判定且不回传。RUIKit 把动作抽象（Joint/Delta/Step/Pose/Point/Skill）与交互形式（逐动作/程序）交叉，另设自由选择接口，共 13 种，共享同一套感知、控制与工具；真机复用同一接口定义。",
+        "results": "仅更换 RUI 时，Claude Code 成功率从 45.3% 升到 80.7%；Qwen3.5-4B 零样本 1.9%，微调后平均 27.3%，per-action Pose 达 46.7%；650 回合真机中 Claude Code 的程序优势消失（36.0% vs 42.0%）。",
+        "limitations": "真机只覆盖 5 个任务、单臂、650 回合；接触密集与时限任务在多数接口下仍失败；任务级验证器只提出需求未实现，接口收益也明显依赖具体智能体。",
+        "reading_minutes": 2
+      }
+    },
+    {
+      "id": "arxiv-2611.27376",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.27376",
+      "arxiv_version": "v2",
+      "version_count": 2,
+      "title": "Composable Soft-Prompt Distillation of RL Experts: Toward Continual Post-Training",
+      "title_zh": "可组合的 soft prompt 蒸馏：把 RL 专家变成可插拔模块的持续 post-training",
+      "authors": [
+        "Zhen Zhang",
+        "Changyi Yang",
+        "Xuehai He",
+        "Chengzhi Liu",
+        "Yutong Yin",
+        "Ziyue Liu",
+        "Zhuoran Yin",
+        "Yangmin Li",
+        "Zhihan Liu",
+        "Jisen Li",
+        "Mingyu Jin",
+        "Chuhan Li",
+        "Zhaotian Weng",
+        "Ruoyu He",
+        "Wenyao Gao",
+        "Jiaxin Deng",
+        "Chenwei Wu",
+        "Hui Shen",
+        "Wenhao Chai",
+        "Chenyang Zhao",
+        "Zhuofan Ying",
+        "Kieran Liu",
+        "Andrew Chen",
+        "Pony Ma",
+        "Zhaoran Wang",
+        "Alkesh Patel",
+        "Zhe Gan",
+        "Xin Eric Wang"
+      ],
+      "abstract": "RL post-training typically produces domain experts that must then be consolidated into one model, and as new experts keep arriving, this consolidation becomes a continual process. Weight merging and multi-teacher on-policy distillation (MOPD) must re-consolidate the whole model whenever an expert is added, and can erode capabilities outside the target domains. We propose Composable Soft-Prompt Distillation (CSPD), which keeps the pre-RL model frozen, distills each RL expert independently into a soft prompt, and composes experts by concatenating their prompts without joint training. A single soft prompt suffices to distill an RL expert, recovering at least 90% of the teacher's gain in 22 of 23 math, code, and agent settings. Independently trained prompts compose well. In a multi-expert setting, the average rises with every expert added, and the full composition matches MOPD (67.83 vs. 67.79). The composition generalizes best across six held-out benchmarks. Input-space adaptation adds little serving overhead, keeping throughput within 1.5% of the unadapted backbone and reaching 2.40x that of rank-4 LoRA. These results point toward continual post-training on a fixed backbone.",
+      "published_at": "2026-11-20T09:42:47+00:00",
+      "updated_at": "2026-11-24T02:06:13+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "category_tier": "high",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.27376",
+        "pdf": "https://arxiv.org/pdf/2611.27376",
+        "code": "https://github.com/UCSB-AI/CSPD",
+        "project": "https://github.com/UCSB-AI/CSPD"
+      },
+      "signals": {
+        "hf_upvotes": 33,
+        "hf_num_comments": 3,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 15,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "强化学习与后训练",
+        "架构/训练/推理加速"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 80.0,
+          "novelty": 76.0,
+          "technical_depth": 86.0,
+          "impact": 76.4,
+          "completeness": 89.6
+        },
+        "tier": "A",
+        "l1_reason": "将每个 RL expert 蒸馏成可拼接 soft prompt，冻结骨干即可持续后训练，组合追平 MOPD 且吞吐仅降 1.5%",
+        "evidence_level": "fulltext",
+        "score": 80.6,
+        "rank_in_pool": 10,
+        "l2_reasons": {
+          "research_value": "把持续 post-training 的整合代价从“重训整个模型”降到“只训一个新 prompt”，并用 23 个单专家设定、四领域逐次加入、六个域外基准与实机服务测量给出成体系证据，对 model merging 与 post-training 部署都有直接参考价值。",
+          "novelty": "soft prompt 与 prompt 拼接都不是新组件，新意在于把输入空间模块作为 RL 专家的整合形式，并给出“独立训练即可组合、且优于 progressive prompts”的完整论证。",
+          "technical_depth": "对比 TA、TIES、MOPD、LoRA 四类基线与合并系数扫描，含 prefix-robust 消融、拼接顺序、逐模块删除归因、progressive 训练对照、serving 与投机解码测量，以及 KL 归因与注意力通路分析。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 14368,
+        "tokens_out": 11156,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "论文在 23 个 math/code/agent 设定上测试单专家蒸馏",
+          "numbers": [
+            "23"
+          ],
+          "source_span": "Section 3.2",
+          "quote": "The 23 settings are deliberately diverse.",
+          "verified": true
+        },
+        {
+          "claim": "其中 22 个设定恢复了教师增益的 90% 以上",
+          "numbers": [
+            "90",
+            "22"
+          ],
+          "source_span": "Section 3.2 / Table 1",
+          "quote": "recovers at least 90% of the teacher’s gain in 22 settings",
+          "verified": true
+        },
+        {
+          "claim": "每个专家被蒸馏成 256 个向量的 soft prompt",
+          "numbers": [
+            "256"
+          ],
+          "source_span": "Section 1",
+          "quote": "its own soft prompt (Lester et al., 2021) of 256 vectors",
+          "verified": true
+        },
+        {
+          "claim": "在 GPT-OSS math 上只用 32 向量仍有 90.0% 恢复率，低于 256 向量的 93.1%",
+          "numbers": [
+            "32",
+            "90.0",
+            "256",
+            "93.1"
+          ],
+          "source_span": "Section 3.2",
+          "quote": "On GPT-OSS math, 32 vectors reach 90.0% recovery, below the 93.1% of 256 vectors in the same sweep.",
+          "verified": true
+        },
+        {
+          "claim": "拼接四个领域的 prompt 把学生平均分从 50.41 提到 67.83",
+          "numbers": [
+            "50.41",
+            "67.83"
+          ],
+          "source_span": "Section 3.3 / Table 2",
+          "quote": "raises the student’s average score from 50.41 to 67.83",
+          "verified": true
+        },
+        {
+          "claim": "CSPD 的域内平均分与 MOPD 的 67.79 持平",
+          "numbers": [
+            "67.79"
+          ],
+          "source_span": "Section 3.3 / Table 2",
+          "quote": "on par with MOPD (67.79)",
+          "verified": true
+        },
+        {
+          "claim": "逐次加入专家时平均分依次为 50.41、60.99、61.67、63.67、67.83",
+          "numbers": [
+            "50.41",
+            "60.99",
+            "61.67",
+            "63.67",
+            "67.83"
+          ],
+          "source_span": "Section 3.4 / Figure 3a",
+          "quote": "The average rises from the student’s 50.41 to 60.99, 61.67, 63.67, and 67.83",
+          "verified": true
+        },
+        {
+          "claim": "域外六个基准上 CSPD 平均 56.6，MOPD 为 53.5",
+          "numbers": [
+            "56.6",
+            "53.5"
+          ],
+          "source_span": "Section 1 / Table 3",
+          "quote": "(56.6, versus 53.5 for MOPD)",
+          "verified": true
+        },
+        {
+          "claim": "soft prompt 的吞吐保持在未适配骨干的 1.5% 以内",
+          "numbers": [
+            "1.5"
+          ],
+          "source_span": "Section 3.6",
+          "quote": "SP throughput stays within 1.5% of the unadapted backbone",
+          "verified": true
+        },
+        {
+          "claim": "32 并发请求下 soft prompt 的吞吐是 rank-4 LoRA 的 2.40 倍",
+          "numbers": [
+            "2.40"
+          ],
+          "source_span": "Section 3.6 / Figure 5",
+          "quote": "SP delivers 2.40× the throughput of LoRA",
+          "verified": true
+        },
+        {
+          "claim": "soft prompt 关闭了 86.8% 的 teacher–student KL 差距",
+          "numbers": [
+            "86.8"
+          ],
+          "source_span": "Section 4 / Figure 6a",
+          "quote": "closes 86.8% of the teacher–student KL gap",
+          "verified": true
+        },
+        {
+          "claim": "同样意图的书面指令最多只关闭 2.1% 的差距",
+          "numbers": [
+            "2.1"
+          ],
+          "source_span": "Section 4 / Figure 6a",
+          "quote": "close at most 2.1% of the gap",
+          "verified": true
+        },
+        {
+          "claim": "仅允许 response token 注意 prompt 时仍保留 80% 的改善",
+          "numbers": [
+            "80"
+          ],
+          "source_span": "Section 4 / Figure 6c",
+          "quote": "80% of its improvement remains",
+          "verified": true
+        },
+        {
+          "claim": "单独合并 IF 专家把 LiveCodeBench 从 58.61 降到 52.69",
+          "numbers": [
+            "58.61",
+            "52.69"
+          ],
+          "source_span": "Section 3.4 / Figure 4",
+          "quote": "The IF expert alone lowers LiveCodeBench to 52.69, well below the student’s 58.61",
+          "verified": true
+        },
+        {
+          "claim": "prefix-robust 训练在一半样本的 prompt 前拼接 128–256 token 同域前缀",
+          "numbers": [
+            "128",
+            "256"
+          ],
+          "source_span": "Section 2.2",
+          "quote": "places a 128–256-token prefix, sampled from other questions in the same domain, before the soft prompt in half of the training examples",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "University of California, Santa Barbara",
+        "Carnegie Mellon University",
+        "University of California, Santa Cruz",
+        "Northwestern University",
+        "NVIDIA"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 0,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 CSPD，在冻结的 pre-RL 骨干上把每个 RL 专家独立蒸馏成 256 向量的 soft prompt，推理时直接拼接组合，四领域组合平均分与 MOPD 持平（67.83 vs 67.79），域外泛化更好、服务开销接近骨干。",
+        "task": "RL post-training 通常按领域分别进行，每个领域有自己的数据、verifier 与环境，产出的专家需要再合并进一个模型；新专家不断到来，合并因此变成持续过程。现有的权重合并与多教师 on-policy 蒸馏（MOPD）每加一个专家都要重新整合整个模型，把专家写进同一组参数还会侵蚀目标域之外的能力；按请求路由专家则要训练 router、无法在同一请求内组合专家、且每个专家要驻一份完整模型。",
+        "findings": [
+          {
+            "point": "权重空间的重新整合本身就是遗忘来源",
+            "detail": "只把 IF 专家做 TIES 合并就把 LiveCodeBench 从 58.61 压到 52.69；progressive 训练同样侵蚀已有 IFBench。写进同一组参数的更新互相抵消。"
+          },
+          {
+            "point": "RL 专家的增益可以被输入空间的少量向量承载",
+            "detail": "256 向量即恢复教师增益 ≥90%（22/23 设定），只留 32 向量仍有 90.0%，说明瓶颈在整合方式而非表示容量。"
+          },
+          {
+            "point": "prompt 学到的是推理行为而非可写出的指令",
+            "detail": "它关闭 86.8% 的 teacher–student KL 差距，主要让模型回头检查中间结果（?、But、Check 概率上升），同义书面指令最多 2.1%；80% 的改善来自 response token 直接注意 prompt。"
+          }
+        ],
+        "method": "每个专家 j 独立蒸馏到自己的 256 向量 prompt：教师对领域问题采样，只保留 verifier 通过的回答，在冻结骨干 $\\theta_0$ 上只训练 prompt，目标为长度归一化的 NLL $P_j^\\star=\\arg\\min_{P_j}\\mathbb{E}_{(x,y)\\sim\\mathcal{D}_j}\\left[-\\frac{1}{|y|}\\sum_t\\log p_{\\theta_0}(y_t\\mid I(P_j,x),y_{<t})\\right]$。为让单独训练的 prompt 能跟在别的 prompt 之后，一半样本在其前面拼 128–256 token 同域前缀（不计 loss、推理不用）。组合即拼接 $P_{1:k}=[P_1^\\star;\\dots;P_k^\\star]$，无联合训练、无合并系数、无 router；加专家只训新 prompt，删专家只丢 prompt。适配只在输入端，prompt 只需 prefill 一次并缓存 KV，不同 prompt 的请求可同批服务。",
+        "results": "23 个 math/code/agent 设定中 22 个恢复教师增益 ≥90%；四领域逐次加入平均分从 50.41 单调升到 67.83，与 MOPD 67.79 持平，域外六基准均值 56.6 对 53.5；B200 上吞吐在骨干 1.5% 内、为 rank-4 LoRA 的 2.40 倍。",
+        "limitations": "组合仅单一 backbone、四个领域验证，专家更多时未知；部分 checkpoint 与合并系数在评测集上选，recovery 存在噪声；每个 prompt 占 256 位置，KV cache 随专家数增长，换骨干需重蒸。",
+        "reading_minutes": 3
+      }
+    },
+    {
+      "id": "arxiv-2611.29338",
+      "content_type": "paper",
+      "source": [
+        "arxiv",
+        "huggingface"
+      ],
+      "arxiv_id": "2611.29338",
+      "arxiv_version": "v1",
+      "version_count": 1,
+      "title": "A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation",
+      "title_zh": "把 VLM 训练成机器人操作基础模型的一次尝试",
+      "authors": [
+        "Meng-Hao Guo",
+        "Yi Zhang",
+        "Zhe-Han Mo",
+        "Han-Zheng Wang",
+        "Jia-Jun Wang",
+        "Xin-Sheng Chen",
+        "Jiaxi Song",
+        "Yi-Xuan Deng",
+        "Jia-Ning Li",
+        "Xuanyu Chu",
+        "Hengrui Zhang",
+        "Huan-ang Gao",
+        "Yongming Rao",
+        "Shi-Min Hu"
+      ],
+      "abstract": "Recently, GPT-6 Astra demonstrates strong generalization in robot control, yet limited disclosure of its training leaves open how such capabilities can be reproduced. We introduce nanoAstra, an approach to training vision-language models (VLMs) for generalizable manipulation that combines semantic action modeling with capability-preserving supervised fine-tuning (CP-SFT). nanoAstra represents robot behavior as semantic steps composed of reusable, parameterized action primitives, guided by explicit progress descriptions. Meanwhile, CP-SFT uses an explicit robot-specific system prompt to constrain manipulation outputs to a structured action space, aiming to focus adaptation on robot-specific contexts and promote specialization while minimizing interference with broader pretrained capabilities. With this formulation, we train nanoAstra on more than 5,000 hours of robot data together with general VQA data. On RoboTwin 2.0's randomized benchmark, nanoAstra-9B achieves a 17.8% zero-shot success rate, substantially outperforming advanced VLA and WAM baselines as well as similarly sized VLMs. With inference faster than the corresponding motion execution on a single H20 GPU, our model supports action-chunk-like streaming execution that overlaps inference with motion, reducing the robot's idle time from 35.0% to 6.9%.",
+      "published_at": "2026-11-22T09:15:32+00:00",
+      "updated_at": "2026-11-22T09:15:32+00:00",
+      "arxiv_announce_date": "2026-11-26",
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "category_tier": "medium",
+      "comment": null,
+      "doi": null,
+      "journal_ref": null,
+      "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.29338",
+        "pdf": "https://arxiv.org/pdf/2611.29338",
+        "code": "https://github.com/Hugo-AGI/nanoAstra",
+        "project": "https://nanoastra.github.io"
+      },
+      "signals": {
+        "hf_upvotes": 56,
+        "hf_num_comments": 2,
+        "hf_trending": true,
+        "citation_count": 0,
+        "influential_citation_count": null,
+        "reference_count": 0,
+        "venue": "arXiv",
+        "work_type": "preprint",
+        "fwci": null,
+        "citation_percentile": null,
+        "citations_by_year": null,
+        "repo_stars": 30,
+        "repo_stars_7d": null,
+        "repo_stars_30d": null
+      },
+      "channel": "primary",
+      "topics": [
+        "World Models 与具身智能",
+        "图像/视频/多模态生成"
+      ],
+      "topics_source": "rule",
+      "quality": {
+        "dimensions": {
+          "research_value": 78.0,
+          "novelty": 70.0,
+          "technical_depth": 62.0,
+          "impact": 87.6,
+          "completeness": 90.0
+        },
+        "tier": "B",
+        "l1_reason": "语义动作原语加能力保持 SFT，5 千小时数据训练，RoboTwin 2.0 零样本 17.8% 超 VLA/WAM，但绝对成功率仍低且细节有限",
+        "evidence_level": "fulltext",
+        "score": 75.4,
+        "rank_in_pool": 16,
+        "l2_reasons": {
+          "research_value": "论文直接追问通用 VLM 能否成为操作基础模型，给出可复现的数据表示与训练配方，并在零样本随机化基准上明显超过 VLA/WAM/VLM 基线，但绝对成功率仍低，离可用还有距离。",
+          "novelty": "核心是把稠密控制步目标换成带进度描述的参数化动作原语，属于监督表示的改变；CP-SFT 的 system prompt 约束加 VQA 混训是既有防遗忘手段的组合，方法层面没有新架构，主要增量在数据流水线。",
+          "technical_depth": "训练细节、时延测量与训练过程监控做得扎实，但语义步表示与 CP-SFT 两条核心设计没有拆开消融，与基线的比较也缺少同数据同算力的重训对照，中心假设未被直接检验。"
+        }
+      },
+      "recommendation_type": "frontier",
+      "recommended_at": "2026-11-26T19:51:39.887345+00:00",
+      "cost": {
+        "model_used": "deepseek-flash",
+        "tokens_in": 12221,
+        "tokens_out": 9995,
+        "cache_hit_tokens": 1664
+      },
+      "claims": [
+        {
+          "claim": "nanoAstra-9B 在 RoboTwin 2.0 零样本随机化基准上取得 17.8% 成功率。",
+          "numbers": [
+            "17.8"
+          ],
+          "source_span": "Abstract; Sec. 1",
+          "quote": "nanoAstra-9B achieves a 17.8% zero-shot success rate",
+          "verified": true
+        },
+        {
+          "claim": "该结果比最强 VLA 与最强 VLM 基线高 7.0 个百分点。",
+          "numbers": [
+            "7.0"
+          ],
+          "source_span": "Sec. 3.3, Performance",
+          "quote": "by 7.0 percentage points",
+          "verified": true
+        },
+        {
+          "claim": "被评测的 WAM 模型成功率最高仅 0.2%。",
+          "numbers": [
+            "0.2"
+          ],
+          "source_span": "Sec. 3.3, Performance",
+          "quote": "The evaluated WAMs achieve at most 0.2%",
+          "verified": true
+        },
+        {
+          "claim": "VLA 基线 π0.5 在同一设定下成功率仅 1.4%。",
+          "numbers": [
+            "1.4"
+          ],
+          "source_span": "Figure 1; Table 1",
+          "quote": "π0.5 1.4%",
+          "verified": true
+        },
+        {
+          "claim": "通用 Qwen 模型加 thinking 后成功率从 3.2–4.0% 升到 8.2–10.8%。",
+          "numbers": [
+            "3.2",
+            "4.0",
+            "8.2",
+            "10.8"
+          ],
+          "source_span": "Sec. 3.3, Performance",
+          "quote": "raising success rates from 3.2–4.0% without thinking to 8.2–10.8% with thinking",
+          "verified": true
+        },
+        {
+          "claim": "流式执行把机器人空闲时间占比从 35.0% 降到 6.9%。",
+          "numbers": [
+            "35.0",
+            "6.9"
+          ],
+          "source_span": "Abstract; Table 3",
+          "quote": "from 35.0% to 6.9%",
+          "verified": true
+        },
+        {
+          "claim": "这批数据约含 818K 条 episode。",
+          "numbers": [
+            "818"
+          ],
+          "source_span": "Sec. 2.1, Data Recipe with VLM Data",
+          "quote": "approximately 818K episodes",
+          "verified": true
+        },
+        {
+          "claim": "训练用 56 张 H20 跑一个 epoch。",
+          "numbers": [
+            "56"
+          ],
+          "source_span": "Sec. 3.1, Settings",
+          "quote": "We train for one epoch on 56 H20 GPUs",
+          "verified": true
+        },
+        {
+          "claim": "最终 checkpoint 上 MMMU、ERQA、CV-Bench-2D、CV-Bench-3D 分别为 53.1%、41.0%、81.6%、87.6%，初始为 58.6%、47.3%、82.2%、92.6%。",
+          "numbers": [
+            "53.1",
+            "41.0",
+            "81.6",
+            "87.6",
+            "58.6",
+            "47.3",
+            "82.2",
+            "92.6"
+          ],
+          "source_span": "Sec. 3.5, Training Process Monitoring",
+          "quote": "At the final checkpoint, MMMU, ERQA, CV-Bench-2D, and CV-Bench-3D reach 53.1%, 41.0%, 81.6%, and 87.6%, respectively, compared with initial scores of 58.6%, 47.3%, 82.2%, and 92.6%.",
+          "verified": true
+        },
+        {
+          "claim": "除 CV-Bench-2D 外，其余基准相对初始精度下降 5.0–6.3 个百分点。",
+          "numbers": [
+            "5.0",
+            "6.3"
+          ],
+          "source_span": "Sec. 3.5, Training Process Monitoring",
+          "quote": "with gaps of 5.0–6.3 points",
+          "verified": true
+        },
+        {
+          "claim": "在 RoboDojo Open 上成功率为 4.75%（19/400）。",
+          "numbers": [
+            "4.75",
+            "19",
+            "400"
+          ],
+          "source_span": "Sec. 3.4; Table 4",
+          "quote": "nanoAstra-9B achieves a 4.75% success rate (19/400)",
+          "verified": true
+        }
+      ],
+      "affiliations": [
+        "Tsinghua University",
+        "Tencent Hunyuan"
+      ],
+      "evidence_level": "fulltext",
+      "validation": {
+        "metadata_ok": true,
+        "links_ok": true,
+        "links_present": [
+          "code",
+          "paper",
+          "pdf",
+          "project"
+        ],
+        "dropped_claims": 4,
+        "downgraded_reason": null,
+        "warnings": []
+      },
+      "content": {
+        "why_read": "提出 nanoAstra，把机器人示教重组成带稠密进度描述的语义动作原语序列，并以能力保持的 CP-SFT 微调 VLM，在 RoboTwin 2.0 零样本随机化基准上取得 17.8% 成功率。",
+        "task": "机器人操作基础模型要在未见过的物体、指令与环境上泛化。当前两条主线各有短板：VLA 直接回归稠密控制步，WAM 额外预测未来视频；在 RoboTwin 2.0 的零样本随机化设定下，π0.5 只有 1.4%、DreamZero 0.2% 成功率，通用 VLM 加 thinking 也只有 8.2–10.8%，说明规模化预训练知识并未自动转化为可执行的操控行为。GPT-6 Astra 展示了这种可能性，但训练细节未公开。",
+        "findings": [
+          {
+            "point": "稠密控制步监督里没有可复用的行为单元",
+            "detail": "控制步目标虽物理明确，却不标出连贯动作单元及其在任务中的角色；同一行为随控制频率、执行速度和局部修正产生不同序列，模型只能从碎片轨迹反推结构，容易贴合示教特有的执行模式。"
+          },
+          {
+            "point": "任务级指令缺少中间目标",
+            "detail": "episode 级指令不描述中间目标，下一步动作缺少可依据的进度状态，长任务中模型难以判断当前处在哪个子任务阶段。"
+          },
+          {
+            "point": "全参适配会侵蚀预训练能力",
+            "detail": "训练曲线显示 VQA 准确率早期下降后回升，但最终 MMMU、ERQA、CV-Bench-3D 仍低于初始值，说明直接微调确实带来遗忘，需要显式的保持机制。"
+          }
+        ],
+        "method": "数据侧用五阶段流水线统一四个异构数据集：对齐坐标系与抓取参考点，在夹爪切换、停顿、急转等决策点切分，用 Qwen3.5 生成「动作+物体+目标」的稠密进度描述，样本输出进度句与左右臂动作原语序列（move x +5.0、gripper open）；2.29B 机器人 token 与 1.36B VQA token 混训。模型侧 CP-SFT 用机器人 system prompt 规定本体、坐标、单位与动作词表，把输出软约束在结构化响应空间，并靠联合 VQA 抑制遗忘；损失为 $\\ell^{CE}+\\lambda\\ell^{num}$（$\\lambda=0.3$），9B 全参微调，无独立动作头。",
+        "results": "RoboTwin 2.0 零样本随机化设定下 17.8%，比最强 VLA/VLM 基线高 7.0 个百分点；RoboDojo Open 4.75%。H20 上推理 1.69 s 短于动作执行，流式执行把空闲占比从 35.0% 降到 6.9%。",
+        "limitations": "绝对成功率仅 17.8%，长程任务仍因关节物体参数化与进度漂移失败；语义步表示与 CP-SFT 未分别消融，中心假设缺乏直接检验；MMMU 等基准仍掉 5.0–6.3 分。",
+        "reading_minutes": 3
+      }
+    }
+  ],
+  "stats": {
+    "filter": {
+      "input": 5516,
+      "passed_rules": 3999,
+      "dropped": {
+        "cooldown": 35,
+        "channel_stale": 1479,
+        "low_quality": 2,
+        "short_abstract": 1
+      },
+      "survey_matched": 5,
+      "pool_sizes": {
+        "frontier": 120,
+        "survey": 5,
+        "classic": 0
+      },
+      "classic_pool": 10
+    },
+    "rank": {
+      "frontier": {
+        "input": 120,
+        "batches": 8,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 23,
+          "B": 81,
+          "C": 16
+        },
+        "kept": 40
+      },
+      "survey": {
+        "input": 5,
+        "batches": 1,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 2,
+          "B": 3
+        },
+        "kept": 5
+      },
+      "classic": {
+        "input": 10,
+        "batches": 1,
+        "failed_batches": 0,
+        "tiers": {
+          "A": 3,
+          "B": 5,
+          "C": 2
+        },
+        "kept": 8
+      }
+    },
+    "select": {
+      "allowance": {
+        "frontier": 10,
+        "survey": 2,
+        "classic": 1
+      },
+      "dropped": {
+        "frontier": {
+          "topic": 6,
+          "affiliation": 0,
+          "similar": 0
+        },
+        "survey": {
+          "topic": 0,
+          "affiliation": 0,
+          "similar": 0
+        },
+        "classic": {
+          "topic": 0,
+          "affiliation": 0,
+          "similar": 0
+        }
+      },
+      "affiliation_constraint": "inactive_no_data"
+    },
+    "summarize": {
+      "input": 13,
+      "cached": 0,
+      "failed": 0,
+      "skipped_budget": 0,
+      "levels": {
+        "fulltext": 12
+      },
+      "degraded": [
+        {
+          "id": "arxiv-2302.09019",
+          "note": "全文超长已截断"
+        },
+        {
+          "id": "arxiv-2611.28649",
+          "note": "全文超长已截断"
+        },
+        {
+          "id": "arxiv-2611.30844",
+          "note": "全文超长已截断"
+        }
+      ]
+    },
+    "validate": {
+      "checked": 12,
+      "dropped": [],
+      "dropped_claims": 7,
+      "downgraded": [],
+      "link_failures": []
+    }
+  },
+  "validation": {
+    "items_dropped": 0,
+    "claims_dropped": 7,
+    "downgraded": 0,
+    "link_failures": 0,
+    "warnings": 2
+  }
+}

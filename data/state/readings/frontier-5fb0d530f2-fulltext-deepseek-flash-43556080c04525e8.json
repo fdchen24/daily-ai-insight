@@ -1,0 +1,147 @@
+{
+  "title_zh": "PyRUA-Dex：用编码智能体学习灵巧双臂操作的程序化策略",
+  "affiliations": [
+    "Peking University",
+    "National University of Singapore",
+    "NVIDIA",
+    "Tongji University",
+    "University of Chicago"
+  ],
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "把多指灵巧操作的示教依赖换成由编码智能体开发、冻结后零 LLM 调用的程序化策略，在 Bench2Dex 与 DexJoCo 上超过全部训练策略，并落到双臂 22-DoF 真机上弹琴写字，给出了可检验的替代路线。",
+    "novelty": 74,
+    "novelty_reason": "「程序即策略 + 编码智能体自我改进」在这条线上已有 pHL、RAX、PyRUA 等工作，本文的实质新增是面向多指手的阶段成功率分解驱动精修、并行探索加共享记忆蒸馏，以及跨 12 种手共用的 primitive 层。",
+    "technical_depth": 82,
+    "technical_depth_reason": "给出成功率沿阶段分解的形式化目标与探索/精修消融（成功率 44.6%→60.6%）、失败归因统计、换手换仿真器的第二基准以及真机 system identification；但只用单一 LLM 且未报多次运行方差，真机只做演示、未在硬件上重复统计成功率。"
+  },
+  "reading": {
+    "why_read": "提出 PyRUA-Dex，用编码智能体在仿真中两阶段开发多指灵巧手的程序化策略：八智能体并行探索并蒸馏成程序，再按阶段成功率定位瓶颈阶段做精修，冻结的 Python 程序在 Bench2Dex 得分 72.9。",
+    "task": "多指灵巧操作目前几乎全靠示教：从人类视频 retarget 不精确，遥操作没有力反馈，外骨骼采集难扩展，数据还与具体的手绑定，换手就要重采重训。代价是 Bench2Dex 上最强训练策略成功率刚过半，布局外观或物体位置一变就明显退化；而让 LLM 智能体在测试时逐 episode 闭环，又受 token 与步数预算制约。",
+    "findings": [
+      {
+        "point": "成功率沿有序阶段连乘，整体被最不可靠的阶段封顶",
+        "detail": "任务被拆成 K 个有序阶段，$SR=s\\prod_{k} r_k$；五个阶段各 80% 也只有 33%，所以单布局上成功的程序在多数布局都会失败，鲁棒性必须逐阶段在大量布局上测量、只修最差的那个。"
+      },
+      {
+        "point": "探索后的失败源于某个阶段不可靠，而不是步数预算不够",
+        "detail": "341 次失败验证 run 中，68% 还剩 30% 以上步数就返回，59% 是一个阶段函数失败后后续阶段直接跳过，仅 2% 耗尽步数。"
+      },
+      {
+        "point": "把 LLM 留在测试回路里既贵又不准",
+        "detail": "同一模型在线跑时每个 episode 都要重新观测决策，基准步数下 Full 通道仅 26.2%，要 61.5% 就得把步数预算提到十倍、每 episode 33.7M token。"
+      }
+    ],
+    "method": "程序是固定骨架的 Python 代码（setup + 每阶段一个 $f_k$，失败可重试），所有手经统一 primitive 库控制。Stage 1：八个 Codex 智能体并行探索，各占一布局与一未解阶段，状态重置只重试该阶段并共享 memory，无智能体评估后由蒸馏智能体编成任务库。Stage 2：单智能体按 32 新布局的阶段级失败率找瓶颈，用 partial rollout 只跑到该阶段测量，精修期步数翻倍，每 160 布局在留出布局上复评、无退化才替换；真机在标定仿真中跑同样两阶段并逐轮写回差异。",
+    "results": "Bench2Dex 得分 72.9 居首，精修把成功率 44.6%→60.6%；DexJoCo 全随机化 81.0%（π0.5 40.3%）；真机六任务验证布局 119/192→168/192。",
+    "limitations": "弱在持续力控与滑移（倒液、拼图落后，DexJoCo 装配仅 34.0%）；触觉仿真粗糙、接触靠关节滞后推断；精修救不了从未成功的阶段；每任务单独学习，真机可靠性只在标定仿真中测。"
+  },
+  "claims": [
+    {
+      "claim": "PyRUA-Dex 在 Bench2Dex 上得分 72.9，为该榜 SOTA",
+      "numbers": [
+        "72.9"
+      ],
+      "source_span": "Section 4.2 / Table 1, row 'PyRUA-Dex'",
+      "quote": "PyRUA-Dex scores 72.9 on Bench2Dex, a new SOTA"
+    },
+    {
+      "claim": "精修把四通道成功率从 44.6% 提到 60.6%",
+      "numbers": [
+        "44.6",
+        "60.6"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "Refinement raises the success rate from 44.6% to 60.6%"
+    },
+    {
+      "claim": "DexJoCo 全随机化（rand-full）成功率 81.0%，最强训练策略 π0.5 为 40.3%",
+      "numbers": [
+        "81.0",
+        "40.3"
+      ],
+      "source_span": "Section 4.5 / Table 2",
+      "quote": "81.0% of the rand-full ones, against 54.1% and 40.3%"
+    },
+    {
+      "claim": "真机六个任务在仿真的验证布局上从 119 升到 168（共 192 个）",
+      "numbers": [
+        "119",
+        "168",
+        "192"
+      ],
+      "source_span": "Section 5 / Table 3",
+      "quote": "the six tasks rise from 119 to 168 of their 192 validation layouts"
+    },
+    {
+      "claim": "五个阶段各 80% 成功率时整体只有 33%",
+      "numbers": [
+        "80",
+        "33"
+      ],
+      "source_span": "Section 1",
+      "quote": "five stages at 80% each give an overall success rate of only 33%"
+    },
+    {
+      "claim": "探索后的程序在 22 个任务上有 341 次失败验证 run",
+      "numbers": [
+        "341",
+        "22"
+      ],
+      "source_span": "Section 4.3, Figure 4a",
+      "quote": "We classify the 341 failed validation runs of the programs after exploration on the 22 tasks"
+    },
+    {
+      "claim": "失败 run 中 68% 还剩至少 30% 步数，59% 是单个阶段函数失败导致后续全跳过，仅 2% 耗尽步数",
+      "numbers": [
+        "68",
+        "30",
+        "59",
+        "2"
+      ],
+      "source_span": "Section 4.3, Figure 4a",
+      "quote": "In 68% of them the program had returned with at least 30% of the step budget unused, and in 59% one stage function had failed once and every later function had returned at once; only 2% ran out of steps."
+    },
+    {
+      "claim": "GPT-6 Astra 在线智能体在基准步数预算下 Full 通道成功率 26.2%",
+      "numbers": [
+        "26.2"
+      ],
+      "source_span": "Table 1, row 'GPT-6 Astra agent, 1×'",
+      "quote": "26.2†"
+    },
+    {
+      "claim": "在线智能体要十倍步数预算、每 episode 33.7M token 才达到 61.5%",
+      "numbers": [
+        "61.5",
+        "33.7"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "The online agent reaches 61.5% only with ten times the step budget, at 33.7M tokens per episode."
+    },
+    {
+      "claim": "精修前在 32 个新训练布局上做阶段级失败分析",
+      "numbers": [
+        "32"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "the program runs without the agent on 32 fresh training layouts"
+    },
+    {
+      "claim": "每 160 个训练布局做一次程序复评与选择",
+      "numbers": [
+        "160"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "After every 160 training layouts, the current version is evaluated without the agent"
+    },
+    {
+      "claim": "DexJoCo 装配任务最低，物体随机化下只有 34.0%",
+      "numbers": [
+        "34.0"
+      ],
+      "source_span": "Section 6",
+      "quote": "assembly is the lowest of the DexJoCo tasks (34.0% under object randomization)"
+    }
+  ]
+}

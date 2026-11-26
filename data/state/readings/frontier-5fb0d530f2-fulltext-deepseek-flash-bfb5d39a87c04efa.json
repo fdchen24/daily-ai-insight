@@ -1,0 +1,102 @@
+{
+  "title_zh": "什么使编码智能体的训练数据优质？基于 SWE-Gym 的系统研究",
+  "affiliations": [
+    "AMD",
+    "University of Michigan",
+    "Tulane University",
+    "Georgia Institute of Technology",
+    "University College London"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "在真实 RL 训练集上以执行证据逐条量化奖励标签错误，并用等规模、匹配难度的训练验证审计收益，对 coding agent 的数据构建有直接意义。",
+    "novelty": 82,
+    "novelty_reason": "把审计粒度从任务级 LLM 评分降到单条 F2P 断言，并要求 witness/counterexample 执行复现；同时追踪错误是否进入 GRPO 梯度，区别于仅做过滤或任务级打分的工作。",
+    "technical_depth": 86,
+    "technical_depth_reason": "执行背书的判定、FN/FP 双向审计、等规模匹配难度多种子训练和多项消融较扎实；但单一模型与 scaffold、有限训练预算及 Clean 与 Orig 的多因素混合限制了因果拆解。"
+  },
+  "reading": {
+    "why_read": "提出 SWE-Gym-Verified：用执行验证逐条审计 SWE-Gym 隐藏测试的奖励标签，修复或剔除假阴性任务，并在同等规模与难度下使 held-out pass@1 提升 2.4–2.7 分。",
+    "task": "RL 训练编码智能体时，隐藏测试就是奖励标签；现有任务集只验证参考修复能通过、原始代码失败，无法保证所有正确修复都得分、错误修复不得分。通过率过滤和丢弃从未解出任务把零通过率当作难度，可能保留甚至奖励标签错误。",
+    "findings": [
+      {
+        "point": "未解不等于难，往往是奖励标签错",
+        "detail": "原始任务中，从未被解出的任务 74% 含拒绝正确修复的 F2P 断言，而有时解出的仅 20%；测试依赖 issue 未说明的接口、精确字符串或任意设计选择。"
+      },
+      {
+        "point": "通过率过滤只删掉不携带梯度的错误",
+        "detail": "从未解出的 FN 缺陷任务仅占 0.9% 的带梯度组；有时解出的缺陷任务占 16.6% 任务、19.5% 带梯度组，过滤后仍在，梯度会奖励复现隐藏测试文本的补丁。"
+      },
+      {
+        "point": "假阳性普遍，强化测试也难以改变策略",
+        "detail": "Clean 上 26.1% 的通过补丁是假阳性；新增测试抓住 25% 后，Clean+FP 在新测试上的通过率仅高 0.4 和 1.8 pp，held-out pass@1 无可检测变化。"
+      }
+    ],
+    "method": "审计 SWE-Gym 的可用去重任务：两族 LLM 对每条 F2P 断言逐条评分，只有执行 witness 复现才判为假阴性；可追加 Requirements 修复的保留，否则剔除；对通过补丁用双模型标记并由 counterexample 执行确认假阳性，再把 counterexample 转成新测试。发布 SWE-Gym-Verified，并用 Qwen3.5-9B + GRPO 在匹配难度的原始、审计、加固和通过率过滤四组任务上训练，以 held-out 基准评估。",
+    "results": "在同等规模与匹配难度、多种子训练下，Clean 在 SWE-bench Verified 与 SWE-bench Pro 上分别比 Orig 高 2.4 和 2.7 分；按通过率过滤的 Orig+Filter 无同等增益，Clean+FP 对 held-out 无可检测变化。",
+    "limitations": "仅一个 base model、单一 scaffold 与有限训练预算；Clean 与 Orig 同时混合修复、剔除和替换，RQ3 无法拆分各因素；审计由 LLM 判定，仅少量人工抽查，FN 只覆盖 F2P 断言，FP 只覆盖回归。"
+  },
+  "claims": [
+    {
+      "claim": "在同等规模与匹配难度下，Clean 在 SWE-bench Verified 与 SWE-bench Pro 上分别比 Orig 高 2.4 和 2.7 分。",
+      "numbers": [
+        "2.4",
+        "2.7"
+      ],
+      "source_span": "§5.4, Table 2",
+      "quote": "Clean outperforms Orig by 2.4 pp on Verified-397 and by 2.7 pp on SWE-bench Pro"
+    },
+    {
+      "claim": "原始任务中，从未被解出的任务 74% 含拒绝正确修复的 F2P 断言，而有时解出的仅 20%。",
+      "numbers": [
+        "74",
+        "20"
+      ],
+      "source_span": "§5.2, RQ1",
+      "quote": "74% of the never-solved tasks are FN-flawed, versus 20% of the sometimes-solved ones"
+    },
+    {
+      "claim": "从未解出的 FN 缺陷任务仅贡献 0.9% 的带梯度组。",
+      "numbers": [
+        "0.9"
+      ],
+      "source_span": "§5.3, RQ2",
+      "quote": "only 0.9% of its gradient-carrying groups"
+    },
+    {
+      "claim": "85 个有时解出的 FN 缺陷任务占 Orig 任务的 16.6%、带梯度组的 19.5%。",
+      "numbers": [
+        "85",
+        "16.6",
+        "19.5"
+      ],
+      "source_span": "§5.3, RQ2",
+      "quote": "The 85 sometimes-solved FN-flawed tasks make up 16.6% of Orig’s tasks and contribute 19.5% of its gradient-carrying groups"
+    },
+    {
+      "claim": "Clean 任务上通过的补丁中 26.1% 为假阳性。",
+      "numbers": [
+        "26.1"
+      ],
+      "source_span": "§5.2, RQ1",
+      "quote": "26.1% are false positives under our conservative rule"
+    },
+    {
+      "claim": "新增测试抓住 25% 的假阳性，但 held-out pass@1 无可检测变化。",
+      "numbers": [
+        "25"
+      ],
+      "source_span": "§5.5, RQ4",
+      "quote": "catch 25% of the false positives in a sample of passing training patches"
+    },
+    {
+      "claim": "Clean+FP 策略在新测试上的通过率仅比 Clean 策略高 0.4 和 1.8 pp。",
+      "numbers": [
+        "0.4",
+        "1.8"
+      ],
+      "source_span": "§5.5, RQ4",
+      "quote": "passes the new tests only 0.4 and 1.8 pp more often than the Clean policy would"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "title_zh": "张量网络遇上神经网络：TNNs 综述与展望",
+  "affiliations": [
+    "Hong Kong Institute of AI for Science, City University of Hong Kong",
+    "Harbin Institute of Technology Shenzhen",
+    "Fudan University",
+    "Shanghai Academy of AI for Science",
+    "Quantum Science Center of Guangdong-Hong Kong-Macao Greater Bay Area"
+  ],
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "把 TN 与 NN 的交叉整理成数据处理与模型架构两条主轴，并附 Dense/Tucker-2/CP 的同预算解析与实测对照，回答的是“该不该张量化、张量化在哪一层”的全局问题。",
+    "novelty": 76,
+    "novelty_reason": "以 tensorization 形状、rank、拓扑、收缩代价与部署约束如何耦合为组织问题，提出四条跨架构结论与工具箱三级分类，而非按应用领域罗列文献。",
+    "technical_depth": 86,
+    "technical_depth_reason": "逐格式给出 CP/Tucker/BTT/TT-MPO/TR/HT/PEPS 的秩与收缩性质，把 PEPS 精确收缩为 #P-hard、CP 的秩一约束与实测 MAC/显存差异对到机制层面。"
+  },
+  "reading": {
+    "why_read": "梳理 TNNs 这一 TN 与 NN 交叉方向，按数据处理与模型架构两条轴把它们分成压缩、融合、注意力张量化、图与量子几类，指出真正的取舍是表达力与可收缩性，而非选哪种分解格式。",
+    "scope": "范围限于张量网络与神经网络的结合：先给 CP、Tucker、BTT、TT/MPO、TR、HT、PEPS 的记号与收缩性质，再从数据处理（多源融合、多模态池化、压缩、多任务、量子态表示）与模型架构（CNN、RNN、Transformer、GNN、QNN、LLM/MoE）两侧梳理，并覆盖训练稳定性、rank 搜索、硬件加速、工具箱与可解释性。不展开纯量子多体算法，也不细讲剪枝、量化、蒸馏等非张量化压缩。",
+    "evolution": "CP/Tucker 出身信号处理，MPS/TT 出身量子物理，两条脉络因多线性结构合流。数据处理侧，TFL 用外积显式建模模态交互，参数随模态数指数膨胀，LMF 改用 BTT 层把复杂度换到与隐层维度线性相关，PTP/HPFN 再用多项式张量补回被截断的高阶交互。模型侧从压缩单个卷积核与循环权重，扩展到分解注意力与 FFN 权重、压 KV Cache、做 LLM 的 PEFT 与 MoE 跨专家共享。作者的判断是重心已从“把某种分解塞进某个网络”转向构造、搜索、收缩与调度的算法层。",
+    "approaches": [
+      {
+        "point": "分解即压缩：稠密权重换成低秩核",
+        "detail": "CP/Tucker/BTT/TT/TR 直接替换卷积通道、RNN 的 $W$ 与 $[W,U]$、Transformer 的 $W_Q,W_K,W_V,W_O$；换来参数与显存下降，代价是 rank 需人工设定、精度随压缩比下滑。"
+      },
+      {
+        "point": "多线性融合层：显式建模跨模态交互",
+        "detail": "TFL 用外积、LMF 用 BTT、PTP 用 CP/TR 层处理多项式特征张量，MCB/MLB/MUTAN 分别对应 Tucker、CP 与低秩 Tucker 双线性池化；换掉拼接式融合的表达力不足，代价是张量尺寸随模态数增长。"
+      },
+      {
+        "point": "张量化注意力与长上下文",
+        "detail": "MPO-Transformer、Hypoformer 的 TT 加稠密混合、Tucker-Bert 的整模型拼接分解、Tuformer 把 MHSA 推广为 Tucker 形式；换注意力权重与 KV Cache 的显存，代价是纯低秩掉点，必须保留稠密分支。"
+      },
+      {
+        "point": "拓扑即归纳偏置：把结构本身当先验",
+        "detail": "TGNN 用对称 CP 聚合建模置换不变的多线性邻居交互，RTGNN 用 Tucker 抓多视图相关性，多任务用 PEPS 式软共享替代硬共享；换鲁棒性与高阶相关，代价是 loopy 结构精确收缩不可行，只能近似。"
+      },
+      {
+        "point": "训练与结构搜索：把 rank 当架构超参",
+        "detail": "Yu 初始化按张量卷积超图推初始方差、混合精度缓解高阶收缩的数值不稳，PSTRN/贝叶斯/RL 搜索 rank，TIE/ETTE 做收缩调度与 kernel 协同设计；换可用性，代价是搜索与调参开销。"
+      }
+    ],
+    "key_differences": "关键不在分解家族，而在 tensorization 形状、rank 与拓扑三者的耦合：TT/HT 这类链树结构可精确收缩，但远距离交互路径少；PEPS 一类 loopy 结构表达力强，精确收缩却一般不可行；CP 压缩最激进但秩一约束伤精度，Tucker/BTT 居中。作者引述的解析卷积例子里，rank 从 32 调到 128，压缩比就从 23.04× 掉到 2.77×，可见单一压缩比不可比。",
+    "bottlenecks": "省算力不等于省时间：重排与收缩调度使访存主导，作者的同预算对照中 CP rank 64 只有 74.56% 精度、训练时间反而未缩短；rank 选择仍 NP-hard，并与 tensorization 形状、模式顺序耦合。",
+    "future_directions": "作者主张把 tensorization、拓扑、rank 与收缩顺序联合优化，并在固定收缩预算下报告峰值显存与近似收缩误差。我判断短期收益更可能来自硬件感知的 rank 分配与 kernel 融合，而非新分解格式。"
+  },
+  "claims": [
+    {
+      "claim": "作者引述的解析 3×3 卷积例子中，Tucker-2 的 rank 由 32 提到 128，压缩比从 23.04× 降到 2.77×。",
+      "numbers": [
+        "3",
+        "32",
+        "128",
+        "23.04",
+        "2.77"
+      ],
+      "source_span": "Section 4.1 / Table 4",
+      "quote": "changes the compression ratio from 23.04× to 2.77×"
+    },
+    {
+      "claim": "作者自建的 CIFAR-10 对照实验中，CP 在 rank 64 下只保住 74.56% 的测试精度。",
+      "numbers": [
+        "10",
+        "64",
+        "74.56"
+      ],
+      "source_span": "Section 4.1 / Table 5",
+      "quote": "CP with rank 64 retains 74.56% accuracy"
+    }
+  ]
+}

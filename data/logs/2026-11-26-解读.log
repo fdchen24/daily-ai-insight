@@ -1,0 +1,105 @@
+19:49:23 INFO  dai | === 批次 2026-11-26 开始每日流水线 ===
+19:49:23 INFO  dai | 初筛：5516 → 125 条（前沿 120，综述 5），丢弃 {'cooldown': 35, 'channel_stale': 1479, 'low_quality': 2, 'short_abstract': 1}
+19:49:23 INFO  dai | 经典池：50 篇可用（共 55 篇，冷却 180 天），送排序 10 篇
+19:49:23 INFO  httpx | HTTP Request: GET https://api.openalex.org/works?filter=doi%3A10.48550%2Farxiv.2201.11903%7C10.48550%2Farxiv.2112.10752%7C10.48550%2Farxiv.2305.14314&select=doi%2Ccited_by_count%2Creferenced_works_count%2Cpublication_year%2Ctype%2Cprimary_location%2Ccounts_by_year%2Cfwci%2Ccitation_normalized_percentile%2Ctopics%2Cauthorships&per-page=3 "HTTP/1.1 200 OK"
+19:49:23 INFO  dai | OpenAlex: 7 条（缓存 7，新查 3 → 命中 0，未命中 3），1 次请求
+19:49:24 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:49:34 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:49:46 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:49:59 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:50:13 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:50:25 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:50:41 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:51:06 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:51:19 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:51:35 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:51:39 INFO  dai | L1 排序完成：{'frontier': '120→40', 'survey': '5→5', 'classic': '10→8'}
+19:51:39 INFO  dai | 配额选取：{'frontier': 10, 'survey': 2, 'classic': 1}（名额 {'frontier': 10, 'survey': 2, 'classic': 1}）
+19:51:39 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2106.09685 "HTTP/1.1 200 OK"
+19:51:40 INFO  dai | 取材：2106.09685 抽出 26 页 / 44597 字符
+19:51:40 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:52:29 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.34923 "HTTP/1.1 200 OK"
+19:52:29 INFO  dai | 取材：2611.34923 抽出 35 页 / 80366 字符
+19:52:30 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:53:16 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2302.09019 "HTTP/1.1 200 OK"
+19:53:16 INFO  dai | 取材：2302.09019 抽出 34 页 / 131008 字符
+19:53:17 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:53:48 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2511.05963 "HTTP/1.1 200 OK"
+19:53:49 INFO  dai | 取材：2511.05963 抽出 34 页 / 65586 字符
+19:53:49 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:54:29 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.28649 "HTTP/1.1 200 OK"
+19:54:29 INFO  dai | 取材：2611.28649 抽出 36 页 / 120211 字符
+19:54:30 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:55:23 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.30844 "HTTP/1.1 200 OK"
+19:55:23 INFO  dai | 取材：2611.30844 抽出 46 页 / 173865 字符
+19:55:24 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:56:11 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.33144 "HTTP/1.1 200 OK"
+19:56:12 INFO  dai | 取材：2611.33144 抽出 23 页 / 44460 字符
+19:56:12 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:58:03 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.30207 "HTTP/1.1 200 OK"
+19:58:03 INFO  dai | 取材：2611.30207 抽出 18 页 / 39596 字符
+19:58:04 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:58:51 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.31094 "HTTP/1.1 200 OK"
+19:58:51 INFO  dai | 取材：2611.31094 抽出 17 页 / 36588 字符
+19:58:52 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+19:59:37 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.31115 "HTTP/1.1 200 OK"
+19:59:37 INFO  dai | 取材：2611.31115 抽出 31 页 / 38887 字符
+19:59:38 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+20:00:22 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.27376 "HTTP/1.1 200 OK"
+20:00:22 INFO  dai | 取材：2611.27376 抽出 28 页 / 43743 字符
+20:00:23 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+20:01:14 INFO  httpx | HTTP Request: GET https://arxiv.org/pdf/2611.29338 "HTTP/1.1 200 OK"
+20:01:14 INFO  dai | 取材：2611.29338 抽出 12 页 / 38026 字符
+20:01:15 INFO  httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+20:01:59 INFO  dai | L2 解读：12/13 条完成（缓存 0，失败 0，预算中止 0）
+20:01:59 INFO  httpx | HTTP Request: GET https://export.arxiv.org/api/query?id_list=2106.09685&max_results=1 "HTTP/1.1 200 OK"
+20:01:59 INFO  dai | arXiv 回查：请求 1 条，命中 1 条
+20:01:59 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2106.09685 "HTTP/1.1 200 OK"
+20:02:00 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2106.09685 "HTTP/1.1 200 OK"
+20:02:00 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.34923 "HTTP/1.1 200 OK"
+20:02:01 INFO  httpx | HTTP Request: HEAD https://github.com/hustvl/MoLT "HTTP/1.1 200 OK"
+20:02:02 INFO  httpx | HTTP Request: HEAD https://github.com/hustvl/MoLT "HTTP/1.1 200 OK"
+20:02:02 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.34923 "HTTP/1.1 200 OK"
+20:02:03 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2302.09019 "HTTP/1.1 200 OK"
+20:02:03 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2302.09019 "HTTP/1.1 200 OK"
+20:02:04 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2511.05963 "HTTP/1.1 200 OK"
+20:02:04 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2511.05963 "HTTP/1.1 200 OK"
+20:02:04 WARNING dai | 《S-Mind: Internalizing Multi-View Geometr》丢弃 1/13 条 claim（8%）
+20:02:05 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.28649 "HTTP/1.1 200 OK"
+20:02:06 INFO  httpx | HTTP Request: HEAD https://github.com/KANABOON1/S-Mind "HTTP/1.1 200 OK"
+20:02:07 INFO  httpx | HTTP Request: HEAD https://kanaboon1.github.io/S-Mind/ "HTTP/1.1 200 OK"
+20:02:07 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.28649 "HTTP/1.1 200 OK"
+20:02:07 WARNING dai | 《DyLoMo-DiT: Dynamic Looped Mixture-of-Ex》丢弃 2/9 条 claim（22%）
+20:02:08 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.30844 "HTTP/1.1 200 OK"
+20:02:09 INFO  httpx | HTTP Request: HEAD https://github.com/OneBoxCream/DyLoMo-DiT "HTTP/1.1 200 OK"
+20:02:09 INFO  httpx | HTTP Request: HEAD https://oneboxcream.github.io/DyLoMo-DiT/ "HTTP/1.1 200 OK"
+20:02:10 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.30844 "HTTP/1.1 200 OK"
+20:02:10 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.33144 "HTTP/1.1 200 OK"
+20:02:11 INFO  httpx | HTTP Request: HEAD https://vme0522.github.io/PyRUA-Dex/ "HTTP/1.1 200 OK"
+20:02:12 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.33144 "HTTP/1.1 200 OK"
+20:02:12 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.30207 "HTTP/1.1 200 OK"
+20:02:13 INFO  httpx | HTTP Request: HEAD https://github.com/Arist12/SWE-Gym-Verified "HTTP/1.1 200 OK"
+20:02:14 INFO  httpx | HTTP Request: HEAD https://arist12.github.io/writing/swe-gym-verified/ "HTTP/1.1 200 OK"
+20:02:14 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.30207 "HTTP/1.1 200 OK"
+20:02:15 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.31094 "HTTP/1.1 200 OK"
+20:02:16 INFO  httpx | HTTP Request: HEAD https://github.com/NUS-HPC-AI-Lab/LoopRes "HTTP/1.1 200 OK"
+20:02:17 INFO  httpx | HTTP Request: HEAD https://oahzxl.github.io/LoopRes/ "HTTP/1.1 200 OK"
+20:02:17 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.31094 "HTTP/1.1 200 OK"
+20:02:18 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.31115 "HTTP/1.1 200 OK"
+20:02:19 INFO  httpx | HTTP Request: HEAD https://github.com/showlab/RUIBench "HTTP/1.1 200 OK"
+20:02:19 INFO  httpx | HTTP Request: HEAD https://showlab.github.io/RUIBench/ "HTTP/1.1 200 OK"
+20:02:20 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.31115 "HTTP/1.1 200 OK"
+20:02:20 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.27376 "HTTP/1.1 200 OK"
+20:02:21 INFO  httpx | HTTP Request: HEAD https://github.com/UCSB-AI/CSPD "HTTP/1.1 200 OK"
+20:02:22 INFO  httpx | HTTP Request: HEAD https://github.com/UCSB-AI/CSPD "HTTP/1.1 200 OK"
+20:02:22 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.27376 "HTTP/1.1 200 OK"
+20:02:22 WARNING dai | 《A Glimpse of Training VLMs as Foundation》丢弃 4/15 条 claim（27%）
+20:02:23 INFO  httpx | HTTP Request: HEAD https://arxiv.org/abs/2611.29338 "HTTP/1.1 200 OK"
+20:02:23 INFO  httpx | HTTP Request: HEAD https://github.com/Hugo-AGI/nanoAstra "HTTP/1.1 200 OK"
+20:02:24 INFO  httpx | HTTP Request: HEAD https://nanoastra.github.io "HTTP/1.1 200 OK"
+20:02:25 INFO  httpx | HTTP Request: HEAD https://arxiv.org/pdf/2611.29338 "HTTP/1.1 200 OK"
+20:02:25 INFO  dai | 校验：12/12 通过（丢弃 claim 7，降级 0，链接异常 0）
+20:02:25 INFO  dai | 当期写出：daily/2026/11/26.json（{'classic': 1, 'frontier': 10, 'survey': 1}）
+20:02:25 INFO  dai | 周预算账本 2026-W48 更新：{'survey': 1, 'classic': 1}
+20:02:25 INFO  dai | metrics 写出：metrics/2026-11.json status=ok 成本={'currency': 'CNY', 'amount': 0.932, 'price_window': 'off_peak'}
+20:02:25 INFO  dai | === 批次 2026-11-26 完成：投放 {'classic': 1, 'frontier': 10, 'survey': 1} ===

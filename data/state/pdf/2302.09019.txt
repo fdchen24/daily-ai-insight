@@ -1,0 +1,2656 @@
+This article has been accepted for publication in Proceedings of the IEEE. This is the author’s accepted version; the final published version is available at
+https://doi.org/10.1109/JPROC.2026.3756230.
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this
+material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other
+works.
+Tensor Networks Meet Neural Networks:
+A Survey and Future Perspectives
+Maolin Wang, Yu Pan, Zenglin Xu*, Senior Member, IEEE, Guangxi Li, Xiangli Yang,
+Danilo Mandic, Fellow, IEEE, and Andrzej Cichocki, Fellow, IEEE
+Abstract—Tensor networks (TNs) and neural networks (NNs) provide complementary approaches to high-dimensional learning. TNs
+represent high-order arrays as contractions of smaller cores and can reduce otherwise prohibitive storage and computation when suitable
+low-rank structure is present. NNs, by contrast, learn flexible nonlinear representations through architectural inductive biases and
+data-driven optimization. Their connection does not arise from multilinearity alone; rather, TNs provide a principled framework for
+analyzing and restructuring the multilinear components that occur within neural architectures. We refer to neural models that incorporate
+such tensor-network structure as tensorial neural networks (TNNs). This survey examines TNNs from both data-processing and
+model-architecture perspectives. The data perspective covers multi-source fusion, multimodal pooling, tensor compression, multi-task
+learning, and quantum-state data representation. The model perspective considers convolutional and recurrent networks, Transformers,
+graph neural networks, large language and mixture-of-experts models, and quantum neural networks. We further review training and
+rank-selection strategies, contraction and hardware considerations, interpretability, and software support. The central contribution is a
+cross-architectural synthesis of how tensorization, rank, topology, contraction cost, optimization, inductive bias, and deployment
+constraints interact across model families. This synthesis identifies when tensorization functions as compression, structured parameter
+sharing, or a task-aligned inductive bias, and it motivates concrete directions for reproducible evaluation and future research. We provide
+a curated list of TNNs at https://github.com/tnbar/awesome-tensorial-neural-networks.
+Index Terms—Tensor Networks, Deep Neural Networks, Network Compression, Information Fusion, Quantum Circuit Simulation
+✦
+1
+INTRODUCTION
+T
+ENSORS are multi-dimensional (or equivalently, multi-order)
+arrays that represent multiway interactions among multiple
+modal sources. In contrast, vectors (i.e., first-order tensors) and
+matrices (i.e., second-order tensors) are accessed in only one or
+two modes, respectively. As a common data type, tensors have
+been widely observed in several scenarios [1], [2], [3], [4]. For
+instance, functional magnetic resonance imaging (fMRI) samples
+are inherently fourth-order tensors that are composed of three-
+dimensional voxels that change over time [5], [6], [7]. In quantum
+physics, variational wave functions used to study many-body quan-
+tum systems are also high-order tensors [8], [9]. For spatiotemporal
+traffic analysis, road flow/speed information, which is collected
+from multiple roads over several weeks, can also be structured as a
+third-order tensor (road segment×day×time of day) [10]. However,
+for higher-order tensors, when the number of modes increases, the
+total number of elements in the tensors grows exponentially, which
+is prohibitive for storing and processing tensors, which is also
+* Corresponding Author
+•
+M. Wang is with the Hong Kong Institute of AI for Science, City University
+of Hong Kong, HKSAR, China. E-mail: morin.w98@gmail.com
+•
+Y. Pan is with the Harbin Institute of Technology Shenzhen, Shenzhen,
+China. E-mail: iperryuu@gmail.com
+•
+Z. Xu is with the Fudan University and the Shanghai Academy of AI for
+Science, Shanghai, China. E-mail: zenglin@gmail.com
+•
+G. Li is with the Quantum Science Center of Guangdong-Hong Kong-Macao
+Greater Bay Area, Shenzhen, China. E-mail: gxli2017@gmail.com
+•
+X. Yang is with the Information Engineering University in Zhengzhou,
+China. E-mail: xlyang@std.uestc.edu.cn
+•
+D. Mandic is with the Department of Electrical and Electronic Engineering,
+Imperial College London, UK, E-mail: d.mandic@imperial.ac.uk
+•
+A. Cichocki is with the Systems Research Institute, Polish Academy of
+Sciences, Newelska 6, 01-447 Warsaw, Poland, and also with Artificial Intel-
+ligence Project, Riken, 103-0027 Tokyo, Japan, E-mail: a.cichocki@riken.jp
+recognized as the “curse of dimensionality” [11]. Tensor networks
+have emerged as an effective approach to mitigate this problem.
+Tensor Networks (TNs). TNs [8], [11], [12] represent a
+high-order tensor through contractions of smaller component
+tensors, also called blocks, factors, or cores. When the target
+admits an appropriate low-rank or low-entanglement structure, this
+representation can replace exponential storage in the tensor order
+with a number of parameters that scales polynomially in the mode
+sizes and bond dimensions. The benefit is therefore conditional on
+the tensorization, topology, and ranks rather than an unconditional
+resolution of the curse of dimensionality. TNs also distribute
+computation across their cores, enabling structured storage and
+processing of tensors that would otherwise be prohibitively large.
+Commonly used TN formats include CANDECOMP/PARAFAC
+(CP) [13], Tucker decomposition [14], Block-term Tucker (BTT)
+decomposition [15], Matrix Product State (MPS)/Tensor Train (TT)
+decomposition [16], [17], Matrix Product Operators (MPO) [16],
+Tensor Ring (TR) decomposition [18], Tree TN/Hierarchical
+Tucker (HT) decomposition [19], Projected Entangled Pair State
+(PEPS)/Tensor Grid decomposition [20], and multiscale entangle-
+ment renormalization [21]. For the purpose of understanding the
+interconnected structures of TNs, a TN diagram was developed
+as a straightforward graphical diagram (which is discussed in
+Section 2.2). A TN can provide a theoretical and computational
+framework for the analysis of some computationally prohibitive
+tasks. For example, based on the low-rank structures of TNs,
+Pan et al. [22] were able to solve the quantum random circuit
+sampling problem in 15 hours using 512 graphics processing
+units (GPUs); this problem was previously believed to require over
+10,000 years on the most powerful classic electronic supercomputer
+and effectively challenge the quantum supremacy of Google’s
+arXiv:2302.09019v4  [cs.LG]  25 Nov 2026
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+2
+TABLE 1: An overview of TNNs from both data and model perspectives. To reduce redundancy, we report representative rather than
+exhaustive examples.
+Category
+Subcategory
+Detailed Models/Techniques
+Section
+Data Processing
+Multi-source Fusion
+TFL [27], LMF [28], PTP [29], InTense [30]
+3.1
+Multimodal Pooling
+MCB [31], MLB [32], MUTAN [33], CTI [34]
+3.2
+Data Compression
+BNTD [35], TensorCodec [36], NeuKron [37], TTHRESH [38]
+3.3
+Multi-task Training
+TTMT/TMT [39], PEPS-like TN [40], GTTN [41], MTCN [42]
+3.4
+Quantum Data
+Quantum State Mapping [8], [43], Word Quantum Embedding [44], [45], [46], [47]
+3.5
+Model Architecture
+CNNs
+CP-CNN [48], Tucker-CNN [49], BTT-CNN [50], TT-CNN [51], TR-CNN [52]
+4.1
+RNNs
+TT-RNN [53], TR-RNN [54], BTT-RNN [55], HT-RNN [56], Conv-TT-LSTM [57]
+4.2
+Transformers
+MPO-Transformer [58], Tucker-Bert [59], Tuformer [60], Tucker Attention [61], TPA [62]
+4.3
+GNNs
+TGNN [63], RTGNN [64], Nimble GNN [65], T-GINEE [66]
+4.4
+QNNs and Circuits
+MPS Models [67], ConvAC [68], ANTN [69], Tensor Factorizations/Circuits [70]
+4.5
+LLMs and MoE
+TRAC [71], TD-MoE [72], LeSTD [73], TIME [74], ReFTA [75]
+4.6
+TABLE 2: An overview of TNN utility. We keep representative methods only, which makes the table more readable and reduces citation
+overload.
+Category
+Subcategory
+Detailed Models/Techniques
+Section
+Lifecycle
+Stable Training
+Mixed Precision [76], Yu Initialization [77], MANGO [78]
+5.1
+Rank/Structure Search
+PSTRN [79], TR-RL [80], TT-Bayes [81], RGTN [82], MTNL [83]
+5.2
+Model Adaptation
+TRAC [71], TD-MoE [72], LeSTD [73], TIME [74], ReFTA [75]
+4.6
+Hardware Speedup
+TIE [84], TT-Engine [85], ETTE [86], LEGO [87]
+5.3
+Toolboxes
+Basic Tensor Ops
+Tensorly [88], Tensor Toolbox [89], Tntorch [90], ITensor [91], TensorNetwork [92]
+6.1
+Deep-Model Tools
+Tensorly-Torch [88], TedNet [49]
+6.2
+Quantum Simulators
+TensorNetwork [92], ITensor [91], TeD-Q [93], TensorNetworkQuantumSimulator.jl [94]
+6.3
+Analysis
+Interpretability
+MPS explanations [95], tensorized model analysis [96], TN-SHAP-G [97]
+6.4
+quantum computer called “Sycamore”. Other applications include
+brain analysis [23], dimensionality reduction [24], latent factor
+analysis [25], subspace learning [26], etc.
+Neural Networks (NNs). NNs are powerful learning struc-
+tures that enable machines to acquire knowledge from observed
+data [98], [99]. Deep Neural Networks (DNNs) [100], [101] have
+revolutionized artificial intelligence by capturing complex patterns
+from hierarchical data. Representative architectural paradigms
+include convolutional neural networks (CNNs), recurrent neural
+networks (RNNs), and Transformers [100], [102], [103]. Their
+impact spans computer vision, language, and scientific discovery,
+including large-scale vision models and AlphaFold2 [104], [105].
+The field of natural language processing has witnessed a paradigm
+shift with the emergence of large language models (LLMs) built
+upon Transformer architectures [102]. Their scale and deployment
+constraints have made parameter efficiency, compression, and
+hardware-aware inference central design concerns. The impact
+of deep learning continues to expand across numerous scientific
+and practical domains, underscoring why parameter efficiency and
+structured model design have become increasingly important.
+Tensor Networks Meet Neural Networks. Tensor Networks
+(TNs) and Neural Networks (NNs), while stemming from distinct
+scientific foundations, have each demonstrated unique capabilities
+across diverse domains. Cichocki et al. [11] and Mondelli and
+Montanari [106] establish connections between multilinear tensor
+structure and neural computation. These connections motivate
+tensorial neural networks (TNNs): neural architectures whose
+parameters, activations, or data-processing modules are explicitly
+structured through tensor networks. We argue that integrating TNs
+with NNs can enhance model performance and sustainability from
+both data and model perspectives:
+(1) Effective Data Representation: Accurate modeling of
+higher-order interactions from multi-source data is critical in
+advancing performance and promoting responsible AI practices [8].
+Integrating TNs within NN frameworks offers a principled way
+to capture such interactions without materializing the full high-
+order tensor, which is particularly useful in multimodal, multiview,
+and multitask settings [27], [29], [33]. Tensorized representations
+are likewise useful for compression-oriented data models such as
+TensorCodec [36].
+(2) Compact Model Structures: TNs also offer a sustainable
+route to model compression by replacing dense weight tensors with
+structured low-rank factors [49], [54], [55]. This can dramatically
+reduce parameters and memory traffic while preserving useful
+architectural priors. Representative examples include tensorized
+convolutional and recurrent layers as well as TR-LSTM-style
+recurrent compression [52], [54], [107].
+We refer to this family of approaches that connect TNs with
+NNs as Tensorial Neural Networks (TNNs). Although this com-
+bination holds significant promise for sustainable AI by offering
+efficient parameter compression and structured representations,
+TNNs also present new training challenges that require careful
+consideration. These challenges include numerical stability issues
+during optimization, particularly for high-order tensor operations
+and decompositions, complex hyperparameter selection especially
+for determining optimal tensor ranks and network architectures,
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+3
+and hardware acceleration requirements to efficiently handle tensor
+contractions and parallel computations. Therefore, it is necessary to
+redesign traditional neural network training techniques to address
+these TNN-specific challenges.
+Memmel et al. [108] position tensor networks as a method-
+ological asset for Green AI and argue that tensorized models
+should be assessed not only by accuracy but also by efficiency,
+inclusivity, and deployment-aware metrics. While several excellent
+surveys and book chapters have explored tensor decompositions in
+deep learning or quantum tensor networks separately, our survey
+focuses on their intersection. We investigate how tensor structures
+are adapted into neural architectures, what trade-offs recur across
+architectures, and which lessons follow from the literature on model
+design and deployment.
+More specifically, Biamonte and Bergholm [8] emphasize
+quantum-TN foundations, graphical notation, contraction, and
+entanglement. Panagakis et al. [76] survey tensor methods for rep-
+resentation learning, computer vision, and deep learning, whereas
+their later book chapter [109] provides a broader methodological
+account that also includes quantum-network material. Our survey
+asks a different organizing question: how do tensor-network
+structures become trainable neural components across CNNs,
+RNNs, Transformers, GNNs, LLMs, and QNNs, and which
+design principles recur across these families? Accordingly, our
+contribution is not a claim that the individual decompositions
+or applications have not been reviewed, but a cross-architectural
+synthesis that connects tensorization and topology choices with
+contraction cost, optimization, software support, inductive bias,
+and deployment constraints.
+What do we learn from this review? Beyond cataloguing
+applications, the surveyed literature supports four recurring mes-
+sages. First, decomposition design is not only about choosing
+ranks: mode permutations, tensorization shapes, and topology
+choices can materially change the compression–accuracy fron-
+tier [110], [111]. Second, the central architectural trade-off is often
+expressiveness versus contractibility: richer loopy structures can
+represent more complex correlations, but they require substantially
+better approximate contraction algorithms to remain practical [112].
+Third, modern TNN progress is increasingly algorithmic rather than
+merely applicational, spanning structure search, sampling-based
+decomposition, and uncertainty-aware tensor modeling [113], [114].
+Fourth, tensorization should be viewed not only as compression,
+but also as an inductive bias that can improve robustness and gener-
+alization when aligned with the underlying problem structure [115].
+An overview of both their data processing capabilities and
+model architectures of TNNs is shown in Table 1. From the
+data processing perspective, TNNs demonstrate versatility across
+multiple domains including: multi-source fusion for integrating
+heterogeneous data sources, multimodal pooling for efficient feature
+combination, data compression for reducing storage requirements
+while preserving information fidelity, multi-task training for
+simultaneous learning of related objectives, and quantum data
+processing for handling quantum state representations. From the
+model architecture perspective, TNNs have been successfully
+integrated into various deep learning frameworks including CNNs,
+RNNs, Transformers, GNNs, Large Language Models (LLMs),
+and Quantum Neural Networks (QNNs), each offering unique
+advantages in their respective application domains.
+The remaining sections are organized as follows. Section 2
+provides the fundamentals of tensor notation, tensor diagrams, and
+TN formats. Section 3 examines TNNs for data representation,
+Tensor 
+Dummy Tensor 
+Hyper-Edge 
+Unfolding
+Tensor Contraction
+Super-Diagonal
+Tensor 
+Fig. 1: Basic symbols for TN diagrams. For more details about
+TNs, refer to [8] and [11].
+TABLE 3: Tensor notations
+Symbol
+Explanation
+a
+scalar
+a
+vector
+A
+matrix
+A
+tensor
+A
+dimensionality
+⊛
+convolution operation
+◦
+outer product operation
+⊙
+Hadamard (element-wise) product
+⊗
+Kronecker product / matrix product of factor matrices in TN
+⊚
+Khatri-Rao product (column-wise Kronecker product)
+< ·, · >
+inner product of two tensors
+|·⟩
+quantum-state ket vector (normalized complex column vector)
+⟨·|
+quantum-state bra vector (normalized complex row vector)
+⟨·|·⟩
+inner product of two quantum state vectors
+fusion, compression, multi-task learning, and quantum-state data.
+Section 4 discusses tensorized model architectures. Section 5
+reviews training, rank and structure selection, and hardware acceler-
+ation. Section 6 introduces software toolboxes and interpretability
+methods, followed by future perspectives in Section 7.
+2
+TENSOR BASIS
+2.1
+Tensor Notations
+A tensor [116], [117], also known as a multiway array, can be
+viewed as a higher-order extension of a vector (i.e., a first-order
+tensor) or a matrix (i.e., a second-order tensor). Like the rows
+and columns in a matrix, an Nth-order tensor X ∈RI1×I2···×IN
+has N modes (i.e., ways, orders, or indices) whose lengths (i.e.,
+dimensions) are represented by I1 to IN, respectively. As shown
+in Table 3, lowercase letters denote scalars, e.g., a, boldface
+lowercase letters denote vectors, e.g., a, boldface capital letters
+denote matrices, e.g., A and boldface Euler script letters denote
+higher-order tensors, e.g., A. In this paper, we define a “tensor” in
+a broad sense that includes scalars, vectors, and matrices.
+2.2
+Tensor Diagrams
+In this subsection, we introduce TN diagrams and their correspond-
+ing mathematical operations. TN diagrams were first developed by
+Roger Penrose [118] in the early 1970s and are now commonly used
+to describe quantum algorithms [8], [119] and machine learning
+algorithms [12], [43], [107]. Within these diagrams, tensors are
+denoted graphically by nodes with edges [12], which enables
+intuitive presentation and convenient representation of complex
+tensors. As both the data and weights in the deep learning field
+are tensors, tensor diagrams are also promising for use as general
+network analysis tools in this area. An overview of the basic
+symbols of tensors is shown in Fig. 1.
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+4
+2.2.1
+Tensor Nodes
+A tensor is denoted as a node with edges, as illustrated in Fig. 1.
+The number of edges denotes the modes of a tensor, and a value on
+an edge represents the dimension of the corresponding mode. For
+example, a one-edge node denotes a vector a ∈RI, a two-edge
+node denotes a matrix A ∈RI×J and a three-edge node denotes a
+tensor A ∈RI1×I2×I3.
+2.2.2
+Tensor Contraction
+Tensor contraction refers to the operation whereby two tensors are
+contracted into one tensor along their associated pairs of indices.
+As a result, the corresponding connected edges disappear while the
+dangling edges persist. Tensor contraction can be formulated as a
+tensor product
+C = A ×1,2,...N
+M+1,M+2,...,M+N B
+(1)
+with the elements of C are computed via
+Cp1,...,pK+M =
+X
+i1,i2,...iN
+Ai1,i2,...iN,∗
+B∗,i1,i2,...iN ,
+(2)
+where A ∈RI1×...IN×P1×...PK, B ∈RPK+1×...PK+M×I1×...IN ,
+and C ∈RP1×...PK×PK+1...PK+M . Fig. 1 also shows a diagram
+of the matrix multiplication operation, which is the most classic
+tensor contraction situation, given by:
+C = AB = A ×1
+2 B.
+(3)
+Tensor contractions among multiple tensors (e.g., TNs) can be com-
+puted by sequentially performing tensor contractions between each
+pair of tensors. It is worth mentioning that the contracting sequence
+must be determined to achieve better calculation efficiency [120].
+2.2.3
+Dummy Tensor
+Hayashi et al. [107] introduce a dummy tensor to represent
+convolution operations. As depicted in Fig. 1, a node with the
+star and arrow symbols denotes a dummy tensor. This operation is
+formulated as
+yj′ =
+α−1
+X
+j=0
+β−1
+X
+k=0
+Pj,j′,kajbk,
+(4)
+where a ∈Rα denotes a vector that will be processed by a
+convolutional weight b ∈Rβ, and y ∈Rα′ is an output. The
+symbol P ∈{0, 1}α×α′×β denotes a binary tensor with elements
+defined as Pj,j′,k = 1 if j = sj′ + k −p and 0 otherwise, where
+s and p represent the stride and padding size, respectively. Thus,
+P can be applied to any two tensors to induce a well-defined
+convolutional relationship between them.
+2.2.4
+Hyperedge
+Fig. 1 illustrates the hyperedge that was also introduced by Hayashi
+et al. [107]. An example of a hyperedge with a size of R can be
+formulated as
+Yijk =
+R
+X
+r=1
+AirBjrCkr,
+(5)
+where A ∈RI×R, B ∈RJ×R and C ∈RK×R are three matrices.
+Y ∈RI×J×K denotes the results of applying a hyperedge on A,
+B, and C. A hyperedge represents contraction with a copy tensor,
+i.e., an identity super-diagonal tensor whose entry is one when all
+incident indices are equal and zero otherwise. It therefore enforces
+equality among the connected bond indices and sums over their
+shared value, as expressed in Eq. (5); it is not an addition operator
+in isolation. Hayashi et al. [107] use dummy tensors together
+with such hyperedges to represent convolutional operations and
+show that TCNN architectures can be expressed systematically as
+tensor-network diagrams.
+2.2.5
+Super-diagonal Tensor
+A super-diagonal tensor has nonzero entries only when all of its
+indices are equal. For an Nth-order tensor G ∈R
+N
+z
+}|
+{
+I × I × · · · × I,
+this means that Gi1,i2,...,iN = 0 unless i1 = i2 = · · · = iN. As
+shown in Fig. 1, a super-diagonal tensor is designated by a node
+with a skew line in TN diagrams. The identity or copy tensor is the
+special case whose super-diagonal entries are all one; contracting
+with it enforces equality of the incident indices, as in the hyperedge
+construction above.
+2.2.6
+Tensor Unfolding
+Tensor unfolding is an operation that virtually flattens a tensor
+into a high-dimensional but low-order tensor. Matricization is
+a special case of tensor unfolding. To be more specific, given
+an Nth-order tensor A ∈RI1×I2···×IN , its mode-n unfolding
+process yields a matrix A(n) ∈RIn×I1I2···In−1In+1...IN . Such an
+operation can also be regarded as performing tensor contraction
+with a specifically designed tensor. A fourth-order tensor unfolding
+diagram is illustrated in Fig. 1.
+2.3
+Tensor Decomposition Formats
+The commonly used terminology “tensor decomposition” (TD)
+is equivalent to “tensor network” to some extent. While TD was
+employed primarily in signal processing fields [121], [122], TNs
+were originally utilized largely in the physics and quantum circuit
+fields [8], [118]. Traditional TD models, such as CP [13], [123],
+[124] and Tucker decomposition [14], [125], can be viewed as
+basic kinds of TNs. In the realm of signal processing, several
+powerful TNs architectures for quantum analysis have also been
+introduced. For instance, the MPS decomposition [126] was defined
+as a TT decomposition [16] and had tremendous success in several
+applications [12]. After years of collaboration and progress across
+different research fields, there is no significant distinction between
+these two terminologies. Therefore, TD and TNs are treated in a
+unified way in this paper. We briefly introduce some basic TDs by
+employing TN diagrams. Hong et al. [127], Ghadiri et al. [110],
+and Li et al. [111] show that the design space of a decomposition is
+richer than its format label: the loss function, core shape, and mode
+permutation can all substantially affect practical performance.
+2.3.1
+CANDECOMP/PARAFAC
+The CP decomposition [13], [123], [124] factorizes a higher-order
+tensor into a sum of several rank-1 tensor components. For instance,
+given an Nth-order tensor X ∈RI1×I2···IN , each of its elements
+in the CP format can be formulated as
+Xi1,i2,...,iN ≈
+R
+X
+r=1
+Gr
+N
+Y
+n=1
+A(n)
+in,r,
+(6)
+where R denotes the CP rank (defined as the smallest possible
+number of rank-1 tensors [121]), G denotes the N-th-order super-
+diagonal tensor, and A(n) ∈RIn×R denotes a series of factor
+matrices. The TN diagram for CP is illustrated in Fig. 2 (a).
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+5
+(c) Block-Term Tucker Decomposition
+(e) Tensor Ring Decomposition
+(b) Tucker Decomposition
+(a) CP Decomposition
+(g) Tensor Grid Decomposition (a.k.a. PEPS)
+(d) Tensor Train Decomposition
+(f) Hierarchical Tucker Decomposition
+Fig. 2: TN diagrams of some popular TN decompositions. (a) The CP format decomposes a tensor X into a sum of several rank-1 tensors
+a(1)
+:,r ◦a(2)
+:,r ◦· · · ◦a(N)
+:,r . (b) Tucker decomposition decomposes a tensor X into a core tensor G multiplied by a matrix A(n) along the
+nth mode. (c) Block term decomposition decomposes a tensor X into a sum of several Tucker decompositions (on the right) with low
+Tucker ranks. (d) TT decomposition decomposes a tensor X into a linear multiplication of a set of 3rd-order core tensors G(2) · · · G(N−1)
+and two matrices G(1),
+G(N). (e) TR decomposition decomposes a tensor X into a set of 3rd-order core tensors and contracts them into
+a ring structure. (f) HT decomposition represents a tensor X as a tree-like diagram. For more basic knowledge about TNs, we refer to [8]
+and [11]. (g) Tensor Grid Decomposition (a.k.a. PEPS) represents a high-dimensional tensor as a two-dimensional grid of interconnected
+lower-rank tensors, where each node connects to its neighbors to efficiently capture spatial correlations in systems with local interactions.
+Notation: In this and subsequent TN diagrams, the upper and
+lower numbers adjacent to a tensor core denote the dimensions
+of the corresponding modes, with upper indices representing
+input dimensions and lower indices representing output or bond
+dimensions. This convention follows the standard TN literature [8].
+When calculating a CP format, the first issue that arises is how
+to determine the number of rank-1 tensor components, i.e., the
+CP rank R. Actually, this is an NP-hard problem [128]. Hence,
+in practice, a numerical value is usually assumed in advance (i.e.,
+as a hyperparameter), to fit various CP-based models [121]. After
+that, the diagonal core tensor G and the factor matrices A(n)
+can be directly solved by employing algorithmic iteration, which
+usually involves the alternating least-squares (ALS) method that
+was originally proposed in [13], [123]. Hong et al. [127] extend CP
+factorization beyond the standard least-squares setting to broader
+loss functions and data types, which is especially relevant for
+non-Gaussian observations and task-specific objectives.
+2.3.2
+Tucker Decomposition
+Tucker decomposition [14], [125] factorizes a higher-order tensor
+into a core tensor multiplied by a corresponding factor matrix
+along each mode. To be more specific, given an Nth-order tensor
+X ∈RI1×I2···IN , the Tucker decomposition can be formulated in
+an elementwise manner as
+Xi1,i2,...,iN ≈
+R1,...,RN
+X
+r1,...,rN=1
+Gr1,r2,...,rN
+N
+Y
+n=1
+A(n)
+in,rn,
+(7)
+where {R1, R2, . . . , RN} denotes a series of Tucker ranks, G ∈
+RR1×R2...RN denotes the dense core tensor and A(n) ∈RIn×Rn
+denotes a factor matrix. The TN diagram for Tucker decomposition
+is illustrated in Fig. 2 (b). Please note that compared with the CP
+rank, R1, R2, . . . , RN can take different numerical values.
+Tucker decomposition is commonly used and can be degraded
+to CP by setting the core tensor G as a super diagonal tensor. In
+addition, the original Tucker decomposition lacks constraints on its
+factors, leading to the nonuniqueness of its decomposition results,
+which is typically undesirable for practical applications due to
+the lack of explainability. Consequently, orthogonality constraints
+are always imposed on the component matrices, yielding the
+well-known higher-order singular value decomposition (HOSVD)
+algorithm [129].
+2.3.3
+Block-Term Decompositions
+Block-term formats interpolate between CP and Tucker by rep-
+resenting a tensor as a sum of low-multilinear-rank Tucker
+blocks [15], [129]. In the BTT construction shown in Fig. 2 (c), RC
+controls the number of blocks and RT controls their shared Tucker
+rank. Rank-one blocks recover a CP-like representation, whereas
+a single block recovers Tucker. General BTD allows each block
+to have its own multilinear-rank profile. Supplementary Note S1
+gives the detailed BTT and BTD formulations.
+2.3.4
+Tensor Train and Matrix Product Operator
+The TT decomposition [12], [16], also known as a Matrix Product
+State (MPS) in quantum physics [126], [130], factorizes an Nth-
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+6
+order tensor into a chain of third-order cores. Its representative
+elementwise form is
+Xi1,i2,...,iN ≈
+R1,R2,...,RN−1
+X
+r1,r2,...,rN−1=1
+G(1)
+1,i1,r1G(2)
+r1,i2,r2G(3)
+r2,i3,r3 · · · G(N)
+rN−1,iN,1,
+(8)
+Here, G(n) ∈RRn−1×In×Rn and R0 = RN = 1. The chain in
+Fig. 2 (d) supports sequential SVD construction and contractions
+whose cost grows linearly with tensor order for fixed mode sizes
+and ranks [119]. Bharadwaj et al. [113] use leverage-score-based
+sampling to reduce the cost of constructing TT approximations
+while preserving high-quality subspace information. For tensorized
+linear operators, MPO pairs local input and output modes in fourth-
+order cores G(n) ∈RRn−1×In×Jn×Rn [53], [131], [132], [133].
+Its full expression is moved to Supplementary Note S2.
+2.3.5
+Tensor Ring Decomposition
+TR closes the two boundary bonds of a TT to form the cycle shown
+in Fig. 2 (e) [18], [134], [135]. Its cores retain the shape G(n) ∈
+RRn−1×In×Rn, but the cyclic condition R0 = RN removes the
+distinguished rank-one endpoints. This symmetry provides flexible
+mode ordering while making rank selection, gauge handling, and
+optimization more involved than in an open chain. Supplementary
+Note S3 records the cyclic contraction formula. This additional
+flexibility makes rank and latent-space design especially important
+in TR models. Yuan et al. [136] minimize rank in the latent space
+to obtain compact and stable TR representations for completion
+and learning problems.
+2.3.6
+Hierarchical Tucker Decomposition
+HT organizes tensor modes with a dimension tree rather than a
+chain [19]. Leaf frames represent individual modes and internal
+transfer tensors combine child subsets recursively, producing the
+structure in Fig. 2 (f). For a balanced tree with uniform mode
+dimension d and rank bounded by R, its storage is commonly
+written as O(NdR + NR3), compared with O(NdR2) for TT.
+HT can therefore exploit meaningful hierarchical mode groupings,
+but its performance and cost depend on the selected dimension tree.
+The recursive formulation is provided in Supplementary Note S4.
+Falco et al. [137] study tensors of fixed or bounded tree-based
+rank as manifold-structured subsets of ambient tensor spaces. This
+geometric view connects Tucker, HT, and TT representations and
+clarifies why rank-constrained optimization has exploitable local
+structure. Because the cited work remains a preprint, we use it as
+mathematical background rather than as empirical evidence.
+2.3.7
+PEPS Decomposition
+PEPS arranges local cores on a two-dimensional grid [8], [20],
+[40], [138]. Each core contains one physical mode and up to
+four bond modes connecting its left, right, upper, and lower
+neighbors, as illustrated in Fig. 2 (g). The loopy lattice can
+encode multidimensional dependencies beyond a chain or tree,
+but exact contraction is #P-hard in general and practical use relies
+on controlled approximations. Supplementary Note S5 gives the
+grid-indexed reconstruction formula. Most current TNNs employ
+low-treewidth structures, including TT/MPS chains, TR cycles,
+and HT trees, because their contractions remain tractable. PEPS
+provides additional correlation pathways through a loopy lattice,
+but topology and contraction algorithm must be designed together.
+Alkabetz and Arad [139] analyze belief propagation as a tensor-
+network contraction procedure, while Tindall et al. [140] demon-
+strate message-passing-based simulation on loopy lattice structures.
+These results motivate approximate-contraction methods whose
+numerical error and task-level effect are reported explicitly [141].
+To reduce preliminary material in the main article, the detailed
+formulations of BTT/BTD, MPO, TR, HT, and PEPS are moved to
+the supplementary material. The tensor-network diagrams in Fig. 2
+and the concise format descriptions above retain the structural
+information needed for the subsequent TNN sections without
+introducing another comparison table. The supplementary material
+records the omitted formulas, while the remainder of the survey
+uses the common topological, rank, and contraction properties
+summarized in the text.
+3
+SUSTAINABLE AI THROUGH TNN IN DATA
+ASPECT: EFFECTIVE DATA REPRESENTATION
+In real-world data analysis, information often comes from multiple
+sources, such as vision, sound, and text in video data [142], [143].
+A prime example is the Visual Question Answering (VQA) task,
+where the key challenge lies in effectively modeling interactions
+between textual and visual information. Processing such diverse
+data sources uniformly is impractical, necessitating specialized
+architectures with multiple input channels to handle multimodal
+sources - an approach known as information fusion. While tradi-
+tional feature-level and decision-level fusion pipelines were popular
+in early stages [144], these linear approaches failed to effectively
+model intramodality dynamics. Tensor Neural Networks (TNNs)
+have emerged as a solution, leveraging their natural multilinear
+properties to model intramodality dynamics and process higher-
+order data. TNNs provide effective frameworks for tensor opera-
+tions, making them naturally suited for expressing and generalizing
+information fusion modules commonly found in deep learning,
+such as attention mechanisms and vector concatenation [145]. As
+a result, numerous studies have adopted TNNs to capture higher-
+order interactions among data or parameters. In the following
+sections, we will explore various TNN-based approaches for data
+representation and processing. First, we examine advanced data
+compression techniques that leverage tensor network architectures
+to achieve significant parameter reduction while preserving critical
+information structures. We then investigate novel tensor fusion
+layers (Section 3.1) designed to facilitate deep feature interactions
+and transformations across modalities, followed by sophisticated
+multimodal data pooling mechanisms (Section 3.2) that effectively
+integrate information across different data types.
+3.1
+Multi-source Data fusion
+The connection between Hadamard products and CP decomposition
+was established in the polynomial networks framework [146], [147].
+In multimodal fusion, the Hadamard product enables efficient low-
+rank bilinear pooling [32], avoiding the exponential parameter
+growth of outer-product-based methods. For a broader discussion
+of multiplicative interactions in deep learning, see Jayakumar et
+al. [148].
+Multimodal sentiment analysis is a task containing three com-
+municative modalities, i.e., the textual modality, visual modality,
+and acoustic modality [27]. Addressing multimodal sentiment
+analysis, Zadeh et al. [27] proposed novel TNNs with deep
+information fusion layers named tensor fusion layers (TFLs),
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+7
+=
+1
+1
+1
+1
+Fig. 3: Illustration of the tensor fusion process in Eq. (10). Different
+from a TN diagram, each circle corresponds to a value.
+which can easily learn intramodality dynamics and intermodality
+dynamics and are able to aggregate multimodal interactions, thereby
+efficiently fusing the three communicative modalities. Specifically,
+a TFL first takes embedded feature vectors zt, zv and za derived
+by embedding networks rather than the original three data types.
+Then, the TFL concatenates a scalar 1 with each embedded feature
+vector as
+z
+′
+t =
+ zt
+1
+
+z
+′
+v =
+ zv
+1
+
+z
+′
+a =
+ za
+1
+
+.
+(9)
+Then, as shown in Fig. 3, the TFL obtains a feature tensor Z by
+calculating the outer product among the three concatenated vectors
+Z = z
+′
+t ◦z
+′
+v ◦z
+′
+a =
+ zt
+1
+
+◦
+ zv
+1
+
+◦
+ za
+1
+
+.
+(10)
+Finally, the TFL processes the feature tensor Z to obtain a
+prediction y via a two-layer fully connected NN. Compared to
+direct concatenation-based fusion, which only considers unimodal
+interactions [27], the TFL benefits from capturing both unimodal
+interactions and multimodal interactions.
+Despite its success, the TFL suffers from an exponential
+increase in its computational complexity and number of parame-
+ters when the number of modalities increases. For example, in
+a multimodal sentiment analysis case [27], the feature tensor
+Z ∈R129×33×33 and the hidden vector h ∈R128 can result
+in 17, 981, 568 parameters to be optimized. To address these
+excessive parameters, low-rank multimodal fusion (LMF) [28]
+adopts a special BTT layer to overcome the massive computational
+cost and overfitting risks of the TFL. For a general situation with
+n modalities, the feature tensor Z = ◦M
+m=1z
+′
+m can be processed.
+The hidden vector h can be computed as follows
+h = ReLU
+
+he(W1z
+′
+1, W2z
+′
+2, . . . , WMz
+′
+M, I) + b
+
+,
+where Wi ∈Rdi×dh is the weight matrix and I ∈Rdh×dh is an
+identity matrix. The LMF reduces the computational complexity of
+the TFL from O
+QM
+m=1 dm
+
+to O
+
+dh × PM
+m=1 dm
+
+.
+Although LMF and the TFL achieve better fusion results than
+other methods, they restrict the order of interactions, causing higher-
+order interactions to lack information. A PTP [29] block has been
+proposed to tackle this problem. The whole procedure and TN
+diagram of PTP are shown in Fig. 4 and Fig. 5, respectively.
+The PTP first merges all feature vectors {zm}M
+m=1 into a long
+feature vector
+z⊤
+12···M =
+h
+1, z⊤
+1 , z⊤
+2 , . . . , z⊤
+M
+i
+.
+(11)
+The polynomial feature tensor of degree P is represented as
+ZP = z12...M ◦z12...M ◦· · · ◦z12···M.
+(12)
+The PTP [29] then adopts a tensorial layer (e.g., a CP layer)
+to process the polynomial feature tensor ZP . The CP layer is
+represented as
+h = he(W1z12...M, . . . WP z12...M, Λ)
+(13)
+where Wi ∈Rdi×dh is the weight matrix and Λ ∈Rdh×dh is a
+learnable diagonal matrix. The structure of PTP is also equivalent
+to that of a deep polynomial NN [147], whereby PTP models all
+nonlinear high-order interactions. For multimodal time series data,
+one approach uses a “window” to characterize local correlations
+and stack the PTP blocks into multiple layers. Such a model is
+called a hierarchical polynomial fusion network (HPFN) [29]. The
+HPFN can recursively process local temporal-modality patterns to
+achieve a better information fusion effect.
+The structure of a single-layer PTP block is similar to that of a
+shallow convolutional arithmetic circuit (ConvAC) network [46]
+(see Section 3.5 and 4.5). The key distinction lies in their
+application domains - while ConvAC processes quantum location
+features, PTP handles temporal-modality patterns and polynomial
+concatenated multimodal features. The HPFN’s architecture closely
+resembles a deeper ConvAC network, suggesting its enhanced
+expressive power through this structural connection. The recursive
+relationships in deep polynomial NNs have been extensively studied
+and implemented for efficient hierarchical computation [29], with
+similar findings reported by Chrysos et al. [147].
+Varshneya et al. [30] use tensor fusion to derive relevance
+scores for individual modalities and their interactions in sentiment
+analysis and sarcasm detection. Nie et al. [149] combine mutual-
+information-based filtering with Tucker fusion to expose feature
+interactions in multimodal sentiment analysis, while Miao et
+al. [150] integrate low-rank tensor fusion with self-supervised
+multi-task learning to capture inter-modal correlations. Wang et
+al. [151] further combine mutual attention with feature-tensor
+construction for multi-sensor fault diagnosis.
+3.2
+Multimodal Data Pooling
+Another group of information fusion methods originated from
+VQA tasks [143]. In VQA tasks, the most important aspect is to
+parameterize bilinear the interactions between visual and textual
+representations. To address this aspect, some tensor fusion methods
+have been discovered in this area. Multimodal compact bilinear
+pooling (MCB) [31] is a well-known fusion method for VQA tasks
+and can be regarded as a special Tucker decomposition-based NN,
+which tries to optimize the simple bilinear fusion operation
+z = W[v ◦q],
+(14)
+where v and q are input vectors with different modalities and
+W is a learnable weight matrix. Moreover, MCB optimizes the
+computational cost of the outer product operation based on the
+property of the count sketch projection function.
+Multimodal low-rank bilinear pooling (MLB) [32] adopts a CP
+layer in a data fusion step that can be formulated as
+z = 1T (Wvv ◦Wqq) ,
+(15)
+where Wq and Wv are the prepossessing weight matrices for the
+inputs q and v, respectively and 1 is a vector in which all values
+are 1. The structure of the MLB method is a special case of LMF
+(see Sec. 3.1). MLB fusion methods can also be regarded as simple
+product pooling when the number of modalities is equal to two.
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+8
+Outer Product
+1
+Concatenate
+w ≈ 
+Low-rank Tensor Weight
+1
+1
+1
+1
+1
+Contraction
+Fig. 4: Illustration of polynomial tensor pooling (PTP) [29]. PTP first concatenates all feature vectors z1, z2, z3 into a longer feature
+vector z⊤
+123 =
+1, z⊤
+1 , z⊤
+2 , z⊤
+3
+
+, it then derives a polynomial feature tensor by repeatedly performing outer product operations on the
+feature vector z123, and finally adopts a tensorial layer (e.g., a TR layer) to merge the polynomial feature tensor into a vector h.
+PTP (CP)
+PTP (TR)
+PTP Input
+Fig. 5: TN diagrams of PTP. The CP and TR structures can be
+adopted in such a strategy.
+The MUTAN [33] is a generalization of MCB and MLB, which
+adopts a Tucker layer to learn the bilinear interactions between
+visual and textual features as
+z =
+
+Tc ×1
+1
+
+q⊤Wq
+
+×1
+2
+
+v⊤Wv
+
+×1
+3 Wo,
+z =
+ Tc ×1
+1 ˜q
+ ×1
+2 ˜v,
+(16)
+where ˜q = tanh
+ q⊤Wq
+
+and ˜v = tanh
+ v⊤Wv
+
+, Tc is the
+fusion weight tensor, and Wo is the output processing weight
+matrix. Moreover, MUTAN [33] adopts a low rank for the fusion
+weight tensor Tc, as follows:
+Tc[:, :, k] =
+R
+X
+r=1
+mk
+r ◦nk⊤
+r ,
+(17)
+where mk
+r and nk⊤
+r
+are weight vectors and R is the number
+of ranks. In this way, MUTAN can represent comprehensive
+bilinear interactions while maintaining a reasonable model size by
+factorizing the interaction tensors into interpretable elements.
+Furthermore, compact trilinear interaction (CTI) [34] was pro-
+posed, which uses an attention-like structure. Instead of presenting
+the given data as a single vector, this method represents every
+modality as a matrix A ∈Rn1×da, where da corresponds to the
+feature dimension and n1 denotes the number of states. The CTI
+simultaneously learns high-level trilinear joint representations in
+VQA tasks and overcomes both the computational complexity and
+memory issues in trilinear interaction learning [34]. Hua et al. [63]
+use high-order tensor pooling to capture nonlinear node interactions
+in graph neural networks. For action recognition, Wang et al. [152]
+combine mutual attention with eigenvalue power normalization to
+model high-order statistics while controlling burstiness. Chen et
+al. [153] apply tensor networks and Tucker-based bilinear pooling
+to interactions between gene expression and copy-number variation
+for pan-cancer survival prediction.
+3.3
+Multi-way Data Compression
+TNNs present a powerful framework for addressing the unique
+challenges in multi-dimensional data compression. Unlike tradi-
+tional compression methods that treat data as vectors or matrices, or
+conventional tensor methods that rely on fixed decomposition struc-
+tures, TNNs leverage learnable neural architectures to adaptively
+preserve and exploit the natural multi-dimensional relationships
+in the data, leading to more efficient and accurate representations
+with theoretical guarantees.
+The BNTD [35] first introduces TNNs and advances multi-way
+data compression through a principled probabilistic framework,
+effectively modelling complex entity-relation interactions and
+incorporating prior information via neural tensor architectures.
+Wang et al. [154] propose federated latent embedding sharing and
+tensor factorization (FLEST), which combines tensor factoriza-
+tion with embedding-matrix decomposition for communication-
+efficient federated knowledge-graph completion without directly
+sharing local graph data. The TTHRESH method [38] leverages
+HOSVD decomposition combined with bit-plane, run-length and
+arithmetic coding to efficiently compress high-dimensional grid-
+ded data for visualization, achieving smooth quality degradation
+and enabling low-cost compressed-domain manipulations while
+providing competitive compression ratios at low-to-medium bit
+rates. Fan et al. [155] proposed a multi-mode deep matrix and
+tensor factorization approach (M2DMTF) that employs TKD with
+factor matrices generated using multilayer perceptrons, effectively
+handling complex tensor data with missing values and noise. Lee
+and Shin [156] developed a robust factorization method specifically
+designed for real-world tensor streams containing patterns, missing
+values, and outliers. Lamba et al. [157] introduced a method for
+incorporating side information into tensor factorization, improving
+the quality of compression and representation learning.
+NeuKron [37] extends tensor neural networks by introducing
+auto-regressive neural networks to generalize Kronecker products,
+enabling constant-size lossy compression of sparse reorderable
+matrices and tensors. TensorCodec [36], [158] extends tensor
+neural networks for efficient data compression by introducing
+neural tensor-train decomposition, tensor folding, and mode-index
+reordering techniques, enabling accurate compression without
+strong data assumptions. Light-IT and Light-IT++ [158] extend
+tensor neural networks for efficient data compression by introducing
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+9
+vocabulary-based compression and core tensor operations, enabling
+compact and accurate representation of irregular tensors. Loeschcke
+et al. [159] construct coarse-to-fine tensor trains that can be
+progressively refined for image fitting, denoising, inpainting, and
+novel-view synthesis. Their results show that TT parameterizations
+support flexible continuous visual modeling and storage reduction.
+3.4
+Multi-task Data Training
+For multitask learning applications, WISDOM [160] pioneered
+an incremental learning algorithm that performs supervised tensor
+decomposition on spatio-temporal data encoded as third-order
+tensors, simultaneously training spatial and temporal prediction
+models from extracted latent factors while incorporating domain
+knowledge, demonstrating superior performance over baseline
+algorithms in global-scale climate data prediction across multiple
+locations. Yang et al. [39] then proposed the Tensor Train multitask
+(TTMT) and Tucker multitask (TMT) models using TT and Tucker
+formats, respectively, to alleviate the negative transfer problem in
+a hard sharing architecture and reduce the parameter volume in
+a soft structure. The M2TD method [161] stitches patterns from
+partitioned parameter subspaces of large simulation ensembles
+to efficiently discover underlying dynamics and interrelationships
+while maximizing accuracy under limited simulation budgets.
+Zhang et al. [162] proposed a tensor network-based multi-task
+model that decomposes person Re-ID into camera-specific classifi-
+cation tasks and leverages low-rank tensor decomposition to capture
+cross-camera correlations while aligning feature distributions
+across different views. The SMART method [163] decomposes
+spatio-temporal data into interpretable latent factors and trains
+an ensemble of spatial-temporal predictors while incorporating
+domain constraints to handle large-scale spatio-temporal prediction
+tasks efficiently. A PEPS-like concatenated TN layer [40] for
+multitask missions was also proposed, which, unlike the TTMT
+and TMT models that suffer from the negative transfer problem
+due to their hard sharing architectures, only contains a soft sharing
+layer, thereby achieving better performance.
+The MTCN method [42] achieves superior face multi-attribute
+prediction by sharing all features in lower layers while differen-
+tiating attribute features in higher layers, by incorporating tensor
+canonical correlation analysis to exploit inter-attribute relationships.
+The CTNN method [164] combines depthwise separable CNN
+and low-rank tensor networks to efficiently extract both local
+and global features from multi-task brainprint data, achieving
+high recognition accuracy with limited training samples while
+providing interpretable channel-specific biomarkers. The GTTN
+method [41] combines matrix trace norms from all possible
+tensor flattenings to automatically discover comprehensive low-
+rank structures in deep multi-task learning models, eliminating the
+need for manual specification of component importance. Zhang et
+al. [165] propose a tensor-based multi-task learning framework that
+leverages spatio-temporal similarities between brain biomarkers
+to predict Alzheimer’s disease progression by encoding MRI
+morphological changes into a third-order tensor and extracting
+shared latent factors through tensor decomposition.
+Ren et al. [166] extend PARAFAC2 with multi-task supervision
+for EHR mining, improving phenotype extraction and prediction
+through jointly modeled static and dynamic tasks. Wang et al. [167]
+combine Tucker-based fusion with self-supervised multi-task
+learning and a dual multimodal–unimodal training mechanism. Liu
+et al. [168] map speech-quality features into a higher-dimensional
+tensor-network representation and jointly optimize regression,
+classification, and correlation objectives.
+3.5
+Quantum (State-based) Data Representation
+To process machine learning tasks in a quantum system, the input
+data should be converted into a linear combination of some quantum
+states as an orthogonal basis; in the form
+|ψ⟩=
+M
+X
+d1...dN=1
+Ad1...dN |ψd1⟩⊗· · · ⊗|ψdN ⟩,
+s.t.
+M
+X
+d1...dN=1
+|Ad1...dN |2 = 1,
+Ad1...dN ∈C,
+(18)
+where |·⟩denotes a ket in Dirac notation [169], ⊗denotes the
+tensor product, and A is the complex amplitude tensor. The squared
+magnitudes of its entries sum to one, and the amplitude tensor can
+be represented and analyzed through a low-rank TN [8]. To embed
+classic data into a quantum state for adapting quantum systems,
+Stoudenmire and Schwab [43] proposed a quantum state mapping
+function ϕi(xi) for the i-th pixel xi in a grayscale image as
+ϕi(xi) = [cos(π
+2 xi), sin(π
+2 xi)].
+(19)
+The values of pixels are transformed into the range from 0.0 to 1.0
+via the mapping function. Furthermore, a full grayscale image x
+can be represented as outer products of the mapped quantum states
+of each pixel as
+Φ1,2,...N(x) = ϕ1(x1) ◦ϕ2(x2) ◦· · · ϕN(xN),
+(20)
+where Φ1,2,...,N(x) ∈R
+N
+z
+}|
+{
+2 × 2 · · · × 2. Through Eq. (20), it is
+feasible to associate realistic images with real quantum systems.
+For a natural language document, the i-th word |xi⟩can also
+be represented as the sum of orthogonal quantum state bases
+|ϕhi⟩(hi = 1, . . . , M) [44], [45], [46], [47] corresponding to a
+specific semantic meaning M as
+|xi⟩=
+M
+X
+hi=1
+αi,hi |ϕhi⟩,
+s.t.
+M
+X
+hi=1
+|αi,hi|2 = 1,
+αi,hi ∈C,
+(21)
+where αi,hi is the amplitude associated with each semantic basis
+state. Normalization requires the squared magnitudes of these
+amplitudes to sum to one; restricting them to nonnegative real
+values would be a model-specific assumption rather than a general
+requirement of quantum mechanics. After completing data mapping,
+the embedded quantum data can be processed by TNNs on a
+realistic quantum circuit, as shown in Fig. 6. The loss functions
+of TNNs can also be defined through the properties of quantum
+circuits. Such a procedure can be simulated on classic electronic
+computers via TNs and can be theoretically efficiently implemented
+on realistic quantum systems.
+4
+SUSTAINABLE AI THROUGH TNNS: COMPACT
+MODEL STRUCTURES
+DNNs have extraordinarily high spatial and temporal complexity
+levels, as deeply stacked layers contain large-scale matrix mul-
+tiplications. As a result, DNNs usually require several days for
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+10
+Label
+Image
+Feature map
+Vectorized Image
+Quantum  Circuit
+Output
+Fig. 6: The processing procedure employed for quantum embedded
+data [170]. Quantum circuits can be simulated via TNNs on classic
+electronic computers, and some special TNNs (such as ConvAC)
+can also be theoretically implemented on a realistic quantum circuit.
+training while occupying a large amount of memory for inference
+purposes. In addition, large weight redundancy has been proven
+to exist in DNNs [171], indicating the possibility of compressing
+DNNs while maintaining performance. Motivated by this, a wide
+range of compression techniques have been developed, including
+pruning [172], quantization [173], distillation [174] and low-rank
+decomposition [54]. Among them, applying TNs to DNNs to
+construct TNNs can be a good choice since TNNs have excellent
+abilities to approximate the original weights with much fewer
+parameters [76]. In this direction, researchers have completed many
+studies, especially concerning the reconstruction of convolutional
+and fully connected layers through a variety of TD formats [50],
+[54], [107], [175]. With compact architectures, these TNNs can
+achieve improved performance with less redundancy.
+Pham et al. [176] exploit shared low-rank structure across
+related network parameter tensors through coupled tensor decom-
+position, rather than compressing each weight tensor independently.
+Yang et al. [177] treat connectivity topology as an algebraic design
+object and recursively generate architectures that interpolate be-
+tween sparse and dense aggregation regimes. For scientific machine
+learning, Zhou et al. [178] apply Tucker decomposition to a high-
+dimensional Fourier neural operator, yielding a sequence of lower-
+dimensional operators while retaining a universal-approximation
+guarantee. Together, these studies broaden the compact-model
+perspective from factorizing conventional weights to designing
+structured connectivity and efficient operator models within a
+common architectural framework.
+In this section, we examine how TNNs enable more sustainable
+AI through compact model structures. Modern DNNs, while
+powerful, often require extensive computational resources and
+memory due to their deep architectures and large-scale matrix
+operations. Additionally, studies have shown significant weight
+redundancy in DNNs, suggesting opportunities for compression
+without sacrificing performance. Here, we explore five key TNN
+architectures that address these challenges: TCNNs (Section 4.1),
+TRNNs (Section 4.2), tensorial Transformers (Section 4.3), TGNNs
+(Section 4.4), and tensorial quantum neural networks (Section 4.5).
+By leveraging tensor decomposition techniques and efficient
+parameter sharing, these approaches achieve significant model
+compression while maintaining or even enhancing performance
+compared to their conventional counterparts. We also examine
+applications of tensor networks in large language models (Sec-
+tion 4.6), where they enable parameter-efficient fine-tuning.
+4.1
+TCNNs
+CNNs have achieved strong performance across a broad range of
+tasks. However, their large parameter counts cause weight redun-
+dancy and superfluous computations, affecting both performance
+and efficiency. TD methods provide one approach to this problem,
+and CNNs represented with tensor formats are called TCNNs. Prior
+to introducing TCNNs, we first present a formulation of a vanilla
+CNN, shown in Fig. 7 (a), in a standard tensorial form as
+Y = X ⊛C + b,
+(22)
+where C ∈RK×K×I×O denotes a convolutional weight, X ∈
+RI×H×W denotes an input, Y ∈RO×H′×W ′ denotes an output,
+b ∈RO represents a bias, and ⊛denotes a convolutional
+operator. K represents the kernel window size, I is an input
+channel, H and W denote the height and width of X, O is an
+output channel, and H′ and W ′ denote the height and width
+of Y, respectively. TCNNs mainly focus on decomposing the
+channels I and O. In detail, the weight C is first reshaped to
+˜C ∈RK×K×I1×I2×...IM×O1×O2×...ON , where QM
+k=1 Ik = I
+and QN
+k=1 Ok = O. Then, TCNNs can be derived by tensorizing
+the reshaped convolutional kernel ˜C.
+To accelerate the CNN training and inference process, CP-
+CNN [48], [107], [179], [180], [181] is constructed by decomposing
+the convolutional weight into the CP format, as shown in Fig. 7 (c).
+CP-CNN contains vector factors as its principal subcomponents and
+can therefore achieve a high compression ratio when a sufficiently
+small CP rank is adequate. As with CP-CNN, additional TCNNs
+can be constructed by applying the tensor formats in Fig. 2 to
+convolutional weights. Tucker decomposition is widely used for
+Tucker-CNNs [49], [182]. A BTT-CNN instead uses a hyperedge
+indexed by Rc to represent a sum of Tucker blocks [50]. This block-
+term structure provides greater flexibility than a single Tucker
+block, but introduces additional rank choices and optimization
+cost. Highly compact TT formats have also been introduced to
+CNNs to implement TT-CNNs [51], [183]. Relative to TT, the
+cyclic topology of TR removes the fixed rank-one endpoints and
+can provide a more flexible parameterization at comparable rank
+settings [52]; whether this improves compression or accuracy
+depends on the selected tensorization and ranks. To address
+degeneracy in tensorial layers, CPD-EPC [180] uses a minimal-
+sensitivity design for CP convolutional layers and hybrid Tucker2-
+CP convolutional layers. The TR-Compress method [184] combines
+tensor-ring factorization with execution scheduling to reduce
+parameters while controlling inference overhead. There are also
+some tensorial convolutional neural networks that decompose
+more than just the convolution cores. The tensorized network
+(T-Net) [185] treats the whole network as a one-layer architecture
+and then decomposes it. As a result, the T-Net achieves better
+results with a lighter structure. The CP-higher-order convolution
+(CP-HOConv) [186] utilizes the CP format to efficiently model
+higher-order data, such as spatial, temporal, and channel-wise
+correlations, for tasks like spatiotemporal emotion estimation.
+Obukhov et al. [187] model a set of neural tensors with shared
+tensor-ring-style basis cores, showing that parameter sharing across
+multiple tensors can itself provide effective compression under
+resource constraints. Hamreras et al. [188] provide a comprehensive
+analysis of tensorization as a powerful but underexplored tool for
+compression and interpretability of neural networks, highlighting its
+potential for advancing mechanistic interpretability and proposing
+the vision of fully tensorized neural networks for future efficient
+and transparent model design.
+To provide a quantitative example that does not depend on a par-
+ticular benchmark, consider a stride-one, padded 3 × 3 convolution
+with 256 input channels, 256 output channels, and a 56×56 output
+feature map. A dense kernel contains 3×3×256×256 = 589,824
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+11
+(b) Low-rank CNN
+(c) CP CNN
+(a) Vanilla CNN
+Fig. 7: Correspondence between TN diagrams and convolutional procedures. In each subfigure, the left part is a TN diagram, and
+the right part is the associated feature representation. (a) depicts a standard convolutional layer with a fourth-order weight tensor. (b)
+illustrates a low-rank convolution in which the channel transformation is factorized through an intermediate rank. (c) shows CP-CNN,
+where the convolutional weight is represented by a sum of rank-one components and implemented through compact factor vectors.
+TABLE 4: Rank sensitivity in an analytical 3 × 3 convolutional example with Ci = Co = 256 and Ho = Wo = 56. GMACs count the
+multiply-accumulate operations of the dense or factorized forward pass under equal spatial resolution.
+Method
+Rank setting
+Parameter formula
+Params
+Compression
+GMACs
+Dense
+–
+K2CiCo
+589,824
+1.00×
+1.850
+Tucker-2
+ri = ro = 32
+Ciri + riroK2 + roCo
+25,600
+23.04×
+0.080
+Tucker-2
+ri = ro = 64
+Ciri + riroK2 + roCo
+69,632
+8.47×
+0.218
+Tucker-2
+ri = ro = 128
+Ciri + riroK2 + roCo
+212,992
+2.77×
+0.668
+CP
+R = 32
+R(Ci + Co + 2K)
+16,576
+35.58×
+0.052
+CP
+R = 64
+R(Ci + Co + 2K)
+33,152
+17.79×
+0.104
+CP
+R = 128
+R(Ci + Co + 2K)
+66,304
+8.90×
+0.208
+parameters and requires approximately 1.850 GMACs. Table 4
+compares this baseline with Tucker-2 and CP parameterizations
+over three rank settings. For the factorized implementations, the
+parameter counts are Ciri + riroK2 + roCo for Tucker-2 and
+R(Ci + Co + 2K) for CP. Multiplying these expressions by
+HoWo gives the corresponding forward-pass MAC counts when the
+intermediate feature maps retain the same spatial resolution. Bias
+additions, activations, data movement, and framework overhead are
+excluded so that every entry is directly verifiable.
+The rank sweep makes two effects explicit. First, compression
+is highly rank dependent. Increasing the Tucker-2 rank from 32 to
+128 changes the compression ratio from 23.04× to 2.77×, while
+increasing the CP rank over the same range changes it from 35.58×
+to 8.90×. At rank 64, Tucker-2 requires 69,632 parameters and
+0.218 GMACs, whereas CP requires 33,152 parameters and 0.104
+GMACs. The lower CP count follows from its stronger separability
+constraint; Tucker-2 retains a dense ri × ro × K × K interaction
+core and therefore allocates more capacity to cross-channel and
+spatial interactions.
+Second, the benefit depends on layer geometry rather than rank
+alone. For a 1 × 1 convolution with the same channel dimensions
+and rank 64, the dense layer contains 65,536 parameters, Tucker-2
+contains 36,864 parameters, and CP contains 32,896 parameters.
+The corresponding compression ratios fall to only 1.78× and
+1.99×, respectively, because there is little spatial structure to
+factorize. These calculations do not predict accuracy or measured
+latency, but they show why rank, tensor format, kernel size, and
+hardware execution must be evaluated jointly instead of reporting
+a single compression ratio.
+We further conducted a controlled task-level benchmark to
+connect these analytical counts with accuracy and measured
+execution. The experiment uses CIFAR-10 and a three-convolution
+SimpleCNN with channel dimensions 3 →64 →128 →256.
+The first convolution remains dense; only the second and third
+convolutions are replaced by Tucker-2 or CP layers. We use a
+fixed split of 45,000 training, 5,000 validation, and 10,000 test
+images, train for 20 epochs with AdamW and a cosine schedule,
+and select the best validation checkpoint. Table 5 reports the mean
+and sample standard deviation over seeds 11, 22, and 33. Training
+uses a batch size of 256 and mixed precision on one Tesla V100
+PCIe GPU with 32GB memory under PyTorch 2.3.0 and CUDA
+12.1. Supplementary Notes S6 and S7 provide the full protocol
+and per-seed records, and the accompanying package includes the
+execution script and machine-readable outputs.
+The empirical results expose trade-offs that parameter counts
+alone cannot show. CP with rank 64 retains 74.56% accuracy
+while reducing parameters by 8.73×, MACs by 7.23×, and peak
+training memory by 43.4%. Its mean full-test inference time is
+1.69× faster than Dense, but its total training time is slightly
+longer and its accuracy is lower by 4.21 percentage points. CP
+with rank 32 reaches the largest parameter compression, 15.57×,
+but increases the accuracy gap to 7.31 points. Tucker-2 with
+rank ratio 0.25 yields a 6.94× parameter reduction and a 2.05×
+inference speedup, yet its training time is again not lower than
+the dense baseline. These observations reinforce that theoretical
+MAC reductions do not translate proportionally into training speed
+because factorized layers introduce additional kernels, intermediate
+activations, and synchronization. A useful TNN comparison should
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+12
+TABLE 5: Controlled CIFAR-10 benchmark for Dense, Tucker-2, and CP versions of SimpleCNN. The first convolution remains dense
+and the second and third convolutions are tensorized. Accuracy, total 20-epoch training time including validation, and full-test-set GPU
+inference time are reported as mean ± standard deviation over three seeds. MACs are counted per image. Peak denotes maximum
+allocated GPU memory during training.
+Method
+Tensor setting
+Params(M)
+CR
+GMACs
+Test Acc.(%)
+Train(s)
+Infer(ms)
+Peak(MB)
+Dense
+None
+0.374
+1.00×
+0.153
+78.78 ± 0.03
+127.7 ± 10.2
+316.9 ± 53.2
+1176
+Tucker-2
+rank ratio 0.25
+0.054
+6.94×
+0.022
+72.59 ± 0.27
+136.8 ± 20.6
+155.0 ± 34.6
+666
+Tucker-2
+rank ratio 0.50
+0.149
+2.52×
+0.060
+74.23 ± 0.34
+130.6 ± 15.6
+230.0 ± 45.5
+764
+CP
+R = 32
+0.024
+15.57×
+0.011
+71.46 ± 0.11
+137.9 ± 11.9
+166.5 ± 36.8
+665
+CP
+R = 64
+0.043
+8.73×
+0.021
+74.56 ± 0.19
+136.3 ± 23.1
+188.1 ± 48.1
+666
+therefore report accuracy, parameters, arithmetic cost, memory, and
+measured execution together.
+4.2
+Tensor Recurrent Neural Networks
+RNNs, such as the vanilla RNN and LSTM, have achieved
+promising performance on sequential data. However, when dealing
+with high-dimensional input data (e.g., video and text data), the
+input-to-hidden and hidden-to-hidden transformations in RNNs
+will result in high memory usage rates and computational costs. To
+solve this problem, low-rank TD is efficient for compressing the
+transformation process in practice. First, we formulate an RNN as
+h(t+1) = ϕ(Wx(t) + Uh(t) + b),
+(23)
+where h(t) ∈RO and x(t) ∈RI denote the hidden state and
+input feature at time t, respectively, W ∈RO×I is the input-to-
+hidden matrix, U ∈RO×O represents the hidden-to-hidden matrix,
+b ∈RO is a bias, while ϕ(·) indicates a series of operations that
+form RNN variants, including the vanilla RNN and LSTM [189].
+Eq. (23) can also be reformulated in a concatenated form that is
+widely used in TD, given by
+h(t+1) = ϕ([W, U][x(t), h(t)] + b),
+(24)
+where [W, U] ∈RO×(I+O) and [x(t), h(t)] ∈R(I+O) denote
+the concatenation of W, U and x(t), h(t), respectively. As shown
+in Fig. 8, there are usually two ways to decompose RNNs: (a) only
+tensorizing W, which is often the largest component in an RNN,
+and (b) tensorizing [W, U] for extreme compression. Because
+Decomposition
+Tensorization
+Vectorization
+Concatenation
+Elment-wise Product
+Elment-wise Sum
+Sigmoid Activation
+Tanh Activation
+C
+C
+Fig. 8: The tensor ring LSTM. It is effective at reducing the
+parameters of an LSTM model by replacing the input-to-hidden
+transformation weights with TR decomposition.
+U is usually smaller than W, the surveyed methods typically
+tensorize W alone or tensorize the concatenated transformation
+[W, U], rather than decomposing U in isolation. The process of
+implementing a TRNN is analogous to that used for a TCNN:
+the relevant weights are reshaped into higher-order tensors and
+replaced with tensor-network parameterizations.
+The most direct compression strategy is to decompose the input-
+to-hidden matrix W. CP-RNN and Tucker-RNN [49] apply CP and
+Tucker parameterizations, respectively. At a sufficiently small rank,
+CP-RNN can be among the most compact alternatives, although
+its stronger rank-one structure may also reduce approximation
+accuracy. The TT-RNN [53] implements the TT format on an RNN
+to obtain a high parameter compression ratio. However, the TT-
+RNN suffers from a linear structure with two smaller endpoints,
+which hinders the representation ability and flexibility of TT-based
+models. To release the power of a linear architecture, TRs were
+proposed to link the endpoints to create a ring format [18]. The
+TR-RNN [54] uses this ring structure to obtain a more compact
+recurrent model. The BTT-RNN [50], [55] was constructed on
+the generalized TD approach, the BTT decomposition [190]. The
+BTT-RNN can automatically learn interparameter correlations to
+implicitly prune redundant dense connections and simultaneously
+achieve better performance. Lizaire et al. [191] interpret second-
+order RNNs through tensors, clarifying when multiplicative recur-
+rent interactions are useful and how they relate to classical TN
+parameterizations rather than treating decomposition only as a
+post-hoc compression tool.
+Moreover, studies are utilizing TD to compress an RNN’s
+two transformation layers, and some have even developed de-
+composition methods that are suitable for both RNNs and CNNs.
+The TT-GRU [192] and the HT-RNN [56] methods decompose
+[W, U] to attain a higher compression ratio. Specifically, TT-
+GRU [192] applies a TT for decomposition, and the HT-RNN [56]
+adopts HT decomposition. Unlike prior works that decompose
+hidden matrices, Conv-TT-LSTM [57] utilizes the idea of a TT to
+represent convolutional operations. As shown in Fig. 8, through
+a TT-like convolution, Conv-TT-LSTM can replace convolutional
+LSTM with fewer parameters while achieving good results on
+action benchmarks. For the adaptation of both CNNs and RNNs,
+a hybrid TD (termed HT-TT) method that combines HT and TT
+decomposition [193] was adopted to compress both the CNN
+and RNN [W, U] matrices. The MPS-NLP [194] proposes tensor
+recurrent neural networks (TRNNs) through matrix product states
+and entanglement entropy, enabling explainable natural language
+processing while maintaining model performance. In addition, the
+tensor contraction layer (TC-Layer) [195] was designed to replace
+the fully connected layer and therefore can be utilized as the last
+layer of a CNN and the hidden layers in RNNs. Interestingly, TC-
+Layer can be viewed as a special case of a TT-based layer obtained
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+13
+(a) Multi-Head Self-Attention (MHSA). 
+(b) Tunable-Head Self-Attention (THSA).
+(c) The design space of 
+.
+Fig. 9: Tensor diagrams for SA modules [58]. (a) It is feasible to represent a classic multihead SA (MHSA) mechanism as a tensor
+diagram. MHSA can be treated as a special case of tunable-head self-attention (THSA) by setting C = IH ⊗(1⊤
+D1D). (b) The THSA
+of the Tuformer can be a more generalized version of SA through a trainable matrix C. (c) THSA has a design space formulated as
+C = C1 ⊗(C⊤
+2 C3), which is the direct generalized form of MHSA.
+by setting all TT ranks to 1, which yields a simpler factorized
+structure with reduced expressive flexibility.
+4.3
+Tensorial Transformers
+Transformers [102], [196] are well known for processing sequence
+data. Compared with CNNs and RNNs, Transformers can be
+stacked into large-scale sizes to achieve significant performance
+gains [103]. However, Transformers are still redundant, similar to
+classic DNNs, and can be made smaller and more efficient [59].
+Therefore, tensor networks can be explored to reduce the numbers
+of parameters in Transformers [58], [60], [197].
+Classic Transformers mainly consist of the self-attention (SA)
+mechanism and feedforward Networks (FFNs). The SA processes
+the given query matrix Q, key matrix K and value matrix V
+with parameters WQ, WK, WV , WO. More generally, SA is
+separated into n heads: {WQ
+i }n, {WK
+i }n, {WV
+i }n, {WO
+i }n.
+Each head can be calculated as
+Atti(Q, K, V) = softmax
+ 
+QWQ
+i WKT
+i
+KT
+√
+d
+!
+VWV
+i WOT
+i
+.
+(25)
+Then, SA((Q, K, V)) = Pn
+i=1 Atti(Q, K, V). Another impor-
+tant component, the FFN, is formulated as
+FFN(X) = ReLU(XWin + bin)Wout + bout,
+(26)
+where X is the input, bin and bout are biases, and Win
+and Wout are weights. The number of parameters in a Trans-
+former is mainly based on its linear transformation matrices, i.e.,
+WQ, WK, WV , WO, Win and Wout.
+Therefore, most compression studies focus on eliminating the
+parameters of these matrices. For instance, the MPO structure
+was proposed to decompose each matrix in a Transformer [58],
+generating central tensors (containing the core information) and
+small auxiliary tensors. A tuning strategy was further adopted to
+continue training the auxiliary tensors to achieve a performance
+improvement while freezing the weight of the central tensor to
+retain the main information of the original matrix. Moreover,
+observing that a low-rank MPO structure can cause a severe
+performance drop, Hypoformer [133] was proposed based on
+hybrid TT decomposition; this approach concatenates a dense
+matrix part with a low-rank MPO part. Hypoformer retains the full-
+rank property while reducing the required numbers of operations
+and parameters to compress and accelerate the base Transformer.
+In addition, by concatenating all matrices into one larger tensor,
+Tucker-Bert [59] decomposes the concatenated tensor with Tucker
+decomposition to greatly reduce the number of parameters, leading
+to extreme compression and maintaining comparably good results.
+Xie et al. [198] extend tensorized compression to parameter
+transfer across model scales by learning a shared self-supervised
+weight template and size-specific lightweight scalers under Tucker
+factorization. Their formulation initializes vision models with differ-
+ent depths and widths across classification, detection, segmentation,
+and generation tasks, indicating that tensorization can serve as a
+reusable cross-scale parameter prior rather than only as a post-hoc
+compression operator. Compared to compressing the original at-
+tention operation, multiway multimodal transformer (MMT) [199]
+explores a novel generalized tensorial attention operation to model
+modality-aware multiway correlations for multimodal datasets.
+Interestingly, Tuformer [60] generalizes MHSA into the Tucker
+form, thus containing more expressive power and achieving better
+results, as shown in Fig. 9. Advances in tensorial causal learning
+have emerged through the implementation of causal capsules and
+tucker-format tensor transformers for latent variable interaction
+control. Klein et al. [61] interpret MHA, GQA, and MLA within a
+unified Tucker-style low-rank view of approximate attention. Their
+analysis connects classical tensor decomposition with attention
+design, KV-cache reduction, and parameter-efficient Transformer
+deployment. Zhang et al. [62] use tensor-product parameterization
+to compress the KV cache for long-context language modeling
+while retaining performance against MHA, MQA, GQA, and MLA.
+4.4
+TGNNs
+Graph Neural Networks (GNNs) have achieved groundbreaking
+performances across a range of applications and domains [200].
+One classic GNN layer consists of an aggregation function for
+aggregating the neighbor node information and an update function
+for updating the current node information. For example, the
+processing step for node v in the k-th layer of a GNN can be
+formulated as
+a(k)
+v
+←Aggregate(k)
+n
+h(k−1)
+u
+, ∀u ∈N(v)
+o
+,
+h(k)
+v
+←Update(k)
+
+h(k−1)
+v
+, a(k)
+v
+
+,
+(27)
+where a(k)
+v
+is an aggregated embedding vector, h(k−1)
+v
+is a
+node embedding vector, and N(v) is a neighbor node set. A
+typical choice for the update function is a simple one-layer
+perceptron, and simple summation/maximization is always chosen
+as the aggregation function. Classic GNNs suffer from low model
+expressivity since high-order nonlinear information among nodes
+is missed [63]. Because of the merits of the tradeoff between
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+14
+Gradient Update
+& Dimension
+Exchange
+SVD Split
+To be updated in next stage
+Sweeping Window
+Contraction
+ZigZag Shifting
+Fig. 10: A single stage of the Sweeping method [43]. In each stage,
+Sweeping only updates the nodes in the sweeping window, which
+shifts along a zigzag trajectory.
+expressivity and computing efficiency, the usage of TGNNs for
+graph data processing is quite beneficial.
+To efficiently parameterize permutation-invariant multilinear
+maps for modeling the interactions among neighbors in an
+undirected graph structure, a TGNN [63] makes use of a symmetric
+CP layer as its node aggregation function. It has been demonstrated
+that a TGNN has a strong capacity to represent any multilinear
+polynomial that is permutation-invariant, including the sum and
+mean pooling functions. Nimble GNN [65] innovatively applies
+tensor-train decomposition to GNN embeddings with graph-aware
+tensor operations, achieving up to 81,362× compression while
+maintaining accuracy. Compared to undirected graph processing,
+TGNNs are more naturally suited for high-order graph structures,
+such as knowledge graphs or multi-view graph. Traditional rela-
+tional graph convolutional networks neglect the trilinear interaction
+relations in knowledge graphs and additively combine the informa-
+tion possessed by entities.
+The RTGNN [64], which applies a Tucker format structure to
+extract the graph structure features in the common feature space,
+was introduced to capture the potential high order correlation
+information in multi-view graph learning tasks. Wang et al. [66]
+extend tensor-based graph learning to multilayer and multi-graph
+settings in which relation layers should neither be processed
+independently nor collapsed by simple aggregation. They combine
+CP-derived shared latent factors with generalized estimating
+equations and task-specific losses to model cross-layer correlations
+explicitly. Their analysis broadens the role of tensorization in graph
+learning from parameter compression and high-order aggregation
+to statistically coupled representation learning across multiple
+networks, with consistency and asymptotic normality guarantees.
+TGNNs are also appropriate for high-order correlation modeling in
+dynamic spatial-temporal graph processing situations. For example,
+tensorized spatiotemporal GNN designs further explore dynamic
+time relations and spatial relations jointly, including PEPS-inspired
+modules that reduce parameter counts while capturing richer cross-
+time and cross-space dependencies.
+4.5
+Tensorial Quantum Neural Networks
+Quantum neural networks aim to process quantum data directly in
+quantum systems. One representative work bridging TNNs with
+quantum data processing is the MPS-based architecture proposed by
+Stoudenmire and Schwab [43], which formulates the classification
+task of quantum mapped image data (as introduced in Sec 3.5) as
+optimizing functions indexed by labels, given by
+Fig. 11: ConvAC is equivalent to an HT-like TN [204].
+x1, . . . , xN ∈Rs, where x1 corresponds to a local patch from
+the input image or the feature map, and v(0,j) is the linear
+transformation of xj. The width is 2 for a single block. Notably, a
+single layer is equivalent to a CP format.
+c = 1
+2
+NT
+X
+n=1
+X
+ℓ
+
+f ℓ(xn) −ynℓ
+2
+,
+(28)
+where NT denotes the number of training samples, and yn denotes
+the true one-hot label vector of xn. The optimization process is
+carried out to minimize this cost function in stages with stochastic
+gradient descent. A single stage is shown in Fig. 10. In each
+stage, two MPS tensors A(2) and A(3) are combined into a
+single bond tensor V via tensor contraction. Then, the tensor
+V is updated with gradients. Finally, ˜V is decomposed back into
+separate tensors with the SVD algorithm. This work establishes
+a crucial connection between quantum physics and machine
+learning: the MPS structure, originally developed for quantum
+many-body systems, naturally bridges quantum-inspired tensor
+methods with neural architectures, where the bond dimensions serve
+as model complexity controls. The Sweeping method demonstrates
+how quantum-inspired optimization techniques can be effectively
+adapted for machine learning tasks. Furthermore, this framework’s
+extensibility to other tensor network structures like PEPS [201]
+suggests its potential for advancing both quantum and classical
+architectures while maintaining computational tractability.
+The expressive power of previously developed quantum data
+processing models, e.g., the MPS models [67] and the Born
+machine [202], suffers from a lack of nonlinearity. Classic nonlinear
+operators, e.g., activation functions (such as the rectified linear
+unit (ReLU) function) and average/max pooling, can significantly
+benefit model performance. However, classic nonlinearity cannot be
+directly implemented in a quantum circuit. To solve this problem,
+the ConvAC network [68], [203] was proposed to adopt quantum
+deployable product pooling as a nonlinear operator, proving that
+ConvAC can be transformed into ConvNets with ReLU activations
+and average/max pooling. The whole structure of ConvAC can be
+represented by an HT format and has been proven to be theoretically
+deployable in realistic quantum systems.
+A tensor diagram example of ConvAC is shown in Fig. 11,
+where one hidden layer of ConvAC is in a CP format. ConvAC
+can also handle language data [46] by mapping natural language
+sentences into quantum states via Eq. (21). ConvAC is a milestone
+in that deep convolutional networks, along with nonlinear modules,
+are implemented on quantum circuits. It serves as an inspiration for
+the integration of more NNs into quantum systems. This has led to
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+15
+several important developments. First, Zhang et al. [205] introduced
+the tensor space language model (TSLM), which generalizes the
+n-gram language model.
+Chen et al. [69] subsequently bridge tensor networks and
+autoregressive neural networks through matrix product states,
+enabling efficient quantum many-body simulation while preserving
+physical priors and model expressivity. Chen et al. [206] combine
+tree tensor networks with CP-rank constraints and tensor dropout to
+improve classification efficiency and accuracy. Lu et al. [207] use
+a variational Monte Carlo algorithm based on Rényi free energy to
+approximate finite-temperature quantum states with tensor and
+neural networks, and show that string-bond states outperform
+restricted Boltzmann machines.
+4.6
+Tensor Networks in Large Language Models
+While LLMs share the same core tensor operations as the ten-
+sorized Transformers discussed in Section 4.3, we keep a separate
+subsection for three reasons: (i) scale, because LLMs operate at
+parameter counts that make memory-aware tensorization a first-
+order concern; (ii) deployment, because inference-time issues such
+as KV-cache growth and multi-token prediction are especially
+prominent; and (iii) adaptation, because tensorized parameter-
+efficient fine-tuning has become a distinct sub-literature. Because
+a substantial fraction of this literature remains in preprint form,
+we summarize representative directions rather than attempting an
+exhaustive catalogue.
+Xu et al. [208] tensorize token embeddings for model com-
+pression, while Yang et al. [209] use tensor-train adaptation
+for parameter-efficient fine-tuning. At inference time, KV-cache
+reduction and dynamic tensorization are especially relevant because
+they target one of the dominant memory bottlenecks in LLM
+deployment. More broadly, tensorized PEFT methods suggest that
+structured adapters can preserve more multilinear structure than
+matrix-only LoRA variants. Structured matrix parameterizations
+such as Monarch Mixer [210] are also relevant here because
+they reveal a broader continuum between tensor decompositions,
+Kronecker/butterfly factorizations, and hardware-efficient sequence
+models. Qiu et al. [211] reinforce this connection by showing that
+BTT-style structured matrices can improve the compute–accuracy
+trade-off in vision transformers and small GPT-style models.
+Ye et al. [71] share or freeze selected TT cores across layers
+and use lightweight controllers to preserve layer-specific flexibility.
+Zheng et al. [75] avoid repeated reconstruction of tensorized
+weights during adaptation to improve the accuracy–memory trade-
+off, whereas Li et al. [73] combine a shared orthogonal basis with
+an importance-pruned sparse core to alleviate the storage bottleneck
+of dense Tucker-style cores. These studies show that tensorized
+adaptation depends not only on the decomposition format, but also
+on cross-layer sharing, reconstruction cost, and core sparsity.
+Mixture-of-experts models provide another important setting.
+Xu et al. [72] jointly tensorize all experts within a layer so that
+a shared three-dimensional factorization captures cross-expert
+redundancy. In a complementary formulation, Xu et al. [74]
+represent lifelong multimodal knowledge edits as compact CP-
+decomposed experts and use the input factors for intrinsic routing.
+These results connect tensor decomposition with expert sharing,
+routing, continual adaptation, and memory-efficient model editing.
+On the Relationship Between Tensor Representations
+and Architectures. A natural question arises regarding how
+different tensor representations interact with different neural
+architectures. We offer the following observations: (1) For the
+same architecture, different tensor representations offer different
+trade-offs. For instance, in CNNs, TR decomposition generally
+outperforms TT due to its ring structure providing more flexibility
+at endpoints, while CP offers the highest compression ratio but
+may sacrifice accuracy. Tucker decomposition provides a balanced
+middle ground. (2) The same tensor representation manifests dif-
+ferently across architectures. TT decomposition in CNNs primarily
+targets convolutional kernel channels; in RNNs, it decomposes
+input-to-hidden and hidden-to-hidden transformation matrices; in
+Transformers, it compresses attention weight matrices and FFN
+layers. Despite sharing the same mathematical framework, the
+specific design choices (e.g., reshaping strategies, rank allocation)
+differ substantially across architectures. (3) Architectural affinity
+of tensor decompositions. Certain decompositions show natural
+affinity with specific architectures: BTT is particularly well-suited
+for CNNs, as its hyperedge structure naturally captures channel-
+wise summation of Tucker blocks, enabling implicit pruning
+of redundant connections [50]; MPO is especially effective for
+Transformers, as its structure aligns with the multi-head attention
+paradigm, allowing compression of attention weights while preserv-
+ing head-specific information [58]; and MPS/TT formats naturally
+fit sequential data processing in RNNs due to their linear chain
+topology. However, whether certain decompositions are exclusively
+suitable for certain architectures remains an open question that
+warrants further investigation.
+5
+TRAINING STRATEGIES FOR TNNS
+While the aforementioned TNNs can perform well on various tasks
+and machines, it is also worth exploring training strategies with
+more stability, better performance and higher efficiency. In this
+section, we introduce such strategies in three groups: (1) strategies
+for stabilizing the training processes of TNNs are presented in
+Section 5.1, (2) strategies for selecting and searching the ranks of
+TNNs are provided in Section 5.2, and (3) strategies for applying
+hardware speedup are shown in Section 5.3.
+5.1
+Stable Training Approaches
+Despite their success, TNNs face significant training challenges
+stemming from their inherent multilinear characteristics. While tra-
+ditional neural networks primarily rely on simple linear operations
+like matrix multiplication, TNNs involve tensor contractions that
+result in exponentially scaling data flows as the number of modes
+increases linearly [77]. This exponential scaling affects both the
+forward propagation of features and the backward propagation of
+gradients, creating substantial computational and numerical stability
+challenges. Several approaches have been proposed to address these
+issues. One straightforward solution involves using full-precision
+float64 format to represent large weights, which helps mitigate
+numerical instability problems. However, this approach comes with
+significant drawbacks - the higher precision format requires more
+computational resources and increases processing time compared
+to lower-precision alternatives like float16. Conversely, while lower
+precision formats offer computational efficiency, they can introduce
+numerical stability issues that compromise training effectiveness.
+To balance these competing concerns, Panagakis et al. [76]
+introduced an innovative mixed-precision strategy. This dynamic
+precision approach adaptively adjusts numerical precision during
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+16
+Multi-Head
+Self-Attention
+Add & Norm
+Feed-Forward
+Network
+Add & Norm
+Scaled Dot-Production
+Attention
+Concatenate
+Large Model
+Small Model
+Full Mapping Operator
+TR-MPO
+The -th Layer of a Transformer
+Concatenate 
+ Layers
+The whole parameters of a Transformer
+Model Growth
+Permute
+Fig. 12: The architecture of MANGO, showing how it establishes comprehensive linear correlations across the entire Transformer
+structure, including Multi-Head Self-Attention (MHSA), Feed-Forward Networks (FFN), and normalization layers. The full mapping
+operator leverages TR-MPO to correlate parameters between small and large models.
+6WDQGDUG&RQYROXWLRQ
++7.&RQYROXWLRQ
+2GG&RQYROXWLRQ
+Fig. 13: Three cases of unified TCNN initialization [77], where σ2 denotes the initial variance of each weight vertex. Gf denotes a
+forward procedure, and Gb denotes a backward procedure. (i) Standard convolution. The method in [77] degenerates to Xavier/Kaiming
+initialization on the standard convolution for the same weight variance formulation. (ii) Hyper Tucker-2 (HTK2) convolution. Tucker-2
+(TK2) is a common TD that is utilized in ResNet as the bottleneck module [212]. HTK2 is formed by applying a hyperedge to the weight
+vertices of TK2. (iii) Odd convolution. The odd TD was originally proposed by Li and Sun [213]. The connections among the vertices
+are irregular, making weight initialization a complex problem. These three successful initialization cases can better demonstrate the
+potential adaptability of unified initialization to diverse TCNNs.
+different phases of computation, effectively creating a trade-
+off between computational efficiency and numerical stability.
+By selectively applying higher precision only where necessary,
+this strategy successfully reduces memory requirements while
+maintaining training stability. This approach has proven particularly
+effective in handling the complex tensor operations characteristic
+of TNNs, enabling more efficient and reliable training processes.
+MANGO [78] accelerates large model training by establishing
+comprehensive linear correlations between all weights of pretrained
+and target models, rather than using only partial weight mapping as
+in earlier transfer schemes such as bert2BERT [214]. As shown in
+Figure 12, MANGO operates on the entire Transformer, including
+Multi-Head Self-Attention blocks, Feed-Forward Networks, and
+normalization layers, applying its mapping operator to correlate
+parameters between small and large models through TR-MPO.
+Another feasible way to solve the training problem lies in
+developing a suitable initialization method for tensorial neural
+networks (TNNs). Two widely adopted adaptive initialization
+methods in deep learning are Xavier [215] initialization and
+Kaiming [216] initialization. Xavier initialization, proposed by
+Glorot and Bengio in 2010, regulates the variances of data flows
+between layers to prevent the vanishing gradient problem in deep
+networks. Similarly, Kaiming initialization, introduced by He et
+al. in 2015, was specifically designed for networks using ReLU
+activation functions. However, these conventional initialization
+methods face two major challenges when applied to TNNs. First,
+they cannot accurately calculate the appropriate scales for TNNs
+due to their inability to account for the complex interactions
+occurring in tensor contractions.
+Second, the diversity of tensor formats (e.g., CP decomposition,
+Tucker decomposition, Tensor Train) makes it challenging to
+develop a universally applicable initialization method that fits all
+tensorial layers. To address these limitations, Yu initialization [77]
+was proposed as a unified initialization paradigm. This method
+extends the principles of Xavier initialization while introducing
+adaptive mechanisms specifically designed for arbitrary Tensor-
+based Convolutional Neural Networks (TCNNs). The key in-
+novation of Yu initialization lies in its systematic approach to
+handling tensor operations. Specifically, Pan et al. developed a
+two-step process: First, they extract a backbone graph (BG) from a
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+17
+tensorial convolution hypergraph [107], which captures the essential
+structure of tensor operations. Second, they encode an arbitrary
+TCNN into an adjacency matrix using this BG. Through this
+adjacency matrix representation, the method can directly calculate
+a suitable initial variance for any TCNN, taking into account
+its specific tensor structure and operations. We illustrate three
+representative cases of applying these unified initializations in
+Fig. 13. These examples demonstrate how the method adapts to
+different tensor formats and network architectures. Although Yu
+initialization was initially developed specifically for TCNNs, its
+applicability extends far beyond this original scope. The method
+has shown remarkable versatility and robustness across different
+settings, and it can be effectively applied to a wide range of various
+neural network architectures, including both convolutional and
+Transformer-based models.
+5.2
+Rank Selection and Search
+Prior studies [50], [54], [175] focused on finding efficient TN
+formats (e.g., TTs and TRs) for compressing NNs and have
+achieved significant efficiency for their natural compact structures.
+However, despite these remarkable successes, efficient algorithms
+for adjusting or selecting suitable ranks for a TN are lacking
+since rank selection is an NP-hard problem [128]. As a result,
+many approaches [49], [50], [52], [53] can only set values for
+all ranks manually, which severely affects the resulting models’
+training procedures. Fortunately, the rank selection problem can
+still be optimized through heuristic strategies, such as Bayesian
+optimization [81], [217], reinforcement learning (RL) [80] and
+evolutionary algorithms (EAs) [79]. Here, we introduce some rank
+selection methods for TNNs.
+DNNs utilize neural architecture search (NAS) [218] to search
+for the optimal network hyperparameters, achieving significant
+success. As ranks can be treated as architecture hyperparameters,
+NAS is applicable to searching for optimal tensorial layers with
+better rank settings. Following this idea, the progressive searching
+TR network (PSTRN) [79] employs NAS with an EA to select
+suitable ranks for a TR network (TRN). In detail, the PSTRN
+employs a heuristic hypothesis for searching: “when a shape-fixed
+TRN performs well, part or all of its rank elements are sensitive, and
+each of them tends to aggregate in a narrow region, which is called
+an interest region”. Instructed by the interest region hypothesis, the
+PSTRN can reach the optimal point with a higher probability than
+a plain EA method. The PSTRN consists of an evolutionary phase
+and a progressive phase. During the evolutionary phase, this method
+validates the ranks in the search space on benchmarks and picks
+the rank that yields the best performance. Then, in the progressive
+phase, the PSTRN samples new ranks around the previously picked
+rank and inserts them into a new search space. After several
+rounds, the heuristic EA can find a high-performance solution.
+With such an efficient design, the PSTRN successfully achieves
+better performance than manual setting, which demonstrates that
+its hypothesis is practical. Li et al. [111], [213], [219] formu-
+late structure search through evolutionary topology optimization,
+local-sampling-based permutation search, and alternating local
+enumeration with fewer evaluations, respectively. Zeng et al. [220]
+further study language-model-assisted discovery of tensor-network
+structure-search algorithms. Together with the core-shape results
+in Section 2, these studies show that practical TNN design depends
+not only on rank values, but also on tensorization shape, mode
+order, and topology.
+In addition to NAS, some other efficient methods are also
+available for rank selection. Zhao et al. [221] inferred a CP
+rank by implementing a reduction process on a large rank value
+via a variational Bayesian optimization procedure. Hawkins and
+Zhang [81] extended this CP procedure [221] to TT-based TNNs
+and adopted the Stein variational gradient descent method, which
+combines the flexibility of the Markov chain Monte Carlo (MCMC)
+approach with the speed of variational Bayesian inference to
+construct a Bayesian optimization method. In pretrained networks,
+Kim et al. [222] and Gusak et al. [223] derived approximate
+ranks by employing Bayesian matrix factorization (BMF) [224] to
+unfolding weight tensors. Konstantin et al. [217] utilize a proxy-
+based Bayesian optimization approach to find the best combination
+of ranks for NN compression. Unlike Bayesian methods, Cheng et
+al. [80] treated the rank searching task as a game process whose
+search space was irregular, thus applying RL to find comparably
+suitable ranks for a trained CNN. However, this algorithm is TD-
+dependent, which indicates that its performance may be influenced
+by the selected TD method.
+Yin et al. [225] leveraged the alternating direction method of
+multipliers (ADMM) to gradually transfer the original weight to a
+low-rank representation (i.e., a TT). Farnaz et al. [226] proposed an
+adaptive rank search framework for TR format in which TR ranks
+gradually increase in each iteration rather than being predetermined
+in advance. Wang et al. [82] apply renormalization-group flows to
+automate tensor-network structure search, obtaining more compact
+decompositions with substantially lower search cost. For TR models
+in particular, latent-space rank minimization has also been shown
+to be effective for controlling model complexity while preserving
+representation quality [136]. Taken together, these results reinforce
+a broader conclusion of this survey: rank, tensorization shape, and
+mode order should be treated as a coupled design problem rather
+than independent knobs.
+We briefly discuss the strengths and limitations of the above
+rank-selection approaches. Manual/Grid Search is the simplest
+baseline. It is easy to implement but computationally expensive and
+prone to suboptimal results. Heuristic methods (e.g., PSTRN [79])
+leverage domain-specific assumptions (e.g., interest region hypoth-
+esis) to guide the search, offering better efficiency than brute-force
+methods, but may miss global optima when the assumptions do
+not hold. Bayesian methods (e.g., CP-Bayes [221], TT-Bayes [81],
+proxy-based Bayesian [217]) provide principled uncertainty quan-
+tification over rank choices, enabling informed decisions with
+limited evaluations; however, they are computationally demanding
+and require careful prior specification. RL-based methods (e.g., TR-
+RL [80]) offer flexible exploration of irregular search spaces but are
+tensor-decomposition-dependent, meaning their performance may
+vary across different TD formats. ADMM-based methods [225]
+enable gradual transfer from full-rank to low-rank representations,
+providing smooth optimization trajectories, but require careful
+tuning of penalty parameters. Adaptive methods [226] automatically
+grow ranks during training, avoiding the need for pre-specification,
+but risk over-parameterization if growth criteria are not properly
+calibrated. In practice, the choice of rank-selection strategy should
+be guided by the specific requirements: Bayesian methods are
+recommended when evaluation budgets are limited and uncertainty
+quantification is important; heuristic methods are suitable for rapid
+prototyping; and adaptive methods are preferred when the optimal
+rank is unknown a priori.
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+18
+5.3
+Hardware Speedup
+Accelerating the training and inference procedures of TNNs
+can benefit resource consumption and experimental adjustment,
+thereby achieving economic gains and green research. A direct and
+effective approach is to optimize the speed of tensor operations in
+TNNs to realize hardware acceleration. As inferring TT-format
+TNNs inevitably results in enormous quantities of redundant
+calculations, the TIE scheme [84] was proposed to accelerate
+TT layers by splitting the working SRAM into numerous groups
+with a well-designed data selection mechanism. Huang et al. [227]
+designed a parallel computation scheme with higher I/O bandwidth,
+improving the speed of tensor contractions. Later, they proposed an
+LTNN [227] to map TT-format TNNs into a 3D accelerator based
+on CMOS-RRAM, leading to significantly increased bandwidth via
+vertical I/O connections. As a result, they simultaneously attained
+high throughput and low power consumption for TNNs. Qu et
+al. [85] proposed a spatial 2D processing element (PE) array
+architecture and built a hardware TT engine consisting of off-chip
+DRAM. Kao et al. [228] proposed an energy-efficient hardware
+accelerator for CP convolution with a mixing method that combines
+the Walsh-Hadamard transform and the discrete cosine transform.
+ETTE [86] proposes a novel algorithm-hardware co-optimization
+framework for TT based TNN acceleration, featuring new ten-
+sor core construction, computation ordering mechanisms, and
+lookahead-style processing schemes, thereby achieving significant
+improvements in computational efficiency, memory consumption,
+and data movement compared to existing acceleration solutions
+across various DNN architectures and deployment settings.
+Many more fascinating methods have been developed for the
+acceleration of generic tensor operations, which are correlated
+with TNNs. For instance, Huang et al. [229] observed that the
+tensor matricization operation is usually resource-consuming since
+its DRAM access is built on a random reading address; thus,
+they proposed a tensor storage scheme with a sequential address
+design for better DRAM accessibility. Both T2s-tensor [230] and
+Tensaurus [231] mainly focus on designing general computation
+kernels for dense and sparse tensor data. Xie et al. [120] and
+Liang et al. [232] accelerated search procedures for obtaining an
+optimal sequence of tensor contractions. Xie et al. [120] solved
+the massive computational complexity problem of double-layer
+TN contraction in quantum analysis and mapped such a double-
+layer TN onto an intersected single-layer TN. Liang et al. [232]
+implemented multithread optimization to improve the parallelism
+of contractions. Meirom et al. [233] optimize tensor-network
+contraction paths using reinforcement learning, complementing
+the broader RL-based tensor-operation design perspective of Fawzi
+et al. [234]. Xu et al. [87] develop a hierarchical optimizer that
+combines top-down decomposition with bottom-up fusion to search
+GPU kernel implementations while preserving local correctness
+and global fusion opportunities. Their results suggest that TNN
+acceleration can combine tensor-aware compiler representations
+with learned, structure-aware kernel synthesis rather than relying
+only on hand-designed contraction schedules. Although many
+TNNs have low calculation complexity levels in theory, realistic
+hardware deployments usually fall short of this objective due to
+their numerous permutation operations [49], [235] and the absence
+of sufficient parallelism [227]. Current hardware architectures are
+primarily designed for matrix operations, making them suboptimal
+for tensor operations that involve complex permutations and
+contractions. Frequent data movement between memory hierarchies
+creates substantial bottlenecks, especially for tensor transposition
+and reshaping, which require extensive reorganization but con-
+tribute little arithmetic computation. Promising directions include
+specialized tensor processing units [236], tensor-aware memory
+hierarchies, and efficient contraction and permutation primitives
+that jointly optimize computation and data movement. In the future,
+it is expected that more general hardware acceleration schemes
+based on tensor operations will be developed to implement TNNs
+with smaller storage and time consumption levels.
+Remark. The training strategies discussed in this section
+address three complementary aspects of TNN development: (1)
+training stability through mixed-precision approaches and unified
+initialization; (2) rank selection via heuristic, Bayesian, RL-based,
+and adaptive methods; and (3) hardware acceleration through
+specialized tensor operation engines. An important observation
+is that these three aspects are interrelated—for instance, the choice
+of rank directly affects both training stability and computational
+efficiency, and hardware-aware rank allocation strategies could
+potentially unify all three directions.
+6
+TNN TOOLBOXES
+In this section, we present a systematic taxonomy and critical
+analysis of the existing toolbox ecosystem for TNNs rather
+than introducing new toolboxes. Specifically, our contributions
+are twofold: (1) we propose a unified categorization of existing
+toolboxes into three levels, namely basic tensor operations, deep
+model implementations, and quantum simulations, which helps
+readers quickly identify the tools most suitable for their needs;
+and (2) we analyze the limitations and gaps of current toolboxes,
+highlighting key directions for future improvement.
+In 1973, Pereyra and Scherer [237], as pioneers in this field,
+developed a programming technique for basic tensor operations.
+Modern computing frameworks support a broad range of basic
+tensor-operation toolboxes and higher-level TNN libraries for
+network compression and quantum-circuit simulation. In this
+section, toolboxes for TNNs are presented in three categories
+according to their design purposes: (1) toolboxes for basic tensor
+operations, which contain important and fundamental operations
+(e.g., tensor contraction and permutation) in TNNs (Section 6.1); (2)
+toolboxes for network compression are high-level TNN architecture
+toolboxes based on other basic operation tools (Section 6.2); and
+(3) toolboxes for quantum circuit simulation are software packages
+for the quantum circuit simulation or quantum machine learning
+processes that use TNs from a quantum perspective (Section 6.3).
+6.1
+Toolboxes for Basic Tensor Operations
+Toolboxes for basic tensor operations aim to implement some
+specific TD algorithms. Many basic tensor toolboxes based on
+different programming languages and backends have been designed
+for this purpose. For example, the online stochastic framework for
+TD (OSTD) [238] and Tensor Toolbox [89] were constructed for
+low-rank decomposition and implemented with MATLAB. Regard-
+ing Python-based toolboxes, TensorTools based on NumPy [239]
+implements CP only, while T3F [240] was explicitly designed
+for TT decomposition on TensorFlow [241]. Similarly, based on
+TensorFlow, TensorD [242] supports CP and Tucker decomposition.
+Tntorch [90] is a PyTorch-based library for tensor modeling in the
+CP, Tucker and TT formats. TorchMPS [67], TT-Toolbox [243]
+and Scikit-TT [244] are all powerful Python-based specific TT
+solvers that efficiently implement the DMRG algorithm. Tensorly
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+19
+is a powerful general TD library that supports many decomposition
+formats and various Python backends including CuPy, Pytorch,
+TensorFlow and MXNet. TensorNetwork [92] is a powerful general-
+purpose TN library that supports a variety of Python backends,
+including JAX, TensorFlow, PyTorch and NumPy. Complemen-
+tarily, CoLA [245] automates structure-aware numerical linear
+algebra by dispatching efficient routines for compositional matrix
+structures, such as Kronecker products, block diagonals, and
+sums, enabling accelerated solves, eigendecompositions, and trace
+estimation with automatic differentiation support in both JAX
+and PyTorch. In addition, some toolboxes based on C++ are also
+available. TenDeC++ [246] leverages a unique pointer technology
+called PointerDeformer in C++ to support the efficient computation
+of TD functions. ITensor [91] is an efficient and flexible C++ library
+for general TN calculations. Tensor4ML [247] provides a compre-
+hensive overview of tensor decomposition models, algorithms, and
+optimization techniques, along with Python implementations and
+datasets, serving as a bridge between theoretical foundations and
+practical applications in machine learning and data science.
+6.2
+Toolboxes for Network Compression
+Specific TNN toolboxes are used to assist with the development of
+tensorial layers. Although some general tensor toolboxes such as
+Tensorly [88] are powerful for TD processing and can use their TD
+operations to help initialize TNN modules to a certain extent, they
+still lack support for application programming interfaces (APIs) for
+building TNNs directly. Therefore, a TNN library (Tensorly-Torch)
+based on Tensorly was developed to build some tensor layers
+within any PyTorch network. Pan et al. also developed a powerful
+TNN library called TedNet [49]. TedNet can quickly set up TNN
+layers by directly calling the API. In addition, TedNet supports the
+construction of TCNNs and TRNNs in single lines of code.
+6.3
+Toolboxes for Quantum Simulation
+A number of quantum circuit simulation toolboxes have been
+designed. For example, some TT toolboxes such as Scikit-TT and
+TorchMPS can partially simulate quantum circuits to some extent,
+although they were not specifically designed for quantum circuits
+simulation. In contrast, general TN toolboxes, e.g., TensorNetwork
+and ITensor, can simulate any quantum circuit. In addition, with
+optimized tensor contraction, TeD-Q [93], a TN-enhanced open-
+source software framework for quantum machine learning, enables
+the simulation of large quantum circuits. Furthermore, Yao [248],
+an extensible and efficient library for designing quantum algorithms,
+can provide support for dumping a quantum circuit into a TN.
+In addition, TensorNetworkQuantumSimulator.jl [94], a Julia
+toolbox for quantum circuit simulation with PEPS-style tensor-
+network backends, further broadens the software landscape beyond
+the Python/C++ ecosystems and is directly relevant to TN-based
+quantum simulation workflows. Although no practical hardware
+implementations of quantum TNNs are currently available, these
+classical quantum circuit simulations are still potentially useful and
+valuable for simulations.
+Remark. Despite the success of current toolboxes, some
+areas for improvement remain. (1) Existing basic tensor operation
+toolboxes are mostly implemented on top of high-level runtime
+stacks, which makes it difficult to fuse reshaping, permutation, and
+contraction into layout-aware kernels that fully exploit modern
+accelerators. (2) Existing deep model implementation toolboxes for
+TNNs can only contain a limited number of predefined TNN
+structures and cannot allow users to design structures freely.
+(3) Existing quantum simulation toolboxes focus more on the
+simulation of quantum circuits using TNs and do not facilitate the
+processing of embedded quantum data via TNNs.
+6.4
+Benefits of Tensor Networks for Interpretability
+Tensor networks offer significant potential for interpretability, a
+dimension largely underexplored in the TNN literature. Their
+structured, low-rank form enables the extraction of quantities
+such as mutual information and entanglement entropy between
+input features. Puljak et al. [95] use MPS representations for
+transparent classification and anomaly detection. Hamreras et
+al. [188] analyze low-rank factorizations of neural weights and
+activations as tools for both compression and interpretability. Pareja
+Monturiol et al. [96] construct MPS representations of trained black-
+box networks through sketching and cross interpolation, enabling
+structural analysis while obfuscating parameter-level information
+associated with the training distribution. Hamdi and Angryk [249]
+further show that tensor factorization can expose meaningful latent
+structure in graph data. Heidari and Rabusseau [97] construct a
+graph-aligned tensor-network surrogate for a black-box predictor
+and deterministically recover first- and higher-order Shapley
+interactions without repeated model queries. Their formulation
+uses TN topology directly as an interpretable surrogate structure
+rather than only as a compressed parameterization.
+7
+DISCUSSION AND FUTURE PERSPECTIVES
+The value of a survey lies not only in organizing existing
+methods, but also in identifying the design principles that recur
+across otherwise different applications. The literature reviewed
+in this article indicates that the central questions in TNN re-
+search concern how tensors are formed, how network topology
+affects expressiveness and computation, how learning algorithms
+exploit multilinear structure, and when tensorization provides an
+appropriate inductive bias. We therefore organize the discussion
+around five cross-cutting themes, followed by a perspective on the
+exchange of ideas between tensor-network learning and quantum
+physics. These themes should be interpreted together with several
+unresolved limitations. Tensorized models remain nonconvex and
+can be sensitive to initialization, rank choice, mode ordering, and
+numerical conditioning. Theoretical parameter reductions do not
+necessarily translate into wall-clock or energy savings because
+permutation, contraction scheduling, and memory traffic can
+dominate execution. Robustness to perturbations, calibration, cross-
+domain transfer, and reproducibility across common benchmarks
+also remain less established than compression results. Accordingly,
+the following perspectives emphasize testable design criteria and
+matched-budget evaluation rather than treating tensorization as an
+automatic advantage.
+7.1
+Tensorization Design Beyond Rank
+Tensorization design is a multi-dimensional model-selection prob-
+lem. Rank is an important capacity parameter, but it does not
+uniquely determine either approximation quality or computational
+cost. The mapping from a dense tensor to a collection of modes
+determines which variables interact locally, the dimensions of
+the cores determine where representational capacity is allocated,
+and the network topology determines which correlations can be
+expressed through short contraction paths. Ghadiri et al. [110]
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+20
+show that core shape alone can materially change decomposition
+efficiency, while Li et al. [111] demonstrate that mode permutation
+can alter the quality of a fixed tensor-network structure. These
+results imply that reporting only the decomposition family and rank
+is insufficient for reproducible comparison.
+Topology selection further couples statistical and computational
+considerations. Li et al. [213], [219] search over tensor-network
+structures using evolutionary and local-enumeration strategies,
+whereas Wang et al. [82] use renormalization-group flows to
+guide structure search. Such methods move beyond the assumption
+that TT, TR, Tucker, or PEPS should be selected in advance.
+However, the resulting search spaces are highly nonuniform:
+two structures with the same number of parameters may have
+very different contraction widths, memory requirements, and
+optimization landscapes. Structure search should therefore optimize
+a vector of objectives rather than parameter count alone.
+A useful evaluation protocol should report the tensorization
+map, mode ordering, core dimensions, rank profile, topology,
+and contraction strategy together with accuracy, peak memory,
+and measured latency. Comparisons should control at least one
+of parameter count, arithmetic cost, or memory traffic, because
+matching rank does not imply matching computational complexity.
+An important research direction is to develop differentiable or
+bilevel procedures that jointly select tensorization, topology, ranks,
+and contraction order. Such procedures would turn architectural
+choices that are currently treated as implementation details into
+explicit, testable components of the learning problem.
+7.2
+Expressiveness Versus Contractibility
+The expressive power of a tensor network is inseparable from the
+cost of contracting it. Chain and tree structures, including TT/MPS
+and HT, remain common because they admit efficient exact
+contraction and stable local manipulation. Their low treewidth,
+however, restricts the pathways through which distant variables
+interact. Loopy structures such as PEPS can encode richer spatial
+and multiway correlations, but exact contraction is computationally
+intractable in the general case [8], [20]. Consequently, a topology
+that is more expressive in representation space may be less useful
+as a trainable neural component if its forward and backward
+contractions cannot be evaluated within practical resource limits.
+This trade-off is not binary. Gray and Chan [112] show that
+contraction for arbitrary geometries can be improved substantially
+through hyperoptimization, while Alkabetz and Arad [139] connect
+belief propagation with tensor-network contraction. Tindall et
+al. [140] further demonstrate that message-passing approximations
+can support large loopy simulations. These studies indicate that
+the effective model class is determined jointly by topology
+and contraction algorithm. Approximation error, contraction-path
+quality, numerical stability, and hardware parallelism therefore
+belong to the architectural analysis rather than to a separate
+implementation stage. Future TNN studies should evaluate ex-
+pressiveness under a fixed contraction budget. Relevant quantities
+include maximum intermediate tensor size, contraction width, peak
+memory, communication volume, and the error introduced by
+approximate contraction. Hybrid structures may offer a productive
+compromise: tree-like backbones can preserve tractability, while a
+limited number of additional edges can encode selected long-range
+dependencies. Another open problem is to connect local contraction
+error with task-level prediction error and gradient bias. Such theory
+would clarify when approximate contraction preserves the benefit
+of a richer topology and when it merely introduces an uncontrolled
+source of optimization noise.
+7.3
+The Algorithmic Shift in TNN Research
+TNN research is increasingly defined by algorithms for con-
+structing, searching, contracting, and learning tensor networks
+rather than by the insertion of a fixed decomposition into another
+neural architecture. Bharadwaj et al. [113] reduce the cost of
+TT construction through leverage-score sampling, and Tao et
+al. [114] formulate probabilistic tensor decomposition as an
+undirected graphical model. Hameed and Rabusseau [250] develop
+an automatic-differentiation-compatible procedure for probabilistic
+tensor networks; because this work remains a preprint, its empirical
+conclusions should be interpreted together with the peer-reviewed
+probabilistic decomposition literature. These examples show that
+sampling, uncertainty estimation, and numerical linear algebra are
+becoming first-class parts of TNN methodology.
+A parallel algorithmic development concerns contraction and
+execution. Meirom et al. [233] learn contraction strategies with
+reinforcement learning, complementing the broader demonstration
+by Fawzi et al. [234] that search can discover efficient multilin-
+ear algorithms. At the computation-graph level, Xu et al. [87]
+combine hierarchical decomposition and fusion to search tensor-
+oriented GPU kernels. These contributions blur the conventional
+boundary between model architecture, compiler optimization, and
+hardware mapping: changing the contraction schedule can alter
+memory consumption by orders of magnitude without changing
+the mathematical tensor network.
+The next step is to optimize these layers jointly. A complete
+pipeline would select the tensorization and topology, estimate ranks,
+choose exact or approximate contraction, and generate hardware-
+aware kernels under a shared resource objective. Such integration
+requires reproducible benchmarks that separate algorithmic gains
+from implementation effects and report wall-clock time, memory
+traffic, numerical error, and energy consumption in addition to pa-
+rameter count. Theoretical analysis is also needed for convergence
+when the model structure or contraction approximation changes
+during training. Establishing these foundations would position
+TNNs as a general framework for structured computation rather
+than a collection of compression techniques.
+7.4
+Tensorization as an Inductive Bias
+Tensorization should be interpreted as an inductive bias, not
+merely as a mechanism for reducing parameters. A decomposition
+constrains which interactions are represented directly, which corre-
+lations must be transmitted through intermediate cores, and how
+parameters are shared across modes. When these constraints align
+with the structure of the task, a tensorized model may generalize
+better than a dense model even at a comparable parameter budget.
+Wang et al. [115] provide theoretical and empirical evidence
+that transformed low-rank parameterizations can improve robust
+generalization. This perspective explains why compression ratio
+alone is an incomplete measure of success: two equally compact
+models may encode very different assumptions about the data.
+Several application settings illustrate this principle. Xie et
+al. [198] use shared Tucker-structured templates as transferable
+priors across vision-model scales. Wang et al. [66] encode corre-
+lations across multiple graphs through shared latent tensor factors
+rather than treating graph layers independently. Klein et al. [61]
+and Zhang et al. [62] impose structured low-rank interactions
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+21
+on attention and its key-value representations. In each case, the
+tensor format specifies which forms of sharing and interaction are
+preferred before optimization begins.
+Matrix factorization provides a necessary baseline hierarchy for
+evaluating this bias. Truncated SVD and related matrix-low-rank
+methods operate on a selected unfolding and can be preferable
+when a weight is intrinsically two-dimensional. TNNs generalize
+this idea by retaining multiple modes and distributing capacity
+across cores and topology, but the advantage is not automatic:
+reshaping can introduce artificial correlations, and contraction
+overhead can offset parameter savings. Evaluations should therefore
+compare dense, matrix-low-rank, and tensor-network models under
+matched parameter, compute, and data budgets, while also reporting
+out-of-distribution performance, robustness, and calibration. Such
+comparisons help distinguish task-aligned structural generalization
+from gains caused only by regularization or reduced model size.
+7.5
+Unified Learning and Scientific Machine Learning
+Tensor networks provide a common representation language for su-
+pervised prediction, unsupervised density estimation, probabilistic
+inference, and operator learning. Zeng et al. [83] connect supervised
+and unsupervised tensor-network learning through mixed structures,
+structure-search priors, and lightweight uncertainty quantification.
+This perspective is important because many applications require
+more than a point prediction: they must also represent latent
+structure, generate samples, or quantify uncertainty. A unified
+framework can share cores or intermediate representations across
+these objectives while preserving the explicit multilinear structure
+of the model.
+Scientific machine learning places additional demands on such
+a framework. Models must often respect separability, locality,
+conservation structure, or symmetries while operating on high-
+dimensional fields. Zhou et al. [178] decompose a high-dimensional
+Fourier neural operator into lower-dimensional operators and estab-
+lish a universal-approximation guarantee. Yang et al. [177] show
+that Kronecker structure can also be used to generate parameter-
+efficient connectivity patterns rather than merely factorize existing
+weights. These examples indicate that tensorization can serve
+simultaneously as a computational device and as a mechanism for
+encoding scientific structure.
+Important open problems concern the preservation of phys-
+ical and statistical properties after factorization. Approximation
+guarantees should be accompanied by analyses of stability, dis-
+cretization transfer, uncertainty calibration, and conservation error.
+Benchmarks should compare tensorized operators not only by
+prediction accuracy, but also by memory, resolution generalization,
+rollout stability, and sensitivity to rank and mode ordering. Another
+promising direction is to combine probabilistic tensor networks
+with neural operators so that uncertainty is represented in the same
+structured space as the solution field. Such developments would
+connect TNN research with inverse problems, surrogate modeling,
+and data assimilation without reducing scientific machine learning
+to another application-specific compression task.
+7.6
+Quantum
+Physics
+Perspectives
+and
+Physics-
+Inspired Algorithms
+Tensor networks originated as structured representations of quan-
+tum many-body states, and this origin continues to provide both
+mathematical tools and algorithmic intuition for TNNs. In quantum
+simulation, tensor networks capture entanglement and high-order
+correlations without explicitly materializing the exponentially large
+state tensor [251]. Neural and tensor-network models therefore offer
+complementary mechanisms: neural components provide flexible
+nonlinear parameterization, while tensor structure provides con-
+trolled correlation pathways and access to physically meaningful
+quantities. The challenge is to combine these advantages without
+discarding the tractability and interpretability that motivate tensor
+networks in the first place.
+Loconte et al. [70] place tensor factorizations and tractable
+circuit representations in a generalized hierarchical framework, clar-
+ifying how modular components can be composed while preserving
+efficient inference. Physics-originated optimization algorithms offer
+another connection. The density matrix renormalization group opti-
+mizes an MPS locally through sweeping updates, providing a direct
+analogue of alternating core optimization in TNN training [252].
+Message-passing and approximate-contraction methods similarly
+suggest ways to train models with loopy structures that would
+otherwise be computationally inaccessible [139], [140]. MERA
+provides a particularly instructive example because its multiscale
+representation combines tensor contractions with disentanglers and
+isometries [21], [253], [254]. These components encode scale-
+dependent correlations that are not naturally represented by a
+simple chain or ring. Translating such structures into practical
+TNNs requires differentiable constraints, stable joint optimization,
+and efficient contraction on classical hardware. Evaluation should
+determine whether physics-inspired components improve represen-
+tation or optimization beyond what can be explained by parameter
+count. More broadly, future work should identify which physical
+concepts, including entanglement measures, renormalization, gauge
+freedom, and locality, remain meaningful when tensor networks
+are embedded in neural systems. This distinction is necessary to
+turn physical analogy into testable algorithmic design.
+8
+CONCLUSION
+TNs and NNs provide complementary perspectives on high-
+dimensional learning: TNs offer explicit multilinear structure and
+controllable complexity, whereas NNs provide flexible nonlinear
+representations and scalable data-driven optimization. This survey
+has examined their theoretical connections, methodological integra-
+tion, and principal applications within TNNs. In particular, tensor
+convolution, convolutional tensors, tensorized parameterizations,
+and tensor-network diagrams provide a common mathematical lan-
+guage for analyzing neural operations and clarifying how network
+structure affects representation, computation, and optimization.
+The practical value of this integration extends beyond parameter
+compression. For data representation, TNNs preserve higher-order
+dependencies in multimodal, multi-view, multi-source, and multi-
+task settings without requiring the underlying structure to be
+flattened prematurely. For model design, tensor decompositions
+replace dense transformations with structured multilinear mappings,
+reducing parameter count, memory, and computational cost. More
+importantly, tensorization acts as an inductive bias: mode organiza-
+tion, core shape, rank allocation, and network topology determine
+which interactions are represented efficiently and how information
+is shared across inputs, tasks, layers, or modalities. Consequently,
+a TNN’s effectiveness cannot be judged by compression ratio
+alone, but also by predictive performance, robustness, contraction
+cost, memory traffic, and compatibility with the target problem’s
+structure. TNNs also connect machine learning with quantum many-
+body modeling and physics-inspired computation. Concepts such
+PROCEEDINGS OF THE IEEE (ACCEPTED VERSION)
+22
+as entanglement, locality, renormalization, message passing, and
+structured contraction provide useful principles for understanding
+and designing tensorized learning systems. Conversely, differen-
+tiable optimization and neural parameterization can extend the
+range of tensor-network models that can be trained from data.
+This relationship should nevertheless be treated as a source of
+testable computational and representational principles rather than
+as a purely conceptual analogy. Establishing when physics-inspired
+structures provide measurable advantages over conventional tensor
+decompositions remains an important research question.
+Future progress will require treating tensorization, topology
+selection, rank adaptation, contraction, and hardware execution
+as a coupled design problem rather than optimizing them in
+isolation. Recent advances in tensorized attention, mixture-of-
+experts models, graph learning, neural operators, and multiscale
+structures such as MERA illustrate the breadth of this design
+space, but their practical value should be established through
+matched-budget and hardware-aware evaluation. Parameter and
+arithmetic reductions should therefore be assessed together with
+predictive performance, robustness, memory traffic, latency, and
+energy consumption. Under these criteria, tensor structure can
+evolve from a post hoc compression device into a principled
+architectural choice for efficient, interpretable, and structurally
+grounded learning, while also clarifying when multilinear structure
+provides measurable advantages in neural computation.
+ACKNOWLEDGMENTS
+This paper was partially supported by National Key Research and
+Development Program of China (No. 2018AAA0100204). G. Li
+was supported by National Natural Science Foundation of China
+(Grant No. 62402206). This paper was also partially supported by
+the Hong Kong Institute of AI for Science, City University of Hong
+Kong.

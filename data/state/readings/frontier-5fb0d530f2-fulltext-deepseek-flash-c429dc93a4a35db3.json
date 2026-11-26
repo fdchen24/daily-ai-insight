@@ -1,0 +1,178 @@
+{
+  "title_zh": "把 VLM 训练成机器人操作基础模型的一次尝试",
+  "affiliations": [
+    "Tsinghua University",
+    "Tencent Hunyuan"
+  ],
+  "scores": {
+    "research_value": 78,
+    "research_value_reason": "论文直接追问通用 VLM 能否成为操作基础模型，给出可复现的数据表示与训练配方，并在零样本随机化基准上明显超过 VLA/WAM/VLM 基线，但绝对成功率仍低，离可用还有距离。",
+    "novelty": 70,
+    "novelty_reason": "核心是把稠密控制步目标换成带进度描述的参数化动作原语，属于监督表示的改变；CP-SFT 的 system prompt 约束加 VQA 混训是既有防遗忘手段的组合，方法层面没有新架构，主要增量在数据流水线。",
+    "technical_depth": 62,
+    "technical_depth_reason": "训练细节、时延测量与训练过程监控做得扎实，但语义步表示与 CP-SFT 两条核心设计没有拆开消融，与基线的比较也缺少同数据同算力的重训对照，中心假设未被直接检验。"
+  },
+  "reading": {
+    "why_read": "提出 nanoAstra，把机器人示教重组成带稠密进度描述的语义动作原语序列，并以能力保持的 CP-SFT 微调 VLM，在 RoboTwin 2.0 零样本随机化基准上取得 17.8% 成功率。",
+    "task": "机器人操作基础模型要在未见过的物体、指令与环境上泛化。当前两条主线各有短板：VLA 直接回归稠密控制步，WAM 额外预测未来视频；在 RoboTwin 2.0 的零样本随机化设定下，π0.5 只有 1.4%、DreamZero 0.2% 成功率，通用 VLM 加 thinking 也只有 8.2–10.8%，说明规模化预训练知识并未自动转化为可执行的操控行为。GPT-6 Astra 展示了这种可能性，但训练细节未公开。",
+    "findings": [
+      {
+        "point": "稠密控制步监督里没有可复用的行为单元",
+        "detail": "控制步目标虽物理明确，却不标出连贯动作单元及其在任务中的角色；同一行为随控制频率、执行速度和局部修正产生不同序列，模型只能从碎片轨迹反推结构，容易贴合示教特有的执行模式。"
+      },
+      {
+        "point": "任务级指令缺少中间目标",
+        "detail": "episode 级指令不描述中间目标，下一步动作缺少可依据的进度状态，长任务中模型难以判断当前处在哪个子任务阶段。"
+      },
+      {
+        "point": "全参适配会侵蚀预训练能力",
+        "detail": "训练曲线显示 VQA 准确率早期下降后回升，但最终 MMMU、ERQA、CV-Bench-3D 仍低于初始值，说明直接微调确实带来遗忘，需要显式的保持机制。"
+      }
+    ],
+    "method": "数据侧用五阶段流水线统一四个异构数据集：对齐坐标系与抓取参考点，在夹爪切换、停顿、急转等决策点切分，用 Qwen3.5 生成「动作+物体+目标」的稠密进度描述，样本输出进度句与左右臂动作原语序列（move x +5.0、gripper open）；2.29B 机器人 token 与 1.36B VQA token 混训。模型侧 CP-SFT 用机器人 system prompt 规定本体、坐标、单位与动作词表，把输出软约束在结构化响应空间，并靠联合 VQA 抑制遗忘；损失为 $\\ell^{CE}+\\lambda\\ell^{num}$（$\\lambda=0.3$），9B 全参微调，无独立动作头。",
+    "results": "RoboTwin 2.0 零样本随机化设定下 17.8%，比最强 VLA/VLM 基线高 7.0 个百分点；RoboDojo Open 4.75%。H20 上推理 1.69 s 短于动作执行，流式执行把空闲占比从 35.0% 降到 6.9%。",
+    "limitations": "绝对成功率仅 17.8%，长程任务仍因关节物体参数化与进度漂移失败；语义步表示与 CP-SFT 未分别消融，中心假设缺乏直接检验；MMMU 等基准仍掉 5.0–6.3 分。"
+  },
+  "claims": [
+    {
+      "claim": "nanoAstra-9B 在 RoboTwin 2.0 零样本随机化基准上取得 17.8% 成功率。",
+      "numbers": [
+        "17.8"
+      ],
+      "source_span": "Abstract; Sec. 1",
+      "quote": "nanoAstra-9B achieves a 17.8% zero-shot success rate"
+    },
+    {
+      "claim": "该结果比最强 VLA 与最强 VLM 基线高 7.0 个百分点。",
+      "numbers": [
+        "7.0"
+      ],
+      "source_span": "Sec. 3.3, Performance",
+      "quote": "by 7.0 percentage points"
+    },
+    {
+      "claim": "被评测的 WAM 模型成功率最高仅 0.2%。",
+      "numbers": [
+        "0.2"
+      ],
+      "source_span": "Sec. 3.3, Performance",
+      "quote": "The evaluated WAMs achieve at most 0.2%"
+    },
+    {
+      "claim": "VLA 基线 π0.5 在同一设定下成功率仅 1.4%。",
+      "numbers": [
+        "1.4"
+      ],
+      "source_span": "Figure 1; Table 1",
+      "quote": "π0.5 1.4%"
+    },
+    {
+      "claim": "通用 Qwen 模型加 thinking 后成功率从 3.2–4.0% 升到 8.2–10.8%。",
+      "numbers": [
+        "3.2",
+        "4.0",
+        "8.2",
+        "10.8"
+      ],
+      "source_span": "Sec. 3.3, Performance",
+      "quote": "raising success rates from 3.2–4.0% without thinking to 8.2–10.8% with thinking"
+    },
+    {
+      "claim": "流式执行把机器人空闲时间占比从 35.0% 降到 6.9%。",
+      "numbers": [
+        "35.0",
+        "6.9"
+      ],
+      "source_span": "Abstract; Table 3",
+      "quote": "from 35.0% to 6.9%"
+    },
+    {
+      "claim": "流水线最终保留 5,310.5 小时操作数据用于训练。",
+      "numbers": [
+        "5310.5"
+      ],
+      "source_span": "Sec. 2.1, Data Recipe with VLM Data",
+      "quote": "we retain 5,310.5 hours of manipulation data"
+    },
+    {
+      "claim": "这批数据约含 818K 条 episode。",
+      "numbers": [
+        "818"
+      ],
+      "source_span": "Sec. 2.1, Data Recipe with VLM Data",
+      "quote": "approximately 818K episodes"
+    },
+    {
+      "claim": "训练混合数据约 3.65B 可训练 token，其中 2.29B（62.7%）来自机器人数据，1.36B（37.3%）来自通用视觉语言数据。",
+      "numbers": [
+        "3.65",
+        "2.29",
+        "62.7",
+        "1.36",
+        "37.3"
+      ],
+      "source_span": "Sec. 2.1, Data Recipe with VLM Data",
+      "quote": "The mixture contains approximately 3.65B trainable tokens: 2.29B (62.7%) from robot data and 1.36B (37.3%) from general vision-language data"
+    },
+    {
+      "claim": "训练用 56 张 H20 跑一个 epoch。",
+      "numbers": [
+        "56"
+      ],
+      "source_span": "Sec. 3.1, Settings",
+      "quote": "We train for one epoch on 56 H20 GPUs"
+    },
+    {
+      "claim": "最终 checkpoint 上 MMMU、ERQA、CV-Bench-2D、CV-Bench-3D 分别为 53.1%、41.0%、81.6%、87.6%，初始为 58.6%、47.3%、82.2%、92.6%。",
+      "numbers": [
+        "53.1",
+        "41.0",
+        "81.6",
+        "87.6",
+        "58.6",
+        "47.3",
+        "82.2",
+        "92.6"
+      ],
+      "source_span": "Sec. 3.5, Training Process Monitoring",
+      "quote": "At the final checkpoint, MMMU, ERQA, CV-Bench-2D, and CV-Bench-3D reach 53.1%, 41.0%, 81.6%, and 87.6%, respectively, compared with initial scores of 58.6%, 47.3%, 82.2%, and 92.6%."
+    },
+    {
+      "claim": "除 CV-Bench-2D 外，其余基准相对初始精度下降 5.0–6.3 个百分点。",
+      "numbers": [
+        "5.0",
+        "6.3"
+      ],
+      "source_span": "Sec. 3.5, Training Process Monitoring",
+      "quote": "with gaps of 5.0–6.3 points"
+    },
+    {
+      "claim": "在 RoboDojo Open 上成功率为 4.75%（19/400）。",
+      "numbers": [
+        "4.75",
+        "19",
+        "400"
+      ],
+      "source_span": "Sec. 3.4; Table 4",
+      "quote": "nanoAstra-9B achieves a 4.75% success rate (19/400)"
+    },
+    {
+      "claim": "同一基准上未调优的 Qwen3.5-9B 成功率仅 0.25%。",
+      "numbers": [
+        "0.25"
+      ],
+      "source_span": "Sec. 3.4",
+      "quote": "compared with 0.25% for its untuned Qwen3.5-9B counterpart without thinking"
+    },
+    {
+      "claim": "单张 H20 上推理时延降到 1.69 s，对应动作执行 2.66 s，推理/执行比为 0.64。",
+      "numbers": [
+        "1.69",
+        "2.66",
+        "0.64"
+      ],
+      "source_span": "Sec. 3.3, Inference Efficiency; Table 2",
+      "quote": "inference latency decreases to 1.69 s, with 2.66 s of motion and a ratio of 0.64"
+    }
+  ]
+}

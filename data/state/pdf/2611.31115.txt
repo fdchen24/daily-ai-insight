@@ -1,0 +1,1371 @@
+November, 2026
+RUIBench: What Makes a Good Robot-Use Interface?
+Yanzhe Chen*
+Zhijun Cao*
+Zechen Bai*
+Wenzheng Zeng*
+Kevin Yuchen Ma
+Yiqi Lin
+Guoqiang Liang
+Xiaokang Liu
+Ke Sun
+Kevin Qinghong Lin
+Mike Zheng Shou†
+Show Lab, National University of Singapore
+ABSTRACT
+Foundation models can reason about complex physical tasks, yet translating this intelligence into reliable
+robot execution remains challenging. We argue that a critical, often overlooked factor is the robot-use
+interface (RUI), which determines how agents express and execute physical actions. To systematically
+study its impact, we introduce RUIBench, comprising 30 manipulation tasks across five suites spanning
+world knowledge, in-context learning, discovery, dynamic interaction, and contact-rich manipulation.
+We further develop RUIKit, a unified framework that crosses six action abstractions with two interaction
+forms, yielding 13 interfaces under shared perception and control. In simulation, changing only the
+RUI shifts a frontier agent’s success rate from 45% to 81%, and that of a fine-tuned 4B model from
+13% to 47%. Our analysis reveals that effective interfaces reduce unnecessary decisions while
+preserving essential feedback, with their benefits shaped by agent behavior and physical uncertainty.
+We further uncover a verification gap, where agents frequently declare success despite observable
+failures, revealing the need for task-level verification beyond individual actions. Together, these findings
+establish RUI design as a critical factor in embodied agent reliability.
+Website [Benchmark & Code & Model] :
+https://showlab.github.io/RUIBench
+1 Introduction
+Foundation models are moving from understanding the physical world to acting in it [2, 39, 74]. While
+vision-language-action models learn to predict robot actions [6, 7, 43], recent agentic systems enable
+general-purpose models to control robots through tool calls and executable programs [15, 16, 27, 45,
+52, 76]. This introduces a critical design choice beyond the model itself: how should an agent interact
+with a robot? We define the robot-use interface (RUI) as the actions an agent can command and
+how they are organized for execution. From low-level motion commands [3, 4] and image-grounded
+points [25, 57] to semantic skills [1, 37] and executable programs [52, 71], the RUI determines what
+the agent must decide, what can be delegated to execution, and when control returns to the agent.
+This distinction becomes critical in complex physical tasks. These tasks require agents to gather
+missing information, react to dynamic events, and correct errors through physical feedback. An
+interface that demands a new model decision for every small movement can make execution costly and
+error-prone, while one that provides insufficient feedback may fail when the world deviates from the
+plan. Thus, reliable execution depends not only on what an agent knows, but also on how decisions
+and feedback are distributed between the agent and the robot.
+However, existing embodied benchmarks compare models under fixed interfaces [18, 23, 47, 82, 84],
+while interface studies typically examine selected design choices [27, 64, 68]. Consequently, the
+impact of interface design remains poorly understood. In our experiments, changing only the RUI shifts
+*Equal contribution.
+†Corresponding author
+1
+arXiv:2611.31115v1  [cs.RO]  23 Nov 2026
+Show Lab
+RUIBench
+B.1. Action Abstraction: Unit of Action
+Six Ways to Reach the Red Ring
+# Joint
+Angles
+robot_move_joints(joints_deg=[0,-45,0,...])
+# Delta
+Vector
+robot_move_delta(dxyz_m=[.05,-.12,-.08])
+# Step
+Fixed-Size Step
+robot_step(move="left",size="coarse",n=3)
+# Pose
+Gripper Pose
+robot_move_to(xyz_m=[.42,.10,.12])
+# Point
+Image Pixel
+robot_move_to_pixel("f3.front",u=212,v=148)
+# Skill
+Named Skill
+skill_pick(target="f3.front#2")
+B.2. Interaction Form: When Control Returns
+Per-Action
+One Action per Reply
+Reply 1
+skill_pick(a)
+8 s
+Pick
+Reply 2
+skill_pick(a)
+skill_place(b)
+8 s
+Place
+...
+8 s
+After Each Action
+</> Program
+Same Tools, One Reply
+Reply 1 · code_run
+for s, d in moves:
+skill.pick(s)
+skill.place(d)
+camera.look()
+8 s
+Pick
+Place
+···
+8 s
+...
+When the Program Ends
+Arm Holds, Scene Moves On during Thinking
+Time
+A. Robot-Use Interface
+Robot
+Motion
+Frames
+Joint
+Delta
+Step
+Pose
+Point
+Skill
+×
+Per-Action
+Program
++
+RUI-Free
+= 13 RUIs
+Calls
+Returns
+Foundation Model
+(a) RUI Exceeds Agent
+40
+50
+60
+70
+80
+90
+Success (%)
+Per-Action
+Program
+Free
+Claude Code
+Range 35.4
+Codex
+Range 16.7
+Δ 2.1
+(b) Decisions and Feedback
+0
+50
+100
+Success (%)
+Claude Code on Delta, Step, Point
+57.8
+Per-Action
+29 Turns
+65.6
+Sequence
+16.5 Turns
+75.6
+Program
+14 Turns
++7.8
++10.0
+(c) Demands Shift from Sim to Real
+20
+40
+60
+80
+100
+Success (%)
+Claude Code
+Codex
+Sim
+Real
+42
+36
+60
+56
+Per-Action vs Program
+Sim
+Real
+54
+36
+66
+52
+Delta vs Skill
+(d) A Good RUI Is Easy to Learn
+0
+30
+60
+Success (%)
+Qwen3.5-4B
+Zero-Shot
+Fine-Tuned
+Pose 46.7
+Joint → Skill
+Per-Action
+Skill 41.3
+Joint → Skill
+Program
+Flip
+Flip
+Figure 1. Robot-use interfaces (RUIs) shape embodied agent performance. Top: RUIKit organizes six
+action abstractions and two interaction forms into 13 RUIs under shared perception and control. Bottom: (a)
+Interface choice substantially affects agent success. (b) Decision compression and in-program feedback provide
+complementary gains. (c) Interface preferences shift from simulation to reality. (d) RUI-specific fine-tuning
+improves small-model performance in both interaction forms.
+Claude Code’s success rate from 45% to 81%, far exceeding the average performance gap between two
+frontier agents (Fig. 1a). This raises our central question: What makes a good robot-use interface?
+To answer this question, we introduce RUIBench, a benchmark combining 30 agentic manipulation tasks
+with a controlled evaluation protocol. These tasks go beyond simple pick-and-place, requiring agents to
+reason, acquire information through interaction, and adapt to changing physical conditions. They span
+five suites: world knowledge, in-context learning, discovery, dynamic interaction, and contact-rich
+manipulation. The protocol limits agents to RGB-D observations and robot states, keeps the environment
+evolving during model reasoning, and evaluates task success independently of the agents’ claims. We
+further develop RUIKit, a unified framework that disentangles two design choices: action abstraction,
+which determines what an agent can command, and interaction form, which determines how actions are
+organized and executed. RUIKit crosses six action abstractions with two interaction forms to instantiate
+12 interfaces, plus a free-choice interface, all within a shared harness where only the RUI varies (Fig. 1).
+Across frontier and small models in simulation and 650 real-robot episodes with frontier agents,
+we find that effective RUIs reduce unnecessary decisions while preserving essential feedback
+(Fig. 1b), which also makes them easier for small models to learn (Fig. 1d). Fine-grained interaction
+can fragment a clear plan into excessive model decisions, a failure we call execution fragmentation.
+Composing actions into programs reduces this burden when agents effectively exploit multi-step
+execution and intermediate feedback. However, real-world execution changes which interfaces are
+effective, as physical uncertainty demands more opportunities for local correction (Fig. 1c). We
+further uncover a verification gap: agents frequently declare success despite observable failures, while
+checking individual actions does not guarantee task completion. Together, these findings highlight the
+importance of allocating decisions, feedback, and verification at appropriate levels.
+2
+Show Lab
+RUIBench
+Simulation
+Real Robot
+Suite
+World
+Knowledge
+WK1 Tower of Hanoi
+WK2 River Crossing
+WK3 Domino Run
+WK4 Set the Table
+WK5 Balance Beam
+WK6 Tic-Tac-Toe
+WK3 Domino Run
+In-Context
+Learning
+CL1 Play It Back
+CL2 Dolls' Names
+CL3 Build the House
+CL4 Crow and Pitcher
+CL5 Tangram
+CL6 Knight's Move
+CL3 Build the House
+Discovery
+DS1 Whose Present?
+DS2 Egg Hunt
+DS3 Treasure Hunt
+DS4 Fake Coin
+DS5 Find the Acid
+DS6 Flame Test
+DS2 Egg Hunt
+Dynamic
+Interaction
+DI1 Rocket Launch
+DI2 Load the Train
+DI3 Traffic Light
+DI4 Simon Says
+DI5 Whack-a-Mole
+DI6 Dessert Covers
+DI4 Simon Says
+Contact
+Rich
+CR1 Shape Sorter
+CR2 Screw the Bulb
+CR3 Curling
+CR4 Graphics Card
+CR5 Snap the Bricks
+CR6 Fold the T-Shirt
+CR1 Shape Sorter
+Figure 2.
+The 30 tasks of RUIBench.
+Each row is a suite of six simulated tasks, defined by what
+success requires: reasoning from prior knowledge, using previously shown visual examples, physical ex-
+ploration, responding to time-sensitive events, or precise adjustments during contact. The right column
+shows the task of each suite that also runs on the real robot.
+Our main contributions are summarized as follows:
+• Agentic benchmark. We introduce RUIBench with 30 manipulation tasks across five suites and a
+controlled evaluation protocol for systematically studying RUIs.
+• Unified framework. We develop RUIKit, spanning 13 interfaces across six action abstractions and
+two interaction forms under shared perception and control.
+• Empirical insights. We reveal how decision burden, physical feedback, and task-level verification
+shape embodied performance across agents and environments.
+2 Related Work
+Robot-Use Interfaces for Foundation Models. Foundation models control robots through learned
+action policies [6, 7, 43] or interfaces that connect general-purpose models to physical actions. Existing
+systems employ semantic skills and learned-policy tools [1, 13, 28, 37, 48, 51, 61, 63, 67, 83, 85, 89],
+executable programs [17, 35, 40, 52, 71, 76, 79], spatial constraints and value maps [36, 38, 60],
+image-grounded points and paths [25, 33, 45, 50, 57, 74, 86, 88], end-effector poses [44], and
+discrete motion commands [3, 15, 31]. However, these interfaces are typically developed within
+individual systems, making their independent effects difficult to isolate. Recent studies compare
+selected action abstractions [27], programmatic versus per-action execution [19, 64, 68], interface
+families [4, 53, 65, 91], harness components [12, 24, 73, 80], and planner-policy interfaces [34]. Yet
+how these design choices jointly shape agent behavior remains poorly understood. RUIKit addresses
+3
+Show Lab
+RUIBench
+this gap by disentangling action abstraction and interaction form, enabling controlled comparisons of
+their individual and combined effects on agent behavior.
+Table 1.
+Comparison with related work.
+Crossed de-
+sign evaluates matched action abstractions under per-action
+and program execution. False claims evaluates comple-
+tion claims against physical outcomes. Ours: RUIBench
++ RUIKit. △: partial coverage.
+Action
+abstr.
+Call vs.
+program
+Crossed
+design
+False
+claims
+Small
+models
+Real
+robot
+CaP-X [27]
+✓
+×
+×
+×
+✓
+✓
+ALRM [64]
+×
+✓
+×
+×
+✓
+×
+Berman et al. [4]
+✓
+✓
+×
+×
+×
+△
+Show-Harness [15]
+✓
+×
+×
+×
+✓
+✓
+RobotUse [45]
+△
+△
+×
+×
+×
+✓
+Espinola et al. [23]
+×
+×
+×
+△
+×
+×
+RobotWorld [84]
+×
+×
+×
+△
+×
+×
+Ours
+✓
+✓
+✓
+✓
+✓
+✓
+Work
+Interface design
+Evaluation
+Interface studies and systems
+Agent benchmarks
+Benchmarks for Embodied Foundation
+Models. Existing embodied benchmarks eval-
+uate robot manipulation, generalization, and
+embodied reasoning [18, 47, 49, 82].
+Re-
+cent efforts extend toward foundation-model
+agents, introducing tasks that demand multi-
+step reasoning, planning, and physical interac-
+tion [14, 23, 29, 30, 46, 66, 78, 84]. Evalua-
+tion protocols have also become more realistic,
+incorporating non-privileged observations,
+continuous physical time, and independent
+outcome scoring [23, 65, 84], alongside time
+and cost considerations [26, 41, 42, 81, 87].
+However, these benchmarks rarely vary the
+interface in a controlled way, limiting our un-
+derstanding of how interface design affects
+agents facing different interaction demands.
+Moreover, physical task success does not nec-
+essarily imply that an agent correctly recog-
+nizes completion. Prior studies investigate visual success detection and failure reasoning [21, 22, 54, 90],
+yet agents can still declare success despite incomplete tasks [23, 58, 84]. RUIBench complements
+these efforts with 30 agentic tasks spanning five interaction demands and a protocol that separates
+physical outcomes from agents’ completion claims. Together, RUIBench and RUIKit measure how
+interface design shapes both execution and completion judgment (Tab. 1).
+3 RUIBench
+RUIBench provides the tasks (Fig. 2) and evaluation protocol (Sec. 3.2) for studying how RUIs shape
+embodied agent performance. For a given agent and task, it fixes the robot, perception, timing, and
+scoring, and varies the RUI through RUIKit (Sec. 4).
+3.1 Agentic Task Design
+Task design. A clear task goal does not imply a fully specified path to achieving it. Successful
+manipulation often requires agents to reason beyond the initial instruction, acquire information through
+interaction, and adapt to physical feedback. RUIBench captures these demands through 30 tasks in five
+complementary suites (Fig. 2). World knowledge requires reasoning from prior knowledge, as in the
+Tower of Hanoi. In-context learning requires using previously shown visual examples, as in building a
+house from a picture. Discovery requires physical exploration, as in finding a fake coin with a balance.
+Dynamic interaction requires responding to time-sensitive events, as in Simon Says. Contact-rich
+manipulation requires precise adjustments during contact, as in inserting a graphics card. Negative
+controls confirm that tasks depend on their intended capabilities (App. A). A scripted reference that
+4
+Show Lab
+RUIBench
+Table 2. Statistics of RUIBench. Source columns count tasks adapted from psychology (Psych.) or drawn
+from everyday games, puzzles, school experiments, and chores (Everyday). Ability columns count tasks
+emphasizing long-horizon (LH), reasoning (RS), memory (ME), fine-grained control (FG), speed (SP), and
+bimanual coordination (BI). Task statistics are per-task means of instruction length (Instr., words), scene objects,
+milestones, and scripted-policy time (Ref., s). Each task provides 15 development and 20 test missions.
+Psych.
+Everyday
+LH
+RS
+ME FG
+SP
+BI
+Instr. Objects
+Milestones
+Ref. (s)
+World knowledge (WK)
+3
+3
+4
+4
+0
+1
+0
+1
+16
+13
+3.8
+36
+In-context learning (CL)
+2
+4
+2
+2
+4
+2
+0
+1
+14
+16
+3.7
+40
+Discovery (DS)
+0
+6
+4
+2
+5
+1
+0
+0
+10
+10
+3.5
+34
+Dynamic interaction (DI)
+4
+2
+0
+0
+1
+1
+6
+2
+15
+9
+4.0
+61
+Contact-rich (CR)
+2
+4
+1
+1
+0
+5
+0
+1
+14
+4
+4.0
+22
+All
+11
+19
+11
+9
+10
+10
+6
+5
+14
+11
+3.8
+38
+Suite
+Source
+Primary abilities
+Task statistics
+solves all 70 control missions succeeds on only 6 of them when it ignores demonstrations, observations
+after the first frame, or mid-episode changes. Of the 30 tasks, 11 adapt paradigms from developmental
+and comparative psychology, and 19 come from everyday games, puzzles, school experiments, and
+chores (Tabs. 2 and 7). These familiar settings make goals intuitive and outcomes interpretable while
+preserving the challenges of agentic decision-making.
+Task configurations. Each suite contains six tasks, with each task drawing on at least three of six
+underlying abilities: long-horizon planning, reasoning, memory, fine-grained control, speed, and
+bimanual coordination. The suites emphasize different combinations of these abilities (Tab. 2). Each
+task includes three or four milestones to measure partial progress. Twenty-five tasks use a Franka
+Research 3 arm with fixed and wrist cameras, while five use two ARX X5 arms with head and
+wrist cameras. All tasks are implemented in Isaac Sim with Isaac Lab [56]. Each task provides 15
+development and 20 test missions from fixed seeds. We retain only layouts that pass reachability,
+visibility, and graspability checks and can be solved by a scripted reference policy with privileged
+state, ensuring feasibility in simulation. Prompts, task parameters, and scorers are configured on
+development missions, while all agents and RUIs are evaluated on the same held-out test missions.
+3.2 Evaluation Protocol
+To isolate interface effects while preserving the demands of physical interaction, RUIBench enforces
+non-privileged observations, continuous physical time, and independent outcome evaluation.
+Non-privileged observations. Agents receive task instructions, hints available to human operators,
+and, for in-context learning tasks, a previously shown video or image. All other information comes
+from RGB-D cameras and robot-state readings through shared tools. SAM 3 [10] detects and segments
+objects, while 3D positions are recovered from noisy sensor depth rather than privileged simulator states.
+On 100 annotated frames, this pipeline detects 93% of objects with localization errors of 0.5 to 0.7 cm.
+Continuous physical time. The environment continues evolving while the agent reasons. In simulation,
+each model response incurs a fixed 8 s delay, during which the robot holds its pose while other objects
+continue moving. This approximates the 75th percentile of 4,067 responses measured from three
+frontier models, preventing differences in serving latency from confounding interface comparisons.
+5
+Show Lab
+RUIBench
+Independent outcome evaluation. Each episode starts from a fresh simulator instance and ends
+when the agent declares completion, gives up, or reaches its turn budget or 30 min time limit. For
+reference, scripted policies complete tasks in 38 s on average (Tab. 2), while some dynamic events
+last only 16 to 20 s. Reaching the goal does not end an episode. Instead, success is determined
+independently from the physical trajectory, verified offline from execution logs, and withheld from
+the agent. The agent must therefore decide when the task is complete, allowing its completion
+claims to be compared against actual physical outcomes.
+Evaluation measures. Beyond task success and API cost per episode, we measure two aspects of
+interface behavior. Decision burden is characterized by model turns per episode and, for programs,
+actions executed per program. Completion judgment is evaluated through three rates (Tab. 6): the
+fraction of episodes declared complete, the fraction of completion claims that are false, and the fraction
+of failed episodes that end in a completion claim. Together, these measures distinguish execution
+performance from the agent’s ability to recognize task completion.
+4 RUIKit
+Instruction, Hint, Film
+Model
+Harness
+Model Reply
+skill_pick(target="f3.front#2")
+code_run("for s, d in moves: ...")
+Shared
+Tools
+24 Tools
+6 Families
+Protocol
+RGB-D Only
+8 s per Reply
+One Attempt
+Engine
+Isaac Sim (FR3, ARX X5)
+Real Franka
+Verdict
+≠ task_done
+All Must Hold
+Goal Met
+Rules Kept
+No Glitch
+156 s
+102 s
+0 s
+Scorer
+Trajectory Log
+×
+Config ID:
+rui.code-skill/v1
+Interface
+Opus 5.5
+GPT-6 Astra
+Small Models
+Claude Code
+Codex
+Minimal Loop
+Interface
+Only
+Variable
+Per-Action
+Program
+RUI-Free
+Joint
+Delta
+Step
+Pose
+Point
+Skill
+@sam3
+Perception
+camera_
+look
+zoom
+vision_
+detect
+segment
+lift
+pose
+memory_
+frames
+note
+recall
+scene
+plan_
+motion
+grasps
+ik
+robot_
+state
+wait
+stop
+task_
+demo
+done
+give_up
+info
+Figure 3. Overview of RUIKit. The RUI is the only
+variable for a fixed agent and task, while the harness, 24
+underlying tools, evaluation protocol, and robot backend re-
+main shared. The scorer’s verdict is withheld from the agent.
+RUIKit provides a unified framework for
+constructing and evaluating robot-use inter-
+faces (Fig. 3). It separates interface design
+from the underlying perception, control, and
+agent infrastructure. For a given agent and
+task, only the RUI varies, while the harness,
+tools, evaluation protocol, and simulator re-
+main fixed across RUIs.
+4.1 Interface Design Space
+Robot-use interfaces differ in what actions they
+expose and how those actions are organized
+for execution. We characterize this design
+space along two complementary axes: action
+abstraction and interaction form (Fig. 1).
+Action abstraction. This axis determines
+what an agent can command. We consider
+six abstractions: Joint specifies joint-space
+targets; Delta specifies relative translations
+and rotations; Step provides fixed-magnitude motion commands; Pose specifies absolute end-
+effector targets; Point grounds actions in image-space locations; and Skill exposes semantic op-
+erations such as picking, placing, pressing, pushing, and turning. They differ in representation and
+control granularity rather than forming a strict hierarchy.
+Interaction form. This axis determines how actions are composed and when control returns to the
+agent. In the per-action form, each model reply issues at most one action per arm, after which control
+returns to the agent. In the program form, the agent writes a Python program [52] that composes
+6
+Show Lab
+RUIBench
+actions through sequences, loops, and conditional branches. Programs can also query observations and
+adapt subsequent actions without another model reply. For a given abstraction, both forms use the
+same action primitives, so they differ only in how actions are organized.
+Interface configurations. Crossing six action abstractions with two interaction forms yields 12
+fixed RUIs. We also introduce RUI-Free, which exposes all abstractions in both forms and lets
+the agent choose, giving 13 interfaces. Per-action RUIs are named by their abstraction, such as
+skill, while program-based RUIs use the prefix program, such as program-skill. Importantly,
+Skill and Program represent different forms of delegation: skills encapsulate predefined robot
+operations, whereas programs compose operations through agent-generated code. They can therefore
+be combined rather than treated as alternatives. All configurations share the same infrastructure,
+allowing either axis to vary while the other stays fixed.
+4.2 Unified Agent Harness
+Shared perception and control. RUIKit provides 24 underlying tools across six families (Fig. 3
+and Tab. 8).
+All RUIs share the same perception and control infrastructure, including camera
+observation, object detection and segmentation, depth-based 3D localization, and robot-state estimation.
+Shared utilities further support memory, visual marking, object tracking, grasp and motion planning,
+and reachability checks. Agents also access task information, such as instructions, demonstrations,
+and events, and issue waiting, stopping, completion, or give-up commands through common tools.
+Only the exposed action commands and their interaction form vary across RUIs.
+Execution and agent integration. RUIKit implements robot actions and observations as reusable
+functions.
+Each interface selects its action primitives and interaction form, with a versioned
+identifier such as rui.code-skill/v1.
+Frontier coding agents access these functions through
+the Model Context Protocol (MCP), while smaller open models use a minimal tool-calling
+loop. Programs execute in a sandbox exposing only permitted functions. Both agent types use
+the same robot-side infrastructure and interface definitions.
+Validation and deployment. RUIKit records tool calls, robot trajectories, observations, and outcomes
+for offline evaluation. An independent scorer evaluates goal satisfaction, task constraints, and simulation
+validity from the logged trajectories. Each session is also audited for unauthorized tool use, file or
+network operations, and access to benchmark internals. A real-robot backend for the Franka arm reuses
+the same interface definitions, tools, and harness, enabling all 13 RUIs to run without modification.
+5 Experiments
+5.1 Experimental Setup
+Models. We evaluate two frontier coding agents, Claude Code with Claude Opus 5.5 and Codex with
+GPT-6 Astra, both at high reasoning effort and connected through MCP (Sec. 4.2). We also evaluate
+Qwen3.5-4B [62] through a minimal agent loop without thinking, both zero-shot and after fine-tuning.
+For each of the 12 fixed RUIs, we fine-tune a LoRA adapter [32] on 300 training trajectories, 30%
+from successful Qwen3.8-Max episodes and 70% from scripted policies. About half of the scripted
+trajectories include injected deviations and recovery. Training and test seeds are disjoint (App. C.1).
+7
+Show Lab
+RUIBench
+Table 3. Simulation results across robot-use interfaces. Success rates are reported for five task suites and their
+average (Avg.). Turns: median model replies per episode; Cost: mean API cost per episode ($). For Qwen3.5-4B,
+ZS/FT: zero-shot/fine-tuned success; Train/Test: one-time fine-tuning cost and cost per test episode, at $2.68 per
+H200 GPU-hour. Bold: best success and lowest per-episode cost per agent.
+WK
+CL
+DS
+DI
+CR
+Avg. Turns Cost
+WK
+CL
+DS
+DI
+CR
+Avg. Turns Cost
+ZS
+FT Train Test
+Joint
+80
+77
+63
+70
+40
+66.0
+35
+1.48
+83
+77
+67
+53
+70
+70.0
+32
+2.15
+2.0
+12.7 0.4K 2.07
+Delta
+93
+47
+50
+70
+53
+62.7
+31
+1.34
+80
+80
+67
+37
+67
+66.0
+23
+1.71
+3.3
+21.3 0.3K 1.66
+Step
+67
+10
+63
+40
+47
+45.3
+37
+2.01
+87
+63
+77
+67
+67
+72.0
+38
+2.37
+0.0
+20.0 0.9K 0.97
+Pose
+87
+67
+80
+87
+57
+75.3
+29
+1.19
+93
+83
+60
+67
+70
+74.7
+23
+1.58
+0.0
+46.7 0.4K 0.56
+Point
+87
+50
+70
+50
+50
+61.3
+28
+1.49
+53
+67
+93
+33
+73
+64.0
+20
+1.42
+0.0
+35.3 0.3K 0.53
+Skill
+100
+63
+70
+63
+70
+73.3
+19
+0.90
+87
+90
+90
+57
+47
+74.0
+16
+1.09
+6.7
+41.3 0.2K 0.36
+Overall
+86
+52
+66
+63
+53
+64.0
+30
+1.40
+81
+77
+76
+52
+66
+70.1
+25
+1.72
+2.0
+29.6 0.4K 1.03
+Joint
+100
+80
+67
+83
+50
+76.0
+12
+0.81
+63
+83
+87
+67
+67
+73.3
+27
+1.75
+2.7
+22.0 0.2K 1.98
+Delta
+97
+70
+97
+83
+57
+80.7
+11
+0.69
+87
+87
+63
+47
+67
+70.0
+20
+1.74
+2.0
+14.0 0.2K 1.96
+Step
+100
+50
+93
+67
+53
+72.7
+14
+0.77
+87
+70
+80
+53
+50
+68.0
+34
+2.27
+0.0
+16.7 0.3K 0.55
+Pose
+100
+70
+73
+67
+50
+72.0
+11
+0.78
+100
+83
+67
+83
+47
+76.0
+21
+1.33
+0.0
+30.0 0.2K 0.33
+Point
+100
+87
+97
+80
+33
+79.3
+14
+0.74
+87
+87
+60
+87
+50
+74.0
+22
+1.75
+0.0
+26.7 0.4K 0.76
+Skill
+93
+47
+67
+93
+47
+69.3
+12
+0.86
+60
+70
+93
+70
+83
+75.3
+14
+0.95
+6.7
+41.3 0.2K 0.52
+Overall
+98
+67
+82
+79
+48
+75.0
+12
+0.77
+81
+80
+75
+68
+61
+72.8
+23
+1.63
+1.9
+25.1 0.2K 1.02
+RUI-Free
+93
+70
+80
+87
+57
+77.3
+14
+0.78
+97
+87
+67
+97
+57
+80.7
+15
+1.47
+–
+–
+–
+–
+All RUIs
+92
+61
+75
+72
+51
+70.1
+21
+1.06
+82
+79
+75
+63
+63
+72.2
+23
+1.66
+1.9
+27.3 0.3K 1.02
+RUI
+Claude Code
+Codex
+Qwen3.5-4B
+Success (%)
+Efficiency
+Success (%)
+Efficiency
+Success (%)
+Cost ($)
+Per-action
+one action per arm per model reply
+Program
+one Python program per reply using the same action primitives
+Free choice
+all action abstractions and both interaction forms
+Protocol and metrics. Each frontier agent runs all 30 tasks with 13 RUIs on five test missions per task,
+yielding 1,950 simulation episodes per agent. The small model is evaluated on the 12 fixed RUIs, as
+RUI-Free has no dedicated training data. All experiments follow the protocol in Sec. 3.2. We report task
+success, median model turns per episode, and mean API cost. For the small model, we also report the one-
+time fine-tuning cost and the per-episode inference cost at GPU rental prices (Train and Test in Tab. 3).
+5.2 Interface Effects in Simulation
+Finding 1: Embodied performance depends on both the agent and its interface. Changing only the
+RUI shifts Claude Code’s success from 45.3% to 80.7%, far exceeding the 2.1-point difference between
+the frontier agents averaged across all RUIs (Tab. 3). API cost also varies by nearly threefold. This
+shows that the interface is not merely a means of issuing actions: it determines how many decisions an
+agent makes and what each decision must accomplish. Importantly, the same interface does not benefit
+every agent equally. For Claude Code, programs raise average success from 64.0% to 75.0%, reducing
+median turns from 30 to 12 and mean API cost from $1.40 to $0.77. Claude Code composes 3.3 actions
+per program, and 54% of its programs observe the world after acting. Codex averages 0.9 actions and
+typically wraps a single action in code, gaining only 2.7 points from the program form (App. C.2).
+Skills offer another way to reduce model decisions by encapsulating predefined operations, achieving
+the fewest turns and lowest costs among per-action RUIs for both agents. RUI-Free further illustrates
+8
+Show Lab
+RUIBench
+the role of interface selection: it achieves 80.7% for Codex, outperforming every fixed RUI, while
+remaining competitive for Claude Code. Together, these results suggest that interface affordances
+matter only when agents can effectively use them.
+Learning to use an interface. The small-model experiments examine whether this ability can be
+acquired through fine-tuning rather than assumed from model scale. Zero-shot, Qwen3.5-4B succeeds
+in only 1.9% of episodes across the 12 fixed RUIs, and does best with Skill (6.7%), which encapsulates
+whole operations. Fine-tuning on 300 trajectories per RUI raises its success to 27.3% at a one-time
+cost of $0.2K to $0.9K, but how much it learns depends on the RUI (Tab. 3). Abstractions that name
+a target rather than a motion (Pose, Point, and Skill) reach 35.3% to 46.7% in the per-action form,
+whereas Joint, Delta, and Step stay between 12.7% and 21.3%. They also shorten episodes: each costs
+$0.36 to $0.56, less than any frontier configuration, whereas a Joint or Delta episode costs $1.66 to
+$2.07. Programs, in contrast, lower the average success from 29.6% to 25.1% and help only with Joint,
+whose per-action episodes run longest. Thus, a good RUI is also easy to learn: the small model learns
+most where the abstraction removes decisions and per-action execution keeps feedback. Pose and Skill
+are the two best per-action RUIs for all three agents, even though Pose scores 0.0% zero-shot. With
+per-action Pose, the small model even matches Claude Code with per-action Step (46.7% vs. 45.3%).
+5.3 Decision Compression and Feedback
+Table 4. Effects of interaction form and action-level
+checks. Success (%); Turns: median model replies per
+episode; Cost: mean API cost per episode ($); Failed
+claimed: the share of failed episodes that end in a completion
+claim (%). One seed per task.
+Turns
+Cost
+Per-action
+57.8
+29
+1.58
+71.1
+Action sequence
+65.6
+16.5
+0.86
+77.4
+Program
+75.6
+14
+0.79
+86.4
+No check
+73.3
+16
+0.89
+87.5
+Report
+73.3
+17.5
+0.94
+81.2
+Report and correct
+66.7
+16.5
+0.91
+75.0
+Variant
+Success
+Efficiency
+Failed
+claimed
+Interaction form Delta, Step, Point; 90 episodes each
+Action-level checks Skill, Program-Skill; 60 episodes each
+Finding 2: Efficient execution requires both
+fewer decisions and effective feedback. Fine-
+grained per-action control can fragment a clear
+plan into repeated model decisions, increas-
+ing latency, cost, and opportunities for error.
+We call this failure execution fragmentation.
+Programs can reduce this burden, but their ben-
+efits may come from both action composition
+and intermediate feedback.
+To distinguish these effects, we introduce an
+action sequence variant that executes multiple
+actions without intermediate observations
+and returns their results only at the end. On
+the Delta, Step, and Point interfaces, Claude
+Code improves from 57.8% with per-action
+execution to 65.6% with action sequences,
+while median turns fall from 29 to 16.5 (Tab. 4). Allowing observations and conditional execution
+within programs further raises success to 75.6%, with 14 turns. Thus, action composition reduces
+decision burden, and in-program feedback adds further gains.
+These benefits depend on task demands (Tab. 10). In-context learning tasks benefit substantially from
+executing known action sequences, while knowledge, discovery, and dynamic tasks rely more on interme-
+diate feedback. Contact-rich manipulation benefits from neither consistently, suggesting that its required
+corrections may exceed what current program-level interaction can provide. The key distinction is
+therefore not simply short versus long execution, but where feedback can influence the next action.
+9
+Show Lab
+RUIBench
+5.4 From Simulation to Reality
+Real-robot setup. We evaluate both frontier agents across all 13 RUIs on a Franka Research 3 arm
+with fixed and wrist cameras. The evaluation covers five tasks, one per suite: Domino Run (WK3),
+Build the House (CL3), Egg Hunt (DS2), Simon Says (DI4), and Shape Sorter (CR1). With five
+layouts per task, this yields 650 real-robot episodes. Interfaces and task budgets match simulation,
+while execution follows wall-clock time. A human operator independently assesses task success, with
+additional quality ratings and rollouts reported in App. C.3.
+Table 5. Sim-to-real effects of interface design. Success (%)
+on five matched tasks (Sim: one seed; Real: 650 episodes). Δ:
+Real minus Sim (percentage points). Abstractions average both
+forms; bold marks the best Real result in each group.
+Sim
+Real
+Δ
+Sim
+Real
+Δ
+Per-action
+66.7
+42.0
+−24.7
+73.3
+60.0
+−13.3
+Program
+90.0
+36.0
+−54.0
+73.3
+56.0
+−17.3
+RUI-Free
+100.0
+44.0
+−56.0
+100.0
+44.0
+−56.0
+Joint
+70.0
+34.0
+−36.0
+60.0
+54.0
+−6.0
+Delta
+70.0
+54.0
+−16.0
+60.0
+66.0
++6.0
+Step
+60.0
+36.0
+−24.0
+60.0
+52.0
+−8.0
+Pose
+80.0
+42.0
+−38.0
+100.0
+64.0
+−36.0
+Point
+100.0
+32.0
+−68.0
+70.0
+60.0
+−10.0
+Skill
+90.0
+36.0
+−54.0
+90.0
+52.0
+−38.0
+All RUIs
+80.0
+39.4
+−40.6
+75.4
+56.9
+−18.5
+RUI
+Claude Code
+Codex
+Interaction form / choice
+Action abstraction
+Finding 3: Real-world execution changes
+interface preferences. Interface advan-
+tages observed in simulation do not neces-
+sarily transfer to physical execution (Tab. 5).
+For Claude Code, programs outperform
+per-action execution by 23.3 points in sim-
+ulation but lose this advantage on the real
+robot (36.0% vs. 42.0%). Their sim-to-
+real drops are 54.0 and 24.7 points, re-
+spectively. Codex shows a smaller shift,
+with per-action execution slightly outper-
+forming programs on the real robot. Free
+choice transfers worst: RUI-Free drops
+from 100.0% in simulation to 44.0% on the
+real robot for both agents. Among action
+abstractions, Delta leads for both agents,
+with Pose close behind for Codex.
+These differences highlight the importance
+of feedback and local correction under
+physical uncertainty. More than in simulation, real execution is affected by depth noise, calibration
+offsets, and slipping grasps, with the two cameras sometimes locating the same object up to 1.5 cm apart.
+Successful trajectories often involve placing an object, inspecting the result, and making incremental cor-
+rections. In contrast, a Claude Code program placed three dominoes without checking their spacing and
+incorrectly declared completion. Such cases suggest that the benefit of action composition depends not
+only on reducing model decisions, but also on preserving opportunities to correct execution errors.
+Limits of current interfaces. Some tasks require feedback at timescales or precision levels beyond
+what model-level interaction can reliably provide. On the real robot, Simon Says remains challenging
+because the target moves while the agent reasons. Codex’s image-point programs provide an instructive
+exception, using in-program observations to track and reach the target across all five layouts. This
+suggests that time-critical reactions may need to operate within programs or lower-level controllers.
+Contact-rich manipulation poses a complementary challenge. In simulation, inserting a graphics card
+and folding a T-shirt remain difficult across nearly all RUIs. Their success depends on fine corrections
+that are poorly resolved by the available observations: a 2 cm T-shirt misalignment spans only about
+eight pixels in the head camera. Together, these cases expose the need for feedback and control
+mechanisms that operate at appropriate temporal and spatial resolutions.
+10
+Show Lab
+RUIBench
+5.5 The Verification Gap
+Table 6. Completion-judgment diagnostics (%). Online (30
+tasks, one test seed): claim rate over episodes, false claims
+among completion claims, and completion claims among failed
+episodes. Post-hoc (23 tasks): failures detected in final frames
+by a fresh judge and claims made without rechecking.
+Claim
+rate
+False
+claims
+Failed
+claimed
+Failure
+visible
+No
+recheck
+Claude Code
+94.6
+26.0
+82.1
+70.2
+69.7
+Codex
+91.8
+21.8
+70.9
+80.9
+92.1
+Agent
+Online judgment
+Post-hoc analysis
+Finding 4: Observing failure does not
+guarantee recognizing it. Beyond exe-
+cuting actions, an agent must determine
+whether the task has actually succeeded.
+Yet 82.1% and 70.9% of failed episodes
+end in a completion claim for Claude Code
+and Codex, respectively (Tab. 6). We call
+this failure mode illusory completion.
+Crucially, these failures are often visually
+detectable (Fig. 5). In an offline analysis
+of 23 tasks (App. C.4), a fresh judge using
+only the final frames the agent had already received recognizes 70.2% of Claude Code’s false claims
+and 80.9% of Codex’s. Most of these claims are made without another observation (69.7% and
+92.1%, respectively). For Codex, the offline judge uses the same underlying model in a fresh context,
+suggesting that the problem is not simply a lack of visual evidence. Rather, access to evidence does
+not guarantee evidence-grounded completion judgments.
+Action-level checks are insufficient for task-level verification. We introduce post-condition checks
+for grasping and placing in the Skill and Program-Skill interfaces. These checks use only observable
+robot states and camera measurements, achieving 88.6% agreement with 149 human-verified labels
+(grasps 97.3%, placements 80.0%) and 94.5% agreement with 524 simulator records.
+Despite this agreement, the checks provide limited improvements (Tab. 4). Reporting failed actions
+lowers the share of failed episodes that end in a completion claim from 87.5% to 81.2%, and automatic
+retries lower it to 75.0% without improving task success. Only 2 of 32 corrections recover a failed grasp.
+An agent may successfully execute individual actions while still failing the overall task. This exposes a
+fundamental distinction: action-level feedback cannot substitute for task-level verification.
+6 Conclusion
+What a robot agent can accomplish depends not only on its model, but also on the interface through
+which it acts. We introduced RUIBench and RUIKit to systematically study this relationship across
+30 agentic manipulation tasks and 13 interfaces. Our findings reveal that effective RUIs reduce
+unnecessary decisions while preserving essential feedback, with their benefits shaped by agent
+behavior and physical uncertainty. Such interfaces are also easier for small models to learn. We
+further uncover a verification gap, where agents frequently declare success despite observable failures.
+Together, these results establish RUI design as a fundamental problem of allocating decisions, execution,
+and feedback between agents and robots. The key is not simply what actions an agent can perform,
+but when to decide, when to correct, and how to verify success.
+Limitations and future work. Extending the real-robot study beyond five tasks on one arm would test
+how widely the observed interface shifts hold. Contact-rich and time-critical tasks remain difficult
+across nearly all RUIs, calling for feedback and control at finer temporal and spatial resolutions, such
+as reactions inside programs or lower-level controllers. Closing the verification gap further requires
+task-level verifiers that check completion against observations rather than individual actions.
+11
+Show Lab
+RUIBench

@@ -1,0 +1,91 @@
+{
+  "title_zh": "LoRA：大语言模型的低秩适配",
+  "affiliations": [
+    "Microsoft Corporation"
+  ],
+  "scores": {
+    "research_value": 95,
+    "research_value_reason": "「冻结权重 + 可合并的低秩增量」这一形式，至今仍是参数高效适配与多任务服务化部署的默认实现对象，后续大量工作直接以它作为基线或积木。",
+    "novelty": 88,
+    "novelty_reason": "把适配的增量本身约束为低秩分解 $BA$，并利用线性结构使增量能在推理前并回原权重，这既区别于 adapter 增加网络深度，也不同于 prefix tuning 占用序列长度。",
+    "technical_depth": 78,
+    "technical_depth_reason": "方法本体只是一个线性重参数化，但配套了 GPT-3 175B 量级的对照实验、按权重类型与 rank 的消融，以及基于 Grassmann 距离的子空间相似度与 $\\Delta W$ 投影分析。"
+  },
+  "reading": {
+    "why_today": "提出 LoRA，冻结预训练权重、在注意力投影旁学习低秩矩阵 $BA$ 作为权重更新，把可训练参数压到原模型的 0.01%、训练显存降 3 倍；合并后无推理延迟，至今是 PEFT 的默认基线。",
+    "historical_context": "GPT-3 175B 之后，全量微调的代价从「不方便」变成部署难题：每个下游任务都要存一份完整 checkpoint。当时的替代路线是 adapter 层与 prefix/prompt tuning，前者增加深度，在 batch size 为 1 的在线场景带来额外延迟；后者占用序列长度，且训练不稳定。",
+    "problem_then": "在冻结大模型的前提下，用极少的任务专属参数达到与全量微调相当的模型质量，同时不增加推理延迟、不挤占输入序列长度，并让多任务存储与切换变得便宜。",
+    "contributions": [
+      {
+        "point": "低秩增量重参数化",
+        "detail": "把任务更新写成 $\\Delta W = BA$，$B\\in\\mathbb{R}^{d\\times r}$、$A\\in\\mathbb{R}^{r\\times k}$，$r \\ll \\min(d,k)$；$W_0$ 冻结，只训练 $A$、$B$。"
+      },
+      {
+        "point": "推理前合并，零额外延迟",
+        "detail": "部署时显式算出 $W_0 + BA$，前向路径与全量微调完全相同；切任务只需换一组 $BA$，而 adapter 必须串行增加深度。"
+      },
+      {
+        "point": "参数与存储的大幅压缩",
+        "detail": "GPT-3 175B 上训练显存从 1.2TB 降到 350GB，$r=4$ 且只适配 $W_q$、$W_v$ 时 checkpoint 从 350GB 缩到 35MB。"
+      }
+    ],
+    "core_idea": "对每个冻结的权重 $W_0\\in\\mathbb{R}^{d\\times k}$，把适配后的权重写成 $W_0 + BA$，其中 $r \\ll \\min(d,k)$。前向为 $h = W_0x + \\frac{\\alpha}{r}BAx$；$A$ 取高斯初始化、$B$ 取零，使训练起点 $\\Delta W = 0$，不扰动预训练模型，$\\alpha/r$ 的缩放让改变 $r$ 时无需重调学习率。Adam 的梯度与优化器状态只需为 $A$、$B$ 维护，显存与 checkpoint 因此大幅缩小；部署时把 $BA$ 加回 $W_0$，前向图与全量微调一致，故无额外延迟。实验只在注意力权重上施加，MLP 与 LayerNorm 保持冻结。",
+    "influence": "把「冻结共享底座 + 每任务一个小模块」变成可部署形态：同一底座服务多个下游任务，切换只换 $BA$。论文指出 LoRA 与 prefix-tuning 等方法正交、可组合，并放出 PyTorch 集成包；它对 $\\Delta W$ 低秩子空间的度量，也成为后续 rank 选择与子空间分析类工作的起点。",
+    "modern_reading": "今天 LoRA 的用法已超出原文设定：原文只在 GPT-3 上验证适配 $W_q$、$W_v$ 足够且 $r$ 取很小即可，实践中常施加到全部线性层并调大 rank。「零延迟」依赖推理前合并权重，代价是同一 batch 内难以混跑不同任务的 $BA$，这点原文已自认。本解读基于全文。"
+  },
+  "claims": [
+    {
+      "claim": "论文以 GPT-3 175B 为例说明独立部署多份微调模型不可行。",
+      "numbers": [
+        "175B"
+      ],
+      "source_span": "Abstract / Section 1",
+      "quote": "GPT-3 175B"
+    },
+    {
+      "claim": "在 GPT-3 175B 上可训练参数量可小到原模型的 0.01%。",
+      "numbers": [
+        "0.01%"
+      ],
+      "source_span": "Section 2",
+      "quote": "can be as small as 0.01% of"
+    },
+    {
+      "claim": "相比 GPT-3 175B 的 Adam 全量微调，LoRA 把可训练参数减少 10,000 倍、GPU 显存需求降低 3 倍。",
+      "numbers": [
+        "10,000",
+        "3"
+      ],
+      "source_span": "Abstract",
+      "quote": "by 10,000 times and the GPU memory requirement by 3 times"
+    },
+    {
+      "claim": "GPT-3 175B 上训练显存从 1.2TB 降到 350GB。",
+      "numbers": [
+        "1.2TB",
+        "350GB"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "from 1.2TB to 350GB"
+    },
+    {
+      "claim": "只适配 query、value 且 $r=4$ 时，checkpoint 从 350GB 缩小到 35MB。",
+      "numbers": [
+        "4",
+        "10,000",
+        "350GB",
+        "35MB"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "With r = 4 and only the query and value projection matrices being adapted, the checkpoint size is reduced by roughly 10,000× (from 350GB to 35MB)"
+    },
+    {
+      "claim": "GPT-3 175B 上 LoRA 训练比全量微调快 25%。",
+      "numbers": [
+        "25"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "a 25% speedup during training on GPT-3 175B"
+    }
+  ]
+}

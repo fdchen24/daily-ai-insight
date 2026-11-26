@@ -1,0 +1,112 @@
+{
+  "title_zh": "下一潜状态预测让 Transformer 学得紧凑世界模型",
+  "affiliations": [
+    "Microsoft Research"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把 belief state 这一有形式化定义的目标做成可训练的辅助损失，并在世界建模、推理、规划、语言建模四个方向给出证据，对「Transformer 内部世界模型是否自洽」这一争议给出可操作的改进路径。",
+    "novelty": 76,
+    "novelty_reason": "相对 JTP/BST 的关键差别是把预测搬到 final hidden state 上、做成 Markovian 且以 token 为条件的转移预测，从而不受 horizon 覆盖可观测量的限制；变长自推测解码是这条目标的直接副产品，但机制本身借鉴自 self-predictive RL。",
+    "technical_depth": 79,
+    "technical_depth_reason": "给出 belief state 收敛的定理与证明思路，实验覆盖四个域并与 JTP/MTP 对齐 horizon、报告训练成本；但语言建模增益不一致，$p_\\psi$ 结构与损失权重的设计空间未系统研究，作者自陈部分结论依赖小规模消融。"
+  },
+  "reading": {
+    "why_read": "提出 NextLat，在 next-token 训练之外加入潜空间自监督预测：由当前隐状态与下一 token 预测下一隐状态，为 Transformer 注入循环归纳偏置而不改架构与推理，在世界建模、推理与规划任务上提升准确率与表示压缩，并支持变长自推测解码。",
+    "task": "Transformer 用随序列长度增长的内存与 self-attention 替代循环，可以直接检索过去 token，因此没有把历史压缩成紧凑 latent state 的内在压力。结果是模型在训练分布上 next-token 准确率接近满分，学到的内部世界模型却不自洽：在 Manhattan 出租车轨迹上重建出的街道方向错误、出现不可能的天桥。已有的多 token 预测（MTP、JTP）与 belief state 方法（BST）试图缓解 next-token 目标的短视，但监督仍停留在 token 空间或代价高昂。",
+    "findings": [
+      {
+        "point": "self-attention 取消了压缩历史的压力",
+        "detail": "过去 token 可直接检索，最小化 next-token 损失并不要求 $h_t$ 成为历史的充分统计量，因此标准自回归训练不保证 belief state，作者以此作为定理的反面参照。"
+      },
+      {
+        "point": "token 空间监督既稀疏又短视",
+        "detail": "one-hot 目标只锚定紧随其后的 token，梯度信号窄；MTP/JTP 受固定 horizon 约束且仍在 token 空间，容易利用局部 n-gram 规律，在 Path-Star 上表现为 Clever Hans 式捷径。"
+      },
+      {
+        "point": "已有 belief state 方法代价高或条件苛刻",
+        "detail": "BST 需对所有前缀–后缀对累积梯度并训练两个编码器，训练显著更慢；JTP 只在预测 horizon 覆盖可观测量时才保证 belief state，长上下文下不现实。"
+      }
+    ],
+    "method": "核心是把「预测未来」从 token 空间挪到 latent 空间：作者先证明，若 next-token 一致性与 transition 一致性同时成立，$h_t$ 必为 belief state，于是把后者做成可训练目标。实现上在交叉熵外加两项：轻量 MLP $p_\\psi$ 由 $(h_t, X_{t+1})$ 回归 $\\hat{h}_{t+1}$，对 $d$ 步 teacher-forcing rollout 的每个中间状态取 Smooth L1，目标端加 stop-gradient 抑制表示坍缩；再用冻结输出头做 KL，对齐预测与真实隐状态的 token 分布。总损失 $\\mathcal{L}=\\mathcal{L}_{\\text{next-token}}+\\lambda_{\\text{next-h}}\\mathcal{L}_{\\text{next-h}}+\\lambda_{\\text{KL}}\\mathcal{L}_{\\text{KL}}$。$p_\\psi$ 只在训练期使用，架构与推理不变；因其可递归复合，推理时能越过训练 horizon 变长起草做自推测解码。",
+    "results": "Manhattan 轨迹上 valid trajectories 98.7%（GPT 97.0%）、压缩 0.71、有效潜秩 52.7（远小于 GPT）；Countdown 58.7% 对 GPT 33.1%；1.3B 模型下游均值 59.21% 对 58.82%，作者承认增益有限；自推测解码最高 3.3 倍加速。",
+    "limitations": "潜动态模型只用 MLP，损失权重与 stop-gradient 靠小规模消融确定；语言建模增益不一致且幅度小；训练中 Smooth L1 损失出现上升、对优化器敏感；草稿长度实际仍固定，未实现自适应。"
+  },
+  "claims": [
+    {
+      "claim": "在 Manhattan 出租车轨迹世界建模中，NextLat 的 valid trajectories 为 98.7%",
+      "numbers": [
+        "98.7"
+      ],
+      "source_span": "Table 1, NextLat 行, Valid Trajectories 列",
+      "quote": "98.7%"
+    },
+    {
+      "claim": "GPT 在 valid trajectories 上为 97.0%",
+      "numbers": [
+        "97.0"
+      ],
+      "source_span": "Table 1, GPT 行, Valid Trajectories 列",
+      "quote": "97.0%"
+    },
+    {
+      "claim": "NextLat 的序列压缩为 0.71，是各方法中最高",
+      "numbers": [
+        "0.71"
+      ],
+      "source_span": "Section 4.1 Results",
+      "quote": "NextLat achieves the highest sequence compression of 0.71"
+    },
+    {
+      "claim": "NextLat 的有效潜秩为 52.7，比 GPT 小 3 倍以上",
+      "numbers": [
+        "52.7"
+      ],
+      "source_span": "Section 4.1 Results",
+      "quote": "NextLat has the lowest effective latent rank of 52.7"
+    },
+    {
+      "claim": "在 Countdown 上 NextLat 最高准确率为 58.7%",
+      "numbers": [
+        "58.7"
+      ],
+      "source_span": "Table 2, NextLat 行",
+      "quote": "58.7"
+    },
+    {
+      "claim": "GPT 在 Countdown 上准确率为 33.1%",
+      "numbers": [
+        "33.1"
+      ],
+      "source_span": "Table 2, GPT 行",
+      "quote": "33.1"
+    },
+    {
+      "claim": "语言建模实验用 1.3B 参数模型在 100B FineWeb-Edu token 上预训练",
+      "numbers": [
+        "1.3",
+        "100"
+      ],
+      "source_span": "Section 4.4 Setup",
+      "quote": "we pretrain 1.3B-parameter models on 100B tokens from the FineWeb-Edu dataset"
+    },
+    {
+      "claim": "NextLat (d=2) 下游平均准确率 59.21%，GPT 为 58.82%",
+      "numbers": [
+        "2",
+        "59.21",
+        "58.82"
+      ],
+      "source_span": "Section 4.4 Results, 对应 Table 3",
+      "quote": "NextLat (d = 2) is the only multi-step prediction objective that meaningfully improves average accuracy over GPT (59.21 vs. 58.82)"
+    },
+    {
+      "claim": "自推测解码最高带来 3.3 倍推理加速",
+      "numbers": [
+        "3.3"
+      ],
+      "source_span": "Abstract / Figure 8",
+      "quote": "accelerating inference by up to 3.3x"
+    }
+  ]
+}
