@@ -38,8 +38,8 @@ from .common import (
 
 # 四套模板各自的必填解读字段，缺任一项即丢弃条目
 _REQUIRED = {
-    "frontier": ("why_read", "task", "findings", "method", "results",
-                 "limitations"),
+    "frontier": ("why_read", "task", "findings", "method_idea", "method_how",
+                 "results", "limitations"),
     "survey": ("why_read", "scope", "evolution", "approaches",
                "key_differences", "bottlenecks", "future_directions"),
     "classic": ("why_today", "historical_context", "problem_then",

@@ -395,7 +395,9 @@ v1.0 把"深度评分"和"生成解读"设计为两步，各自读一遍全文�
 
 ### 5.1 前沿论文（`frontier.md`）
 
-`why_read` 为什么推荐 · `motivation` 研究背景与动机 · `innovations[]` 核心创新 1–3 条 · `method` 方法思路 · `results` 实验结果（含基线、指标、结论）· `limitations` 局限性 · `insights` 研究启发
+`why_read` TL;DR · `task` 任务与问题 · `findings[]` 问题根因 1–3 条 · `method_idea` 方法的核心想法 · `method_how` 方法的技术实现 · `results` 实验结果（含设置、基线、关键数字）· `limitations` 局限性
+
+方法写成两段，是因为看这一节的是两种人：只想判断"思路成不成立、能不能搬到自己问题上"的，和要判断"能不能复用、代价多大"的。合成一段时实测前者被符号挡在外面（线上出现过一段 12 个 `$` 带独立损失函数的方法描述），后者嫌不够细。`method_idea` 整段禁用 `$`，第一句必须交代"原来怎么做、卡在哪"；`method_how` 禁独立公式，最后一句必须交代代价。符号在两段里都要展开成名词——读者没有符号表可查。2026-11-27 之前的条目是单个 `method` 字段，前端两种结构都认。
 
 ### 5.2 深度综述（`survey.md`）
 
@@ -630,9 +632,10 @@ daily-ai-insight/
   },
   "quality": { "score": 86.4, "tier": "A", "rank_in_pool": 2,
                "evidence_level": "fulltext" },
-  "content": { "why_read": "...", "motivation": "...", "innovations": ["..."],
-               "method": "...", "results": "...", "limitations": "...",
-               "insights": "...", "reading_minutes": 12 },
+  "content": { "why_read": "...", "task": "...",
+               "findings": [{ "point": "...", "detail": "..." }],
+               "method_idea": "...", "method_how": "...",
+               "results": "...", "limitations": "...", "reading_minutes": 12 },
   "claims": [ { "claim": "...", "numbers": ["83.1"],
                 "source_span": "Table 2", "verified": true } ],
   "validation": { "links_ok": true, "metadata_ok": true,

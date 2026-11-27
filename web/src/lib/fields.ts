@@ -13,6 +13,11 @@ export interface FieldSpec {
 const FRONTIER: FieldSpec[] = [
   { key: 'task', label: '任务与问题' },
   { key: 'findings', label: '问题根因' },
+  // 方法分两节：先给不做这个子方向的人一段不含符号的核心想法，再给要判断
+  // 能不能复用的人技术实现。`method` 是 2026-11-27 之前的旧字段名，归档里
+  // 还有一批那种结构的条目，留着它们才不会掉成无标题的兜底节。
+  { key: 'method_idea', label: '方法 · 核心想法' },
+  { key: 'method_how', label: '方法 · 技术实现' },
   { key: 'method', label: '方法设计' },
   { key: 'results', label: '实验结果' },
   { key: 'limitations', label: '局限' },
