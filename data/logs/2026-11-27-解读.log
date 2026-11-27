@@ -1,0 +1,3 @@
+19:38:35 INFO  dai | === 批次 2026-11-27 开始每日流水线 ===
+19:38:35 ERROR dai | 批次日 2026-11-27 的 arXiv 公告一条都没入场，本期不投放（保留上一期）
+19:38:35 INFO  dai | metrics 写出：metrics/2026-11.json status=skipped 成本={'currency': 'CNY', 'amount': 0.0, 'price_window': 'off_peak'}

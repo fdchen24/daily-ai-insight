@@ -1225,8 +1225,8 @@
   },
   "2026-11-27": {
     "arxiv_announce_date": "2026-11-27",
-    "generated_at": "2026-11-27T19:38:01.344843+00:00",
-    "stage": "collect",
+    "generated_at": "2026-11-27T19:38:35.408651+00:00",
+    "stage": "daily",
     "collect_status": "ok",
     "sources": {
       "arxiv": {
@@ -1333,6 +1333,26 @@
       "output": 3518,
       "review_pairs": 1
     },
-    "duration_seconds": 256.3
+    "duration_seconds": 256.3,
+    "llm": {},
+    "output": {},
+    "stages": {},
+    "validation": {
+      "items_dropped": 0,
+      "claims_dropped": 0,
+      "downgraded": 0,
+      "link_failures": 0,
+      "warnings": 0
+    },
+    "cost": {
+      "currency": "CNY",
+      "amount": 0.0,
+      "price_window": "off_peak"
+    },
+    "pipeline_duration_seconds": 0.1,
+    "status": "skipped",
+    "notes": [
+      "2026-11-27 的 arXiv 公告未入场：采集跑在 01:00 UTC 公告之前，候选池里只有前几日的材料，本期跳过以免按陈批次付费"
+    ]
   }
 }
