@@ -43,7 +43,7 @@ def publish(items: list[dict], *, batch: date, notes: list[str],
             stats: dict[str, Any], validation: dict[str, Any]) -> dict[str, Any]:
     """组装并写出当期 JSON、latest.json、归档索引与已推荐台账。"""
     now = utcnow()
-    payload_items = [_shape(item) for item in items]
+    payload_items = [shape_item(item) for item in items]
     counts: dict[str, int] = {}
     for item in payload_items:
         name = item.get("recommendation_type") or "frontier"
@@ -66,13 +66,13 @@ def publish(items: list[dict], *, batch: date, notes: list[str],
     }
     write_json(daily_path(batch), payload)
     write_json(DATA_DIR / "daily" / "latest.json", payload)
-    _update_index(batch, payload, counts)
+    update_index(batch, payload, counts)
     _update_seen(batch, payload_items, now)
     log.info("当期写出：%s（%s）", daily_path(batch).relative_to(DATA_DIR), counts)
     return payload
 
 
-def _shape(item: dict) -> dict[str, Any]:
+def shape_item(item: dict) -> dict[str, Any]:
     """按 DESIGN 8.6 组装单条目，并把 `reading` 改名为 `content`。"""
     reading = dict(item.get("reading") or {})
     reading["reading_minutes"] = _reading_minutes(item)
@@ -116,7 +116,7 @@ def _reading_minutes(item: dict) -> int:
 # ------------------------------------------------------------ 索引与台账
 
 
-def _update_index(batch: date, payload: dict, counts: dict[str, int]) -> None:
+def update_index(batch: date, payload: dict, counts: dict[str, int]) -> None:
     """按年分片的归档索引：每天一行，供前端做归档页和日期跳转。"""
     path = archive_index_path(batch)
     index = read_json(path, default=None) or {"year": batch.year, "days": {}}
@@ -188,7 +188,7 @@ def write_metrics(batch: date, *, llm: dict[str, Any], output: dict[str, int],
             "link_failures": len(validation.get("link_failures") or []),
             "warnings": len(validation.get("warnings") or []),
         },
-        "cost": _cost(llm, duration_seconds),
+        "cost": cost_of(llm, duration_seconds),
         "pipeline_duration_seconds": round(duration_seconds, 1),
         "status": status,
         "notes": notes or [],
@@ -200,7 +200,7 @@ def write_metrics(batch: date, *, llm: dict[str, Any], output: dict[str, int],
     return row
 
 
-def _cost(llm: dict[str, Any], duration_seconds: float) -> dict[str, Any]:
+def cost_of(llm: dict[str, Any], duration_seconds: float) -> dict[str, Any]:
     """按 scoring.yaml 的 `pricing` 折算金额。单价未填就如实写未知。
 
     DeepSeek 分时计价，空闲时段是高峰的一半，所以算钱必须知道这些 token 是

@@ -78,6 +78,21 @@ cp .env.example .env                      # 填 DEEPSEEK_API_KEY，该文件已�
 产物默认写入 `./data`（已 gitignore）。设 `DAI_DATA_DIR` 可改写入位置，CI 用它指向
 `data` 分支的工作区。
 
+改了 `config/prompts/` 之后，已发布的批次不会自己更新——解读缓存键含 prompt 指纹，
+新模板只对新一期生效，归档里于是同时存在两种文风。补这一步用 `scripts.reread`：
+
+```bash
+git worktree add -B data .data-branch origin/data          # data 分支的工作区
+export DAI_DATA_DIR=$PWD/.data-branch/data
+.venv/bin/python -m scripts.reread --date 2026-11-26 --dry-run   # 先看会动哪些条目
+.venv/bin/python -m scripts.reread --date 2026-11-26             # 真跑，一期约 0.9 CNY
+cd .data-branch && git commit -am "chore(data): 重解读 2026-11-26" && git push
+```
+
+它只换解读：条目、顺序、配额与冷却期台账一律不动，新解读过不了校验的那条回滚成
+原解读（历史页面不该因为重跑少掉条目）。不重跑选取是因为候选池不在 data 分支，
+且那些条目已登记 `last_recommended`，重跑阶段五会按冷却期把它们整批排除。
+
 ## 前端与发布
 
 React 19 + Vite + Tailwind 4 + vite-plugin-pwa，没有后端：页面直接 fetch

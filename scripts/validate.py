@@ -156,6 +156,7 @@ def _check_item(item: dict, official: dict[str, dict | None], cfg: dict,
     _drop_unknown_fields(item, report)
     _verify_claims(item, cfg, report)
     _check_abstract_numbers(item, report)
+    hard += _check_emptied(item, report)
     _check_lengths(item, cfg, report)
     _check_untranslated(item, cfg, report)
     _normalize_spacing(item)
@@ -198,15 +199,56 @@ def _check_metadata(item: dict, official: dict[str, dict | None]) -> list[str]:
     return problems
 
 
-def _check_required(item: dict) -> list[str]:
+def _fields_for(item: dict) -> tuple[str, ...]:
+    """这条目该有哪些解读字段：按模板定，repo 条目一律走 github 模板。"""
     template = (item.get("reading_template")
                 or item.get("recommendation_type") or "frontier")
     if item.get("content_type") == "repo":
         template = "github"
-    fields = _REQUIRED.get(template, _REQUIRED["frontier"])
+    return _REQUIRED.get(template, _REQUIRED["frontier"])
+
+
+def _check_required(item: dict) -> list[str]:
     reading = item.get("reading") or {}
-    missing = [name for name in fields if not reading.get(name)]
+    missing = [name for name in _fields_for(item) if not reading.get(name)]
     return [f"解读缺必填字段：{'、'.join(missing)}"] if missing else []
+
+
+def _check_emptied(item: dict, report: dict) -> list[str]:
+    """数值反查删句之后复查一遍必填：被删空的字段算硬失败。
+
+    `_check_required` 跑在反查之前，那时字段都还在。整段由数值句构成的字段
+    （`why_read`、`results`、`limitations` 最常见）会被 `_strip_sentences`
+    删成空串，此前没人再查一遍——11-25 的 Embo-Harness 就这样带着空 TL;DR、
+    空实验结果上了线，列表页只剩一个没有正文的标题。宁可减量投放一条，
+    也不发一张空卡片。
+    """
+    reading = item.get("reading") or {}
+    # 点列表（findings）里 detail 被删空的行，留着只会在页面上显示一个没有
+    # 正文的小标题，整行去掉；全删完就按空字段处理
+    for key, value in list(reading.items()):
+        if not isinstance(value, list):
+            continue
+        kept = [row for row in value if not isinstance(row, dict)
+                or str(row.get("detail") or "").strip()]
+        if len(kept) != len(value):
+            _warn(item, report, "claims",
+                  f"{key} 有 {len(value) - len(kept)} 条因数值无法溯源被删空，已整行去掉")
+            reading[key] = kept
+
+    emptied = [name for name in _fields_for(item)
+               if not _nonempty(reading.get(name))]
+    if not emptied:
+        return []
+    return [f"数值反查删句后必填字段被删空：{'、'.join(emptied)}"]
+
+
+def _nonempty(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, list):
+        return bool(value)
+    return value is not None
 
 
 def _drop_unknown_fields(item: dict, report: dict) -> None:

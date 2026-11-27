@@ -65,9 +65,21 @@ export function fieldsFor(type: RecommendationType,
   const known = new Set([...spec.map((f) => f.key),
                          'reading_minutes', 'why_read', 'why_today'])
   const extra = Object.keys(content)
-    .filter((k) => !known.has(k))
+    .filter((k) => !known.has(k) && present(content[k]))
     .map((k) => ({ key: k, label: k }))
-  return [...spec.filter((f) => content[f.key] != null), ...extra]
+  return [...spec.filter((f) => present(content[f.key])), ...extra]
+}
+
+/** 空串与空数组都不算有内容。
+ *
+ * 校验层会删掉数值查不到的句子，整段都是数值句的字段会被删成空串（校验现在
+ * 把这种条目判成硬失败，但 2026-11-27 之前已经发布的几条还留在归档里）。
+ * 只判 `!= null` 的话，那些条目会渲染出一个有标题、没正文的空白小节。
+ */
+function present(value: unknown): boolean {
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return value != null
 }
 
 export const TYPE_LABEL: Record<RecommendationType, string> = {

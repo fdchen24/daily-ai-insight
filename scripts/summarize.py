@@ -37,7 +37,7 @@ _CACHE_DIR = DATA_DIR / "state" / "readings"
 _TEMPLATES = {"frontier": "frontier", "survey": "survey", "classic": "classic"}
 
 
-def _material_client() -> HttpClient:
+def material_client() -> HttpClient:
     """取材用的 HTTP 客户端：只重试一次。
 
     PDF 抓不到的代价是降级到摘要级解读（material 会标 note），比把时间耗在
@@ -67,12 +67,12 @@ def summarize_selected(selected: dict[str, list[dict]], *, batch: date,
     entries = entries[:final_count]
 
     llm = llm or LLM.from_config("summarize")
-    client = _material_client()
+    client = material_client()
     done: list[dict] = []
     try:
         for name, item in entries:
             try:
-                _analyze(name, item, level="fulltext", llm=llm, client=client,
+                analyze_item(name, item, level="fulltext", llm=llm, client=client,
                          stats=stats)
             except BudgetExceeded as exc:
                 log.warning("预算用尽，剩余条目不再解读：%s", exc)
@@ -107,12 +107,12 @@ def _screen(entries: list[tuple[str, dict]], cfg: dict, llm: LLM | None,
     limit = int(cfg.get("screen_count") or 30)
     pool = entries[:limit]
     llm = llm or LLM.from_config("summarize")
-    client = _material_client()
+    client = material_client()
     ok = 0
     try:
         for name, item in pool:
             try:
-                _analyze(name, item, level="intro_conclusion", llm=llm,
+                analyze_item(name, item, level="intro_conclusion", llm=llm,
                          client=client, stats=stats)
                 ok += 1
             except BudgetExceeded:
@@ -129,9 +129,13 @@ def _screen(entries: list[tuple[str, dict]], cfg: dict, llm: LLM | None,
 # ------------------------------------------------------------ 单条解读
 
 
-def _analyze(pool: str, item: dict, *, level: str, llm: LLM,
+def analyze_item(pool: str, item: dict, *, level: str, llm: LLM,
              client: HttpClient, stats: dict) -> None:
-    """取材 → 调模型 → 写回条目。缓存命中则跳过调用。"""
+    """取材 → 调模型 → 写回条目。缓存命中则跳过调用。
+
+    `scripts.reread` 重解读历史批次时也走这条路径：两边必须用同一套取材、
+    缓存键与写回规则，否则归档里会出现结构对不上的条目。
+    """
     template = _template_for(pool, item)
     # 校验层按模板决定必填字段，不再从 recommendation_type 反推
     item["reading_template"] = template

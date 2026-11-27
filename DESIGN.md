@@ -461,13 +461,14 @@ v1.0 写了"关键数值校验""AI 幻觉检查"但没有可执行定义。用�
 
 - 全部命中 → 保留。
 - 数值未在原文出现 → **删除该 claim 所在句子**，并在 `validation.dropped_claims` 记录。
-- 同一条目丢弃 claim 超过 30% → 整条降级为 `evidence_level: abstract` 并重新生成不含数值的解读。
+- 同一条目丢弃 claim 超过 30% → 整条降级为 `evidence_level: abstract`，清空 claims 并删掉全部数值句（不再调一次模型重写，见 9.2 第 8 条的预算理由）。
+- **删句后复查必填字段**：整段由数值句构成的字段会被删成空串，这时整条按硬失败处理（日常流水线减量投放一条，`scripts.reread` 回滚成原解读）。点列表里 `detail` 被删空的行整行去掉，全删完同样算空字段。不这么做就会发出有标题没正文的空白小节——2026-11-25 的 Embo-Harness 正是带着空 TL;DR、空实验结果上线的。
 
 `evidence_level: abstract` 的条目**禁止输出任何实验数值**，prompt 内硬性约束 + 校验层正则拦截（匹配 `\d+\.\d+%?` 等模式）。
 
 ### 6.3 其他机械检查
 
-- 字段完整性：按内容类型校验必填字段非空。
+- 字段完整性：按内容类型校验必填字段非空，数值反查删句之后再查一遍（见 6.2）。
 - 重复检查：当期内两条解读的 3-gram 重叠率 > 0.4 时告警。
 - 中英混排：中英文之间空格规范化；检测未翻译残留（连续 ≥ 8 个 ASCII 单词）。
 - 长度范围：各字段字数上下限（如 `why_read` 60–200 字）。
@@ -591,7 +592,8 @@ daily-ai-insight/
 │   ├── llm.py                # DeepSeek 客户端、重试、token 计量
 │   ├── normalize.py          ├── deduplicate.py   ├── filter.py
 │   ├── rank.py               ├── rerank.py        ├── summarize.py
-│   ├── validate.py           ├── archive.py       └── run_daily.py
+│   ├── validate.py           ├── archive.py       ├── run_daily.py
+│   └── reread.py             # 用当前 prompt 重解读已发布批次（只换解读）
 ├── data/                     # 见 8.3；提交到 data 分支，不进 main
 ├── web/
 │   ├── public/{manifest.webmanifest,icons/}
@@ -671,6 +673,10 @@ daily-ai-insight/
 6. 经典论文解读缓存复用，仅复推换角度时重新生成。
 7. GitHub 项目若 README 与版本号未变（`content_hash` 一致）则复用历史解读。
 8. 单次任务设 token 预算上限与失败保护。
+9. **缓存键含 prompt 指纹**：改了模板，新一期自动重算，历史批次原样保留。
+   要让历史批次跟上新模板就跑 `scripts.reread`——它只重新生成解读，不重跑
+   选取（候选池不在 data 分支，而且那些条目已登记冷却期，重跑阶段五会把它们
+   整批排除），新解读过不了校验的回滚成原解读，seen 台账与周配额都不动。
 
 ### 9.3 成本与运行指标落盘
 

@@ -109,11 +109,15 @@ jobs:
 
       # 即使采集失败也要 push：公共仓库 60 天无 push 会被 GitHub 自动
       # 停用 scheduled workflow，静默停掉整个站点的更新。
+      #
+      # 备注写成"不成功才给文案"，不能写 `== 'success' && '' || '…'`：
+      # GitHub 表达式里空串是 falsy，成功时 `true && ''` 落到 `||` 右边，
+      # 结果每次提交都盖上"未成功"的戳（11-23 至 11-26 四天都被误标）。
       - name: 写回数据与日志
         if: always()
         run: |
           bash .github/scripts/data-branch.sh push 采集 run.log \
-            "${{ steps.collect.outcome == 'success' && '' || '（采集未成功，见 logs/）' }}"
+            "${{ steps.collect.outcome != 'success' && '（采集未成功，见 logs/）' || '' }}"
 
   # 解读是唯一花钱的环节，所以 needs 采集成功才跑：采集失败时候选池是空的
   # 或者是上一期的，拿去解读既浪费 token 又会把旧内容当新一期投放。
@@ -166,4 +170,4 @@ jobs:
         if: always()
         run: |
           bash .github/scripts/data-branch.sh push 解读 run.log \
-            "${{ steps.daily.outcome == 'success' && '' || '（解读未成功，见 logs/）' }}"
+            "${{ steps.daily.outcome != 'success' && '（解读未成功，见 logs/）' || '' }}"
