@@ -1,0 +1,94 @@
+{
+  "title_zh": "Plan4D：生成式可规划 4D 世界",
+  "affiliations": [
+    "Nanyang Technological University",
+    "Alibaba Group"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把「动作条件未来预测」从只生成 RGB 推进到同时输出深度、相机、点云与 scene flow，定义了可测量、可执行的 4D 世界生成任务，对具身与机器人规划有直接价值；但评测规模与任务定义都还在早期。",
+    "novelty": 74,
+    "novelty_reason": "latent-to-geometry 缝合承自 VIST3A/Gen3R，实质增量在于把缝合用于动作条件的未来生成，并用轻量 scene flow 头把静态重建器改成动态读出，同时用探针证明冻结 token 已含跨帧对应。",
+    "technical_depth": 82,
+    "technical_depth_reason": "三阶段训练、教师蒸馏与 GT 监督混合、目标函数/adapter 架构/微调策略三组消融，加上冻结 token 的相似度-检索-PCA 探针，证据链完整；扣分在联合生成对比中部分基线只支持部分模态，且相机 RRA@5 出现 1.000 的天花板值、指标区分度受限。"
+  },
+  "reading": {
+    "why_read": "提出 Plan4D，把冻结的 Depth Anything 3 与 LongCat-Video 用可学习 latent-to-geometry 缝合模块对接，并为 DA3 加轻量 scene flow 头，从观测画面和文本动作一次前向同时生成 RGB 视频与深度、相机、点云、场景流。",
+    "task": "世界模型要预测未来，但主流做法只生成 RGB 视频：画面好看，几何却随时间长漂，既不能测量也不能直接执行。反过来 3D 重建模型能给出深度、相机与点云，却只解释已观测的帧，无法按动作生成未来。要得到既能规划又物理落地的未来，必须显式建模 4D，而现有 4D 框架只做重建，不做动作条件生成。",
+    "findings": [
+      {
+        "point": "动作标注与稠密 4D 标注不在同一份数据里",
+        "detail": "Action100M 有细粒度动作文本却没有 3D 注释，动态 3D 数据集规模小且缺自然动作，两类数据无法直接拼成动作—4D 配对监督，从头训 4D 世界模型数据远远不够。"
+      },
+      {
+        "point": "视频生成器与 3D 重建器各自为政",
+        "detail": "像素级生成器缺物理一致性，3D 模型是重建导向且静态，二者在同一物理世界上训练却从不共享表示，没有一方能同时给出外观与随时间一致的几何。"
+      },
+      {
+        "point": "冻结的 DA3 token 已含跨帧对应，只是编码分散",
+        "detail": "探针实验里真实匹配对的相似度 0.962、随机负样本 0.784，最近邻检索 PCK@1 达 86.01%，说明对应信息已在；但主成分分析显示运动分散在高维，需要结构化解码器读出而非重学。"
+      }
+    ],
+    "method_idea": "现有两条路各自为政：视频生成器只产出 RGB，几何随时间长漂；3D 重建器能给出深度、相机、点云，却只解释已看到的帧，不能按动作生成未来。Plan4D 把冻结的 3D 重建器改造成视频生成器潜空间的几何解码器，让同一段生成的潜变量同时被读成画面和 4D 几何，相当于给一把已校准的尺子换了个读数入口，再用这把尺子反过来约束视频生成。",
+    "method_how": "先给冻结的 DA3 加一个 DPT 风格 scene flow 头，读编码器四个中间 token 图预测每像素到下一帧的三维位移，再旋转到首帧相机基。缝合时用岭回归挑出最易被 Wan latent 线性拟合的编码器层，以一个三维卷积把 16 通道 latent 投到该层 token，绕过原始 RGB patch embedding。解码器用两路监督微调：以读 GT RGB 的原版 DA3 为教师蒸馏深度、ray、相机与 scene flow，再用数据集 3D 注释纠偏；联合训练时它冻结成可微几何 critic，视频 DiT 只训 LoRA，损失为 flow matching 加几何项。代价是几何上限被教师决定：RobbySimVal 深度 AbsRel 从 0.0808 退到 0.1085，scene flow 只建一步前向。",
+    "results": "81 帧 scene flow 上缝合版 MOVi-F EPE 13.10，训练帧数 0.97M 为对比最少；缝合解码器 ETH3D Acc 0.2898 接近 DA3 的 0.2783，远好于 VIST3A 0.9184；Epic-Kitchens-100 的 13 项指标中 10 项最优。",
+    "limitations": "几何目标全由冻结 DA3 教师给出，RobbySimVal 深度 AbsRel 已从 0.0808 退到 0.1085，天花板被教师锁死；scene flow 只建一步前向，长时程未验证（原文 Limitations 节为空）。"
+  },
+  "claims": [
+    {
+      "claim": "缝合版在 MOVi-F 的 scene flow EPE 为 13.10",
+      "numbers": [
+        "13.10"
+      ],
+      "source_span": "Table 1, row 'Ours (Stitched)', MOVi-F EPE",
+      "quote": "13.10"
+    },
+    {
+      "claim": "PLAN4D 两种场景流变体的训练帧数为 0.97M，是表中最少",
+      "numbers": [
+        "0.97"
+      ],
+      "source_span": "Table 1, column 'Train frames / M', rows 'Ours (DA3)' 与 'Ours (Stitched)'",
+      "quote": "0.97"
+    },
+    {
+      "claim": "缝合解码器 ETH3D 重建 Acc 为 0.2898，接近 DA3 的 0.2783，远好于 VIST3A 的 0.9184",
+      "numbers": [
+        "0.2898",
+        "0.2783",
+        "0.9184"
+      ],
+      "source_span": "Table 2, ETH3D Reconstruction Acc.",
+      "quote": "0.2898"
+    },
+    {
+      "claim": "在 100 段五秒的 Epic-Kitchens-100 片段上，PLAN4D 在全部对比的 13 项指标中 10 项最优",
+      "numbers": [
+        "100",
+        "13",
+        "10"
+      ],
+      "source_span": "Section 4.2, Joint 4D World Generation",
+      "quote": "On the 100 five-second Epic-Kitchens-100 clips, PLAN4D leads on 10 of the 13 metrics in the full comparison."
+    },
+    {
+      "claim": "冻结 DA3 token 上真实匹配对的平均相似度为 0.962，随机负样本为 0.784，最近邻检索 PCK@1 为 86.01%",
+      "numbers": [
+        "0.962",
+        "0.784",
+        "86.01"
+      ],
+      "source_span": "Table 5, Similarity 与 Retrieval 区块, PointOdyssey test split",
+      "quote": "0.962"
+    },
+    {
+      "claim": "缝合解码器在 RobbySimVal 上的深度 AbsRel 为 0.1085，DA3 为 0.0808",
+      "numbers": [
+        "0.1085",
+        "0.0808"
+      ],
+      "source_span": "Table 2, RobbySimVal Depth AbsRel",
+      "quote": "0.1085"
+    }
+  ]
+}

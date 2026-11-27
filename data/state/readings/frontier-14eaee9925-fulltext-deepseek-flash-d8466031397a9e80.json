@@ -1,0 +1,124 @@
+{
+  "title_zh": "HiUni：在共享视觉空间中协同理解与生成",
+  "affiliations": [
+    "Baidu Inc."
+  ],
+  "scores": {
+    "research_value": 72,
+    "research_value_reason": "直接追问统一多模态模型是否真需要任务专用主干，并用同初始化的受控对比给出共享稠密主干的可行性与代价，对架构选型有参考价值；但模型建在 Qwen3-VL 之上，结论外推有限。",
+    "novelty": 60,
+    "novelty_reason": "把生成接到预训练 VLM 既有的 ViT 与稠密主干、任务计算全部挪到输出端并非首次，去掉 AdaLN 的像素扩散头与像素残差门控分别受 JiT 与 Cheers 启发，新意主要在共享与 MoT 的受控对比。",
+    "technical_depth": 74,
+    "technical_depth_reason": "有 Dense/MoT/单任务三组同初始化同步数的受控对比、HiGate 插入位置消融和门控强度随训练演化的分析；但受控实验只跑 30K 步、扩散头去 AdaLN 只给观察无消融，表 2 与 4.5 节的 OneIG 口径也不一致。"
+  },
+  "reading": {
+    "why_read": "提出 HiUni，复用预训练 VLM 的语言对齐 ViT 与稠密 Transformer 主干同时承担理解与生成，仅在输出侧加 Pixel Diffusion Head 与像素级门控残差 HiGate，理解均分与原始 VLM 持平、生成在统一模型中居前。",
+    "task": "统一多模态模型要在一个框架里同时做视觉理解与生成，而两者对视觉表征的要求相反：理解要好语言对齐的高层语义，生成要细粒度空间细节。主流做法因此保留两套编码器（ViT 与 VAE），或用 MoT 在主干内按任务路由不同计算。代价是两条通路之间缺少共享的视觉表征，理解与生成难以互相借力，参数量也被摊到两个分支上。",
+    "findings": [
+      {
+        "point": "语义抽象在进入生成头之前就把细节压掉了",
+        "detail": "ViT 深层越往上越偏向语义，patch merger 又合并相邻 token、把有效 patch 尺寸翻倍，理解效率因此提高，但合成所需的高频空间信息已经被丢弃；消融显示残差接在像素侧优于接在 ViT 特征上。"
+      },
+      {
+        "point": "像素空间扩散在标准 DiT 上优化不稳",
+        "detail": "早期实验把标准 DiT 直接用于像素空间扩散时频繁出现 loss 尖峰，作者归因于逐块 AdaLN 的重复调制；去掉 block-wise AdaLN、只在输出端保留一次调制后，训练轨迹明显更平滑。"
+      },
+      {
+        "point": "主干共享与容量分配直接冲突",
+        "detail": "把 2B 预训练主干复制成理解与生成两支的 MoT 在同规模下生成更好、理解更弱；同等总参数下换成更大的共享主干后理解全面提升，说明瓶颈更多在于能否继承预训练表征，而不是是否按任务路由。"
+      }
+    ],
+    "method_idea": "原来的统一模型要么给理解和生成各配一套视觉编码器，要么在主干内按任务路由不同的注意力或专家，共享只停留在很浅的层面。这篇把生成也接到理解那条已有的通路上：同一套 ViT、同一份合并后的视觉 token、同一个稠密主干，任务差异全部挪到输出端——文本走语言模型头，图像走一个直接预测像素的扩散头，再用一条旁路把被压缩掉的像素细节补回扩散头。",
+    "method_how": "针对细节丢失，HiGate 在 patch embedding 之前引出一支残差：把每 2×2 组 16×16 的 RGB patch 拼成与目标视觉 token 对齐的向量，线性投影后由轻量 MLP 逐 token 预测门控权重，加权加回对应位置的生成特征，只更新目标视觉位置、理解通路不变。针对优化不稳，扩散头去掉 DiT 的逐块 AdaLN，时间步改由一个显式时间 token 经骨干和输出端单层调制注入，每个 token 直接回归 32×32 的 RGB 块。训练分三步：冻结预训练部分热身新模块、全参数联合预训练并逐步提高分辨率、最后加入编辑数据做 SFT。代价是生成端多出 0.9B 参数，联合训练后 OneIG 从单任务基线的 0.390 降到 0.314。",
+    "results": "以 Qwen3-VL-4B 初始化：理解七项基准均分 75.56，与原始 VLM 官方 75.61 基本持平；Qwen-Image-Bench 中文总分 47.98 为对比统一模型最高，ImgEdit 3.66 居统一模型第二。受控对比中 2B 稠密主干生成弱于同规模 MoT（OneIG 0.291 对 0.345），但 4B 共享主干理解均分 65.04 全面反超。",
+    "limitations": "受控对比训练预算远少于完整模型，生成分数 0.314 与最终模型 0.524 不可直接比较，规模结论外推需谨慎；OCRBench 相比重评估基线下降约 5 分，联合训练仍带可测干扰。"
+  },
+  "claims": [
+    {
+      "claim": "HiUni 在七项越高越好的理解基准上平均 75.56，与 Qwen3-VL-4B-Instruct 官方 75.61 基本持平",
+      "numbers": [
+        "75.56",
+        "75.61"
+      ],
+      "source_span": "Section 4.2, Image Understanding",
+      "quote": "an average score of 75.56, close to the officially reported 75.61"
+    },
+    {
+      "claim": "Qwen-Image-Bench 中文总分 47.98，为对比统一模型中最高的中文分",
+      "numbers": [
+        "47.98"
+      ],
+      "source_span": "Table 2, row 'HIUNI'",
+      "quote": "47.98"
+    },
+    {
+      "claim": "ImgEdit 总分为 3.66，在对比的统一模型中排第二，仅次于 UniSpace 的 3.82",
+      "numbers": [
+        "3.66",
+        "3.82"
+      ],
+      "source_span": "Section 4.2, Image Editing",
+      "quote": "HIUNI reaches an Overall score of 3.66 on ImgEdit, ranking second among the compared unified models behind UniSpace (3.82)"
+    },
+    {
+      "claim": "2B 稠密主干的 OneIG 为 0.291，低于同规模 MoT 的 0.345",
+      "numbers": [
+        "0.291",
+        "0.345"
+      ],
+      "source_span": "Section 4.3, Results and Analysis",
+      "quote": "its OneIG score decreases from 0.345 to 0.291"
+    },
+    {
+      "claim": "4B 共享稠密主干的六项理解基准平均 65.04，全面超过 2B MoT",
+      "numbers": [
+        "65.04"
+      ],
+      "source_span": "Table 4, row 'HIUNI-Dense-4B'",
+      "quote": "65.04"
+    },
+    {
+      "claim": "HIUNI 的规模为 4B 主干加 0.9B 生成专用参数",
+      "numbers": [
+        "4",
+        "0.9"
+      ],
+      "source_span": "Table 1, row 'HIUNI'",
+      "quote": "4B + 0.9B"
+    },
+    {
+      "claim": "单任务生成基线 HIUNI-Gen-4B 的 OneIG 为 0.390",
+      "numbers": [
+        "0.390"
+      ],
+      "source_span": "Section 4.3, Results and Analysis",
+      "quote": "HIUNI-Gen-4B achieves a OneIG score of 0.390"
+    },
+    {
+      "claim": "联合训练后生成分数降到 0.314，低于单任务生成基线",
+      "numbers": [
+        "0.314"
+      ],
+      "source_span": "Section 4.3, Results and Analysis",
+      "quote": "joint training yields a lower generation score of 0.314"
+    },
+    {
+      "claim": "最终模型在 Qwen-Image-Bench 中文上的 OneIG 为 0.524",
+      "numbers": [
+        "0.524"
+      ],
+      "source_span": "Table 2, row 'HIUNI', OneIG ZH",
+      "quote": "0.524"
+    },
+    {
+      "claim": "HiUni 的 OCRBench 为 74.5，低于重评估的 Qwen3-VL-4B-Thinking 的 79.6，差约 5 分",
+      "numbers": [
+        "74.5",
+        "79.6",
+        "5"
+      ],
+      "source_span": "Table 1, rows 'HIUNI' 与 'Qwen3-VL†THK'",
+      "quote": "74.5"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "title_zh": "NextLat：用下一潜在状态预测学习紧凑世界模型",
+  "affiliations": [
+    "Microsoft Research"
+  ],
+  "scores": {
+    "research_value": 87,
+    "research_value_reason": "把 belief state 学习从递归模型和双编码器方案中解放出来，给出可检验的理论条件，并在世界建模、规划、推理和语言建模上系统验证，问题重要且覆盖面广。",
+    "novelty": 82,
+    "novelty_reason": "用仅依赖当前隐状态与下一个 token 的 latent transition 预测作为辅助目标，把 token 空间多步监督换成 latent 空间自预测，并复用它做变长自推测解码；与 BST、JTP 的差异清楚。",
+    "technical_depth": 86,
+    "technical_depth_reason": "有 belief state 收敛定理、跨领域实验和 GPT/MTP/JTP/BST 基线，还报告压缩、线性探针与解码加速；但语言建模增益有限，动力学模型仅用 MLP，部分设计依赖小规模消融。"
+  },
+  "reading": {
+    "why_read": "提出 NextLat，在训练时用轻量动力学模型预测下一隐状态并强制多步一致，使 Transformer 获得 belief-state 式紧凑表征，在规划、世界建模与自推测解码上优于 next-token 基线。",
+    "task": "序列建模希望 Transformer 学到可递推的紧凑世界模型，但其记忆随序列增长、自注意力可随时回看历史，缺乏压缩压力；结果是世界模型不一致、规划短视，OOD 泛化差。",
+    "findings": [
+      {
+        "point": "自注意力取消压缩压力",
+        "detail": "历史可由 attention 临时查表，next-token 目标不要求每步隐状态成为历史的充分统计量，因此模型可拟合训练集却学不到一致转移规则。"
+      },
+      {
+        "point": "token 空间多步监督仍短视",
+        "detail": "MTP、JTP、BST 在 token 空间加预测，仍易利用局部 n-gram 捷径；材料中其长程线性探针表现随 offset 增大而下降。"
+      },
+      {
+        "point": "递归收益与并行训练冲突",
+        "detail": "RNN 天然压缩历史并具转移规则，但训练需顺序展开；纯 Transformer 保留并行却丢掉这种归纳偏置。"
+      }
+    ],
+    "method_idea": "标准 Transformer 只用下一 token 的交叉熵训练，自注意力可随时回看历史，因此没有动力把历史压成可递推的状态。NextLat 在训练时加一个轻量动力学模型，要求它仅凭当前层末隐状态和下一个 token 预测下一时刻的隐状态，并把多步滚动也纳入监督；推理结构不变。",
+    "method_how": "实现上，NextLat 在标准交叉熵之外，对最终层隐状态做自预测：动力学模型只接收当前隐状态与下一个 token，输出下一隐状态，目标端做 stop-gradient 以避免表征塌缩。训练还对同一动力学模型做多步 teacher-forcing 滚动，用 Smooth L1 对齐每个中间隐状态；另加一项 KL，让预测隐状态经过冻结输出头后复现真实隐状态的 token 分布。总损失是三项加权和；推理时主 Transformer 不变，动力学模型只在自推测解码中递归起草。代价是额外训练一个 MLP，且多步滚动需顺序展开，长 horizon 下训练比 JTP 慢，但主模型推理参数不增加。",
+    "results": "在 Path-Star 规划上接近 100% 解出率；语言模型平均准确率 59.21，仅略高于 GPT 的 58.82；自推测解码最高加速 3.3×，但 LM 增益有限。",
+    "limitations": "作者承认动力学模型仅用简单 MLP，未探索宽度与结构；语言建模平均准确率提升有限且不一致，损失轨迹还对优化器敏感。此外自适应 draft 长度未实现。"
+  },
+  "claims": [
+    {
+      "claim": "在 Path-Star 图任务上，NextLat 对所有拓扑保持接近 100% 的解出率",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Section 4.3, Path-Star results / Figure 5",
+      "quote": "NextLat maintains close to 100% solve rate for all topologies of the Path-Star graphs."
+    },
+    {
+      "claim": "在语言建模评测中，NextLat（d=2）平均准确率为 59.21，GPT 为 58.82，作者称提升有限且不一致",
+      "numbers": [
+        "59.21",
+        "58.82"
+      ],
+      "source_span": "Section 4.4, Table 3 discussion",
+      "quote": "NextLat (d = 2) is the only multi-step prediction objective that meaningfully improves average accuracy over GPT (59.21 vs. 58.82)"
+    },
+    {
+      "claim": "自推测解码的加速随 draft 长度亚线性增长，最高达到 3.3×",
+      "numbers": [
+        "3.3"
+      ],
+      "source_span": "Section 4.4, Figure 8",
+      "quote": "Speedup increases sublinearly with draft length, reaching up to 3.3×"
+    }
+  ]
+}

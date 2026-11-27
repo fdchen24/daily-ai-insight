@@ -1,0 +1,74 @@
+{
+  "title_zh": "EgoCaptioner：面向全面细粒度第一人称视频字幕的两级结构与奖励训练",
+  "affiliations": [
+    "HKUST(GZ)",
+    "KlingAI Research",
+    "PKU",
+    "NJU",
+    "HKU"
+  ],
+  "scores": {
+    "research_value": 78,
+    "research_value_reason": "第一人称视频字幕需同时满足细粒度与时间对齐，是个人记忆检索与机器人预训练数据的直接依赖；论文给出可复用的标注流程、5 万条训练数据与完整训练配方，并明确把字幕质量、时序对齐、物理细节覆盖拆成四个可测维度。",
+    "novelty": 68,
+    "novelty_reason": "两级字幕格式（视频级概览 + 带关键时刻的时间戳步骤）与按活动类型切换描述重点是新提法，但由粗到细的多模型标注、事实/时间/风格多奖励 GRPO 相对近期密集字幕的 RL 工作属增量，用传感器位姿事实作为独立参考事实校验运动描述是较实的一处改动。",
+    "technical_depth": 72,
+    "technical_depth_reason": "给出数据规模、单项奖励、标注流程三组消融并铺满五个基准，但所有指标由模型裁判产生、无人工一致性验证，且附录承认在 EgoHome 与 PhysCapBench 上给基线换了指令模板，比较不完全对等。"
+  },
+  "reading": {
+    "why_read": "提出 EgoCaptioner，用「视频级概览 + 带关键时刻的时间戳步骤」的两级字幕格式、由粗到细的标注流水线与事实/时间/风格三类奖励的 GRPO 训练，在五个第一人称视频基准上取得开源最好成绩。",
+    "task": "第一人称视频要变成可检索的记忆、变成机器人预训练用的时间戳监督，字幕就得既保留动作细节又标对时刻。现有 MLLM 在这类素材上常漏掉短暂动作、把顺序写乱、误判穿戴者的移动；字幕格式本身也不支持详细叙述与精确时间并存——段落式描述看不出单个动作的起止，带时间戳的字幕又常把一个事件压成一句。通用字幕器铺陈可见场景却不绑定穿戴者动作，第一人称字幕器则多集中于手物操作，导航与社交被写得单薄。",
+    "findings": [
+      {
+        "point": "字幕格式把细节与时间割成两套",
+        "detail": "稠密段落式描述不给出每个动作的起止，带时间戳的字幕则往往一个事件只写一句，或按场景把细节归组，读者无法同时拿到细粒度事实和精确边界。"
+      },
+      {
+        "point": "描述重点不随活动类型变化",
+        "detail": "通用字幕器只铺陈可见场景而不绑定穿戴者动作，现有第一人称字幕器又多专攻手物操作，导航、社交、观察类活动因此缺路线、回应与注视目标等细节。"
+      },
+      {
+        "point": "第一人称下运动只能从场景反推",
+        "detail": "穿戴者身体大多不在画面内，只能靠场景变化推测行进方向；当头动与体动不一致时这类线索会误导，而纯文本参考本身也无法校验运动事实。"
+      }
+    ],
+    "method_idea": "以往做法是让模型一次性把整段视频写成段落式字幕，或给每个事件一句带时间戳的摘要，细节与时间难以兼顾。这篇改成两级结构：先给一段视频级概览交代场景、参与者与穿戴者的整体活动，再把视频切成连续不重叠的事件、每个事件拆成带起止时间的步骤，并把物体状态改变等关键时刻钉在具体时间点上。",
+    "method_how": "标注由两个商用模型分工：一个写视频级概览，另一个切事件、按操作/移动/社交/观察四类打标签并列出步骤大纲，再由前者在带上下文的裁剪片段上把大纲扩写成带时间戳的步骤，最后交审阅模型对照完整视频修正。训练先做 LoRA 监督微调，再用 GRPO 加三类奖励：事实奖励让裁判模型对抽取事实分级打分并取精确率与召回率的 F1，时间奖励按时间交并比贪心匹配步骤，风格奖励惩罚只写手部动作或重复背景的步骤。有骨架或相机轨迹的视频还额外提供由传感器量化出的运动事实，与字幕事实冲突时优先采信。代价是两阶段各用 16 张 GPU、每个 rollout 都调用裁判模型，传感器事实只覆盖八个数据源中的三个。",
+    "results": "在五个第一人称基准上评测。相对 Qwen3.5-9B 主干，PhysCapBench Overall 提高 27.6 分、EgoTempo 问答准确率提高 16.8 个百分点；PhysCapBench 得 78.84 分，高于 Gemini 3.1 Pro，EgoHome 步骤分割 PSJ 75.51 为开源最高。",
+    "limitations": "标注、奖励判定与 QA 评分都交给 Gemini 系列模型，而基线中就有 Gemini，存在裁判偏好；附录承认 EgoHome 与 PhysCapBench 上给基线换了指令模板，比较不完全对等。传感器事实只覆盖八个源中的三个。"
+  },
+  "claims": [
+    {
+      "claim": "PhysCapBench Overall 得 78.84，为开源模型最高并高于 Gemini 3.1 Pro",
+      "numbers": [
+        "78.84"
+      ],
+      "source_span": "Sec. 4.2, paragraph 'Description quality and video QA'",
+      "quote": "EgoCaptioner scores 78.84 Overall, the best among open-source models and above Gemini 3.1 Pro."
+    },
+    {
+      "claim": "EgoHome 步骤分割 PSJ 为 75.51，在开源模型中排名第一",
+      "numbers": [
+        "75.51"
+      ],
+      "source_span": "Sec. 4.2, paragraph 'Temporal alignment'",
+      "quote": "EgoCaptioner scores 75.51 on PSJ, ranking first among the open-source models"
+    },
+    {
+      "claim": "相对 Qwen3.5-9B 主干，PhysCapBench Overall 提升 27.6 分",
+      "numbers": [
+        "27.6"
+      ],
+      "source_span": "Sec. 1 Introduction",
+      "quote": "EgoCaptioner improves by 27.6 points in PhysCapBench"
+    },
+    {
+      "claim": "EgoTempo 问答准确率提升 16.8 个百分点",
+      "numbers": [
+        "16.8"
+      ],
+      "source_span": "Sec. 1 Introduction",
+      "quote": "by 16.8 percentage points in EgoTempo [26] accuracy"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "title_zh": "S-Mind：将多视图几何内化为空间智能",
+  "affiliations": [
+    "The Hong Kong University of Science and Technology",
+    "Nanyang Technological University",
+    "National University of Singapore",
+    "Tongji University"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "针对 MLLM 空间智能的核心缺口，先用探针证明微调未带来真正的多视图融合与视角变换，再给出可内化、可检查的解法，对具身与 3D 推理有直接意义。",
+    "novelty": 82,
+    "novelty_reason": "把外部几何从推理阶段移到训练阶段，用少量 spatial tokens 同时承载融合场景和视角重表达，并用刚体变换目标监督重发 token，区别于只监督答案或输入视图几何的空间微调。",
+    "technical_depth": 84,
+    "technical_depth_reason": "有冻结骨干探针、逐层定位融合层、替换/剔除 token 的因果干预、组件消融与两种规模验证；但训练限于 LoRA、几何预训练依赖 posed 数据，结论主要来自作者自建探针。"
+  },
+  "reading": {
+    "why_read": "提出 S-Mind，用少量 spatial tokens 在 MLLM 内部承载多视图融合出的 3D 场景，并在推理切换视角时重发这些 token 重表达场景，9B 模型在四个空间基准上平均达 74.03%。",
+    "task": "从多视图理解 3D 空间是具身智能、自动驾驶和扩展现实的基础能力，但 MLLM 往往只做 2D 模式识别，不能把多张视图拼成一个连贯场景，也不能在推理换视角时把场景转过去。现有两条路线各有问题：外部几何方法在模型外做重建或挂几何编码器，推理慢且空间能力没有内化；空间微调只监督输出文本或对齐输入视图的几何，换视角的目标基本没被监督。结果是微调后答案准确率明显上升，内部却仍不融合、不旋转。",
+    "findings": [
+      {
+        "point": "多视图融合没有自发形成",
+        "detail": "几何探针在冻结骨干上解码每个视觉 token 的 3D 点：首图自身的点恢复 60.62%，后视图的点只能靠视图间关系放置，却仅 11.23%；SFT/GRPO 升至 14.19%/16.02%，3DThinker 与 GPD 为 10.65%/11.82%。"
+      },
+      {
+        "point": "场景表征锚定在相机帧",
+        "detail": "视角探针显示：状态外部旋转到查询视角后关系正确率 95.14%，直接在目标帧读仅 33.44%（首次提及）和 47.15%（最后）；推理自己声明的视角场景仅恢复 30.02%，接近 25% 随机水平。"
+      }
+    ],
+    "method_idea": "现有空间微调只监督最终答案或对齐输入视图的几何，模型仍把每个视图独立编码，内部场景固定在相机坐标系，推理换视角时不会跟着转。S-Mind 改为在模型序列里预留一小组 spatial tokens，把多视图压进一个共享坐标系下的 3D 场景，并在推理每声明一个新视角时重发这组 token，让它承载该视角下重表达的场景，后续推理直接读它。",
+    "method_how": "每张图后接自己的 scene tokens，所有视图共享一组 camera tokens，它们的隐状态就是融合场景。一个单层 cross-attention 读出器只拿网格位置或相机 token 作查询，从这些状态解码每个视觉 token 的全局/局部 3D 点和相机位姿；查询不含图像内容，逼着融合发生在 token 里。几何预训练用 Huber 回归加置信度，同时监督全局点、局部点和相机位姿，三者互为冗余，把解码拉向同一连贯场景。SFT 在推理链每个视角声明后插入一段 spatial tokens，模型自己重发，冻结读出器解码后按刚体变换到该视角，与答案交叉熵一起优化；GRPO 只用答案奖励。推理去掉读出器和损失，只多少量 token。代价是需要带位姿图像集预训练、依赖教师写视角声明，且只在 Qwen3.5 两个规模上以 LoRA 验证。",
+    "results": "四个基准（MindCube-Tiny、SPAR-Bench、BLINK、ViewSpatial）上，9B 的 S-Mind 平均 74.03%，比同骨干 GRPO 高 6.76 分；探针显示融合点恢复 65.11%、视角变换 82.17%，基线最高为 16.02% 和 37.28%。",
+    "limitations": "作者承认目前只监督输入视图可见的几何，未覆盖未见区域补全、动态场景与长期交互；方法还依赖带位姿的图像集和教师标注的视角链，且只在 Qwen3.5 的两个规模上以 LoRA 验证。"
+  },
+  "claims": [
+    {
+      "claim": "9B 的 S-Mind 在四个基准上平均 74.03%，比同骨干 GRPO 高 6.76 分。",
+      "numbers": [
+        "9",
+        "74.03",
+        "6.76"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "Trained with the same recipe on Qwen3.5-9B, S-MIND reaches 74.03%, 6.76 points above GRPO"
+    },
+    {
+      "claim": "融合点恢复 65.11%，基线最高 16.02%。",
+      "numbers": [
+        "65.11",
+        "16.02"
+      ],
+      "source_span": "Section 5.3, Figure 6a",
+      "quote": "S-MIND recovers 65.11% of the fused points and 86.32% of the single-view points, whereas the baselines recover at most 16.02% and 60.62%."
+    },
+    {
+      "claim": "视角变换 82.17%，基线最高 37.28%。",
+      "numbers": [
+        "82.17",
+        "37.28"
+      ],
+      "source_span": "Section 5.3, Figure 6b",
+      "quote": "S-MIND reaches 82.17% accuracy, whereas the baselines remain between 25.22% and 37.28%"
+    },
+    {
+      "claim": "首图点恢复 60.62%，其他视图仅 11.23%。",
+      "numbers": [
+        "60.62",
+        "11.23"
+      ],
+      "source_span": "Section 3, Finding 1",
+      "quote": "it recovers 60.62% of the first image’s own points (single-view) but only 11.23% of the other images’ points (fused)"
+    },
+    {
+      "claim": "SFT/GRPO 仅 14.19/16.02，3DThinker/GPD 10.65/11.82。",
+      "numbers": [
+        "14.19",
+        "16.02",
+        "10.65",
+        "11.82"
+      ],
+      "source_span": "Section 3, Finding 1",
+      "quote": "the + SFT and + GRPO variants lift the fused points only to 14.19% and 16.02%, and the released 3DThinker and GPD reach 10.65% and 11.82%."
+    },
+    {
+      "claim": "外部旋转后关系正确 95.14%，目标帧首次提及仅 33.44%，最后 47.15%。",
+      "numbers": [
+        "95.14",
+        "33.44",
+        "47.15"
+      ],
+      "source_span": "Section 3, Finding 2",
+      "quote": "the decoded state gives the correct relation for 95.14% of them once rotated to the queried viewpoint, yet for only 33.44% when read directly in the target frame at the first mention of the objects, and 47.15% at the last."
+    },
+    {
+      "claim": "声明视角场景仅 30.02%，随机 25%。",
+      "numbers": [
+        "30.02",
+        "25"
+      ],
+      "source_span": "Section 3, Finding 2",
+      "quote": "recovered with only 30.02% accuracy on average, barely above the chance level of 25%."
+    }
+  ]
+}

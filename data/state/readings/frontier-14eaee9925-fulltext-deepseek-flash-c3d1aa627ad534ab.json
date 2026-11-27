@@ -1,0 +1,80 @@
+{
+  "title_zh": "RUIBench：机器人使用接口如何影响具身智能体可靠性",
+  "affiliations": [
+    "National University of Singapore"
+  ],
+  "scores": {
+    "research_value": 90,
+    "research_value_reason": "把机器人使用接口从系统实现细节提升为可控制的实验变量，并用多任务基准和真机实验支撑，对具身智能体可靠性有普遍意义。",
+    "novelty": 84,
+    "novelty_reason": "将动作抽象与交互形式交叉成受控接口空间，同时把完成声称与物理结果分开评估，区别于固定接口的基准和只比较单一设计的研究。",
+    "technical_depth": 87,
+    "technical_depth_reason": "在同一感知、控制、时序和评分下比较多个模型与接口，包含动作序列消融、小模型微调、真机迁移和完成判定分析，证据链较完整但真机覆盖仍有限。"
+  },
+  "reading": {
+    "why_read": "提出 RUIBench 与 RUIKit，用 30 个操作任务和 13 种机器人接口做受控评测，发现仅换接口即使 Claude Code 成功率从 45.3% 升到 80.7%，并暴露完成验证缺口。",
+    "task": "具身智能体用基础模型调用工具控制机器人时，接口决定它下什么命令、哪些步骤交给执行器、何时收回控制权。现有基准通常固定一种接口，接口研究又只比较少数设计选项，因此同一个模型在不同动作表达与执行组织下能差多少并不清楚。",
+    "findings": [
+      {
+        "point": "执行碎片化",
+        "detail": "逐动作接口把连续操作拆成大量模型决策，增加回合、成本与出错机会；程序化执行压缩决策，但只有在智能体真正利用多步执行和中间反馈时才有效。"
+      },
+      {
+        "point": "物理不确定性改变接口偏好",
+        "detail": "真机上深度噪声、标定偏差和抓取滑移要求局部纠错；程序减少决策却可能减少检查机会，因而仿真中的接口优势不一定迁移。"
+      },
+      {
+        "point": "验证缺口",
+        "detail": "智能体常在实际失败时宣称完成，且多数声称前不再观察；动作级抓取和放置检查无法替代任务级完成判定。"
+      }
+    ],
+    "method_idea": "已有具身基准通常固定一套动作命令，或只比较少数接口选项，难以判断同一模型换一种动作表达和执行组织后会怎样。RUIBench 固定任务、感知、时序和评分，只让接口变化：动作抽象覆盖关节、增量、步进、位姿、图像点和语义技能，交互形式分为逐动作执行与写程序批量执行。这样就把模型能力与接口施加的决策负担拆开。",
+    "method_how": "RUIKit 在 30 个任务上共享感知控制工具，只替换动作原语和组织方式：逐动作接口一次回复执行一个动作，程序接口让智能体写 Python 组合动作并在程序内查询观察。评测只给 RGB-D 和机器人状态，每次回复固定延迟 8 秒，成功由离线评分器独立判定并对智能体隐藏。为分离决策压缩与反馈，作者加入只执行动作序列、不返回中间观察的变体，并测试报告失败与自动重试；真机端复用同一接口，在 Franka 上人工判定。代价是依赖仿真和固定延迟，真机覆盖少且仅单一机械臂。",
+    "results": "仿真中只换接口，Claude Code 成功率从 45.3% 到 80.7%；真机上程序接口相对逐动作的优势反转，Claude Code 为 36.0% 对 42.0%。",
+    "limitations": "真机验证只覆盖少量任务与单一机械臂，仿真每任务测试种子有限；接触密集和时间敏感任务在多数接口下仍失败，任务级验证器仍是开放问题。"
+  },
+  "claims": [
+    {
+      "claim": "RUIBench 包含 30 个操作任务，覆盖多个交互需求",
+      "numbers": [
+        "30"
+      ],
+      "source_span": "Abstract",
+      "quote": "30 manipulation tasks across five suites"
+    },
+    {
+      "claim": "RUIKit 在共享感知控制下给出 13 种接口",
+      "numbers": [
+        "13"
+      ],
+      "source_span": "Abstract",
+      "quote": "yielding 13 interfaces under shared perception and control"
+    },
+    {
+      "claim": "仅改变接口，Claude Code 的成功率从 45.3% 升到 80.7%",
+      "numbers": [
+        "45.3",
+        "80.7"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "Changing only the RUI shifts Claude Code’s success from 45.3% to 80.7%"
+    },
+    {
+      "claim": "每次模型回复固定延迟 8 秒",
+      "numbers": [
+        "8"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "each model response incurs a fixed 8 s delay"
+    },
+    {
+      "claim": "真机上程序接口相对逐动作的优势反转，Claude Code 为 36.0% 对 42.0%",
+      "numbers": [
+        "36.0",
+        "42.0"
+      ],
+      "source_span": "Section 5.4",
+      "quote": "lose this advantage on the real robot (36.0% vs. 42.0%)"
+    }
+  ]
+}

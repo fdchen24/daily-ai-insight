@@ -1,0 +1,98 @@
+{
+  "title_zh": "地理空间基础模型与气候韧性：迁移、不确定性与决策就绪度综述",
+  "affiliations": [
+    "University of California, Davis"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "把“基础模型能否迁移到极端事件”拆成事件、区域、时间、传感器等可审计维度，对灾害监测与预警有直接方法学价值。",
+    "novelty": 74,
+    "novelty_reason": "用137篇应用的编码审计加决策倒推评估框架取代精度排行榜，但技术分类仍基本沿用EO表征学习与大气预报两条线。",
+    "technical_depth": 78,
+    "technical_depth_reason": "逐类拆解SatMAE的掩码重建、CROMA的跨模态对齐等机制，并把标签、可观测性、提前期和延迟纳入同一评估讨论。"
+  },
+  "reading": {
+    "why_read": "梳理137篇气候灾害GeoAI应用与37条模型/基准记录，按头条验证设计（事件、区域、时间、传感器）与不确定性报告分类，指出传感器留出仅2篇、基础模型微调组无一篇，主张从决策倒推设计迁移测试。",
+    "scope": "覆盖洪水、野火、干旱、热浪、冰冻圈、损失评估与复合灾害的深度学习应用，以及EO基础模型和大气预报模型；讨论标签、可观测性、预报提前期与决策要求如何限制其贡献。不评估单篇精度高低，也不做PRISMA荟萃分析，重点在验证设计、不确定性报告与决策可用性。",
+    "evolution": "领域先以任务专用的卫星灾害制图为主，随后转向在大型EO档案上预训练、再适配下游任务的基础模型；大气预报则沿Pangu-Weather、GraphCast、GenCast、NeuralGCM形成平行路线。基准研究显示分数强烈依赖标签、划分、解码器和调参预算，因此讨论焦点从“模型能力”转向“在何种事件、区域和传感器位移下仍能支持决策”，并催生按决策倒推的评估框架。",
+    "approaches": [
+      {
+        "point": "EO掩码重建与跨模态对比预训练",
+        "detail": "SatMAE用掩码时空与多光谱重建学习表征；CROMA用光学和雷达双编码器加跨模态对比与对齐重建。换得可复用表征，但下游迁移仍受适配数据和输入配置约束。"
+      },
+      {
+        "point": "异构传感器与多模态适配",
+        "detail": "DOFA按光谱条件调整处理，AnySat处理变化的模态、分辨率和尺度，TerraMind加入多模态与生成能力，Prithvi-EO扩展多时相预训练。换得跨传感器适应性，代价是适配预算与输入可得性必须匹配基线。"
+      },
+      {
+        "point": "大气场学习预报",
+        "detail": "Pangu-Weather、GraphCast学习大气场演化，GenCast给出概率预报，NeuralGCM混合学习组件与大气动力学，Aurora适配多种地球系统预报。换得中程预报能力，但验证对象是未来场和提前期，不是卫星水体或烧痕制图。"
+      },
+      {
+        "point": "共享基准与标准化评估",
+        "detail": "GEO-Bench与PANGAEA组织共享任务和标准化适配设置，暴露强监督基线的重要性。换得可比性，但分数条件于标签、划分、解码器和调参预算，不能直接外推为灾害就绪度。"
+      },
+      {
+        "point": "决策倒推评估协议",
+        "detail": "作者提出先定义行动、决策时可得信息和漏报/误报代价，再复现事件、区域或传感器位移，保留匹配的任务基线，并报告漏报、误报、可靠性和端到端延迟。换得可检验的迁移要求，但需要领域方提供决策阈值。"
+      }
+    ],
+    "key_differences": "两条主线解决的问题不同：EO表征学习赌的是有限标签下的可迁移表征，常用分割IoU衡量；大气预报赌的是未来场演化，须按提前期和极端事件验证。基础模型优势还取决于基线强度：在增强基线比较中，U-Net的Bolivia平均IoU为87.77%，U-Prithvi为87.70%，说明“预训练”标签本身不等于任务增益。传感器变化、缺失模态与目标传感器适配也是不同测试，不能混为zero-shot迁移。",
+    "bottlenecks": "最要紧的是头条检验与部署条件错位：传感器留出仅2篇，基础模型微调组无一篇；不确定性方法仅16篇、显式校准仅2篇。跨传感器可靠性与端到端延迟因此缺少证据。",
+    "future_directions": "作者主张建事件多样、传感器显式的基准，报告预训练来源，并在同一位移下评估校准与失效，按真实预警时刻测试天气—EO耦合；框架可操作，但落地需领域方给出行动阈值。"
+  },
+  "claims": [
+    {
+      "claim": "综述对137篇可用全文的灾害应用研究做描述性编码审计。",
+      "numbers": [
+        "137"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "Evaluation-design coding used the 137 records with usable full text."
+    },
+    {
+      "claim": "另设37条模型与基准记录提供架构背景。",
+      "numbers": [
+        "37"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "A separate collection of 37 model and benchmark records provides architectural context"
+    },
+    {
+      "claim": "头条评估中，留出事件31篇、留出区域25篇、留出传感器仅2篇。",
+      "numbers": [
+        "31",
+        "25",
+        "2"
+      ],
+      "source_span": "Abstract",
+      "quote": "headline evaluations included held-out events in 31 studies, regions in 25 and sensors in only two."
+    },
+    {
+      "claim": "10篇地理基础模型微调研究中，没有一篇把传感器留出作为头条检验。",
+      "numbers": [
+        "10"
+      ],
+      "source_span": "Abstract",
+      "quote": "None of the ten studies coded for geospatial foundation-model fine-tuning used sensor holdout as a headline test."
+    },
+    {
+      "claim": "16篇记录了不确定性相关方法，其中仅2篇有显式校准的概率输出。",
+      "numbers": [
+        "16",
+        "2"
+      ],
+      "source_span": "Abstract",
+      "quote": "Uncertainty-related methods were recorded in 16 studies, including two with explicitly calibrated probabilistic output."
+    },
+    {
+      "claim": "在增强基线比较中，U-Net的Bolivia平均IoU为87.77%，U-Prithvi为87.70%。",
+      "numbers": [
+        "87.77",
+        "87.70"
+      ],
+      "source_span": "Section 7.1",
+      "quote": "In the latter study’s strengthened-baseline comparison, Bolivia mean IoU was 87.77% for U-Net and 87.70% for U-Prithvi."
+    }
+  ]
+}

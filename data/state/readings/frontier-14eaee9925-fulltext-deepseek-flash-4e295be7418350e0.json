@@ -1,0 +1,112 @@
+{
+  "title_zh": "Motion Mamba 2.0：面向长时程人形控制的自回归扩散 Mamba",
+  "affiliations": [
+    "Peking University",
+    "Korea University",
+    "Monash University",
+    "Nanyang Technological University"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "长时程、可随时改指令的人形动作生成是交互动画与机器人共用的瓶颈，论文在三个 G1 基准与真机闭环上同时给出终端空间精度与推理代价，属于能直接落到系统里的一类工作。",
+    "novelty": 76,
+    "novelty_reason": "核心不是把 Mamba 与注意力并列，而是把已接受的循环状态经门控写成语义相关、随会话演进的注意力内容槽，并提出\"仅提交已接受窗口\"的更新规则把扩散采样迭代与物理时间分开。",
+    "technical_depth": 82,
+    "technical_depth_reason": "所有基线在同一 G1 语料、同一训练预算下重训，配对评估覆盖多档时程，PCM 的文本条件与状态差分分别消融，延迟用配对 bootstrap 区间并逐位校验输出一致；不足是语义指标未全面占优、延迟对比未与最快基线对齐。"
+  },
+  "reading": {
+    "why_read": "提出 Motion Mamba 2.0，把可续接的 Mamba-3 循环状态经门控写成注意力可读的持久内容槽，并只在窗口被接受后提交历史，实现长时程可控的人形动作生成。",
+    "task": "交互式动画与人形机器人在动作执行中要响应新指令与空间目标，生成器得逐窗产出并接上已产生的动作，而不是合成一段孤立片段。自回归扩散提供了这种窗口式接口，但注意力缓存有界就丢掉远端历史、无界又让存储与计算随时长增长；短窗口的重复去噪还带来可观的执行开销。这两件事分别属于历史表示与推理实现，不能互相替代。",
+    "findings": [
+      {
+        "point": "有界缓存与压缩循环状态暴露历史的方式不可互换",
+        "detail": "缓存只保留最近若干窗口的 key/value，无界缓存则随序列增长；Mamba 状态压缩了历史，但它本身不是注意力可读的条目，两条分支并列不能让注意力取到它。"
+      },
+      {
+        "point": "扩散的中间候选不能当作历史写入",
+        "detail": "同一窗口的连续噪声候选是同一输出的不同备选，不是动作流的时间推进；把它们写进状态等于把去噪步数混进物理时间，因此必须等干净窗口被接受后统一提交。"
+      },
+      {
+        "point": "窗口延迟主要不是花在去噪计算上",
+        "detail": "eager 执行下 host launch 达 83,777 次、GPU kernel 86,849 次而单算子计算量很小，说明重复派发与小算子调度才是每窗固定开销的来源。"
+      }
+    ],
+    "method_idea": "逐窗自回归扩散在生成每个窗口时都要重读历史，而这份历史要么放在会被截断的注意力缓存里，要么压进一个注意力根本读不到的循环状态。这篇把已接受动作累积出的循环状态、它与上一窗口的差、以及当前文本一起，经门控写成一组随会话更新的记忆槽，让注意力在滑动缓存之外还能取到压缩历史，并规定历史只在窗口被接受后整体提交。",
+    "method_how": "根网络先预测全局位置与朝向，体网络再以此为条件预测关节；两个去噪器都把局部注意力与可续接的 Mamba-3 扫描并联，按层内门控相加。Mamba 头携带循环矩阵与上一拍输入，在窗口边界从已提交状态续扫，状态大小不随时长增长。PCM 每层把循环状态池化成摘要、与上一窗口作差，用当前文本嵌入调制差值后拼成候选槽；写入门控读取候选与旧槽并截断门值上限，使同一状态变化在不同指令下写入不同内容。读出时槽插在 sink token 之后参与注意力，其与基注意力的差由初值为零的可学习标量缩放后残差相加，故初始退化为原混合器。代价是每层多出槽投影与更大的键值集合，延迟与显存上升，且不保证精确召回远端事件。",
+    "results": "重定向 HiPHI 滚动到 39.52 s 时 Root/End CE 为 7.55/13.64 cm，优于 ARDY 的 10.09/14.84 cm；RTX 4090 上完整优化把窗口 p50 从 1685.35 ms 降到 276.14 ms（6.138×），输出逐位一致；实机 100 次试验 94 次成功、无跌倒。",
+    "limitations": "作者只承认未涉及物体操作；更实际的是语义指标并未全面领先（单窗 R@3、L2-FID 多落后），且完整优化后单窗 276.14 ms 仍远慢于 ARDY 的 95.6 ms。"
+  },
+  "claims": [
+    {
+      "claim": "eager 执行下 host launch 与 GPU kernel 数远多于实际计算需要",
+      "numbers": [
+        "83,777",
+        "5,519"
+      ],
+      "source_span": "Sec. 5.4 Execution profile and consistency",
+      "quote": "ordinary host launches decrease from 83,777 to 5,519"
+    },
+    {
+      "claim": "GPU kernel 数从 86,849 降到 44,877",
+      "numbers": [
+        "86,849",
+        "44,877"
+      ],
+      "source_span": "Sec. 5.4 Execution profile and consistency",
+      "quote": "GPU kernels decrease from 86,849 to 44,877"
+    },
+    {
+      "claim": "重定向 HiPHI 上滚动 39.52 s 时 Root/End CE 达到 7.55/13.64 cm",
+      "numbers": [
+        "39.52",
+        "7.55",
+        "13.64"
+      ],
+      "source_span": "Sec. 5.2 Results on HiPHI, Table 1",
+      "quote": "At 39.52 s, our method achieves 7.55/13.64 cm"
+    },
+    {
+      "claim": "ARDY 在同一评测量纲下的最佳 End CE 为 14.84 cm",
+      "numbers": [
+        "14.84"
+      ],
+      "source_span": "Sec. 5.2 Results on HiPHI",
+      "quote": "14.84 cm from ARDY"
+    },
+    {
+      "claim": "ARDY 在 39.52 s 的 Root CE 为 10.09 cm",
+      "numbers": [
+        "10.09"
+      ],
+      "source_span": "Table 1, row 'ARDY', 39.52 s block",
+      "quote": "10.09"
+    },
+    {
+      "claim": "完整优化把窗口 p50 延迟从 1685.35 ms 降到 276.14 ms，中位配对加速 6.138×",
+      "numbers": [
+        "1685.35",
+        "276.14",
+        "6.138"
+      ],
+      "source_span": "Table 7, row with Flow+Fusion+Graph",
+      "quote": "reduces p50 latency from 1685.35 to 276.14 ms"
+    },
+    {
+      "claim": "实机 100 次试验中 94 次全任务成功且无跌倒",
+      "numbers": [
+        "94",
+        "100"
+      ],
+      "source_span": "Sec. 6.3 / Table 8",
+      "quote": "94/100 trials achieve full-task success"
+    },
+    {
+      "claim": "ARDY 单窗延迟为 95.6 ms，快于本文优化后的单窗延迟",
+      "numbers": [
+        "95.6"
+      ],
+      "source_span": "Table 1, row 'ARDY', 52 frames block, Lat. 列",
+      "quote": "95.6"
+    }
+  ]
+}

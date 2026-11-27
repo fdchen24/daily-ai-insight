@@ -1,0 +1,84 @@
+{
+  "title_zh": "可组合软提示蒸馏 RL 专家：面向持续后训练",
+  "affiliations": [
+    "University of California, Santa Barbara",
+    "Carnegie Mellon University",
+    "University of California, Santa Cruz",
+    "Northwestern University",
+    "NVIDIA"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "针对持续后训练中新增专家需重整合并、域外能力易退化的问题，把专家变成冻结主干上的可插拔输入模块，设定务实且可检验。",
+    "novelty": 76,
+    "novelty_reason": "将 RL 专家独立蒸馏为软提示并用拼接实现组合，避开权重合并、MOPD 重训与路由器；前缀鲁棒训练是为组合服务的关键改动。",
+    "technical_depth": 85,
+    "technical_depth_reason": "覆盖多模型多任务的单专家恢复、四域组合、渐进训练对照、域外泛化与 serving 测试，并分析提示作用机制；但组合只在一个主干四域验证，部分检查点与系数按评测集选取。"
+  },
+  "reading": {
+    "why_read": "提出 CSPD，将每个 RL 专家独立蒸馏成冻结主干上的软提示，推理时直接拼接组合，多专家平均分与 MOPD 持平且域外泛化更高。",
+    "task": "RL 后训练通常按域分别进行，得到多个专家后要合并成一个模型；新专家不断到来，合并就成为持续过程。权重合并和多教师 on-policy 蒸馏在新增专家时需重新整合整个模型，且可能侵蚀目标域外能力；路由方案要训练路由器、无法在同一请求内组合专家，LoRA 合并又给每层解码增加计算。",
+    "findings": [
+      {
+        "point": "权重空间合并让专家共用参数，新增专家必须重整合并，更新相互干扰并伤及主干原有能力。",
+        "detail": "单独把 IF 专家合并进权重就使 LiveCodeBench 明显低于未合并学生，再合并 science 也未恢复，说明覆盖式写入会擦掉已有能力。"
+      },
+      {
+        "point": "渐进式适配当前组合会损害早期能力，冻结旧提示也不足以保住行为。",
+        "detail": "按 Progressive Prompts 方式训练新提示时，IFBench 在后续阶段持续下降，且各阶段平均都低于独立训练；让新模块拟合某一组合不利于后续联合使用。"
+      },
+      {
+        "point": "软提示学到的不是可写出的指令，而是教师的推理行为，并通过回答 token 的注意力起作用。",
+        "detail": "在 GPT-OSS 数学专家上，提示关闭了 86.8% 的教师—学生 KL 差距，同义文字指令最多关闭 2.1%；只允许回答 token 注意提示时仍保留 80% 改进。"
+      }
+    ],
+    "method_idea": "现有做法把多个 RL 专家合并进同一套权重，新增专家要重训或重合并，且会覆盖主干原有能力；路由方案又要训练路由器、无法在同一请求内组合专家。这篇把每个专家蒸馏成一段可拼接的软提示，挂在冻结主干的输入前，推理时按需拼接，不再改权重。相当于把专家从参数搬到输入上下文里，装入和卸载只需增删提示。",
+    "method_how": "对每个专家，先用其验证器筛出教师回答，只训练一段固定长度的软提示：提示插在系统消息中、位于问题之前，主干全部冻结，损失是回答 token 上的长度归一化负对数似然。每个提示只用自己的教师与数据，不访问其他专家；为让提示在拼接后仍可用，一半训练样本在提示前拼一段来自同域其他问题的随机上下文，前缀不计损失、推理时不保留。推理时把选中的提示按顺序拼进同一系统消息，相当于加长上下文，不改任何权重；新增专家只训练新提示，删除专家只删对应提示。代价是每个提示都占上下文位置，组合越多注意力和 KV Cache 越贵，提示绑定主干、换主干需重新蒸馏，且仍依赖 RL 教师提供监督。",
+    "results": "在 Qwen3-4B 的四域设定中，四个独立软提示直接拼接平均 67.83，与 MOPD 的 67.79 持平；六个域外基准平均 56.6，高于 MOPD 的 53.5。",
+    "limitations": "作者承认只在一个主干、四个域上验证组合，专家增多与域间关系未知；提示各占上下文，KV Cache 随组合数增长。部分检查点与系数按评测集选取，教师增益过小时恢复率会失真。"
+  },
+  "claims": [
+    {
+      "claim": "在 GPT-OSS 数学专家上，软提示关闭 86.8% 的教师—学生 KL 差距，同义文字指令最多关闭 2.1%",
+      "numbers": [
+        "86.8",
+        "2.1"
+      ],
+      "source_span": "Introduction; Section 4 / Figure 6a",
+      "quote": "On a GPT-OSS math expert, the prompt closes 86.8% of the teacher–student KL gap, mainly by making the student check its intermediate results, while written instructions with the same intent close at most 2.1% (Section 4)."
+    },
+    {
+      "claim": "只允许回答 token 注意软提示时，仍保留 80% 的改进",
+      "numbers": [
+        "80"
+      ],
+      "source_span": "Section 4 / Figure 6c",
+      "quote": "80% of its improvement remains"
+    },
+    {
+      "claim": "四个独立软提示直接拼接平均 67.83，与 MOPD 的 67.79 持平",
+      "numbers": [
+        "67.83",
+        "67.79"
+      ],
+      "source_span": "Abstract; Table 2, row 'CSPD (MCSI)' and row 'MOPD'",
+      "quote": "the full composition matches MOPD (67.83 vs. 67.79)"
+    },
+    {
+      "claim": "六个域外基准上 CSPD 平均 56.6",
+      "numbers": [
+        "56.6"
+      ],
+      "source_span": "Table 3, Mean column; Section 3.5",
+      "quote": "CSPD achieves the highest mean score (56.6)"
+    },
+    {
+      "claim": "MOPD 的域外平均为 53.5",
+      "numbers": [
+        "53.5"
+      ],
+      "source_span": "Table 3, row 'MOPD'",
+      "quote": "53.5 (+3.3)"
+    }
+  ]
+}

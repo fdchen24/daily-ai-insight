@@ -1,0 +1,56 @@
+{
+  "title_zh": "AutoMaster：让同一模型成为更好教师的自主后训练",
+  "affiliations": [
+    "Renmin University of China"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把后训练的目标从“筛选成功轨迹”推进到“塑造教师演示的行为”，并用跨领域、跨模型规模的受控实验说明固定教师仍有可挖掘的改进空间，对 agent 后训练有直接参考价值。",
+    "novelty": 78,
+    "novelty_reason": "Skill-FT 用自然语言技能主动改变教师 rollout 的行为分布，AutoMaster 再把技能设计、pilot 验证和数据选择纳入 agent 循环；与只做轨迹筛选或 failure recovery 的工作相比，差异在“先造演示再选演示”，并给出保留技能上下文的反直觉发现。",
+    "technical_depth": 80,
+    "technical_depth_reason": "固定教师、任务池、训练集大小与 SFT 配置，分别设置去掉技能引导、去掉数据选择和任务匹配的对照，并报告多次评测的均值与方差；不足是仅使用单教师、单 agent 和多轮预算，行为机制主要靠案例说明。"
+  },
+  "reading": {
+    "why_read": "提出 AutoMaster，用自然语言技能引导固定教师模型的 rollout、由 LLM agent 筛选演示做 SFT，在三个领域上比 Vanilla SFT 平均高 1.42–8.99 个百分点，并发现训练时保留技能上下文反而更好。",
+    "task": "面向长程任务的后训练通常从教师的成功轨迹做 SFT，但“任务成功”只是结果标签，不能说明哪些推理和操作值得学。在终端操作、深度搜索和软件工程等任务中，教师可能靠无依据假设、重复试错或表面验证过关，也可能很少展示真正有效的验证行为；直接模仿成功轨迹会把好坏行为一起学进去。",
+    "findings": [
+      {
+        "point": "成功标签不能约束推理和验证质量",
+        "detail": "同一任务上，无引导教师即使最终通过，也可能把实测收敛阶数说高、靠反复猜奖项命中答案，或为迁就有问题的自测而改错实现；按成功过滤会把这些习惯一起带进 SFT。"
+      },
+      {
+        "point": "有效行为在无引导轨迹里太稀疏",
+        "detail": "独立复核数值、先找证据依据再检索、失败后先定位原因再改代码，这些行为教师很少自发做；只从现有成功池里挑，样本再多也补不出教师没展示的行为。"
+      },
+      {
+        "point": "删掉技能上下文会丢掉行为适用条件",
+        "detail": "把技能从训练输入去掉虽然更接近无技能的评测提示，却把“何时用这条规则”的显式条件一起删了；学生要从任务和轨迹反推，作者用同轨迹对比发现保留反而更好。"
+      }
+    ],
+    "method_idea": "常规后训练只从成功教师轨迹里取样做 SFT，成功标签无法区分验证是否扎实，还会把重复试错等坏习惯一起模仿；教师很少表现的有效行为也几乎采不到。Skill-FT 改为用自然语言技能改写教师的系统提示，让同一个教师在 rollout 中减少坏习惯、诱发稀缺的好行为，再由 LLM agent 迭代技能与数据选择，并用保留技能上下文的轨迹训练学生。",
+    "method_how": "内层由 LLM agent 读取教师与初始学生的轨迹，找出要抑制的习惯和稀缺的有效行为，按任务子集写技能并拼到教师系统提示后；候选技能先跑小批 pilot，确认能改变行为且不引入新问题，再扩到批量 rollout。批量轨迹按结果与行为筛选。外层每轮从同一初始 checkpoint 做全参数 SFT，训练输入保留教师用过的技能上下文，评测时去掉技能；agent 据分数和学生轨迹决定下一轮改技能、改覆盖或换数据。代价是每个候选都要跑 pilot、批量 rollout、SFT 与评测，教师调用和 GPU 开销随轮次成倍增加。",
+    "results": "三个领域上，教师、任务池、训练集大小与 SFT 配置固定，AutoMaster 平均比 Vanilla SFT 高 1.42–8.99 个百分点；Terminal-Bench 2.1 的 9B 学生从 26.59 升到 35.58。",
+    "limitations": "仅在少量领域和模型规模上验证，教师与 agent 都固定为单一模型；技能质量依赖 agent 的分析，多轮搜索的教师调用量与 GPU 成本尚未量化，“行为内化”只有轨迹示例支撑。"
+  },
+  "claims": [
+    {
+      "claim": "AutoMaster 在多个领域上平均比 Vanilla SFT 高 1.42–8.99 个百分点",
+      "numbers": [
+        "1.42",
+        "8.99"
+      ],
+      "source_span": "Abstract; Section 1",
+      "quote": "improves mean performance over Vanilla SFT on successful unguided teacher rollouts by 1.42–8.99 percentage points"
+    },
+    {
+      "claim": "Terminal-Bench 2.1 上 9B 学生经 Vanilla SFT 为 26.59，AutoMaster 达 35.58",
+      "numbers": [
+        "26.59",
+        "35.58"
+      ],
+      "source_span": "Section 4.2, Table 1",
+      "quote": "Vanilla SFT raises the 9B student’s accuracy from 25.47% to 26.59%. With the same teacher, training task pool, number of demonstrations, and SFT recipe, AutoMaster reaches 35.58%."
+    }
+  ]
+}

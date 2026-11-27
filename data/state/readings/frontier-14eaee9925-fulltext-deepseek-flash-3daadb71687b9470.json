@@ -1,0 +1,164 @@
+{
+  "title_zh": "Claw-Eval：面向自主智能体的可信评测套件",
+  "affiliations": [
+    "Peking University",
+    "The University of Hong Kong"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "为智能体可信评测提供统一框架，覆盖服务编排、多模态与多轮对话，并系统分析安全、鲁棒性与一致性，问题重要且结论可操作。",
+    "novelty": 78,
+    "novelty_reason": "把全轨迹三路证据、嵌入式安全门控、受控错误注入和异构任务统一到一个 schema；单项机制并非全新，新颖性主要在集成方式与评测结论。",
+    "technical_depth": 84,
+    "technical_depth_reason": "有确定性加 LLM 的混合评分、阈值与权重敏感性分析、人工盲审和错误注入消融；但多轮任务规模小、鲁棒性仅覆盖传输层故障，LLM judge 仍是近似。"
+  },
+  "reading": {
+    "why_read": "提出 Claw-Eval 端到端评测套件，以执行轨迹、服务端审计日志与环境快照三路证据做全轨迹评分，覆盖 300 个任务和 2,159 条评分项，并在 14 个前沿模型上揭示全轨迹评分的必要性。",
+    "task": "智能体要在真实软件环境里完成多步工作流，评测必须判断它是否真的执行了这些步骤，而不只是给出看似正确的产物。现有 benchmark 多只校验最终输出，安全约束和受控故障恢复很少嵌入普通任务，且任务多集中在单一模态或交互方式，高完成分可能来自伪造步骤或侥幸通过。",
+    "findings": [
+      {
+        "point": "全轨迹证据缺失让 LLM judge 无法执行确定性规则",
+        "detail": "vanilla judge 拿到完整对话和评分代码仍漏掉 12/27 安全违规；补上审计日志也不改善，瓶颈是未执行规则而非证据不足。"
+      },
+      {
+        "point": "Pass@k 与 Pass^k 度量的是不同能力",
+        "detail": "注入错误后 Pass@3 基本不变而 Pass^3 最多降 24 个百分点，说明至少一次成功掩盖了重复执行的不稳定。"
+      },
+      {
+        "point": "多轮对话成败取决于提问质量而非轮数",
+        "detail": "问题精度与 Pass^3 相关 r=0.87、解释 76% 方差；平均轮数相关仅 r=0.07，延长对话并不补齐信息。"
+      }
+    ],
+    "method_idea": "现有 agent 评测大多只读最终答案或整段对话，评分器看不到服务端实际收到什么请求，也难以稳定执行安全规则。Claw-Eval 把每次运行拆成 Setup、Execution、Judge 三段，在隔离沙箱中执行，执行结束后才注入评分材料，并用执行轨迹、服务端审计日志和环境快照三路独立证据共同打分，把安全约束做成乘性门控，把鲁棒性做成受控错误注入下的恢复率。",
+    "method_how": "每个任务用统一声明式 schema 定义工具、mock 服务、评分脚本和证据采集点；执行时 agent 只能通过固定系统工具与任务专属服务层操作，服务端把每个请求写入独立审计日志，运行结束后再生成环境快照并注入评分脚本。评分把完成度按任务 rubric 聚合，安全用 86 个任务中的 125 条禁止动作规则做乘性门控，鲁棒性按注入 HTTP 429/500 与延迟尖峰后成功恢复的工具类型比例计算；开放题由 LLM judge 评分，确定项由规则匹配。每个任务跑 3 次，报告平均分、Pass@3 和 Pass^3，并用人工盲审验证 judge。代价是评测依赖 mock 服务与沙箱，单次全量成本高，且鲁棒性只覆盖传输层故障，语义故障仍写在任务里。",
+    "results": "在 14 个模型、3 次试验下，Claude-Opus-4.6 的最高 Overall Pass^3 为 70.4%，Multimodal 最高仅 25.7%（GPT-5.4）；错误注入率升到 0.6 时 Pass@3 基本不变而 Pass^3 最多降 24 个百分点。",
+    "limitations": "作者承认鲁棒性只覆盖随机注入的传输层故障，语义、对抗与权限故障尚未运行时注入；多轮仅 38 个任务，开放题依赖 LLM judge（与人工一致率约 95%），仍是近似。"
+  },
+  "claims": [
+    {
+      "claim": "Claw-Eval 覆盖 300 个人工核验任务",
+      "numbers": [
+        "300"
+      ],
+      "source_span": "Abstract",
+      "quote": "300 human-verified tasks"
+    },
+    {
+      "claim": "包含 2,159 条细粒度评分项",
+      "numbers": [
+        "2,159"
+      ],
+      "source_span": "Abstract",
+      "quote": "2,159 fine-grained rubric items"
+    },
+    {
+      "claim": "在 14 个前沿模型上评估",
+      "numbers": [
+        "14"
+      ],
+      "source_span": "Abstract",
+      "quote": "14 frontier models"
+    },
+    {
+      "claim": "vanilla LLM judge 漏掉 12/27 的安全违规",
+      "numbers": [
+        "12",
+        "27"
+      ],
+      "source_span": "§5.1",
+      "quote": "it misses 12/27 (44%) safety violations"
+    },
+    {
+      "claim": "错误注入下 Pass@3 基本稳定，而 Pass^3 最多下降 24 个百分点",
+      "numbers": [
+        "3",
+        "24"
+      ],
+      "source_span": "Abstract",
+      "quote": "Pass@3 remaining stable under error injection while Pass^3 dropping by up to 24 percentage points"
+    },
+    {
+      "claim": "提问精度与 Pass^3 的相关系数为 0.87，解释 76% 方差",
+      "numbers": [
+        "0.87",
+        "76"
+      ],
+      "source_span": "§5.3",
+      "quote": "It explains 76% of Pass^3 variance (r = 0.87, Figure 5b)"
+    },
+    {
+      "claim": "平均轮数与 Pass^3 的相关系数仅 0.07",
+      "numbers": [
+        "0.07"
+      ],
+      "source_span": "§5.3",
+      "quote": "Round count shows near-zero correlation with performance (r = 0.07, R2 < 0.01)"
+    },
+    {
+      "claim": "86 个任务带有 125 条禁止动作规则",
+      "numbers": [
+        "86",
+        "125"
+      ],
+      "source_span": "§3.3",
+      "quote": "86 of the 300 tasks carry 125 such rules"
+    },
+    {
+      "claim": "每个任务独立跑 3 次",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "§4.2",
+      "quote": "3 independent trials"
+    },
+    {
+      "claim": "注入 HTTP 429/500 与延迟尖峰",
+      "numbers": [
+        "429",
+        "500"
+      ],
+      "source_span": "Appendix A",
+      "quote": "HTTP 429/500, latency spikes"
+    },
+    {
+      "claim": "Claude-Opus-4.6 的 Overall Pass^3 为 70.4%",
+      "numbers": [
+        "70.4"
+      ],
+      "source_span": "§4.3",
+      "quote": "even the strongest model achieves only 70.4% Overall Pass^3"
+    },
+    {
+      "claim": "Multimodal 最高 Pass^3 为 25.7%（GPT-5.4）",
+      "numbers": [
+        "25.7"
+      ],
+      "source_span": "§4.3",
+      "quote": "the highest Pass^3 is only 25.7% (GPT-5.4)"
+    },
+    {
+      "claim": "错误注入率升到 0.6",
+      "numbers": [
+        "0.6"
+      ],
+      "source_span": "§5.2",
+      "quote": "error-injection rates of 0.0, 0.2, 0.4, and 0.6"
+    },
+    {
+      "claim": "多轮对话仅 38 个任务",
+      "numbers": [
+        "38"
+      ],
+      "source_span": "Appendix C.3",
+      "quote": "38 in all"
+    },
+    {
+      "claim": "LLM judge 与人工评分一致率约 95%",
+      "numbers": [
+        "95"
+      ],
+      "source_span": "Appendix A",
+      "quote": "95% exact agreement with human scoring"
+    }
+  ]
+}

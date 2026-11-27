@@ -1,0 +1,115 @@
+{
+  "title_zh": "AI 辅助如何影响编程技能形成：一项随机对照实验",
+  "affiliations": [
+    "Anthropic"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "用随机对照实验直接检验 AI 辅助是否损害新手学习新编程库，切中 AI 监督能力与安全关键场景的技能形成问题。",
+    "novelty": 78,
+    "novelty_reason": "把研究焦点从 AI 的任务产出转向学习结果，并用录屏归纳多种交互模式，区分保留与损害技能的使用方式。",
+    "technical_depth": 81,
+    "technical_depth_reason": "预注册随机对照、分组平衡、测验经多轮试测，且有录屏行为编码；但样本小、任务短，部分模式分析为探索性。"
+  },
+  "reading": {
+    "why_read": "提出一项随机对照实验，让开发者在有无 GPT-4o 助手条件下学习新的 Python 异步库 Trio，发现 AI 辅助降低概念理解、代码阅读与调试成绩，且未带来显著提速。",
+    "task": "职场中工程师常要在工作中学习新库；AI 助手能提高任务产出，但现有研究多看得出的代码或完成量，或依赖问卷观察认知卸载，无法判断 AI 是否因果性地削弱新手掌握新技能。异步编程库 Trio 概念新、任务短、可评分，且监督 AI 生成代码需要读码与调试能力，适合作为测试场景。",
+    "findings": [
+      {
+        "point": "AI 减少了与 Trio 相关的报错和独立排错机会",
+        "detail": "对照组遇到的错误中位数是 3 次，AI 组仅 1 次；控制组更多遇到 TypeError、RuntimeWarning 等迫使理解协程与 await 的错误，独立解决这些错误可能正是技能形成的关键。"
+      },
+      {
+        "point": "AI 把主动编码时间转成提问与读生成代码，抵消提速并减少练习",
+        "detail": "AI 组主动编码时间明显更少，时间转向组织提问和理解生成代码；直接粘贴与手动抄写 AI 代码的测验成绩相近，说明增加打字时间不等于认知投入。"
+      },
+      {
+        "point": "学习结果取决于使用模式是否保持认知投入",
+        "detail": "六类模式中，完全委托 AI 或让 AI 反复调试的小组得分低，而只问概念、要求解释、先生成后理解的小组得分高；差异不在是否用 AI，而在是否自己推理与排错。"
+      }
+    ],
+    "method_idea": "原有研究多比较用了 AI 后的任务产出，或用问卷观察认知卸载，难以判断 AI 是否改变了学习过程。这里把 AI 助手当作学习路径的随机干预：一组可向助手提问并生成代码，另一组只靠文档和搜索完成同一组新库任务，随后在无 AI 条件下测验概念、读码和调试；再用录屏把使用方式分类。",
+    "method_how": "实验选用较新的 Python 异步库 Trio，先试测多个任务，正式实验只保留前两个，限时 35 分钟。参与者需有 Python 经验、用过 AI 编程助手且从未用过 Trio，随机分入 AI 组和对照组各 26 人；AI 组使用能读取当前代码、可直接生成完整答案的 GPT-4o 聊天助手。测验共 14 题 27 分，只考调试、代码阅读和概念理解，不考代码书写，评分标准在预注册中固定；研究者逐帧标注录屏，统计提问类型、报错和主动编码时间，并归纳六种交互模式。代价是样本小、任务短、只测聊天式助手，模式分析偏探索性，难以外推到长期岗位学习。",
+    "results": "52 名有 Python 经验的参与者随机分组，在 35 分钟内学习 Trio；AI 组测验比对照组低 4.15 分（15.4%，效应量 0.738，$p=0.010$），任务完成时间无显著差异（$p=0.391$）。",
+    "limitations": "短时、单一 Trio 库、聊天式助手与众包参与者，难以外推到长期岗位学习；作者也指出 agentic 工具可能让认知卸载更严重，各交互模式样本很小。"
+  },
+  "claims": [
+    {
+      "claim": "对照组遇到的错误中位数是 3 次，AI 组仅 1 次",
+      "numbers": [
+        "3",
+        "1"
+      ],
+      "source_span": "Section 6.2, error frequency",
+      "quote": "the median participant in the treatment group encountered only one error in the entire task, while the median for the control group was three errors."
+    },
+    {
+      "claim": "正式实验只保留前两个任务",
+      "numbers": [
+        "2"
+      ],
+      "source_span": "Section 4.1",
+      "quote": "we used the first two tasks in our main study"
+    },
+    {
+      "claim": "任务限时 35 分钟",
+      "numbers": [
+        "35"
+      ],
+      "source_span": "Section 4.3",
+      "quote": "maximum of 35 minutes"
+    },
+    {
+      "claim": "主实验共 52 人，AI 组与对照组各 26 人",
+      "numbers": [
+        "52",
+        "26"
+      ],
+      "source_span": "Section 5.2.1",
+      "quote": "52 participants completed the task, 26 for each of the control and treatment groups."
+    },
+    {
+      "claim": "测验共 14 题 27 分",
+      "numbers": [
+        "14",
+        "27"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "contained 14 questions for a total of 27 points"
+    },
+    {
+      "claim": "归纳六种 AI 交互模式",
+      "numbers": [
+        "6"
+      ],
+      "source_span": "Section 6",
+      "quote": "We categorize AI interaction behavior into six common patterns"
+    },
+    {
+      "claim": "AI 组测验比对照组低 4.15 分",
+      "numbers": [
+        "4.15"
+      ],
+      "source_span": "Section 5.2.2",
+      "quote": "There is a 4.15 point difference between the means of the treatment and control groups."
+    },
+    {
+      "claim": "AI 组测验低 15.4%，效应量 0.738，p=0.010",
+      "numbers": [
+        "15.4",
+        "0.738",
+        "0.010"
+      ],
+      "source_span": "Section 1.1",
+      "quote": "reduction in the evaluation score by 15.4% or two grade points (Cohen’s d = 0.738, p = 0.010)."
+    },
+    {
+      "claim": "任务完成时间无显著差异（p=0.391）",
+      "numbers": [
+        "0.391"
+      ],
+      "source_span": "Figure 6",
+      "quote": "p = 0.391"
+    }
+  ]
+}

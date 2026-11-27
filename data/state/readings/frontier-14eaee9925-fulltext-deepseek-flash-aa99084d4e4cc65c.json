@@ -1,0 +1,107 @@
+{
+  "title_zh": "TuringSpace：用交互式 CAPTCHA 将空间智能落到屏幕动作上",
+  "affiliations": [
+    "University of Pennsylvania",
+    "University of Minnesota",
+    "University of Southern California",
+    "Meta",
+    "MBZUAI"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把空间基准从静态选择题推进到像素级动作闭环，并提供可扩展训练环境与可检验的迁移结果。",
+    "novelty": 82,
+    "novelty_reason": "把空间题做成必须用像素级 GUI 动作完成的 CAPTCHA，并用程序生成器同时供给 benchmark 和训练 gym，区别于静态选择题、文本命令或 DOM 选择。",
+    "technical_depth": 84,
+    "technical_depth_reason": "有统一 harness 下的多类模型对比、人类基线、pass^3、错误归因与错误信念标注，以及多个 OOD 迁移；但训练只模仿 oracle，缺少数据组成与训练目标消融。"
+  },
+  "reading": {
+    "why_read": "提出 TuringSpace，把 125 个可程序化生成实例的空间 CAPTCHA 做成浏览器交互环境，要求模型通过点击拖拽并按截图反馈调整；同一套题兼作训练场，微调 Qwen3.5-9B 后成功率从 1.6% 升至 33.1%。",
+    "task": "空间智能要求人从二维视图推断三维布局，并在动作后根据新视图修正判断。现有空间基准大多用静态图像上的选择题，交互环境又常只接受“左转”这类文本命令或直接暴露 DOM 让模型选元素；CAPTCHA 基准则多已被 GUI agent 解掉，难以再区分能力。结果是缺少一个必须通过像素级点击拖拽、且能观察动作后果的空间测试。",
+    "findings": [
+      {
+        "point": "失败主要来自读错截图，而非点不准",
+        "detail": "最强三模型的失败中 57.1% 属感知错误，深度误判是首要原因；即使闭环任务每步给新截图，错误读数仍决定多数失败，说明视觉反馈没有纠正感知。"
+      },
+      {
+        "point": "错误信念在前两步形成，后续推理主要在维护它",
+        "detail": "多数失败的决定性错误信念在最初两步形成；后续推理虽会质疑，却很少真正放弃，反而常编造截图细节或凭先验经验为原判断找证据。"
+      },
+      {
+        "point": "强模型胜在分配思考，而非思考更长",
+        "detail": "强模型并非想得更多：平均 thinking token 量与 pass@1 呈负相关，而把更多思考分给难题的模型更强，说明关键是分配而非长度。"
+      }
+    ],
+    "method_idea": "原有空间基准多用静态选择题，交互环境又只接受文本命令或暴露 DOM，模型不必在像素级动作与视觉反馈之间闭环。TuringSpace 把空间题做成浏览器里的交互式 CAPTCHA，要求模型像人一样点击、拖拽，并根据下一张截图修正判断；同一套题目程序还能用新种子生成无限实例，兼作评测与训练环境。",
+    "method_how": "实现上，125 个任务模板覆盖空间关系、心理变换、闭环操作、多步规划与时空推理；每个模板是网页生成器，给定种子和素材池后产出初始页面、指令、检查器与 oracle 动作，并经离线回放、模型试探和人工试玩筛掉可猜或可走捷径的题。评测时模型只看浏览器截图，用鼠标键盘作答；训练时重放 oracle 轨迹并只保留检查器通过的样本，得到 55,000 条示范。以 Qwen3.5-9B 为基座、冻结视觉编码器，只对工具调用做交叉熵监督。代价是训练信号全是正确示范，模型没有在训练中经历“做错—看反馈—改动作”的负样本，真实网页噪声与长程恢复未覆盖。",
+    "results": "在 125 题上，人类 94.1%，最强 GPT-6 Astra 74.1%，Kimi K3 32.0%；55,000 条 oracle 轨迹微调使 Qwen3.5-9B 从 1.6% 升至 33.1%，VSI-Bench 提升 9.9 点。",
+    "limitations": "训练只用 oracle 正确轨迹，未教模型从错误动作中恢复，和论文强调的闭环纠错有距离；合成任务与有限的人类基线也限制外部效度，OOD 提升尚无数据组成或训练目标消融。"
+  },
+  "claims": [
+    {
+      "claim": "TuringSpace 包含 125 个交互式空间 CAPTCHA。",
+      "numbers": [
+        "125"
+      ],
+      "source_span": "Abstract",
+      "quote": "125 interactive CAPTCHAs"
+    },
+    {
+      "claim": "人类在 TuringSpace-Bench 上 pass@1 为 94.1%。",
+      "numbers": [
+        "94.1"
+      ],
+      "source_span": "Table 1, row 'Human'",
+      "quote": "94.1 ±2.6"
+    },
+    {
+      "claim": "GPT-6 Astra 的 pass@1 为 74.1%，是最强模型。",
+      "numbers": [
+        "74.1"
+      ],
+      "source_span": "Table 1, row 'GPT-6 Astra'",
+      "quote": "74.1 ±1.7"
+    },
+    {
+      "claim": "Kimi K3 的 pass@1 为 32.0%。",
+      "numbers": [
+        "32.0"
+      ],
+      "source_span": "Table 1, row 'Kimi K3'",
+      "quote": "32.0 ±1.4"
+    },
+    {
+      "claim": "微调使用 55,000 条 oracle 轨迹。",
+      "numbers": [
+        "55,000"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "55,000 verified oracle trajectories"
+    },
+    {
+      "claim": "Qwen3.5-9B 的成功率从 1.6% 升至 33.1%。",
+      "numbers": [
+        "1.6",
+        "33.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "from 1.6% to 33.1%"
+    },
+    {
+      "claim": "VSI-Bench 提升 9.9 点。",
+      "numbers": [
+        "9.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "9.9-point gain"
+    },
+    {
+      "claim": "最强三模型的失败中 57.1% 属感知错误。",
+      "numbers": [
+        "57.1"
+      ],
+      "source_span": "Table 6",
+      "quote": "Perception (217, 57.1%)"
+    }
+  ]
+}

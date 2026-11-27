@@ -1,0 +1,109 @@
+{
+  "title_zh": "WAM-Policy：用在线策略蒸馏把世界动作模型迁到四足腿式操作",
+  "affiliations": [
+    "Australian Centre for Robotics, USYD",
+    "UNSW Sydney",
+    "Maincode",
+    "La Trobe University"
+  ],
+  "scores": {
+    "research_value": 76,
+    "research_value_reason": "首次把视频预训练的世界动作模型落到无臂四足腿式操作，并给出含十个任务、1000 条无遥操作合成演示的 QLM-Bench，让“把操作基础模型迁到新形态”这条路线有了可复现基线。",
+    "novelty": 66,
+    "novelty_reason": "主体是视觉/动作接口替换加已有 OPSD、多教师蒸馏与 DiffusionNFT 的组合，真正新的点是把同噪声在线自蒸馏压到一步视频两步动作、并让多专家按指令路由合并，组件层面创新有限。",
+    "technical_depth": 72,
+    "technical_depth_reason": "有 3 个策略种子共 300 回合评测、配对 McNemar 检验、逐项消融和 LIBERO 上的跨形态验证，但消融显示换训练上下文来源几乎不影响结果、真机仅 7/30，核心的 on-policy 主张证据偏弱。"
+  },
+  "reading": {
+    "why_read": "提出 WAM-Policy，只换掉机械臂世界动作模型的视觉与动作接口把策略迁到无臂四足，再用同噪声在线自蒸馏压到一步视频两步动作，在 QLM-Bench 上把十任务成功率由 76.7% 提到 85.0%。",
+    "task": "无臂四足靠三条腿支撑、用前腿当末端执行器，省掉机械臂的重量与机构复杂度；但现有腿式操作方案从点云学逐任务规划器，无法端到端跟随语言指令，能跟语言的四足工作又多针对导航或外加机械臂。世界动作模型（WAM）已是有效的语言条件操作策略，却只为机械臂预训练、采样还慢。",
+    "findings": [
+      {
+        "point": "机械臂与四足的观测、动作语义都不对齐",
+        "detail": "基座 WAM 吃头部与腕部相机、输出 30 维双臂指令；四足相机随机身一起动、操作腿同时承重，预测下一帧隐变量必须先建模自运动，原动作接口则完全不可用。"
+      },
+      {
+        "point": "多步联合去噪是慢的根源，砍步数直接掉性能",
+        "detail": "每步一次网络评估，一段覆盖 0.32 s 的 chunk 要 2.226 s；直接降到 1/2 步，成功率从 77.0% 掉到 69.3%，损失集中在拉抽屉与转阀门。"
+      },
+      {
+        "point": "教师只会模仿，学生自采样还会把误差带进上下文",
+        "detail": "蒸馏学生的上界是教师，推箱子、开门只有 47% 与 53%；学生的动作条件在自己的计划上，误差会改变随后抵达的状态分布，所以要按学生自己走到的上下文给监督。"
+      }
+    ],
+    "method_idea": "机械臂 WAM 直接搬到四足行不通：视角随机身晃、动作空间不对，多步采样又比实时慢七倍。这篇只换接口——用自我视角加俯视视角替换头/腕相机，用九维四足指令替换双臂指令并交给固定的全身控制器——再让高步数的自己当教师，把同一网络蒸馏成一步视频、两步动作的学生；任务专家则按指令路由合并成一个学生。",
+    "method_how": "接口替换后只用 flow matching 在新数据上微调两路流，动作流只重初始化输入嵌入与输出投影。蒸馏时对同一上下文只采一次噪声：教师用原始高步数采样器出目标，学生用一步视频、两步动作去回归它，动作以自身计划为条件并截断梯度，只训练低秩 LoRA 适配器；训练上下文一半取自教师预先缓存的闭环轨迹，一半来自学生当前权重的在线 rollout。第二阶段对推箱子与开门各用窗口级 RL 训一个 LoRA 专家，再按指令把上下文路由到对应专家、从第一阶段学生继续蒸馏。代价是奖励仍需逐任务手工设计，真机闭环 0.66 s 仍超过一段 0.32 s 的时长。",
+    "results": "QLM-Bench 十个任务上，迁移后的教师 77.0%，OPSD 学生 76.7%（不蒸馏为 69.3%），采样从 2.226 s 降到 0.159 s；两个任务经 RL 加 M-OPD 合并后达 85.0%（推箱子 90%、开门 87%）。真机 Go2 Air 仅 7/30 成功。",
+    "limitations": "第二阶段只做两个任务、奖励逐任务手设；只验证一种四足与控制器，真机 7/30、闭环 0.66 s 未达实时。消融中换上下文来源几乎不掉分，on-policy 增益未被证实。"
+  },
+  "claims": [
+    {
+      "claim": "QLM-Bench 上迁移后的教师成功率 77.0%，OPSD 学生 76.7%，采样快 14 倍",
+      "numbers": [
+        "77.0",
+        "76.7",
+        "14"
+      ],
+      "source_span": "Abstract",
+      "quote": "the transferred policy reaches 77.0%, and the OPSD student keeps 76.7% while sampling 14 times faster"
+    },
+    {
+      "claim": "不经蒸馏直接降到 1/2 步采样，成功率从 77.0% 掉到 69.3%",
+      "numbers": [
+        "77.0",
+        "69.3"
+      ],
+      "source_span": "Sec. 5.2.2",
+      "quote": "this speed lowers success from 77.0% to 69.3%"
+    },
+    {
+      "claim": "学生每段采样 0.159 s，教师为 2.226 s",
+      "numbers": [
+        "0.159",
+        "2.226"
+      ],
+      "source_span": "Sec. 5.3",
+      "quote": "it samples a chunk in 0.159 s instead of 2.226 s"
+    },
+    {
+      "claim": "推箱子与开门上 OPSD 教师为 47%、53%，M-OPD 学生达到 90%、87%，十任务总体由 76.7% 升到 85.0%",
+      "numbers": [
+        "47",
+        "53",
+        "90",
+        "87",
+        "76.7",
+        "85.0"
+      ],
+      "source_span": "Sec. 1, contributions",
+      "quote": "the specialists succeed in every episode, against 47% and 53% for the OPSD teacher, and the M-OPD student reaches 90% and 87%, raising the ten-task success from 76.7% to 85.0%"
+    },
+    {
+      "claim": "真机上 OPSD 学生在 30 次试验中成功 7 次",
+      "numbers": [
+        "7",
+        "30"
+      ],
+      "source_span": "Sec. 5.5, Tab. 7",
+      "quote": "the OPSD student succeeds in 7 of 30 trials overall"
+    },
+    {
+      "claim": "真机闭环一轮耗时 0.66 s，超过一段 0.32 s 的时长，机器人只能在段间保持上一条指令",
+      "numbers": [
+        "0.66",
+        "0.32"
+      ],
+      "source_span": "Sec. 5.5",
+      "quote": "the closed loop takes 0.66 s with the encoding of the observations; since this exceeds the 0.32 s of a chunk"
+    },
+    {
+      "claim": "三种训练上下文来源的 1/2 步学生都回到 76.3%–77.0%，教师为 77.0%",
+      "numbers": [
+        "76.3",
+        "77.0"
+      ],
+      "source_span": "Sec. 5.4, Tab. 2",
+      "quote": "All three students recover the teacher at 1/2 NFE, with 76.3% to 77.0% against 77.0%"
+    }
+  ]
+}

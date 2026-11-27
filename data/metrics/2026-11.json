@@ -237,6 +237,97 @@
     "status": "ok",
     "notes": [
       "survey 仅选出 0/1 篇：候选不足或受多样性约束，减量投放不降门槛"
+    ],
+    "rereads": [
+      {
+        "generated_at": "2026-11-27T05:21:59.001848+00:00",
+        "llm": {
+          "deepseek-flash": {
+            "calls": 11,
+            "failures": 0,
+            "tokens_in": 255587,
+            "tokens_out": 106301,
+            "cache_hit_tokens": 21760
+          }
+        },
+        "cost": {
+          "currency": "CNY",
+          "amount": 0.6595,
+          "price_window": "off_peak"
+        },
+        "summarize": {
+          "input": 11,
+          "cached": 0,
+          "failed": 0,
+          "skipped_budget": 0,
+          "levels": {
+            "fulltext": 11
+          },
+          "degraded": [
+            {
+              "id": "arxiv-2611.25387",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.26380",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.26073",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.19499",
+              "note": "全文超长已截断"
+            }
+          ]
+        },
+        "rolled_back": [],
+        "duration_seconds": 659.4
+      },
+      {
+        "generated_at": "2026-11-27T06:32:30.466504+00:00",
+        "llm": {},
+        "cost": {
+          "currency": "CNY",
+          "amount": 0.0,
+          "price_window": "peak"
+        },
+        "summarize": {
+          "input": 11,
+          "cached": 11,
+          "failed": 0,
+          "skipped_budget": 0,
+          "levels": {
+            "fulltext": 11
+          },
+          "degraded": [
+            {
+              "id": "arxiv-2611.25387",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.26380",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.26073",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.19499",
+              "note": "全文超长已截断"
+            }
+          ]
+        },
+        "rolled_back": [
+          {
+            "id": "arxiv-2611.21053",
+            "reason": "数值反查删句后必填字段被删空：why_read、results、limitations"
+          }
+        ],
+        "duration_seconds": 0.0
+      }
     ]
   },
   "2026-11-24": {
@@ -489,7 +580,56 @@
     },
     "pipeline_duration_seconds": 1354.7,
     "status": "ok",
-    "notes": []
+    "notes": [],
+    "rereads": [
+      {
+        "generated_at": "2026-11-27T06:01:30.780743+00:00",
+        "llm": {
+          "deepseek-flash": {
+            "calls": 12,
+            "failures": 0,
+            "tokens_in": 319842,
+            "tokens_out": 128240,
+            "cache_hit_tokens": 25088
+          }
+        },
+        "cost": {
+          "currency": "CNY",
+          "amount": 0.8082,
+          "price_window": "off_peak"
+        },
+        "summarize": {
+          "input": 12,
+          "cached": 0,
+          "failed": 0,
+          "skipped_budget": 0,
+          "levels": {
+            "fulltext": 12
+          },
+          "degraded": [
+            {
+              "id": "arxiv-2103.00020",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2604.25850",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.26516",
+              "note": "全文超长已截断"
+            }
+          ]
+        },
+        "rolled_back": [
+          {
+            "id": "arxiv-2611.26954",
+            "reason": "数值反查删句后必填字段被删空：results"
+          }
+        ],
+        "duration_seconds": 670.2
+      }
+    ]
   },
   "2026-11-25": {
     "arxiv_announce_date": "2026-11-25",
@@ -736,7 +876,56 @@
     },
     "pipeline_duration_seconds": 605.4,
     "status": "ok",
-    "notes": []
+    "notes": [],
+    "rereads": [
+      {
+        "generated_at": "2026-11-27T06:18:12.769515+00:00",
+        "llm": {
+          "deepseek-flash": {
+            "calls": 12,
+            "failures": 0,
+            "tokens_in": 311284,
+            "tokens_out": 112529,
+            "cache_hit_tokens": 25856
+          }
+        },
+        "cost": {
+          "currency": "CNY",
+          "amount": 1.4721,
+          "price_window": "peak"
+        },
+        "summarize": {
+          "input": 12,
+          "cached": 0,
+          "failed": 0,
+          "skipped_budget": 0,
+          "levels": {
+            "fulltext": 12
+          },
+          "degraded": [
+            {
+              "id": "arxiv-2005.14165",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.32884",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2609.13345",
+              "note": "全文超长已截断"
+            }
+          ]
+        },
+        "rolled_back": [
+          {
+            "id": "arxiv-2611.28618",
+            "reason": "数值反查删句后必填字段被删空：why_read、results"
+          }
+        ],
+        "duration_seconds": 687.8
+      }
+    ]
   },
   "2026-11-26": {
     "arxiv_announce_date": "2026-11-26",
@@ -983,6 +1172,55 @@
     },
     "pipeline_duration_seconds": 782.0,
     "status": "ok",
-    "notes": []
+    "notes": [],
+    "rereads": [
+      {
+        "generated_at": "2026-11-27T06:31:42.813377+00:00",
+        "llm": {
+          "deepseek-flash": {
+            "calls": 12,
+            "failures": 0,
+            "tokens_in": 250311,
+            "tokens_out": 121908,
+            "cache_hit_tokens": 25856
+          }
+        },
+        "cost": {
+          "currency": "CNY",
+          "amount": 1.4252,
+          "price_window": "peak"
+        },
+        "summarize": {
+          "input": 12,
+          "cached": 0,
+          "failed": 0,
+          "skipped_budget": 0,
+          "levels": {
+            "fulltext": 12
+          },
+          "degraded": [
+            {
+              "id": "arxiv-2302.09019",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.28649",
+              "note": "全文超长已截断"
+            },
+            {
+              "id": "arxiv-2611.30844",
+              "note": "全文超长已截断"
+            }
+          ]
+        },
+        "rolled_back": [
+          {
+            "id": "arxiv-2611.28649",
+            "reason": "数值反查删句后必填字段被删空：why_read、findings、results"
+          }
+        ],
+        "duration_seconds": 758.3
+      }
+    ]
   }
 }

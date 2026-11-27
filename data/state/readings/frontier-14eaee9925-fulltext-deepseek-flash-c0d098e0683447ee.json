@@ -1,0 +1,117 @@
+{
+  "title_zh": "ALTRA-TEST：无需共享标注者的 LLM 评审替代标注者统计检验",
+  "affiliations": [
+    "Technion",
+    "University of Haifa",
+    "Google Research"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 LLM 替代人类标注从经验比较变成可在稀疏标注下执行的统计决策，并在多模态真实数据上系统验证，对数据标注与 LLM-as-a-judge 实践有直接价值。",
+    "novelty": 78,
+    "novelty_reason": "相对 ALT-TEST/STT 的关键改动是条目内重采样标注、无需标注者身份，并让非劣性 margin 随人类分歧缩放；属于问题设定与统计构造的实质推进。",
+    "technical_depth": 85,
+    "technical_depth_reason": "给出渐近一致性与显著性水平控制的证明，模拟用已知噪声比较基线，真实数据覆盖多模态；但多数真实数据无 gold，默认容差只在模拟中校准，低一致性时结论有限。"
+  },
+  "reading": {
+    "why_read": "提出 ALTRA-TEST，一种无需同一批标注者覆盖全部条目、通过条目内重采样构造配对全人类与混合面板的非劣性统计检验，用于判断 LLM 能否替代人类标注者。",
+    "task": "LLM 越来越多地充当标注者与评审，但用其替代人类需要统计依据：若替代破坏了标注者共享的信号，后续训练与评测结论就不可信。现有 ALT-TEST 与 STT 要求同一组标注者标注所有条目，而众包、偏好标注和匿名数据集常不满足，导致这些检验无法直接使用。",
+    "findings": [
+      {
+        "point": "现有检验依赖共享标注者面板",
+        "detail": "ALT-TEST 逐一留出标注者，STT 比较两组人类，都要求同一批人覆盖全部条目；众包与偏好数据常是一人只标少量条目，甚至不提供身份，面板无法构造。"
+      },
+      {
+        "point": "可接受的一致性损失应随人类分歧缩放",
+        "detail": "客观任务人类分歧小，主观任务分歧大；固定 margin 在客观任务上过松、在主观任务上过严。作者改为按观测人类分歧的一定比例设非劣性边界。"
+      },
+      {
+        "point": "准确率或与多数票的相关不能回答替代是否合理",
+        "detail": "人类标注本身有噪声，单个标注者与多数票也不完全一致，且没有已知上限；LLM 分数高低无法判断它是否保留了标注者共享的信号。"
+      }
+    ],
+    "method_idea": "ALT-TEST 逐一把每位人类标注者留出，要求同一组人标完所有条目，一人只标少量条目的众包数据就无法构造面板。这篇改为条目层面重采样：每个条目抽若干人类标签，随机换入一个 LLM 标签，比较全人类面板与混合面板的标注者间一致性，并用随人类分歧缩放的容差做非劣性检验；因此不需要标注者身份或共享标注者。",
+    "method_how": "实现上，每次 bootstrap 从数据集中有放回抽同样数量的条目，对每个条目无放回抽 3 个人类标签组成全人类面板，再随机用一个 LLM 标签替换其中一个，得到混合面板。对两个面板分别计算 Krippendorff’s alpha，取其差；把差值加上按观测人类分歧和面板大小缩放的容差，默认容差常数 0.1，得到调整后的替代差距。重复多次后取调整差距的低分位数，若大于零则拒绝“混合面板更差”的原假设，判定 LLM 通过。作者证明该检验随条目数增长一致，并控制渐近显著性水平，还给出分组检验与双向等价变体；代价是每个条目至少需 3 个人类标签、需反复重采样，且通过只说明保留共享信号，不保证覆盖少数群体或发现人机共同错误。",
+    "results": "在 20 个数据集、18 个 LLM 上，默认 CoT 的 201 个组合通过 71 个（35.3%），最佳提示后 95 个（47.3%）；模拟中有效模型通过率 0.98，错误模型低于 0.05，约 100 条常够用。",
+    "limitations": "通过只表示保留人类池的共享信号：人类一致性很低时随机 LLM 也可能通过，故建议 IAA 至少 0.2 才用；也无法发现人机共有错误，少数群体视角需分组或等价变体。"
+  },
+  "claims": [
+    {
+      "claim": "评估覆盖 20 个真实数据集。",
+      "numbers": [
+        "20"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "20 datasets"
+    },
+    {
+      "claim": "测试 18 个 LLM judge。",
+      "numbers": [
+        "18"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "18 LLMs"
+    },
+    {
+      "claim": "默认 CoT 下 201 个 judge–dataset 组合中 71 个通过（35.3%）。",
+      "numbers": [
+        "201",
+        "71",
+        "35.3"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "71 of 201 judge–dataset pairs (35.3%)"
+    },
+    {
+      "claim": "取最佳提示后 95 个通过（47.3%）。",
+      "numbers": [
+        "95",
+        "201",
+        "47.3"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "increases to 95 of 201 (47.3%)"
+    },
+    {
+      "claim": "模拟中默认容差下 better-model 通过率 0.98，worse-model 低于 0.05。",
+      "numbers": [
+        "0.98",
+        "0.05"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "the better-model pass rate is 0.98, while the worse-model pass rate remains below 0.05"
+    },
+    {
+      "claim": "约 100 条常足以获得可靠结果。",
+      "numbers": [
+        "100"
+      ],
+      "source_span": "Abstract",
+      "quote": "Around 100 annotated items often suffice for the test."
+    },
+    {
+      "claim": "默认容差常数 c=0.1。",
+      "numbers": [
+        "0.1"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "using c = 0.1"
+    },
+    {
+      "claim": "检验使用 k=3 的标注面板。",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "Section 5.1",
+      "quote": "panels of k = 3 annotations"
+    },
+    {
+      "claim": "建议仅在人类 IAA 至少 0.2 时使用该检验。",
+      "numbers": [
+        "0.2"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "when the human IAA is at least 0.2"
+    }
+  ]
+}

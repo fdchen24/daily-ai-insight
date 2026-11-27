@@ -1,0 +1,62 @@
+{
+  "title_zh": "Future-OPSD：用同策略自蒸馏从无标注视频学习前瞻推理",
+  "affiliations": [
+    "University at Buffalo",
+    "Stony Brook University",
+    "Johns Hopkins University",
+    "Duke University",
+    "University of Maryland, College Park"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "视频前瞻推理是可扩展世界模型与具身规划的关键能力，论文给出无需标注的自监督路线并在两族 VLM、两类任务上验证，问题重要且结果有说服力。",
+    "novelty": 82,
+    "novelty_reason": "把 on-policy self-distillation 用于 video foresight，并以真实未来与随机参考未来的对比优势替代答案或外部 LLM 监督，和已有拟合未来描述或视觉状态的方法有实质差异。",
+    "technical_depth": 84,
+    "technical_depth_reason": "从 foresight score 的不可解目标推导 KL 正则下界，落到 token 级 PPO 优势，并配有混合权重、教师、视觉编码器、数据与教师 scaling、GRPO 及算力对比等消融，证据链较完整。"
+  },
+  "reading": {
+    "why_read": "提出 Future-OPSD，用同策略自蒸馏把同一视频的过去—未来片段变成无需标注的监督，并以真实未来与随机参考未来的对比优势强化决策相关 token；在开放预测和闭环规划上分别最高提升 14.2 与 15.9 分。",
+    "task": "视频前瞻推理要求 VLM 从当前观察推断下一步事件或动作，是自动驾驶、机器人和第一视角助手的基础能力。现有训练方法要么依赖未来片段的人工描述、答案或外部 LLM 生成的 rationale/judge，难以扩展到海量无标注视频；要么把整段未来都当作同等重要的监督目标，但未来里大部分是水槽、沥水架这类与问题无关的背景，只有“冲洗刀具”这类内容才决定下一步。",
+    "findings": [
+      {
+        "point": "监督信号被标注和外部大模型卡住",
+        "detail": "现有方法要用未来描述、答案或 LLM rationale/judge 来训练，数据规模和领域覆盖受人工标注与外部模型能力限制，不能直接利用自然视频里的过去—未来对。"
+      },
+      {
+        "point": "未来片段被均匀拟合，背景信息淹没决策信息",
+        "detail": "同一未来片段里多数帧或 token 是多种可能未来都成立的背景，只有少量内容信息能区分真实下一步；整段拟合会把监督浪费在无关上下文上。"
+      },
+      {
+        "point": "朴素蒸馏与纯对比各有偏差",
+        "detail": "只用教师—学生蒸馏会奖励两种未来都支持的通用描述；只用真实未来对参考未来的对比又缺教师锚点，会产生策略漂移，纯对比设置下训练崩溃。"
+      }
+    ],
+    "method_idea": "现有方法让模型拟合未来描述、答案或视觉状态，既依赖标注或外部大模型，也把整段未来当作同等重要的监督目标。这篇把同一视频的过去—未来对变成自监督信号：学生只看过去作答，冻结教师看过去加真实未来给同一回答打分，再用真实未来与随机参考未来的对比压掉共享背景。训练时另加约束防止偏离教师，推理只用学生。",
+    "method_how": "训练时把每段视频切成过去片段与后续未来片段；学生只看过去和问题，采样推理加回答，冻结教师分别以真实未来和另一段视频的随机未来为条件，对同一回答逐 token 打分。真实未来与参考未来的教师对数概率之差给出对比优势，真实未来教师与学生自身对数概率之差给出蒸馏优势，两者按权重相加后裁剪、中心化，用于 PPO 更新。为控制纯对比的漂移，作者由前瞻分数推出 KL 正则下界，让目标在区分真实未来的同时把学生拉向配对未来教师；混合权重搜索后取偏重对比的一侧。代价是每个 query 多一次教师前向，相对 Naive OPSD 增加约 19–33% 的 FLOPs 和 8–15% 的训练时间，显存基本持平。",
+    "results": "在 Qwen3-VL 与 Qwen3.5 上，开放预测（Future-L1→TwiFF-Bench）和闭环规划（EgoPlan-IT→SEED-Bench-R1）作者报告相对基座最高提升 14.2 与 15.9 分，稳定优于 SFT 和 Naive OPSD，通用视频理解基本持平。",
+    "limitations": "作者承认结论限于所用数据集与模型；跨任务迁移只有小幅提升，开放预测评分依赖外部 judge，真实机器人闭环未验证。"
+  },
+  "claims": [
+    {
+      "claim": "论文报告 Future-OPSD 在开放预测和闭环规划上分别最高提升 14.2 与 15.9 分，且不损通用视频理解。",
+      "numbers": [
+        "14.2",
+        "15.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "improves base models by up to 14.2 and 15.9 points without compromising general video understanding"
+    },
+    {
+      "claim": "相对 Naive OPSD，Future-OPSD 增加约 19–33% 的 FLOPs 和 8–15% 的训练时间，显存基本持平。",
+      "numbers": [
+        "19",
+        "33",
+        "8",
+        "15"
+      ],
+      "source_span": "Sec. 4.6, computational cost",
+      "quote": "approximately 19–33% more FLOPs and 8–15% more training time than Naive OPSD with similar memory"
+    }
+  ]
+}

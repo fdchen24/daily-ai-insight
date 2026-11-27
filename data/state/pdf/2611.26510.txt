@@ -1,0 +1,825 @@
+AutoMaster: Autonomous Post-Training by Making
+the Same Model a Better Teacher
+Guoxin Chen*, Shuang Sun*, Fanzhe Meng*, Xinyu Tang,
+Ruihua SongB and Wayne Xin ZhaoB
+1Gaoling School of Artificial Intelligence, Renmin University of China
+Task success alone does not specify which behaviors post-training should reinforce. Even successful
+teacher trajectories can contain unsupported assumptions, unproductive repetition, or superficial
+verification. We propose Skill-FT (Skill-Guided Fine-Tuning), which uses natural-language skills
+to suppress undesirable habits and elicit underrepresented effective behaviors during teacher roll-
+outs, then fine-tunes a student model on the resulting trajectories. We introduce AutoMaster, an
+autonomous post-training system in which an LLM agent develops these interventions through
+trajectory analysis, skill design, data selection, and feedback from rollouts and evaluation. Across
+Terminal, Search, and software engineering tasks with 4B and 9B student models, AutoMaster im-
+proves mean performance over Vanilla SFT on successful unguided teacher trajectories by 1.42–8.99
+percentage points, with the teacher, task pool, training set size, and SFT recipe held fixed. Together
+with the ablations and trajectory analyses, these results suggest that behavioral shaping can make
+a fixed model a more effective teacher. We further find that retaining skill instructions during SFT
+yields higher mean performance than removing them across all six settings, despite their absence at
+evaluation and identical supervised outputs. These findings suggest that preserving skill context as
+part of a training demonstration can support better behavioral internalization.
+∗Equal Contributions. BCorresponding authors.
+Date: Nov. 20, 2026.
+a Same model, better teaching
+Task: fix a parallel pipeline that sometimes freezes
+100 input records
+100 results within 30 seconds
+AutoMaster Skill: test where the solution might fail
+Unguided teacher
+Skill-guided teacher
+Both fixes process all 100 records.
+Tests the default setting
+Default setting
+4 workers × 5 runs
+Other worker counts
+Not tested
+One configuration tested
+Varies the worker count
+Default setting
+4 workers × 5 runs
+Worker counts tested
+1
+2
+4
+8
+Four configurations tested
+Stronger verification with skill guidance.
+b Better teaching, stronger students
+Base
+Vanilla SFT
+AutoMaster (Skill-FT)
+Terminal-Bench 2.1
+0
+15
+30
+45
+Accuracy (%)
++5.62
+4B
++8.99
+9B
+BrowseComp
+0
+20
+40
+60
+Accuracy (%)
++2.88
+4B
++4.68
+9B
+Doc2Repo
+0
+10
+20
+30
+40
+50
+Pass rate (%)
++1.42
+4B
++4.74
+9B
+Qwen3.5 Series
+Figure 1. A correct result is only part of what a teacher demonstrates. AutoMaster designs
+natural-language skills to guide teacher rollouts and selects demonstrations for fine-tuning. (a) In
+this example, both pipelines process all 100 records with four workers. The skill-guided teacher
+also checks whether the fix holds with fewer or more workers. (b) With the same teacher, task pool,
+training set size, and SFT recipe, students trained with AutoMaster achieve higher performance
+than their Vanilla SFT counterparts on all three benchmarks at both model sizes (4B and 9B). Labels
+above the bars show gains of 1.42–8.99 percentage points over Vanilla SFT. Error bars show ±1 SD
+over three evaluation runs per checkpoint.
+Emails: {gx.chen.chn, sunshuanguns, mengfanzhe16, batmanfly}@gmail.com
+Project Page
+Models
+GitHub
+arXiv:2611.26510v2  [cs.CL]  20 Nov 2026
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+1
+Introduction
+LLM agents are beginning to undertake model development, from creating training data to running
+post-training pipelines (Kulikov et al., 2026; Chen et al., 2026c; Rank et al., 2026; Zhao et al., 2026a).
+This opens a path toward autonomous post-training, in which an agent diagnoses model weaknesses,
+proposes interventions, and uses training feedback to decide what to try next. A central question is
+what such a system should seek to change.
+A common approach to post-training is supervised fine-tuning (SFT) on successful teacher trajecto-
+ries (Chen et al., 2023; Ta et al., 2026). Yet task success does not specify which behaviors post-training should
+reinforce. A teacher can reach the correct outcome despite unsupported assumptions, unproductive
+repetition, or superficial verification. Fine-tuning on such successful trajectories can reinforce these
+behaviors alongside the actions that support success. When the teacher rarely demonstrates a useful
+behavior, even a large pool of successful trajectories may offer few examples for the student to
+learn from. We therefore argue that autonomous post-training should actively shape how desirable
+demonstrations are generated as well as select which ones the student learns from.
+To this end, we propose Skill-FT (Skill-Guided Fine-Tuning), which uses natural-language skills to
+shape teacher behavior during rollout. A skill specifies how to reason or act in situations that recur
+across tasks, such as checking a claim against independent evidence. We append the applicable
+skills to the system prompt to discourage undesirable habits and elicit useful behaviors that are
+rare in unguided rollouts. We then fine-tune the student on selected teacher trajectories with their
+original system prompts, including any skill instructions that guided the teacher.
+Developing these interventions involves two questions: whether a skill elicits the intended behavior
+from the teacher and how well the student learns from the resulting demonstrations. We introduce
+AutoMaster, an autonomous post-training framework in which an LLM agent decides what the
+teacher should demonstrate and which trajectories the student should learn from. The agent
+inspects trajectories to identify behaviors worth changing, designs skills for relevant tasks, and tests
+them in pilot teacher rollouts. It uses these trials to refine the skills and their scope, then applies
+promising interventions to larger batches and selects demonstrations based on both task outcomes
+and observed behaviors. In every round, SFT starts from the same initial student checkpoint. The
+agent uses rollout evidence and student evaluation to decide whether to revise a skill, change where
+it is applied, or select different demonstrations in the next round.
+We evaluate AutoMaster on terminal, search, and software engineering tasks with Qwen3.5-4B
+and Qwen3.5-9B (Qwen Team, 2026) as students. With the teacher, training task pool, number of
+demonstrations, and SFT recipe held fixed, AutoMaster improves mean performance over Vanilla
+SFT on successful unguided teacher rollouts by 1.42–8.99 percentage points across the six settings.
+Removing either skill guidance or agent-directed selection lowers performance in every setting. The
+full method also outperforms SFT on unguided demonstrations matched by task ID and per-task
+sample count, showing that matching the training tasks alone does not recover the full gains.
+These comparisons reveal post-training headroom that Vanilla SFT on successful unguided rollouts leaves
+untapped. By using Skill-FT to shape what the teacher demonstrates and selecting which trajectories
+enter student training, AutoMaster makes the same model a more effective teacher.
+We further find that reducing a training–evaluation prompt mismatch can make the same trajectories
+less effective for learning. With the same trajectories and SFT recipe, retaining skill instructions
+during training yields higher performance than removing them across all six settings, even though
+all students are evaluated without generated skills. The training examples suggest a possible
+explanation: retaining skill instructions keeps behavioral rules and their conditions of application
+explicit in the input. Removing them preserves the same reasoning and actions as supervision, but
+2
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+may require the student to infer more of these rules from the task and trajectory. For reasoning that
+explicitly references a skill, retaining the instructions also preserves the correspondence between
+the input guidance and the supervised output. These findings suggest that preserving skill context
+can help the student better internalize the behaviors shaped during teacher rollouts.
+Our contributions are summarized as follows:
+• Behavioral shaping beyond task success. We introduce Skill-FT, which uses natural-language
+skills to shape the reasoning and actions a fixed teacher demonstrates during rollout, including
+on tasks it already solves.
+• Autonomous post-training framework. We develop AutoMaster, a framework in which an
+LLM agent designs, executes, and refines behavioral interventions. It jointly optimizes skill
+guidance and data selection using rollout evidence to guide subsequent exploration.
+• Skill context for behavioral internalization. Controlled comparisons across the six settings
+show that retaining skill instructions in the SFT input improves student performance by 2.15–
+4.01 percentage points even without test-time skills. This suggests that preserving the context
+behind supervised reasoning and actions can support better behavioral internalization.
+2
+Related Work
+Autonomous Post-Training. Recent systems use LLM agents to implement training experiments
+and revise them in light of the results (Karpathy, 2026; Chen et al., 2026a; Wei, 2026). FT-Agent (Li
+et al., 2026) uses structured planning and feedback analysis to refine data and training strategies,
+while RSI-Master (Du et al., 2026) uses persistent experiment records and reviewer feedback to
+guide exploration. AutoMaster focuses on two decisions: how to guide a fixed teacher with skills
+and which of its demonstrations to use for student training.
+Skill-Based Agent Learning. Prompt and skill optimization methods use execution feedback to
+refine natural-language guidance without updating model parameters (Agrawal et al., 2025; Shi
+et al., 2026). Related work couples the evolution of skill libraries or procedural scaffolds with model
+training (Xia et al., 2026; Ding et al., 2026; Ge et al., 2026). Skill-to-LoRA (Zhang and Qi, 2026) trains
+skill-specific adapters on skill-guided demonstrations, while Skill-SD (Wang et al., 2026) uses a
+skill-conditioned teacher to score tokens in the student’s own rollouts for on-policy self-distillation.
+Our work examines both how skills shape teacher demonstrations and whether retaining the skill
+instructions during SFT improves learning when those instructions are absent at evaluation.
+Learning from Agent Trajectories. Prior work improves reasoning and agent capabilities by
+learning from generated trajectories (Chen et al., 2024b,a; Zeng et al., 2024), including trajectories
+that demonstrate error recovery (Fu et al., 2025; Yuan et al., 2025). Behavior Priming (Jin et al., 2026)
+selects trajectories exhibiting beneficial behaviors, while PROOF-Gen (Ta et al., 2026) uses per-task
+prompt optimization to recover verified demonstrations from teacher failures. Skill-FT complements
+trajectory selection and failure recovery by actively shaping behavioral patterns during teacher
+rollouts, including on tasks it already solves.
+3
+Autonomous Post-Training with Skill-FT
+AutoMaster uses an LLM agent to develop and refine Skill-FT interventions through two nested
+loops (Figure 2). Within each setting, the teacher, training task pool, and initial student checkpoint
+are fixed. In the inner loop, the agent decides how to guide the teacher and which demonstrations
+3
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+Inner loop
+Skill-FT: behavioral shaping
+Training task pool
+Reused each round
+Initial trajectories
+Student model
+Teacher model
+1 Analyze patterns
+Bad patterns
+Good patterns
+2 Design & assign skills
+3 Pilot teacher rollouts
+System
+prompt
+Skill
+Teacher Pilot rollouts
+Effective?
+Pilot rollout feedback
+No
+Scale up
+Yes
+4 Batched rollouts
+Group 1
+Group 2
+Group 3
+5 Review & select
+Training set
+Ready
+for SFT
+Outer loop
+Training & evaluation
+Skills retained
+Student model
+Fine-tuned student
+Model evaluation
+Student evaluation feedback
+Supervised fine-tuning
+No skill guidance
+AutoMaster
+LLM agent
+Orchestrates both loops
+Node = action
+Bad behavior
+Good behavior
+Skill design & data curation
+within fixed pool
+Skills
+Task subsets
+Skill 1
+D1
+Skill 2
+D2
+Skill 3
+D3
+Needs
+refinement
+Figure 2. Overview of AutoMaster. An LLM agent designs skills for subsets of a fixed training
+task pool and tests them in pilot teacher rollouts. It refines the skills as needed, runs promising
+interventions on larger batches, and selects demonstrations for SFT. In each outer-loop round, the
+student is trained from the same initial checkpoint, with any skill instructions used by the teacher
+retained in the training input. The student is evaluated without generated skills.
+to use for training. In the outer loop, it fine-tunes the student on the selected demonstrations and
+uses the student’s subsequent evaluation scores and trajectories to guide the next round.
+3.1
+Skill-FT: Skill-Guided Fine-Tuning
+To shape the behavioral patterns represented in training trajectories, we guide the teacher with
+natural-language skills. These skills are designed to suppress undesirable habits and elicit effective
+behaviors that are underrepresented in unguided rollouts. A skill specifies how to reason or act in
+relevant situations and may include behavioral principles, concrete procedures, or domain-specific
+knowledge. Skills can be shared across tasks or combined to address different aspects of the same
+task. For a task x, let s denote the combined text of the selected skills. We append s to the base
+system prompt p and generate a trajectory through interaction with the task environment:
+τ ∼Rollout(πT, x; p ⊕s),
+(1)
+where πT denotes the teacher model and ⊕denotes text concatenation. This guidance conditions
+the teacher’s reasoning and actions during execution, enabling behavioral interventions even on
+tasks it already solves.
+To internalize the demonstrated behaviors, we fine-tune the student on selected teacher trajectories
+using standard SFT. For each trajectory, we retain the original system prompt, including any skill
+instructions, so the student sees the same instructions that guided the teacher. At evaluation, the
+student follows the benchmark’s official protocol without the generated skills.
+4
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+LLM agent
+Skill design · trajectory analysis · data selection
+Docker
+Linked experiment records
+Skills
+Rollout trajectories
+Training set
+Checkpoint
+Evaluation
+access history
+MCP service
+Tools:
+Read data
+Submit rollout
+Submit SFT
+tool calls / results
+Data pool
+Tasks
+Initial trajectories
+Rollout service
+Teacher API
+Teacher harness
+model calls
+Training and evaluation service
+SFT service
+GPU training
+Execution controller
+Scheduling · failure recovery
+Shared checkpoint storage
+Evaluation service
+SGLang workers
+GPU inference
+Evaluation harness
+model calls
+completion
+schedule
+write
+check
+load
+log
+Service / data
+Control flow
+Sandbox cluster
+Isolated execution environments
+Task 1
+Task 2
+Task n
+tools / verifier
+tools / verifier
+Figure 3. Infrastructure of AutoMaster. The agent accesses data and submits rollout and SFT jobs
+through the MCP interface. After SFT, the execution controller automatically schedules evaluation
+on a separate GPU cluster, where SGLang workers load the checkpoint directly from storage shared
+with the training cluster. Linked experiment records let the agent trace each evaluation back to the
+training set and the skills that guided the teacher.
+3.2
+Inner Loop: Developing Behavioral Interventions
+The agent begins by examining the training tasks and initial trajectories from both the unguided
+teacher and the initial student. It looks for habits to discourage and useful behaviors that the teacher
+rarely demonstrates, including on tasks the teacher already solves. In later rounds, the agent also
+inspects student evaluation trajectories to see where the intended behaviors appear and which
+weaknesses persist. These observations guide the skills it designs and the training tasks to which it
+applies them.
+As shown in Figure 2, pilot rollouts test whether candidate skills elicit the intended behaviors
+without introducing new problems during task execution. The agent uses the resulting trajectories
+to refine both the skill instructions and their scope of application, repeating trials as needed.
+The agent then scales promising interventions to batched rollouts and selects trajectories it judges
+valuable for training, considering both task outcomes and demonstrated behaviors. The agent may
+also select unguided teacher trajectories that already exhibit useful behavioral patterns. Feedback
+from generation and selection can prompt further revisions to skills or task coverage, followed by
+additional rollouts as needed. The selected trajectories form the training set for the outer loop.
+3.3
+Outer Loop: Model Training and Feedback
+The outer loop evaluates the student trained on the demonstrations selected in each round. In round
+r, the inner loop produces a training set Dr. SFT starts from the same initial student checkpoint θ0
+in every round:
+θr = SFT(θ0, Dr).
+(2)
+The agent receives both scores and trajectories from evaluating θr without generated skills. Scores
+summarize how well the student performs, while trajectories let the agent inspect how it handled
+individual tasks. The agent can compare these observations with earlier skills, teacher rollouts,
+and training sets to decide whether to revise a skill, change its task coverage, or select different
+demonstrations in the next round. This experiment history carries forward, while each student is
+trained from θ0.
+5
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+3.4
+Infrastructure
+The infrastructure lets the AutoMaster agent test how a skill shapes teacher behavior and examine
+whether the student exhibits that behavior after fine-tuning (Figure 3). From its Docker container,
+the agent uses the Model Context Protocol (MCP) (Anthropic, 2024) to access tasks and initial
+trajectories, submit teacher rollout jobs, and launch SFT on selected demonstrations. The rollout
+harness calls the teacher API, while the evaluation harness queries the student model served by
+SGLang (Zheng et al., 2024). Both harnesses use a shared sandbox cluster that runs task tools and
+verifiers in isolated Docker containers, allowing multiple tasks to execute concurrently.
+When an SFT job completes, the execution controller checks that the checkpoint is available and
+automatically schedules evaluation. The training and evaluation GPU clusters share a checkpoint
+store: SGLang workers load the weights directly from the location where the SFT service wrote
+them, avoiding an intermediate copy to the evaluation cluster. The controller also records job
+and stage progress so that it can restart a failed inference worker and resume evaluation without
+rerunning SFT.
+Across rounds, AutoMaster links each student’s evaluation scores and trajectories to its checkpoint,
+its training set, and the skills used during teacher rollouts. When a weakness recurs in student
+evaluations, the agent can inspect earlier rollouts to see whether the teacher demonstrated the
+desired behavior and check which of those demonstrations entered the training set. This evidence
+informs whether the agent revises a skill, changes its data selection, or both in the next round.
+4
+Experiments
+4.1
+Experimental Setup
+Benchmarks and Task Pools.
+We evaluate Terminal, Search, and software engineering (SWE) tasks
+using Terminal-Bench 2.1 (Merrill et al., 2026), BrowseComp (BC; using the Lite-185 subset released
+by Traverse) (Wei et al., 2025; Ma et al., 2026), and Doc2Repo (Chen et al., 2026b), respectively. For
+each domain, we randomly sample 1,000 training tasks from public datasets (Meng et al., 2026;
+Deng et al., 2026; Zhao et al., 2026b) to form a fixed task pool shared across all methods.
+Models and Baselines. We use Qwen3.5-4B and Qwen3.5-9B (Qwen Team, 2026) as students.
+Across all experiments, the LLM agent runs in Codex with GPT-6 Astra (OpenAI, 2026) at xhigh
+reasoning effort, while DeepSeek-V4-Pro-Preview (DeepSeek-AI, 2026) serves as the teacher at high
+reasoning effort. We compare against Base, the student without additional fine-tuning, and Vanilla
+SFT, which performs standard SFT on 512 trajectories randomly sampled from successful unguided
+teacher rollouts on the shared task pool.
+Training and Evaluation. For AutoMaster, the agent starts with trajectories generated by the
+initial student and the unguided teacher on the training task pool, with a budget of five outer-loop
+rounds. Across all settings, each training run starts from the corresponding initial checkpoint
+and performs full-parameter SFT on 512 trajectories for three epochs, with a learning rate of 10−5
+and a global batch size of 32. We evaluate final-epoch checkpoints without generated skills using
+domain-specific harnesses (Meng et al., 2026; Sun et al., 2026; Chen et al., 2026b), with identical
+settings across methods within each domain. We measure task accuracy on Terminal-Bench 2.1 and
+BC and mean test pass rate on Doc2Repo, reporting mean ± SD over three evaluation runs per
+checkpoint. Further experimental details are provided in Appendix A.
+6
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+Table 1. Main results with Qwen3.5-4B and Qwen3.5-9B. We report task accuracy for Terminal-
+Bench 2.1 and BrowseComp, and mean test pass rate for Doc2Repo, all in percent (higher is better).
+Results are mean ± SD over three evaluation runs per checkpoint. Bold marks the highest mean in
+each column. ∆gives the gain over Vanilla SFT in percentage points.
+Terminal-Bench 2.1
+BrowseComp
+Doc2Repo
+Method
+4B
+9B
+4B
+9B
+4B
+9B
+Base
+15.73 ± 2.25
+25.47 ± 2.59
+33.69 ± 0.82
+35.50 ± 2.72
+21.39 ± 2.61
+33.42 ± 1.60
+Vanilla SFT
+22.47 ± 1.12
+26.59 ± 1.30
+43.24 ± 0.54
+46.85 ± 2.98
+32.30 ± 4.00
+36.05 ± 3.89
+AutoMaster
+28.09 ± 2.25
+35.58 ± 1.30
+46.13 ± 2.98
+51.53 ± 1.25
+33.72 ± 3.58
+40.79 ± 3.21
+∆over Vanilla SFT
++5.62
++8.99
++2.88
++4.68
++1.42
++4.74
+4.2
+Main Results
+Table 1 shows that AutoMaster achieves the highest mean score across all six benchmark–model
+comparisons. Vanilla SFT improves over Base in every setting, demonstrating the effectiveness
+of learning from successful teacher trajectories. Building on this baseline, AutoMaster yields
+further gains of 1.42–8.99 percentage points with the same training set size and SFT recipe. Paired
+confidence intervals for these gains are reported in Appendix A.6. The gains are larger for the 9B
+model than for the 4B model across all three domains.
+On Terminal-Bench 2.1, Vanilla SFT raises the 9B student’s accuracy from 25.47% to 26.59%. With the
+same teacher, training task pool, number of demonstrations, and SFT recipe, AutoMaster reaches
+35.58%. The modest gain from imitating successful unguided rollouts therefore understates what this student
+can learn from the same teacher: changing how demonstrations are generated and selected yields a
+further gain of 8.99 percentage points in mean accuracy.
+4.3
+Ablation Studies
+To understand how AutoMaster improves on Vanilla SFT, we separately ablate skill guidance and
+data selection. In w/o Skill Guidance, the LLM agent selects training trajectories from unguided
+teacher rollouts. In w/o Data Selection, the agent designs and refines skills for a fixed, randomly
+sampled subset of training tasks, without agent-directed trajectory selection. Both variants retain
+autonomous experimentation with the same teacher, task pool, training set size, and SFT recipe.
+Removing either component lowers mean performance in all six settings, but their relative con-
+tributions vary (Figure 4). On Terminal-Bench 2.1 with the 4B student, skill guidance without
+agent-directed selection yields higher mean accuracy than selection from unguided rollouts (20.22%
+versus 17.60%). Both fall below Vanilla SFT (22.47%), whereas the full method reaches 28.09%. On
+BrowseComp at the same model size, the ordering reverses: selection from unguided rollouts yields
+45.77%, compared with 43.78% for guidance without selection. One possible explanation is that the
+value of selection depends on what the teacher already demonstrates: selection can favor trajectories
+that exhibit useful behaviors, while guidance can elicit behaviors that are rare in unguided rollouts.
+To test whether the choice of training tasks alone explains the gains, we construct Task-Matched SFT
+from unguided rollouts by the same teacher, matching both the task IDs and the per-task sample
+counts of AutoMaster’s final training set. With task composition held fixed, AutoMaster achieves
+higher mean scores in all six settings, by 1.08–10.11 percentage points. Across the four Terminal
+and Search training corpora, both the unguided rollout and the selected AutoMaster demonstration
+7
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+15
+20
+25
+30
+35
+40
+Terminal-Bench 2.1
+40
+45
+50
+55
+BrowseComp
+30
+35
+40
+45
+Doc2Repo
+15
+20
+25
+30
+35
+40
+Accuracy (%)
+40
+45
+50
+55
+Accuracy (%)
+30
+35
+40
+45
+Pass rate (%)
+Qwen3.5-4B
+AutoMaster
+w/o Skill Guidance
+w/o Data Selection
+Task-Matched SFT
+Vanilla SFT
+Qwen3.5-9B
+AutoMaster
+w/o Skill Guidance
+w/o Data Selection
+Task-Matched SFT
+Vanilla SFT
+Figure 4. Contributions of skill guidance and data selection. w/o Skill Guidance retains agent-
+directed selection from unguided teacher rollouts. w/o Data Selection retains skill guidance on a fixed
+random subset of tasks but omits agent-directed trajectory selection. Removing either component
+lowers the mean score in each of the six settings. Task-Matched SFT uses unguided rollouts from the
+same teacher and matches the final training set of AutoMaster. Even with this match, AutoMaster
+scores 1.08–10.11 percentage points higher on average within each setting. Points show mean scores
+over three evaluation runs per checkpoint. Horizontal bars indicate ±1 standard deviation.
+succeed in 79.3–91.2% of matched pairs (Table A5). For these pairs, the success label alone cannot
+distinguish what the two trajectories demonstrate. Together with the component ablations, these
+results support jointly optimizing how training demonstrations are generated and selected.
+5
+Analysis
+5.1
+Behavioral Shaping Beyond Task Success
+Task success can conceal weaknesses in a teacher’s reasoning and actions. To examine the behaviors
+targeted by Skill-FT, Figure 5 contrasts unguided and skill-guided teacher trajectories on the same
+tasks across three domains.
+The first two cases illustrate behavioral differences that task outcomes alone cannot distinguish.
+In Figure 5(a), both executions satisfy the numerical error threshold, yet the unguided teacher
+claims fourth-order accuracy despite measured convergence of approximately second order. The
+guided teacher uses independent numerical checks to revise and validate its method. Similarly,
+both search executions in Figure 5(b) reach the correct answer. The unguided trajectory repeatedly
+pursues unverified award guesses before finding supporting records, while the guided trajectory
+uses retrieved episode–director records to identify and verify a candidate. A filter based solely on
+successful completion would leave these behavioral differences unexamined.
+The third case highlights the importance of diagnosing verification failures. Both executions initially
+construct a self-test with an input different from the specification while retaining the original
+expected order. The unguided teacher reverses the global sorting rule to satisfy this mistaken
+expectation. The guided teacher checks the input encoding, corrects the self-test, and preserves the
+specified rule, passing 38 of 38 tests compared with 32 of 38. The useful behavior here is to establish
+what a failed check actually implies before changing the implementation.
+8
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+Task
+Unguided
+teacher
+Skill-guided
+teacher
+a Evidence–claim consistency
+Repair a Poisson solver
+\(64\!\times\!64\) grid · max error \({}<5\times10^{-4}\)
+Fourth-order accuracy not required.
+Claims fourth-order accuracy
+\(N = 32\)
+\(\mathrm{error} = 1.36\times 10^{-3}\)
+\(N = 64\)
+\(\mathrm{error} = 3.31\times 10^{-4}\)
+Convergence order: \(p \approx 2\)
+Claimed: 4
+Pass · error \(3.31\times 10^{\mathbf{-4}}\)
+Skill: execute-numeric-decision
+Check independently; investigate failures;
+tie conclusions to numerical evidence.
+Verifies fourth-order accuracy
+Independent check of the guided solver
+Repair
+Verify
+\(7.04\times 10^{-4} > 5\times 10^{-4}\)
+Uses a nine-point stencil
+Before repair:
+Direct solve: \(p \approx 4\)
+Pass · error \(2.55\times 10^{\textcolor{#117765}{\mathbf{-7}}}\)
+b Grounding search in evidence
+Identify a 2017 TV episode
+Clues: a Columbia-educated director and
+an award named for a writer-director.
+Guesses the award first
+Repeated unverified guesses:
+“Preston Sturges Award”
+“Frank Capra Achievement Award”
+Correct · This Land Is Your Land
+Skill: recover-search-anchor
+Drop unsupported search restrictions;
+follow evidence to test new candidates.
+Identifies the director first
+Retrieved episode–director record
+3×13
+Meera Menon
+Verified: Columbia · Nora Ephron Prize
+Correct · This Land Is Your Land
+c Diagnosis before code changes
+Implement canonical JSON ordering
+Sort keys by UTF-16BE, ascending.
+Compare U+FB33 with emoji U+1F602.
+Reverses the sorting rule
+Self-test key: U+05D3 U+05BC
+Still expects the key after the emoji.
+reverse=True
+32 / 38 tests passed
+Skill: Trace failures to their source
+Identify the source of the issue
+before making changes.
+Fixes the test, keeps the rule
+Compare the first UTF-16 code units
+Corrects the test input
+Self-test key
+Emoji
+05D3
+<
+<
+D83D
+Original key
+FB33
+38 / 38 tests passed
+Figure 5.
+Skill-guided changes in teacher behavior. Each column compares unguided and
+skill-guided rollouts by the same teacher on the same task. (a) Terminal: Both solvers meet the error
+threshold. The unguided teacher claims fourth-order accuracy, but an independent grid check of its
+solver indicates second-order convergence. The skill-guided teacher switches to a nine-point stencil
+and verifies fourth-order convergence using direct solves on successively finer grids. (b) Search:
+Both rollouts identify the same episode. The unguided teacher repeatedly guesses the award, while
+the skill-guided teacher identifies the director from episode credits and verifies the clues. (c) SWE:
+The unguided teacher reverses the global sort to satisfy a flawed self-test. The skill-guided teacher
+checks the UTF-16 encoding, corrects the self-test input, and keeps the required ascending order.
+Across these cases, the guided trajectories illustrate changes in how the teacher validates a numerical
+claim, redirects a search, or diagnoses a failed check. The first two cases show how skill guidance
+can address behavioral weaknesses even when both executions succeed, while the third illustrates an
+improvement in implementation correctness. These differences highlight the value of examining
+demonstrated behaviors alongside task outcomes to identify opportunities for improvement. Au-
+toMaster identifies such opportunities through trajectory analysis and designs skills to address
+them. Together with the downstream results, these observations suggest that Skill-FT can improve
+the training value of the demonstrations produced by a fixed teacher.
+5.2
+Preserving Skill Context for Better Internalization
+We investigate how to help the student internalize skill-guided behaviors. Specifically, we examine
+whether the skill instructions used to guide teacher rollouts should be retained during fine-tuning.
+We compare Keep, which retains these instructions in the training input, with Remove, which omits
+them. Both conditions use the same trajectories and SFT recipe. All models are evaluated without
+generated skills, following the official evaluation protocols.
+Removing the skill instructions leaves the supervised reasoning, responses, and tool calls unchanged
+while making the training prompt more like the evaluation prompt, which contains no generated
+skills. Yet students perform better when the training input retains the instructions that guided the teacher.
+Across all six settings, Keep exceeds Remove in mean score by 2.15–4.01 percentage points (Figure 6).
+Figure 7 illustrates a possible explanation. In (a), the teacher consults the skill to decide whether the
+9
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+4B
+9B
+0
+10
+20
+30
+40
+Accuracy (%)
++3.00
++3.75
+(a) Terminal-Bench 2.1
+4B
+9B
+0
+10
+20
+30
+40
+50
+60
+Accuracy (%)
++3.60
++2.34
+(b) BrowseComp
+4B
+9B
+0
+10
+20
+30
+40
+50
+Pass rate (%)
++4.01
++2.15
+(c) Doc2Repo
+Remove
+Keep
+Figure 6. Retaining skill instructions during SFT improves performance without test-time skills.
+Both conditions use the same teacher trajectories and SFT recipe. Keep retains the skill instructions
+in the training input, whereas Remove omits them. All students are evaluated without skills under
+the official benchmark protocols. Bars show mean scores over three evaluation runs per checkpoint,
+circles show individual runs, and error bars indicate ±1 SD. Labels give the gain of Keep over
+Remove in percentage points.
+a Applying a conditional rule
+Task:
+Skill: check-discriminating-evidence
+Teacher excerpt
+“Let me check the skill about this:”
+b Deriving operator precedence
+Task:
+Skill: expression-grammar
+Teacher excerpt
+“Actually, the skill says:”
+Optimize a script without an execute bit. Run it with
+python3 /app/process_data.py
+…
+Repair a C evaluator to match the README’s rules for precedence and associativity.
+Direct invocation: fix a missing execute bit.
+Interpreter invocation
+Preserve the documented command.
+“it's invoked through the interpreter, not directly.
+No need to change permissions.”
+Output: Matched the reference byte for byte.
+Powers bind before unary minus.
+prefix := sign prefix | power
+prefix := sign prefix | power
+power := atom (power_operator prefix)?
+Square first: -2^2 →
+-(2^2)
+→-4
+Tests:
+(-2)^2 = 4
+2^3^2 = 512
+Figure 7. Explicit use of skill context in teacher demonstrations. Two examples from the SFT
+corpus illustrate how skill instructions inform the teacher’s reasoning and actions. (a) The teacher
+applies a conditional rule to distinguish interpreter invocation from direct execution, avoiding an
+unnecessary permission change. (b) The teacher references the supplied grammar to derive an
+expression’s grouping, then implements and tests the corresponding parser. Skill instructions and
+trajectory excerpts are condensed. Quotation marks indicate verbatim excerpts.
+script needs an execute bit: because the script runs through the interpreter, no permission change
+is needed. In (b), the teacher explicitly refers to the skill and uses its grammar to determine how
+to group an expression. Removing the instructions preserves the teacher’s reasoning and actions
+as supervision, including any rule it quotes, but removes the original instruction from the input.
+Retaining that context may help the student learn when the demonstrated action applies.
+10
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher
+1
+2
+3
+4
+5
+20
+25
+30
+35
+40
+Accuracy (%)
+(a) Terminal-Bench 2.1
+1
+2
+3
+4
+5
+40
+45
+50
+55
+Accuracy (%)
+(b) BrowseComp
+1
+2
+3
+4
+5
+30
+35
+40
+45
+Pass rate (%)
+(c) Doc2Repo
+Outer-loop round
+Qwen3.5-4B
+Qwen3.5-9B
+Vanilla SFT
+Figure 8. Performance across five rounds of autonomous experimentation. For each model size,
+every round trains a student from the initial checkpoint. Points show means over three evaluation
+runs per checkpoint; error bars indicate ±1 SD. Dashed lines show the corresponding Vanilla SFT
+means. Filled markers indicate the highest observed mean for each model on each benchmark.
+5.3
+Autonomous Experimentation Across Rounds
+Having examined how skill context affects learning from teacher demonstrations, we next investi-
+gate how AutoMaster develops the interventions used to generate and curate those demonstrations.
+The agent draws on accumulated rollout and training feedback to explore alternative behavioral
+hypotheses and intervention strategies.
+Figure 8 shows that continued experimentation identifies higher-performing candidates in all six
+benchmark–model settings. The highest mean scores occur in rounds two through four, exceeding
+first-round performance by 2.16–4.87 percentage points. Variation across rounds is consistent with
+the exploratory protocol: the agent continues to investigate alternative interventions after finding a
+strong candidate, without requiring each trial to improve on its predecessor. On BrowseComp-9B,
+mean accuracy remains near 49% for the first three rounds before reaching 51.53% in the fourth.
+This delayed improvement illustrates how continued experimentation can uncover further gains
+after several rounds of limited progress.
+The consistency of gains also differs across model sizes. The 9B model exceeds Vanilla SFT in mean
+performance in every round across all three domains, whereas the 4B model does so throughout
+all five rounds only on Terminal-Bench 2.1. The component ablations show a similar pattern: both
+variants exceed Vanilla SFT in all three domains for the 9B model, but only on BrowseComp for the
+4B model (Section 4.3). Together, these observations suggest that greater student capacity may support
+more consistent gains from the interventions explored by AutoMaster.
+6
+Conclusion
+We introduced Skill-FT for shaping teacher behavior with natural-language skills and AutoMaster,
+an autonomous post-training system that designs, executes, and refines these interventions. Across
+three domains and two model sizes, AutoMaster achieves higher mean performance than Vanilla
+SFT. The results and trajectory analyses suggest that a fixed model can become a more effective
+teacher through behavioral shaping, even on tasks it already solves. Retaining skill instructions
+during SFT also yields higher mean performance than removing them, despite their absence at
+evaluation, suggesting that preserving skill context can support better behavioral internalization.
+11
+AutoMaster: Autonomous Post-Training by Making the Same Model a Better Teacher

@@ -1,0 +1,74 @@
+{
+  "title_zh": "TiRex-2：面向多变量与流式预测的循环时间序列基础模型",
+  "affiliations": [
+    "ELLIS Unit Linz",
+    "JKU Linz",
+    "NXAI Lab",
+    "NXAI GmbH",
+    "Interdisciplinary Transformation University Austria"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把多变量、未来协变量和恒定成本流式统一到一个 TSFM，并给出可检验的因果性与流式证据，对时序基础模型的部署方向有直接意义。",
+    "novelty": 90,
+    "novelty_reason": "非对称组注意力让未来协变量双向编码而目标严格因果，配合从单变量语料合成多变量耦合，这两点相对现有 TSFM 是实质结构差异，而非换骨干或换数据集。",
+    "technical_depth": 88,
+    "technical_depth_reason": "给出目标因果性证明、泄漏反例、架构与耦合消融，并在两个基准和超长流式上验证；但长上下文对比让基线超出训练窗口，结论需打折。"
+  },
+  "reading": {
+    "why_read": "提出 TiRex-2，以 xLSTM 循环骨干和非对称组注意力把 TiRex 扩展到多变量、过去/未来协变量与恒定单 patch 成本的流式预测，并在 GIFT-Eval 零样本上超过 Chronos-2-Synth。",
+    "task": "多变量时间序列预测要同时利用变量内时序、变量间依赖和未来已知协变量，并在观测持续到达时低成本更新。现有 Transformer TSFM 能建模跨变量关系，但每摄入一个新观测的代价随上下文长度增长，非因果设计还需重算全历史，难以支持真正的流式部署。",
+    "findings": [
+      {
+        "point": "未来协变量与目标因果性相冲突",
+        "detail": "未来协变量需要双向时间上下文，但对称变量混合会让协变量 token 读到目标 token；未来目标信息可经反向时间混合泄漏回更早目标 patch，破坏单遍流式预测。"
+      },
+      {
+        "point": "现有多变量语料不足以教模型使用跨变量依赖",
+        "detail": "多变量语料规模小、依赖类型窄，单变量语料虽大却缺少跨变量结构；模型不会仅凭架构自动学会从协变量取信息。"
+      },
+      {
+        "point": "注意力式模型的流式更新成本随上下文增长",
+        "detail": "Transformer 即使有 KV Cache，每摄入一个新 patch 仍要按已见 patch 数增加计算；非因果模型还需重算全上下文，无法做到恒定单 patch 成本。"
+      }
+    ],
+    "method_idea": "原 TiRex 只做单变量，通道独立假设丢掉变量间依赖；多变量 Transformer 能建模变量关系，却让目标状态受未来目标影响，新观测到来还要重算历史。TiRex-2 保留循环 xLSTM 做时间混合，在 patch 级加变量混合器：目标可读协变量、协变量不可读目标，于是未来已知协变量能双向编码而目标严格因果；单变量输入跳过变量混合器。",
+    "method_how": "时间混合器用前向 xLSTM 处理目标和过去协变量，对未来已知协变量额外跑共享权重的反向 xLSTM 并融合，骨干交替 mLSTM 与 sLSTM。变量混合器沿变量轴做组注意力，组内加非对称掩码：目标 query 可读协变量 key，协变量 query 不能读目标 key，故目标表示只依赖当前及更早的目标 patch。训练时从单变量池采样并增强，随机施加函数、线性混合、协整、线性/非线性 SCM 等耦合，再注入缺失、时间扭曲与离散化，损失为各输出步上的 pinball 分位数损失。代价是多变量模式多出变量混合器参数；未来已知协变量被修订时需重算其表示，流式以 patch 为粒度。",
+    "results": "零样本 GIFT-Eval 上 MASE 0.697、CRPS 0.478，低于 Chronos-2-Synth 的 0.720 与 0.496；fev-bench 上 Chronos-2 的 SQL skill 仍更高，但参数开销更大。",
+    "limitations": "作者承认恒定成本流式只覆盖已提前给出的未来协变量；若其值被修订，需重算协变量表示及读取它的目标状态，且流式以 patch 为粒度。长上下文对比还让基线跑出训练窗口，滑动窗口会缩小差距。"
+  },
+  "claims": [
+    {
+      "claim": "TiRex-2 在 GIFT-Eval 零样本上 MASE 为 0.697",
+      "numbers": [
+        "0.697"
+      ],
+      "source_span": "Table 5, row 'TiRex-2 (zero-shot)'",
+      "quote": "TiRex-2 (zero-shot)\n0.697"
+    },
+    {
+      "claim": "TiRex-2 在 GIFT-Eval 零样本上 CRPS 为 0.478",
+      "numbers": [
+        "0.478"
+      ],
+      "source_span": "Table 5, row 'TiRex-2 (zero-shot)'",
+      "quote": "0.478\n38.28"
+    },
+    {
+      "claim": "Chronos-2-Synth 在 GIFT-Eval 上 MASE 为 0.720",
+      "numbers": [
+        "0.720"
+      ],
+      "source_span": "Table 5, row 'Chronos-2-Synth'",
+      "quote": "Chronos-2-Synth\n0.720"
+    },
+    {
+      "claim": "Chronos-2-Synth 在 GIFT-Eval 上 CRPS 为 0.496",
+      "numbers": [
+        "0.496"
+      ],
+      "source_span": "Table 5, row 'Chronos-2-Synth'",
+      "quote": "0.496\n59.28"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "title_zh": "探针与引导在语言模型内部和跨模型间是否偏好相同方向？",
+  "affiliations": [
+    "Fraunhofer IAIS"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把探针与引导是否该共用方向这一常被默认的问题，推进到连续方向族、固定副作用和跨模型迁移的功能性比较，对表征工程有直接指导意义。",
+    "novelty": 82,
+    "novelty_reason": "相对以往只比较训练探针与均值差两个端点，本文构造连续方向族并逐点测量两种角色，还区分引导与探针的传输律，属于设定层面的实质推进。",
+    "technical_depth": 84,
+    "technical_depth_reason": "三模型、两概念加 PopQA 应用，配合层扫描、匹配文本、旋转算子、跨模型映射与预注册判据；但主分析单层、映射拟合偏弱，部分结论只是描述性倾向。"
+  },
+  "reading": {
+    "why_read": "提出正则化判别方向族，在固定副作用预算下逐点比较探针与引导，发现最佳探针并非最佳引导方向，且探针跨模型迁移比均值差更稳。",
+    "task": "语言模型的隐藏状态方向既可用于线性探针判断概念是否存在，也可加回隐藏状态引导模型。现有做法常直接把探针方向复用于引导，但检测概念与改变行为未必要同一方向；此前比较多只拿训练探针与类别均值差两个端点，在各自选定强度下比优劣，无法排除“推得更猛所以效果更好”。",
+    "findings": [
+      {
+        "point": "探针利用类内协方差，引导需要沿类别均值差推动",
+        "detail": "最佳探针是协方差调整后的判别方向，它利用类内离散把两类分开；线性探针的激活模式却正比于类别均值差，二者不是同一对象，所以读得准不等于推得动。"
+      },
+      {
+        "point": "固定副作用后，行为主要响应推力在均值差上的分量",
+        "detail": "作者用一阶线性预测检验：只用推力在均值差上的投影和副作用曲线，就复现了六个组合的引导曲线形状与平台位置；探针端与均值差夹角小，同预算下推得弱。"
+      },
+      {
+        "point": "跨模型时探针与引导服从不同传输律",
+        "detail": "引导向量按前向线性映射搬运，探针按反向映射的转置搬运；中性文本拟合的映射下，探针保留更多性能，均值差引导损失更大，但部分损失可能来自映射本身。"
+      }
+    ],
+    "method_idea": "以往常把探针方向直接用于引导，或只比较训练探针与类别均值差两个端点，分不清差异来自方向还是推力大小。这篇在两者之间构造由正则化强度控制的连续方向族，从协方差调整的判别方向过渡到均值差，并在中性文本上固定同一副作用预算，逐点比较探针与引导；跨模型时分别用前向映射搬运引导方向、用反向映射的转置搬运探针。",
+    "method_how": "每个模型和概念先在估计集算两类隐藏状态的均值差与池化类内协方差，再用正则化强度把协方差调整从强调到弱，得到一族方向。探针按保留集 AUROC 评分，引导把单位方向加到末 token 的残差流，并用中性文本的下一词 KL 散度对齐到同一副作用预算。作者用同一模板和带门控旋转做对照，跨模型只用中性文本拟合岭回归映射，引导走前向、探针走反向映射的转置。应用在 PopQA 上看向 unknown 引导后的弃答变化；代价是每模型只取一层，映射在概念文本上拟合更差，效果用答案边际或词对数几率而非准确率衡量。",
+    "results": "主组合中最佳探针 AUROC 0.96–0.98，引导最优点在 10τ–316τ，逐层 59/60 成立；跨模型探针保留 81–91%，引导 44–93% 且 11/12 对更低。PopQA 不确定错误弃答升 18–44 个百分点，自信错误 2–5。",
+    "limitations": "主分析每模型仅一层，逐层扫描只覆盖 RQ1；跨模型映射在概念文本上拟合明显弱于中性文本，引导损失可能来自映射；PopQA 的可达标签依赖五次采样，知识可得错误样本很少。"
+  },
+  "claims": [
+    {
+      "claim": "主组合中最佳探针 AUROC 为 0.96–0.98。",
+      "numbers": [
+        "0.96",
+        "0.98"
+      ],
+      "source_span": "Section 4.1, Figure 2 paragraph",
+      "quote": "the held-out AUROC is 0.96–0.98"
+    },
+    {
+      "claim": "引导最优点落在 10τ–316τ。",
+      "numbers": [
+        "10",
+        "316"
+      ],
+      "source_span": "Section 4.1, Figure 2 paragraph",
+      "quote": "the strongest directions lie between 10τ and 316τ"
+    },
+    {
+      "claim": "逐层扫描在 59/60 个组合成立。",
+      "numbers": [
+        "59",
+        "60"
+      ],
+      "source_span": "Section 3.1",
+      "quote": "H1a holds at 59 of the 60 combinations of layer, model, and concept"
+    },
+    {
+      "claim": "跨模型探针保留 81–91% 的高于随机 AUROC。",
+      "numbers": [
+        "81",
+        "91"
+      ],
+      "source_span": "Section 4.1, Across models",
+      "quote": "keeps 81–91% of the target probe’s above-chance AUROC"
+    },
+    {
+      "claim": "均值差引导保留 44–93%，且在 11/12 对中更低。",
+      "numbers": [
+        "44",
+        "93",
+        "11",
+        "12"
+      ],
+      "source_span": "Section 4.1, Across models",
+      "quote": "reaches 44–93% of the target’s own steering effect, less than ρprobe in 11 of 12 pairs"
+    },
+    {
+      "claim": "PopQA 上向 unknown 引导使不确定错误弃答升 18–44 个百分点，自信错误仅 2–5。",
+      "numbers": [
+        "18",
+        "44",
+        "2",
+        "5"
+      ],
+      "source_span": "Abstract",
+      "quote": "steering toward “unknown” increases abstention by 18–44 percentage points on uncertain errors, versus 2–5 on confident errors"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "title_zh": "从有限交互经验蒸馏视觉智能体",
+  "affiliations": [
+    "University of Technology Sydney",
+    "Hong Kong Polytechnic University"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "研究少任务或少历史蒸馏视觉智能体，覆盖 Navigation、Sokoban 与 SpatialGym 三个环境和 4B/9B 两个学生规模，并系统对照固定回放与在线交互，对数据效率路线有直接参考价值。",
+    "novelty": 72,
+    "novelty_reason": "把技能–情境覆盖与有序视觉决策相似度结合，用于选择完整轨迹，并在匹配任务与响应预算下比较固定历史回放和在线 OPD，不同于单纯换数据集、换骨干或堆模块。",
+    "technical_depth": 70,
+    "technical_depth_reason": "提供了匹配 SFT、选择器消融、重复训练和独立面板，但核心结果多为单次训练，部分端点为合作者报告且未本地审计，关于选择指标与迁移之间因果机制的主张也未被隔离验证。"
+  },
+  "reading": {
+    "why_read": "提出一个从有限交互经验蒸馏视觉智能体的框架，用技能–情境覆盖与有序视觉决策相似度挑选少量完整轨迹，4B 学生在 Navigation 上从 49.17% 升到 82.08%。",
+    "task": "视觉智能体要在图像与反馈下做多步决策，把大模型教师蒸馏到小模型通常依赖大量任务和在线交互；但动作会改变后续观测，产生状态分布偏移，少量固定历史能否迁移到新任务并不清楚。",
+    "findings": [
+      {
+        "point": "覆盖很快饱和，代表性决定后续选择",
+        "detail": "在 Navigation 的录制例子里，第一条历史已覆盖清单中全部观测到的能力–情境对，后续选择新增覆盖为零，排序改由有序视觉决策相似度决定；这解释了 coverage-only 的不足。"
+      },
+      {
+        "point": "小集合靠重复监督换取覆盖",
+        "detail": "相同响应预算下，K4 的前缀数远少于全池，训练更新被重复压在少数决策上；论文把这种覆盖–重复权衡列为小数据仍有效的可能原因。"
+      },
+      {
+        "point": "在线交互的边界是状态刷新",
+        "detail": "固定回放在标准 Navigation/Sokoban 上接近在线结果，但在 two-room SpatialGym 明显落后，说明当任务需要新观测时，仅回放旧前缀不够。"
+      }
+    ],
+    "method_idea": "视觉智能体蒸馏通常要么在大量任务上在线交互，要么对整条轨迹做监督微调；前者采集成本高，后者把学生限制在旧观测上，动作一改状态分布就偏。这篇改为从学生自己的轨迹里按技能–情境覆盖挑少量完整历史，覆盖相同时用有序视觉决策相似度补代表性，再在原始因果前缀上做 on-policy distillation 或匹配 SFT，把“选经验”和“反复用”分开。",
+    "method_how": "先让独立标注模型读环境文档和训练轨迹，建立技能–情境清单，标出每个决策点出现的能力–情境对，并按新对子计覆盖增益。再把截图、观测、此前动作和反馈写成决策描述，用字段化 TF–IDF 做有序软匹配算轨迹相似度，以 facility-location 目标衡量代表性；选择时先比新覆盖、再比代表性，每条任务只取一条完整轨迹。选中的历史保留原始因果前缀，回放先均匀抽轨迹再均匀抽轮次，学生生成回答、冻结教师打分，用 PPO 式裁剪的 token log-ratio 损失更新；匹配 SFT 让教师在同一前缀生成回答做交叉熵。在线版本只在选中任务上执行动作刷新历史。代价是候选采集与标注仍不可省，且只对齐响应数和更新数，token 与计算量并不相同，回放也不产生新观测。",
+    "results": "4B 学生用四条固定轨迹做 OPD，标准 Navigation 从 49.17% 升到 82.08%，Sokoban 从 60.16% 升到 85.55%，分别补回 91.86%/90.28% 的师生差距；独立 Navigation 面板回放达到 76.67%。",
+    "limitations": "核心结果多为单次训练，部分随机子集与小预算端点由合作者报告且未本地审计，SpatialGym 的 held-out 房间还用于监控；选择指标与最终迁移之间的因果机制没有被隔离。"
+  },
+  "claims": [
+    {
+      "claim": "4B 学生用四条固定轨迹做 OPD 后，标准 Navigation 成功率从 49.17% 升到 82.08%，Sokoban 从 60.16% 升到 85.55%。",
+      "numbers": [
+        "4",
+        "49.17",
+        "82.08",
+        "60.16",
+        "85.55"
+      ],
+      "source_span": "Abstract",
+      "quote": "Four fixed trajectories raise a 4B student’s success from 49.17% to 82.08% on standard Navigation and from 60.16% to 85.55% on Sokoban"
+    },
+    {
+      "claim": "K4 固定轨迹 OPD 在标准 Navigation/Sokoban 上分别补回 91.86%/90.28% 的师生差距。",
+      "numbers": [
+        "91.86",
+        "90.28"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "closing 91.86%/90.28% of the measured teacher gap"
+    },
+    {
+      "claim": "独立 Navigation 面板上，固定历史回放把成功率从 45.83% 提升到 76.67%。",
+      "numbers": [
+        "45.83",
+        "76.67"
+      ],
+      "source_span": "Abstract",
+      "quote": "replay improves success from 45.83% to 76.67%"
+    }
+  ]
+}

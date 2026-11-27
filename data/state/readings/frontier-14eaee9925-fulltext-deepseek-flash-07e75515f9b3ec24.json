@@ -1,0 +1,162 @@
+{
+  "title_zh": "System 1 智能体：构建本地、可靠、快速 agentic AI 的方法",
+  "affiliations": [
+    "University of Crete",
+    "Karolinska Institute",
+    "University Hospital of Heraklion"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把'临床数据不能出院'与'本地小模型会编造工具参数'这两个卡点合并成一个可工程化的方案，并在 157 个真实 MCP 工具上与 18 个本地 LLM 配置做系统对比，对 agentic AI 的落地路线有直接参考价值。",
+    "novelty": 80,
+    "novelty_reason": "实质改动是把工具调用从自由文本生成换成'确定性编译器出题 + 决策模型在有限选项上打分'，'不可能虚构'由结构保证，而不是靠提示词、约束解码或更大模型换来的经验性下降。",
+    "technical_depth": 82,
+    "technical_depth_reason": "主基准 1,952 条请求、每指标 108 组配对比较并做 Holm 校正，用 compiler oracle 把编译器失败与模型失败分开，存储答案可逐题重放，还做了匹配规则与推理模式的敏感性分析；扣分点在基准请求多为作者自建。"
+  },
+  "reading": {
+    "why_read": "提出 System 1 Agents 方法：用确定性编译器把工具 schema 与用户请求转成有限选项的选择题，再由小型决策模型单次前向打分，全程不生成文本，在 157 个生物医学工具上完全正确率达 93.9% 且无虚构内容。",
+    "task": "临床与生物医学数据的自动化分析需要能调用工具的智能体，但能装进院内 GPU 的本地 LLM 逐 token 生成工具调用，会调用不存在的工具、写错参数名，或把用户从未给出的值填进参数；这类虚构值不会报错，而是静默改变该步结果并被后续每一步继承。云端 LLM 能力更强，却要把请求和患者数据送出机构。开启推理模式能压掉部分错误，却成倍放大生成量、时间与能耗。",
+    "findings": [
+      {
+        "point": "虚构内容源于把工具调用当成自由文本生成",
+        "detail": "逐 token 解码时，工具名、参数名和取值都没有候选集约束，模型可以写出目录与 schema 之外的任何字符串，于是 5.5–19.7% 的 LLM 调用含至少一个虚构值，且开推理也去不掉。"
+      },
+      {
+        "point": "一次调用里真正需要判断的部分很小",
+        "detail": "多数取值或明写在请求里、或由固定规则（如单位换算）导出、或列在 schema 中，剩下的只是选哪个工具、哪个值给哪个参数、要不要调用，是有界选择而不是开放式生成。"
+      },
+      {
+        "point": "缺少必需参数时 LLM 倾向于补全而非追问",
+        "detail": "生成目标奖励给出完整调用，因此在 174 条欠指定请求中，LLM 最多有 62.1% 直接编造缺失值，而正确行为是把参数留空并向用户索取。"
+      }
+    ],
+    "method_idea": "现有做法让 LLM 把整条工具调用当文本逐 token 写出来，工具名、参数名和取值都不受约束。这篇把这一步换成有限选项的选择题：由不含模型的确定性代码从工具 schema 和用户请求里抽出候选值，编成'调哪个工具''这个参数取哪个值''要不要调用'等问题，再由一个只做单步判断的小模型给每个选项打分。整条链路不生成任何文本，因而没有可以虚构的位置。",
+    "method_how": "系统分三部分。智能体管流程：先在全部工具加'以上都不是'之间做选择题，前两名概率接近时再问一题比较参数，再用一个是否问题判断该工具能否完成请求，肯定概率低于 0.5 就拒答。编译器是确定性代码，按 schema 给每个参数定类型并生成有限选项的问题，候选取自请求原文、固定规则导出（单位换算、写成文字的数字）、schema 与运行环境，可选参数过阈值才赋值、必需参数缺失只报告不填。决策模型只把状态、问题与选项映射成每个选项的概率，作者用六个 4–35B 公开模型、不微调、单卡本地运行。代价是每条请求约 12 个问题各一次前向，数据库类工具上填充准确率不如大 LLM，缺失值仍需用户补齐。",
+    "results": "在 157 个工具、1,952 条请求的主基准上，最强 System 1 智能体的完全正确率为 93.9%，高于 18 个本地 LLM 配置中最好的 91.3%；10,888 次调用无一含虚构内容，LLM 调用则有 5.5–19.7% 含虚构值。",
+    "limitations": "基准 2,126 条请求中 2,003 条为作者自建，覆盖限于生物医学工具；'不虚构'只保证取值落在候选集内，选错工具或把值填错参数仍会发生，另有 22 次调用提交了 schema 不接受的取值形式。"
+  },
+  "claims": [
+    {
+      "claim": "方法在 157 个生物医学 MCP 工具上验证",
+      "numbers": [
+        "157"
+      ],
+      "source_span": "Results, 'A local System 1 agent for biomedical research'",
+      "quote": "A total of 157 tools of 18 MCP servers"
+    },
+    {
+      "claim": "最强 System 1 智能体（pplx-decider-27b）工具调用、参数填充与完全正确率分别为 97.0%、97.0%、93.9%",
+      "numbers": [
+        "97.0",
+        "93.9"
+      ],
+      "source_span": "Results, 'Accuracy'",
+      "quote": "pplx-decider-27b reached 97.0%, 97.0% and 93.9%"
+    },
+    {
+      "claim": "主基准由 1,952 条完整与超范围请求构成",
+      "numbers": [
+        "1952"
+      ],
+      "source_span": "Results, 'Accuracy'",
+      "quote": "main benchmark of 1,952 requests"
+    },
+    {
+      "claim": "pplx-decider-27b 智能体在完全正确率上领先全部 18 个 LLM agent 配置",
+      "numbers": [
+        "18"
+      ],
+      "source_span": "Results, 'Accuracy'",
+      "quote": "pplx-decider-27b-based agent was ahead of all 18 LLM-based agents"
+    },
+    {
+      "claim": "最好的 LLM 配置（Qwen3.5-27B 关闭推理）完全正确率为 91.3%",
+      "numbers": [
+        "91.3"
+      ],
+      "source_span": "Results, 'Accuracy'",
+      "quote": "reached 95.1%, 97.2% and 91.3% accuracy"
+    },
+    {
+      "claim": "系统共产生 10,888 次 System 1 调用",
+      "numbers": [
+        "10888"
+      ],
+      "source_span": "Results, 'Reliability'",
+      "quote": "Across 10,888 System 1 calls"
+    },
+    {
+      "claim": "System 1 调用中没有出现虚构内容",
+      "numbers": [],
+      "source_span": "Results, 'Reliability'",
+      "quote": "No System 1 call contained hallucinated content"
+    },
+    {
+      "claim": "含至少一个虚构值的 LLM 调用占比为 5.5–19.7%",
+      "numbers": [
+        "5.5",
+        "19.7"
+      ],
+      "source_span": "Results, 'Reliability'",
+      "quote": "A total of 5.5–19.7% of LLM-based agent calls contained at least one invented value"
+    },
+    {
+      "claim": "欠指定请求共 174 条，单独评估",
+      "numbers": [
+        "174"
+      ],
+      "source_span": "Results, 'A local System 1 agent for biomedical research'",
+      "quote": "On the 174 underspecified requests"
+    },
+    {
+      "claim": "LLM agent 在欠指定请求中最多有 62.1% 直接编造缺失值",
+      "numbers": [
+        "62.1"
+      ],
+      "source_span": "Results, 'Reliability'",
+      "quote": "filled the missing value with an invented one in up to 62.1% of underspecified requests"
+    },
+    {
+      "claim": "评估集共 2,126 条请求，其中 2,003 条为自建提示",
+      "numbers": [
+        "2126",
+        "2003"
+      ],
+      "source_span": "Methods, 'Prompt Requests, labels and evaluation set'",
+      "quote": "The evaluation set comprised 2,126 requests: 2,003 custom prompts"
+    },
+    {
+      "claim": "10,888 次调用中有 22 次把请求中的取值放在 schema 要求另一形式的位置",
+      "numbers": [
+        "22"
+      ],
+      "source_span": "Results, 'Reliability'",
+      "quote": "In 22 of the 10,888 System 1 calls"
+    },
+    {
+      "claim": "能力校验在肯定概率低于 0.5 时拒答",
+      "numbers": [
+        "0.5"
+      ],
+      "source_span": "Results, 'A method to build System 1 agents'",
+      "quote": "declines below a probability of 0.5"
+    },
+    {
+      "claim": "每个请求平均约 12 个问题",
+      "numbers": [
+        "12"
+      ],
+      "source_span": "Results, 'Efficiency'",
+      "quote": "A System 1 agent asked about 12 questions per request"
+    },
+    {
+      "claim": "使用六个 4 到 35 亿参数的公开决策模型",
+      "numbers": [
+        "4",
+        "35"
+      ],
+      "source_span": "Results, 'A local System 1 agent for biomedical research'",
+      "quote": "six published decision models with 4 to 35 billion parameters"
+    }
+  ]
+}

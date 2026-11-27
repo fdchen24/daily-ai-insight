@@ -1,0 +1,191 @@
+{
+  "title_zh": "语言模型就是少样本学习器",
+  "affiliations": [
+    "OpenAI",
+    "Johns Hopkins University"
+  ],
+  "scores": {
+    "research_value": 92,
+    "research_value_reason": "把 zero-shot/one-shot/few-shot 三分法和「任务写在 prompt 里、不做梯度更新」的评测协议固定下来，closed-book QA、prompt 鲁棒性、上下文学习与污染审计至今都以这套设定为基线。",
+    "novelty": 88,
+    "novelty_reason": "in-context learning 本身在 GPT-2 已出现，实质差异是把规模推到 175B 后让 few-shot 从「远逊于微调」变成偶尔追平或超过微调，并把评测从单任务搬到二十多个数据集的统一协议上。",
+    "technical_depth": 80,
+    "technical_depth_reason": "方法层面基本是 GPT-2 加稀疏注意力的放大，技术含量主要在 8 个规模的三档对照实验、13-gram 重叠的干净子集重测，以及人类判别合成新闻的实验设计。"
+  },
+  "reading": {
+    "why_today": "提出 GPT-3（175B），把任务写进 prompt、不做梯度更新，用 in-context learning 让 few-shot 接近微调 SOTA；prompt 与 few-shot 评测沿用至今，但已被 instruction tuning 与 RLHF 大幅取代。",
+    "historical_context": "2020 年前的主流是「预训练 + 下游微调」：BERT、RoBERTa、T5 每个任务都要几千到几十万条标注样本，还要换分类头。GPT-2 已经能零样本续写，但在 Natural Questions 上只有 4%，远低于微调模型；当时对继续放大规模是否还能换来下游收益也存在争论。",
+    "problem_then": "能否不训练任何任务专用参数，只靠推理时给出的自然语言指令和少量示例就完成新任务？也就是把「任务适配」从改权重换成改输入，并检验这条路线在足够大的规模下是否真的可行。",
+    "contributions": [
+      {
+        "point": "证明 in-context learning 随规模变成可用能力",
+        "detail": "训练 125M 到 175B 共 8 个规模的同族模型，发现 few-shot 曲线比 zero-shot 更陡，模型越大越能从上下文示例中获益。"
+      },
+      {
+        "point": "任务无关的统一评测协议",
+        "detail": "所有任务都靠拼接上下文后做似然打分或生成来完成，不做梯度更新，覆盖翻译、问答、完形、算术、词序重排与合成新闻。"
+      },
+      {
+        "point": "把训练数据污染变成必须报告的问题",
+        "detail": "用 13-gram 重叠构造干净子集重测，对 PIQA、Winograd 结果加星号，并直接放弃被训练集完全覆盖的若干 Wikipedia 语言建模基准。"
+      }
+    ],
+    "core_idea": "整篇只有一个训练目标：用前面的所有 token 预测下一个 token。任务不再由损失函数或分类头定义，而由喂进去的文本定义——把若干组「英文句子→法文句子」按行拼进输入，模型接着往下写就等于翻译，全程没有梯度更新。few-shot 的 K 通常取 10 到 100 个示例，全部塞进 2048 token 的上下文窗口，一次前向即完成推断；选择题则给每个候选答案算逐 token 似然取最大者。规模从 125M 拉到 175B，所有模型都训练 300B token，数据是过滤后的 Common Crawl 混合网页文本、两套书籍语料与 Wikipedia。所谓 meta-learning 就是：预训练把大量任务压进权重，推理时用上下文把对应能力「认」出来。",
+    "influence": "把 prompt 从技巧变成正式评测设定：few-shot prompting、prompt engineering 以及后续 in-context learning 的 scaling 研究都沿用这套大小模型对照；closed-book QA 成为独立赛道；13-gram 重叠加干净子集的污染审计成了新基准发布的标配；论文在局限性中点出的「从人类反馈中学习目标」，直接指向后来的 instruction tuning 与 RLHF。",
+    "modern_reading": "今天回看：in-context learning 究竟是从零学新任务，还是识别预训练里见过的模式，论文自己留作开放问题，后续工作更支持后者；原始 few-shot 数字已被 instruction tuning 与 RLHF 后的模型全面超过，把示例拼进 prompt 退居评测基线；文中承认过滤 bug 让污染没有清干净，这也让污染审计从附录走进常规流程。"
+  },
+  "claims": [
+    {
+      "claim": "GPT-3 有 1750 亿参数，是此前最大非稀疏语言模型的 10 倍",
+      "numbers": [
+        "175",
+        "10"
+      ],
+      "source_span": "Abstract",
+      "quote": "an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model"
+    },
+    {
+      "claim": "训练了 8 个规模从 125M 到 175B 的模型做对照",
+      "numbers": [
+        "8",
+        "125",
+        "175"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "we train 8 different sizes of model, ranging over three orders of magnitude from 125 million parameters to 175 billion parameters"
+    },
+    {
+      "claim": "所有模型都训练了 3000 亿 token",
+      "numbers": [
+        "300"
+      ],
+      "source_span": "Table 2.1",
+      "quote": "All models were trained for a total of 300 billion tokens."
+    },
+    {
+      "claim": "上下文窗口为 2048 token",
+      "numbers": [
+        "2048"
+      ],
+      "source_span": "Section 2.1",
+      "quote": "All models use a context window of nctx = 2048 tokens."
+    },
+    {
+      "claim": "few-shot 设定里 K 通常取 10 到 100 个示例",
+      "numbers": [
+        "10",
+        "100"
+      ],
+      "source_span": "Section 2",
+      "quote": "We typically set K in the range of 10 to 100"
+    },
+    {
+      "claim": "GPT-2 在 Natural Questions 上只有 4%",
+      "numbers": [
+        "4"
+      ],
+      "source_span": "Section 1",
+      "quote": "achieves only 4% on Natural Questions"
+    },
+    {
+      "claim": "CoQA 上 zero-shot、one-shot、few-shot 分别为 81.5、84.0、85.0 F1",
+      "numbers": [
+        "81.5",
+        "84.0",
+        "85.0"
+      ],
+      "source_span": "Section 1",
+      "quote": "GPT-3 achieves 81.5 F1 on CoQA in the zero-shot setting, 84.0 F1 on CoQA in the one-shot setting, 85.0 F1 in the few-shot setting"
+    },
+    {
+      "claim": "TriviaQA 上 zero-shot 64.3%、few-shot 71.2%",
+      "numbers": [
+        "64.3",
+        "68.0",
+        "71.2"
+      ],
+      "source_span": "Section 1",
+      "quote": "GPT-3 achieves 64.3% accuracy on TriviaQA in the zero-shot setting, 68.0% in the one-shot setting, and 71.2% in the few-shot setting"
+    },
+    {
+      "claim": "LAMBADA few-shot 达 86.4%，比此前 SOTA 高 18% 以上",
+      "numbers": [
+        "86.4",
+        "18"
+      ],
+      "source_span": "Section 3.1.2",
+      "quote": "GPT-3 achieves 86.4% accuracy in the few-shot setting, an increase of over 18% from the previous state-of-the-art"
+    },
+    {
+      "claim": "PTB 上零样本困惑度 20.50，比此前 SOTA 低 15 个点",
+      "numbers": [
+        "20.50",
+        "15"
+      ],
+      "source_span": "Section 3.1.1",
+      "quote": "Our largest model sets a new SOTA on PTB by a substantial margin of 15 points, achieving a perplexity of 20.50."
+    },
+    {
+      "claim": "译成英语时 few-shot 比此前无监督 NMT 高约 5 BLEU",
+      "numbers": [
+        "5"
+      ],
+      "source_span": "Table 3.4",
+      "quote": "Few-shot GPT-3 outperforms previous unsupervised NMT work by 5 BLEU when translating into English"
+    },
+    {
+      "claim": "Winogrande 上 zero-shot、one-shot、few-shot 分别为 70.2%、73.2%、77.7%",
+      "numbers": [
+        "70.2",
+        "73.2",
+        "77.7"
+      ],
+      "source_span": "Section 3.4",
+      "quote": "GPT-3 achieves 70.2% in the zero-shot setting, 73.2% in the one-shot setting, and 77.7% in the few-shot setting"
+    },
+    {
+      "claim": "两位加法 few-shot 100%，两位减法 98.9%",
+      "numbers": [
+        "100",
+        "98.9"
+      ],
+      "source_span": "Section 3.9.1",
+      "quote": "100% accuracy on 2 digit addition, 98.9% at 2 digit subtraction"
+    },
+    {
+      "claim": "SAT 类比 few-shot 达 65.2%",
+      "numbers": [
+        "65.2",
+        "59.1",
+        "53.7"
+      ],
+      "source_span": "Section 3.9.3",
+      "quote": "GPT-3 achieves 65.2% in the few-shot setting, 59.1% in the one-shot setting, and 53.7% in the zero-shot setting"
+    },
+    {
+      "claim": "人类判别 175B 生成的新闻仅约 52% 准确率，接近随机",
+      "numbers": [
+        "175",
+        "52"
+      ],
+      "source_span": "Section 3.9.4",
+      "quote": "175B parameter model was barely above chance at ∼52%"
+    },
+    {
+      "claim": "训练数据按词数 93% 是英语",
+      "numbers": [
+        "93"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "still primarily English (93% by word count)"
+    },
+    {
+      "claim": "用 13-gram 重叠来定义潜在污染并构造干净子集重测",
+      "numbers": [
+        "13"
+      ],
+      "source_span": "Section 4",
+      "quote": "examples that have a 13-gram overlap with anything in the pretraining set"
+    }
+  ]
+}

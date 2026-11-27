@@ -1,12 +1,14 @@
 {
   "arxiv_announce_date": "2026-11-25",
-  "generated_at": "2026-11-25T20:16:03.991583+00:00",
+  "generated_at": "2026-11-27T06:18:12.757170+00:00",
   "counts": {
     "classic": 1,
     "frontier": 10,
     "survey": 1
   },
-  "notes": [],
+  "notes": [
+    "重解读 2026-11-27：11 条按当前模板重新生成，1 条未过校验、保留原解读"
+  ],
   "items": [
     {
       "id": "arxiv-2005.14165",
@@ -16,7 +18,7 @@
       ],
       "arxiv_id": "2005.14165",
       "title": "Language Models are Few-Shot Learners",
-      "title_zh": "语言模型就是少样本学习者：GPT-3 与 in-context learning",
+      "title_zh": "语言模型就是少样本学习器",
       "authors": [
         "Tom B. Brown",
         "Benjamin Mann",
@@ -63,52 +65,55 @@
       "year": 2020,
       "quality": {
         "dimensions": {
-          "research_value": 90.0,
-          "novelty": 82.0,
-          "technical_depth": 66.0,
+          "research_value": 92.0,
+          "novelty": 88.0,
+          "technical_depth": 80.0,
           "impact": 100.0,
           "completeness": null
         },
         "tier": "A",
         "l1_reason": "in-context learning 的原始刻画，读它才能分辨今天关于 prompting 与 scaling 的争论。",
         "evidence_level": "fulltext",
-        "score": 84.1,
+        "score": 89.6,
         "rank_in_pool": 1,
         "l2_reasons": {
-          "research_value": "zero-/one-/few-shot 三档评测协议、以提示指定任务的做法，以及 13-gram 重叠加干净子集的污染审计，至今仍是 LLM 基准与数据审计的默认框架。",
-          "novelty": "架构与训练目标沿用 GPT-2，实质差异在于把 in-context learning 当作被测量对象，用 175B 规模与跨 20 多个数据集的统一提示格式，证明它随规模可用。",
-          "technical_depth": "无新算法：改动仅为交替 dense 与 locally banded sparse attention，技术含量在 8 个规模族（125M–175B）的工程实现、打分与归一化协议设计，以及污染量化的方法学。"
+          "research_value": "把 zero-shot/one-shot/few-shot 三分法和「任务写在 prompt 里、不做梯度更新」的评测协议固定下来，closed-book QA、prompt 鲁棒性、上下文学习与污染审计至今都以这套设定为基线。",
+          "novelty": "in-context learning 本身在 GPT-2 已出现，实质差异是把规模推到 175B 后让 few-shot 从「远逊于微调」变成偶尔追平或超过微调，并把评测从单任务搬到二十多个数据集的统一协议上。",
+          "technical_depth": "方法层面基本是 GPT-2 加稀疏注意力的放大，技术含量主要在 8 个规模的三档对照实验、13-gram 重叠的干净子集重测，以及人类判别合成新闻的实验设计。"
         }
       },
       "recommendation_type": "classic",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 30600,
-        "tokens_out": 6444,
-        "cache_hit_tokens": 1280
+        "tokens_in": 30696,
+        "tokens_out": 9256,
+        "cache_hit_tokens": 1408
       },
       "claims": [
         {
-          "claim": "GPT-3 是 1750 亿参数的自回归语言模型",
+          "claim": "GPT-3 有 1750 亿参数，是此前最大非稀疏语言模型的 10 倍",
           "numbers": [
-            "175"
+            "175",
+            "10"
           ],
           "source_span": "Abstract",
-          "quote": "175 billion parameters",
+          "quote": "an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model",
           "verified": true
         },
         {
-          "claim": "GPT-2 在 Natural Questions 上仅 4%",
+          "claim": "训练了 8 个规模从 125M 到 175B 的模型做对照",
           "numbers": [
-            "4"
+            "8",
+            "125",
+            "175"
           ],
-          "source_span": "Section 1 Introduction",
-          "quote": "achieves only 4% on Natural Questions",
+          "source_span": "Section 2.1",
+          "quote": "we train 8 different sizes of model, ranging over three orders of magnitude from 125 million parameters to 175 billion parameters",
           "verified": true
         },
         {
-          "claim": "所有模型统一训练 3000 亿 tokens",
+          "claim": "所有模型都训练了 3000 亿 token",
           "numbers": [
             "300"
           ],
@@ -117,57 +122,142 @@
           "verified": true
         },
         {
-          "claim": "所有模型上下文窗口为 2048 tokens",
+          "claim": "上下文窗口为 2048 token",
           "numbers": [
             "2048"
           ],
           "source_span": "Section 2.1",
-          "quote": "2048 tokens",
+          "quote": "All models use a context window of nctx = 2048 tokens.",
           "verified": true
         },
         {
-          "claim": "LAMBADA few-shot 准确率 86.4%",
+          "claim": "few-shot 设定里 K 通常取 10 到 100 个示例",
           "numbers": [
-            "86.4"
+            "10",
+            "100"
           ],
-          "source_span": "Table 3.2",
-          "quote": "86.4",
+          "source_span": "Section 2",
+          "quote": "We typically set K in the range of 10 to 100",
           "verified": true
         },
         {
-          "claim": "TriviaQA few-shot 达到 71.2%",
+          "claim": "GPT-2 在 Natural Questions 上只有 4%",
           "numbers": [
+            "4"
+          ],
+          "source_span": "Section 1",
+          "quote": "achieves only 4% on Natural Questions",
+          "verified": true
+        },
+        {
+          "claim": "CoQA 上 zero-shot、one-shot、few-shot 分别为 81.5、84.0、85.0 F1",
+          "numbers": [
+            "81.5",
+            "84.0",
+            "85.0"
+          ],
+          "source_span": "Section 1",
+          "quote": "GPT-3 achieves 81.5 F1 on CoQA in the zero-shot setting, 84.0 F1 on CoQA in the one-shot setting, 85.0 F1 in the few-shot setting",
+          "verified": true
+        },
+        {
+          "claim": "TriviaQA 上 zero-shot 64.3%、few-shot 71.2%",
+          "numbers": [
+            "64.3",
+            "68.0",
             "71.2"
           ],
-          "source_span": "Table 3.3",
-          "quote": "71.2",
+          "source_span": "Section 1",
+          "quote": "GPT-3 achieves 64.3% accuracy on TriviaQA in the zero-shot setting, 68.0% in the one-shot setting, and 71.2% in the few-shot setting",
           "verified": true
         },
         {
-          "claim": "SuperGLUE few-shot 平均 69.0",
+          "claim": "LAMBADA few-shot 达 86.4%，比此前 SOTA 高 18% 以上",
           "numbers": [
-            "69.0"
+            "86.4",
+            "18"
           ],
-          "source_span": "Table 3.8",
-          "quote": "69.0",
+          "source_span": "Section 3.1.2",
+          "quote": "GPT-3 achieves 86.4% accuracy in the few-shot setting, an increase of over 18% from the previous state-of-the-art",
           "verified": true
         },
         {
-          "claim": "SuperGLUE 微调 SOTA 平均 92.5",
+          "claim": "PTB 上零样本困惑度 20.50，比此前 SOTA 低 15 个点",
           "numbers": [
-            "92.5"
+            "20.50",
+            "15"
           ],
-          "source_span": "Table 3.8",
-          "quote": "92.5",
+          "source_span": "Section 3.1.1",
+          "quote": "Our largest model sets a new SOTA on PTB by a substantial margin of 15 points, achieving a perplexity of 20.50.",
           "verified": true
         },
         {
-          "claim": "WiC few-shot 仅 49.4%，处于随机水平",
+          "claim": "译成英语时 few-shot 比此前无监督 NMT 高约 5 BLEU",
           "numbers": [
-            "49.4"
+            "5"
           ],
-          "source_span": "Table 3.8 / Section 3.7",
-          "quote": "49.4",
+          "source_span": "Table 3.4",
+          "quote": "Few-shot GPT-3 outperforms previous unsupervised NMT work by 5 BLEU when translating into English",
+          "verified": true
+        },
+        {
+          "claim": "Winogrande 上 zero-shot、one-shot、few-shot 分别为 70.2%、73.2%、77.7%",
+          "numbers": [
+            "70.2",
+            "73.2",
+            "77.7"
+          ],
+          "source_span": "Section 3.4",
+          "quote": "GPT-3 achieves 70.2% in the zero-shot setting, 73.2% in the one-shot setting, and 77.7% in the few-shot setting",
+          "verified": true
+        },
+        {
+          "claim": "两位加法 few-shot 100%，两位减法 98.9%",
+          "numbers": [
+            "100",
+            "98.9"
+          ],
+          "source_span": "Section 3.9.1",
+          "quote": "100% accuracy on 2 digit addition, 98.9% at 2 digit subtraction",
+          "verified": true
+        },
+        {
+          "claim": "SAT 类比 few-shot 达 65.2%",
+          "numbers": [
+            "65.2",
+            "59.1",
+            "53.7"
+          ],
+          "source_span": "Section 3.9.3",
+          "quote": "GPT-3 achieves 65.2% in the few-shot setting, 59.1% in the one-shot setting, and 53.7% in the zero-shot setting",
+          "verified": true
+        },
+        {
+          "claim": "人类判别 175B 生成的新闻仅约 52% 准确率，接近随机",
+          "numbers": [
+            "175",
+            "52"
+          ],
+          "source_span": "Section 3.9.4",
+          "quote": "175B parameter model was barely above chance at ∼52%",
+          "verified": true
+        },
+        {
+          "claim": "训练数据按词数 93% 是英语",
+          "numbers": [
+            "93"
+          ],
+          "source_span": "Section 3.3",
+          "quote": "still primarily English (93% by word count)",
+          "verified": true
+        },
+        {
+          "claim": "用 13-gram 重叠来定义潜在污染并构造干净子集重测",
+          "numbers": [
+            "13"
+          ],
+          "source_span": "Section 4",
+          "quote": "examples that have a 13-gram overlap with anything in the pretraining set",
           "verified": true
         }
       ],
@@ -190,26 +280,26 @@
       },
       "arxiv_version": "v4",
       "content": {
-        "why_today": "提出 GPT-3，用 175B 参数的自回归 LM 把 few-shot 变成 in-context learning：不更新任何梯度，只靠上下文中的示例完成新任务；今天 LLM 的 prompt 评测与三档 shot 报告仍沿用此设定。",
-        "historical_context": "2020 年前的主流是 pre-train + fine-tune：架构虽已与任务无关，每个新任务仍需数千到数十万条标注样本。GPT-2 已出现 in-context learning 的雏形，但在 Natural Questions 上仅 4%，远落后于微调结果。",
-        "problem_then": "能否不做梯度更新、只在上下文里给几个示例，就让语言模型完成新任务？以及这种能力是否随规模可预测地变强？",
+        "why_today": "提出 GPT-3（175B），把任务写进 prompt、不做梯度更新，用 in-context learning 让 few-shot 接近微调 SOTA；prompt 与 few-shot 评测沿用至今，但已被 instruction tuning 与 RLHF 大幅取代。",
+        "historical_context": "2020 年前的主流是「预训练 + 下游微调」：BERT、RoBERTa、T5 每个任务都要几千到几十万条标注样本，还要换分类头。GPT-2 已经能零样本续写，但在 Natural Questions 上只有 4%，远低于微调模型；当时对继续放大规模是否还能换来下游收益也存在争论。",
+        "problem_then": "能否不训练任何任务专用参数，只靠推理时给出的自然语言指令和少量示例就完成新任务？也就是把「任务适配」从改权重换成改输入，并检验这条路线在足够大的规模下是否真的可行。",
         "contributions": [
           {
-            "point": "把 in-context learning 从雏形推到可用",
-            "detail": "在 175B 规模上系统评测 zero-/one-/few-shot：不更新权重，仅凭提示示例，LAMBADA few-shot 达 86.4%、TriviaQA few-shot 达 71.2%，后者超过同设定的微调闭卷结果。"
+            "point": "证明 in-context learning 随规模变成可用能力",
+            "detail": "训练 125M 到 175B 共 8 个规模的同族模型，发现 few-shot 曲线比 zero-shot 更陡，模型越大越能从上下文示例中获益。"
           },
           {
-            "point": "规模族与统一评测协议",
-            "detail": "同时训练 125M 到 175B 共 8 个模型，各训练 300B tokens，在 2 打以上数据集上用同一套提示格式评测，给出可比的 scaling 曲线。"
+            "point": "任务无关的统一评测协议",
+            "detail": "所有任务都靠拼接上下文后做似然打分或生成来完成，不做梯度更新，覆盖翻译、问答、完形、算术、词序重排与合成新闻。"
           },
           {
-            "point": "benchmark 污染的量化和处置",
-            "detail": "以 13-gram 重叠构造保守的干净子集并对比分数，对受影响的 PIQA、Winograd 结果打星号，对几乎完全泄漏的 Wikipedia LM 任务直接不报告。"
+            "point": "把训练数据污染变成必须报告的问题",
+            "detail": "用 13-gram 重叠构造干净子集重测，对 PIQA、Winograd 结果加星号，并直接放弃被训练集完全覆盖的若干 Wikipedia 语言建模基准。"
           }
         ],
-        "core_idea": "训练目标完全不变：GPT-3 沿用 GPT-2 架构，只在 transformer 层里交替使用 dense 与 locally banded sparse attention，把参数量放大到 175B。任务不再靠改网络或改权重指定，而是写进上下文：$K$ 个 (context, completion) 示例后接待答 context，模型在前向传播中预测 completion。多选任务比较各候选的 $\\log P(\\text{completion}\\mid\\text{context})$ 并做长度归一化，部分数据集再除以无条件概率做 PMI 式校正；上下文窗口 2048 tokens，通常容纳 10–100 个示例。",
-        "influence": "三档 shot 报告方式成为 LLM 基准的默认写法；「上下文即任务说明」直接支撑了此后 prompt 工程与 API 化的模型使用方式。文中把 human feedback、RL 微调、多模态 grounding 列为下一步，这条线后来成为对齐研究的主干；污染检测流程也成了大模型数据审计的参照做法。",
-        "modern_reading": "今天看，「提示里塞示例」已更多让位于指令微调与工具调用，175B 的 few-shot 数字也早被超过；论文自陈的短板仍在起作用：SuperGLUE few-shot 平均 69.0，远低于微调 SOTA 的 92.5，WiC 只有 49.4（随机水平），比较两句类任务普遍偏弱。真正留下来的是评测范式：三档 shot 设定，以及污染必须被量化并标注。",
+        "core_idea": "整篇只有一个训练目标：用前面的所有 token 预测下一个 token。任务不再由损失函数或分类头定义，而由喂进去的文本定义——把若干组「英文句子→法文句子」按行拼进输入，模型接着往下写就等于翻译，全程没有梯度更新。few-shot 的 K 通常取 10 到 100 个示例，全部塞进 2048 token 的上下文窗口，一次前向即完成推断；选择题则给每个候选答案算逐 token 似然取最大者。规模从 125M 拉到 175B，所有模型都训练 300B token，数据是过滤后的 Common Crawl 混合网页文本、两套书籍语料与 Wikipedia。所谓 meta-learning 就是：预训练把大量任务压进权重，推理时用上下文把对应能力「认」出来。",
+        "influence": "把 prompt 从技巧变成正式评测设定：few-shot prompting、prompt engineering 以及后续 in-context learning 的 scaling 研究都沿用这套大小模型对照；closed-book QA 成为独立赛道；13-gram 重叠加干净子集的污染审计成了新基准发布的标配；论文在局限性中点出的「从人类反馈中学习目标」，直接指向后来的 instruction tuning 与 RLHF。",
+        "modern_reading": "今天回看：in-context learning 究竟是从零学新任务，还是识别预训练里见过的模式，论文自己留作开放问题，后续工作更支持后者；原始 few-shot 数字已被 instruction tuning 与 RLHF 后的模型全面超过，把示例拼进 prompt 退居评测基线；文中承认过滤 bug 让污染没有清干净，这也让污染审计从附录走进常规流程。",
         "reading_minutes": 3
       }
     },
@@ -224,7 +314,7 @@
       "arxiv_version": "v1",
       "version_count": 1,
       "title": "Lazy Agents Answer Against Their Own Beliefs: Reinforcement Learning with Verifiable Beliefs Teaches Them to Act on What They Believe",
-      "title_zh": "懒惰智能体违背自身信念：可验证信念强化学习 RLVB 教其按信念行动",
+      "title_zh": "RLVB：用可验证信念的强化学习让视觉智能体按自己的信念行事",
       "authors": [
         "Richmond Sin Jing Xuan",
         "Peilin Feng",
@@ -274,34 +364,34 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 88.0,
-          "novelty": 84.0,
-          "technical_depth": 89.0,
+          "research_value": 85.0,
+          "novelty": 78.0,
+          "technical_depth": 86.0,
           "impact": 97.0,
           "completeness": 90.0
         },
         "tier": "A",
         "l1_reason": "用模拟器精确后验构造成熟度奖励，无需 critic/judge，教 agent 何时提交答案；9/9 设置均提升，含未见基准",
         "evidence_level": "fulltext",
-        "score": 88.8,
+        "score": 85.8,
         "rank_in_pool": 1,
         "l2_reasons": {
-          "research_value": "把“何时提交”形式化为可用模拟器后验验证的最优停止问题，为长程 agentic RL 的逐步信用分配提供了可检验的新信号。",
-          "novelty": "以精确后验教师生成过程奖励、且奖励完全不读智能体自述信念，区别于 outcome reward、LLM judge 过程奖励与 Agent-BRACE 式真实状态评分。",
-          "technical_depth": "三个 VLM、三个基准、完整消融、行为归因与训练成本对比；结论受“后验必须可计算”限制，但证据链完整。"
+          "research_value": "把长程视觉智能体的\"何时该停\"落成可用精确后验验证的停止决策，覆盖三模型三基准并给出行为级归因，对 agentic RL 的信用分配有直接参考价值。",
+          "novelty": "与用 LLM judge 或学习型过程奖励模型给每步打分不同，这里直接用模拟器的精确后验构造过程奖励，只评动作、不读智能体写下的信念行。",
+          "technical_depth": "有 POMDP 形式化、带前瞻的后验教师、两种学习器与逐项消融，并用后验回放把增益拆成\"答在更高证据水平\"和\"同等证据下更准\"两部分，同时如实报告取证动作没变好、证据充分时误读上升。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 36917,
-        "tokens_out": 6763,
-        "cache_hit_tokens": 1664
+        "tokens_in": 37629,
+        "tokens_out": 8816,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "RLVB 在全部九个设定上均优于基座，平均提升 17.1%。",
+          "claim": "RLVB 在九个设定上全部超过基座，平均提升 17.1%",
           "numbers": [
             "17.1"
           ],
@@ -310,16 +400,17 @@
           "verified": true
         },
         {
-          "claim": "在同一 GRPO 学习器下，后验过程奖励比结果奖励平均高 18.1%。",
+          "claim": "结果奖励的 GRPO 与 PPO（action-only）平均分别下降 1.0% 与 5.1%",
           "numbers": [
-            "18.1"
+            "1.0",
+            "5.1"
           ],
           "source_span": "Section 4.3, Comparison with the baselines",
-          "quote": "With this learner, the posterior process reward outperforms the outcome reward in all nine settings, by 18.1% on average.",
+          "quote": "loses 1.0% and PPO (action-only) loses 5.1%",
           "verified": true
         },
         {
-          "claim": "RLVB 比使用 LLM judge 过程奖励的 PPO 平均高 9.3%，且 GPU-hours 少 1.6 倍。",
+          "claim": "对带 LLM judge 过程奖励的 PPO，RLVB 平均高 9.3%，且 GPU 时间少 1.6 倍",
           "numbers": [
             "9.3",
             "1.6"
@@ -329,17 +420,45 @@
           "verified": true
         },
         {
-          "claim": "训练后智能体在三个基准上证据充分时作答比例分别为 51%、12%、74%，基座为 8%、0.4%、36%。",
+          "claim": "基座在证据不足、自己信念行仍列多个答案时提交的比例为 3–68%",
           "numbers": [
-            "51",
-            "12",
-            "74",
-            "8",
-            "0.4",
-            "36"
+            "3",
+            "68"
           ],
-          "source_span": "Abstract",
-          "quote": "The trained agent answers with sufficient evidence in 51%, 12% and 74% of the episodes on the three benchmarks, against 8%, 0.4% and 36% for the base model.",
+          "source_span": "Section 1 Introduction",
+          "quote": "commit at 3 to 68% of the turns at which the evidence is insufficient",
+          "verified": true
+        },
+        {
+          "claim": "只用信念行打分时 HiddenGames 准确率 24.6%，与基座 24.5% 持平",
+          "numbers": [
+            "24.6",
+            "24.5"
+          ],
+          "source_span": "Section 4.4 Ablation, Table 3 讨论",
+          "quote": "at 24.6% against 24.5%",
+          "verified": true
+        },
+        {
+          "claim": "证据充分却给出错误答案的比例从 2–4% 升到 10–15%",
+          "numbers": [
+            "2",
+            "4",
+            "10",
+            "15"
+          ],
+          "source_span": "Section 5 Limitations",
+          "quote": "rise from 2–4% to 10–15% of the episodes",
+          "verified": true
+        },
+        {
+          "claim": "RLVB 一次训练用 74.2 GPU-hour，带 LLM judge 的 PPO 为 120.1",
+          "numbers": [
+            "74.2",
+            "120.1"
+          ],
+          "source_span": "Section 4.5 Training time, Table 4",
+          "quote": "as many GPU-hours as RLVB (120.1 against 74.2)",
           "verified": true
         }
       ],
@@ -362,26 +481,27 @@
         "warnings": []
       },
       "content": {
-        "why_read": "提出 RLVB，用模拟器逐步计算的精确后验作为过程奖励，训练视觉语言智能体在证据不足时继续探索、充分时再提交，并在多个基准上超过基座与 LLM judge 过程奖励。",
-        "task": "长程视觉智能体要在证据不足时继续探索、证据充分时提交答案，这决定了答案是否可靠。现有 VLM 常过早作答，甚至在自己写出的信念行仍列多个候选时提交；结果奖励只看最终答案，无法区分幸运猜中与证据支持，过程奖励又依赖 judge 或 critic。",
+        "why_read": "提出 RLVB，用模拟器算出的精确后验构造可验证过程奖励，训练视觉语言智能体在证据不足时继续取证、证据充分后再作答，九个设定平均超基座 17.1%。",
+        "task": "长程视觉智能体常在证据不足时就作答，即使自己刚写下的信念行仍列出多个可能答案。终点结果奖励只评最终答案，猜对与有据可依同酬，学不会何时该停；LLM judge 看得到真值，会奖励幸运猜测、惩罚仍然谨慎的信念；PPO 的 critic 同样依赖隐藏目标。加了信念行有提升，早答却没有减少。",
         "findings": [
           {
-            "point": "结果奖励的信用分配错位",
-            "detail": "奖励只在回合末给最终答案，幸运猜中与证据充分同分；多步回合中无法指出哪一步该继续、哪一步该提交。"
+            "point": "早答不是不知道，而是行动不跟随自己的信念",
+            "detail": "基座在证据不足、自己信念行仍列出多个答案的回合里照样提交，占这类回合的 3–68%，说明监控与决策控制没有连上。"
           },
           {
-            "point": "LLM judge/critic 以真实答案而非证据评分",
-            "detail": "看到隐藏目标的 judge 会奖励猜中、惩罚仍不确定但正确的信念；PPO 还要额外 critic 与逐步 judge，成本高且信号偏。"
+            "point": "看真值的过程奖励无法给\"是否该停\"定价",
+            "detail": "LLM judge 见到隐藏答案，会把只报真答案的猜测判对、把仍列多个可能但正确的信念判错，奖励因此仍在为猜测付钱；PPO 的 critic 也拟合依赖隐藏目标的回报。"
           },
           {
-            "point": "会说信念不等于会按信念行动",
-            "detail": "基座即使写出多个候选仍提交，说明监控与决策控制脱节；外部 harness 读不到观测，无法替智能体判断证据是否充分。"
+            "point": "只奖励信念行本身改变不了行为",
+            "detail": "去掉动作项、只按后验给信念行打分后，HiddenGames 准确率 24.6% 对基座 24.5%，且模型只要行里只剩一个答案就提交，不管证据是否支持。"
           }
         ],
-        "method": "RLVB 用模拟器已知规则枚举隐藏答案，逐步计算精确后验 $b_t$，并让后验教师做 lookahead，权衡继续探索还是作答。奖励取动作在教师策略下的 log 概率 $R(h,x)=\\log \\pi^*(u\\mid b)$，完全不读智能体写出的信念行；但整条 turn 的似然更新仍会训练该行。学习器在同一历史采样多条 turn 做组内相对加权（GRPO 式）或 EM，无需 judge、critic 或 reward model。信念项可额外评分，但消融显示不提升准确率，故主方法只用动作项。",
-        "results": "全部设定均优于基座，平均 +17.1%；同学习器下比结果奖励高 18.1%，比 LLM judge 过程奖励高 9.3% 且 GPU-hours 少 1.6 倍。证据充分时作答比例 51/12/74%，基座 8/0.4/36%。",
-        "limitations": "需已知规则与观测似然；信念行只能列候选集合，无法表达细粒度置信度；MiniGrid/MineSweeper 上单步信息增益低时无增益，证据充分后仍会误读观测。",
-        "reading_minutes": 2
+        "method_idea": "原来用终点结果或看真值的 LLM judge 给每步打分：前者分不清猜中与查实，后者会把幸运猜测判成好步。RLVB 改用模拟器每步可算的精确后验作为过程奖励：后验仍留多个答案就奖励继续取证，收窄到唯一答案才奖励提交，奖励只读证据、不读模型写的信念行。回合似然被整体抬高，信念行一并训练，模型于是学会照它行事。",
+        "method_how": "每步用先验和观测似然算出隐藏答案的精确后验；教师在后验上做深度二前瞻，比较提交答案与各取证动作的价值，给出提交概率与动作分布。同一历史采样多个回合，按教师对该动作的对数概率给奖励，远低于教师最优动作的回合权重归零；用组内相对权重或按奖励指数加权的 EM 更新，每阶段受 KL 上限约束，并混入教师动作与随机开局覆盖罕见状态。信念行打分项经消融证实不涨点。代价是不需要 critic 与 LLM judge（74.2 对 120.1 GPU-hour），但要求环境已知先验与观测模型，前瞻成本随动作与观测数增长，学到的取证动作也不比基座更有信息量。",
+        "results": "九设定（三模型 × 三基准）全部超过基座，平均 +17.1%；结果奖励的 GRPO/PPO 平均反而下降 1.0% 与 5.1%；对带 LLM judge 的过程奖励 PPO 平均高 9.3%，GPU 时间少 1.6 倍。",
+        "limitations": "依赖已知先验与观测模型，开放规则任务需先估计后验；大动作空间要更浅或采样的前瞻；信念行只列可能集合，表示不了细粒度置信；证据充分仍答错的比例升到 10–15%。",
+        "reading_minutes": 3
       }
     },
     {
@@ -394,7 +514,7 @@
       "arxiv_version": "v2",
       "version_count": 2,
       "title": "AVO: Agentic Variation Operators for Autonomous Evolutionary Search",
-      "title_zh": "AVO：以自主智能体充当变异算子的进化式注意力 kernel 优化",
+      "title_zh": "AVO：把自主编码智能体当作进化搜索的变异算子",
       "authors": [
         "Terry Chen",
         "Zhifan Ye",
@@ -469,33 +589,33 @@
       "quality": {
         "dimensions": {
           "research_value": 88.0,
-          "novelty": 80.0,
-          "technical_depth": 78.0,
+          "novelty": 76.0,
+          "technical_depth": 74.0,
           "impact": 98.5,
           "completeness": 60.0
         },
         "tier": "A",
         "l1_reason": "用自主编码 agent 替代固定变异算子做进化搜索，7 天在 B200 上搜出超 cuDNN/FlashAttention-4 的注意力 kernel，结果可检验",
         "evidence_level": "fulltext",
-        "score": 82.8,
+        "score": 81.0,
         "rank_in_pool": 2,
         "l2_reasons": {
-          "research_value": "在 B200 上自主进化出的 attention kernel 稳定超过 cuDNN 与 FlashAttention-4，并给出向 GQA、GatedDeltaNet、Triangle Attention 迁移的证据，直接检验了 agentic 搜索能否做出专家级 kernel 优化。",
-          "novelty": "把整个 $Vary$（采样+生成+评测）交给一个自主体循环，而不是在既有 Sample/Generate 分解里换更强的生成器；算法层没有新组件，新意在于角色重定义以及由此获得的实测结果。",
-          "technical_depth": "有逐版本消融（+8.1%、+1.1%、+2.1%）、匹配 wall-clock 的 EVO 基线对比，并逐条解释优化针对的硬件瓶颈；但只有单次 7 天运行、评测配置窄、部分增益在噪声内，关键对照散在附录。"
+          "research_value": "把 LLM 从候选生成器提升为整个变异算子，并在被手工优化到极致的 attention 内核上超过 cuDNN 与 FlashAttention-4，对自动内核与算法发现方向有直接推动作用。",
+          "novelty": "关键改动是取消已有工作中“固定启发式采样 + 单轮生成”的分解，让智能体自己决定读什么、改什么、何时评测，属于对变异算子这一层的框架重构，而非新的搜索算法。",
+          "technical_depth": "提供了逐版本消融（Table 1）与同墙钟预算下对三个 EVO 基线的对照，优化分析具体到寄存器分配和流水调度；但只做单谱系、单一 B200、前向 prefill，增益幅度小且部分配置落在噪声内，驱动智能体与内部工具链未公开。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 10896,
-        "tokens_out": 11723,
-        "cache_hit_tokens": 1664
+        "tokens_in": 11608,
+        "tokens_out": 9007,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "7 天连续自主进化后，MHA kernel 最多超过 cuDNN 3.5%、超过 FlashAttention-4 10.5%。",
+          "claim": "因果 MHA 内核最高比 cuDNN 快 3.5%、比 FlashAttention-4 快 10.5%",
           "numbers": [
             "3.5",
             "10.5"
@@ -505,110 +625,51 @@
           "verified": true
         },
         {
-          "claim": "BF16 精度下 MHA kernel 峰值达到 1668 TFLOPS。",
+          "claim": "GQA 只需约 30 分钟额外自主适配，即最高比 cuDNN 快 7.0%、比 FlashAttention-4 快 9.3%",
           "numbers": [
-            "1668"
-          ],
-          "source_span": "Section 1 Introduction",
-          "quote": "producing MHA kernels achieving up to 1668 TFLOPS at BF16 precision",
-          "verified": true
-        },
-        {
-          "claim": "7 天里 agent 探索了超过 500 个优化方向，最终演化出 40 个 kernel 版本。",
-          "numbers": [
-            "500",
-            "40"
-          ],
-          "source_span": "Section 1 Introduction",
-          "quote": "the agent explored over 500 optimization directions and evolved 40 kernel versions",
-          "verified": true
-        },
-        {
-          "claim": "无分支累加器重缩放带来 non-causal +8.1%、causal +1.6% 的 geomean 提升，是单步最大收益。",
-          "numbers": [
-            "8.1",
-            "1.6"
-          ],
-          "source_span": "Section 5.1",
-          "quote": "yield +8.1% geomean throughput on non-causal and +1.6% on causal attention",
-          "verified": true
-        },
-        {
-          "claim": "correction/MMA 流水 overlap 带来 non-causal +1.1%、causal +0.4% 的 geomean 提升。",
-          "numbers": [
-            "1.1",
-            "0.4"
-          ],
-          "source_span": "Section 5.2",
-          "quote": "yielding +1.1% geomean throughput on non-causal and +0.4% on causal attention",
-          "verified": true
-        },
-        {
-          "claim": "寄存器跨 warp 组重分配后在 non-causal 上取得 +2.1% geomean 提升。",
-          "numbers": [
-            "2.1"
-          ],
-          "source_span": "Section 5.3",
-          "quote": "yielding +2.1% geomean throughput on non-causal attention",
-          "verified": true
-        },
-        {
-          "claim": "寄存器配比被调整为 184/88/56。",
-          "numbers": [
-            "184",
-            "88",
-            "56"
-          ],
-          "source_span": "Section 5.3",
-          "quote": "arriving at a 184/88/56 allocation",
-          "verified": true
-        },
-        {
-          "claim": "MHA kernel 适配到 GQA 只需约 30 分钟的自主工作。",
-          "numbers": [
-            "30"
-          ],
-          "source_span": "Section 4.3",
-          "quote": "completed this adaptation autonomously in approximately 30 minutes",
-          "verified": true
-        },
-        {
-          "claim": "causal GQA 上最多超过 cuDNN 7.0%、超过 FA4 9.3%。",
-          "numbers": [
+            "30",
             "7.0",
             "9.3"
           ],
-          "source_span": "Section 4.3",
-          "quote": "AVO achieves up to +7.0% over cuDNN and +9.3% over FA4",
+          "source_span": "Abstract",
+          "quote": "requiring only 30 minutes of additional autonomous adaptation and yielding gains of up to 7.0% over cuDNN and 9.3% over FlashAttention-4",
           "verified": true
         },
         {
-          "claim": "non-causal 上仅在序列长度大于 16384 时超过 cuDNN 1.8%–2.4%，更短序列的差异在测量噪声内。",
-          "numbers": [
-            "16384",
-            "1.8",
-            "2.4"
-          ],
-          "source_span": "Section 4.2",
-          "quote": "(+1.8% to +2.4% over cuDNN at sequence lengths larger than 16384)",
-          "verified": true
-        },
-        {
-          "claim": "匹配 wall-clock 预算下，AVO 比最强的 LLM 驱动 EVO 基线高约 31%。",
+          "claim": "同墙钟预算下 AVO 比最强的 LLM 进化搜索基线高约 31%",
           "numbers": [
             "31"
           ],
-          "source_span": "Appendix B（正文第 1 节引用）",
+          "source_span": "Section 1, contribution summary / Appendix B",
           "quote": "AVO achieves an approximately 31% improvement over the strongest EVO baseline",
           "verified": true
         },
         {
-          "claim": "在 GatedDeltaNet 上相对 Flash Linear Attention 最高取得 4.1× 加速。",
+          "claim": "把带分支的累加器重缩放改为无分支，使非因果配置几何平均吞吐提升 8.1%、因果提升 1.6%",
           "numbers": [
-            "4.1"
+            "8.1",
+            "1.6"
           ],
-          "source_span": "Section 1 贡献列表 / Appendix A",
-          "quote": "achieving up to 4.1× speedup over Flash Linear Attention on GatedDeltaNet",
+          "source_span": "Section 5.1 / Table 1, row 'Branchless accumulator rescaling'",
+          "quote": "+8.1% geomean throughput on non-causal and +1.6% on causal attention",
+          "verified": true
+        },
+        {
+          "claim": "7 天演化中智能体内部探索了 500 多个候选优化方向",
+          "numbers": [
+            "500"
+          ],
+          "source_span": "Section 4.4, 'Scale of exploration'",
+          "quote": "the agent explored over 500 candidate optimization directions internally",
+          "verified": true
+        },
+        {
+          "claim": "7 天自主演化最终只沉淀出 40 个提交版本",
+          "numbers": [
+            "40"
+          ],
+          "source_span": "Section 3.3",
+          "quote": "spanned 40 successive versions",
           "verified": true
         }
       ],
@@ -628,26 +689,27 @@
         "warnings": []
       },
       "content": {
-        "why_read": "提出 AVO，把进化搜索的变异算子整体交给自主编码智能体（可查文档、读评测反馈、自行修复），在 B200 上经 7 天自主进化，注意力 kernel 最高超 cuDNN 3.5%、FlashAttention-4 10.5%。",
-        "task": "attention 是 Transformer 的核心算子，也是被手工优化得最狠的 GPU kernel：FlashAttention-4 与 cuDNN 都在 Blackwell 上投入数月调优，想再快就必须反复读硬件文档、看 profiler 定位瓶颈、改代码、调正确性。已有的 LLM 进化搜索（FunSearch、AlphaEvolve、LoongFlow）把模型锁在固定流水线的单轮生成步骤：采样用启发式、评测与种群由框架控制，模型不能先查资料、试跑、读反馈再改，面对这种深度迭代工程就触顶。",
+        "why_read": "提出 AVO，用自主编码智能体取代经典进化搜索中固定的采样—生成—评估流水线，在 B200 上连续自主演化 7 天，得到的 attention kernel 最高比 cuDNN 快 3.5%、比 FlashAttention-4 快 10.5%。",
+        "task": "attention 是 Transformer 的核心算子，也是被手工优化得最狠的 GPU 内核：FlashAttention 系列与 cuDNN 在 Blackwell 上各需数月工程投入，剩余吞吐只能靠读硬件文档、看 profiler、反复试错挖出来。已有的 LLM 进化搜索（FunSearch、AlphaEvolve 一类）把 LLM 限制在流水线的单轮生成步骤，采样、种群管理与评估由框架固定，候选写完即交、无法自行验证和修正，于是最需要迭代工程的目标恰恰提升有限。",
         "findings": [
           {
-            "point": "现有进化搜索把 LLM 限制在单轮候选生成",
-            "detail": "Sample/Generate 分解里 Sample 是固定启发式、评测与种群由框架控制，模型每次只吐一个候选，不能先查参考实现、试跑、读反馈再改；AlphaEvolve、LoongFlow、TTT-Discover 均如此，遇到需要深度迭代的 kernel 工程即触顶。"
+            "point": "瓶颈在流水线剥夺了 LLM 的迭代能力，而不在候选生成本身",
+            "detail": "采样、种群管理、评估顺序全部由框架固定，LLM 每轮只输出一份代码就交出去，不能查文档、试跑、读 profiler 后再改，面对需要反复调试的内核几乎无从下手。"
           },
           {
-            "point": "在线 softmax 的累加器重缩放条件分支开销被低估",
-            "detail": "跳过无用的 rescale 省了计算，但每个 K-block 迭代都要付 warp 同步成本，且条件控制流使其无法改用更轻的非阻塞 fence，masked 与 unmasked 迭代还走不同执行路径。"
+            "point": "FA4 级别内核的剩余性能藏在子系统耦合处，单参数调优碰不到",
+            "detail": "消融中最大单步收益（非因果 +8.1%）来自把带分支的累加器重缩放改成无分支：同时去掉 warp 同步开销、消除分支发散，才换得上更轻的内存栅栏。"
           },
           {
-            "point": "照搬 FA4 的 warp 寄存器配额与串行 correction 流水在本 kernel 上成为瓶颈",
-            "detail": "profiler 显示 correction warp 组寄存器不足、溢出到 local memory，而 softmax 组仍有余量；双 Q-stage 设计下 correction warp 要等两个 PV GEMM 全部完成才开始归一化，第二个 GEMM 期间空转。"
+            "point": "长时间自主搜索会停滞或陷入无效编辑循环",
+            "detail": "作者观察到智能体会耗尽当前探索方向，或反复提交没有提升的改动，因此在主智能体之外加了一个 supervisor，在停滞时回看轨迹并重定向探索。"
           }
         ],
-        "method": "把 $Vary(P_t)=Generate(Sample(P_t))$ 换成 $Vary(P_t)=\\mathrm{Agent}(P_t,\\mathcal{K},f)$：通用编码 agent（Claude Opus 4.6，无 kernel 专用改造）在单条 lineage 上自主决定查 $\\mathcal{K}$（CUDA/PTX 文档、Blackwell 规格、FA4 源码）、比对历史版本与 profiling、改码并调 $f$ 评测（正确性不过直接判失败），失败即诊断重试。只有通过正确性且不劣于当前最优的版本才 commit 入库，supervisor agent 在停滞时介入换方向。对应三条根因：无分支 predicated select 替代条件重缩放并换轻量 fence；correction warp 在首个 PV GEMM 完成即开始归一化与之 overlap；把 softmax 组的部分寄存器挪给另两组。",
-        "results": "causal MHA 超 cuDNN 至多 3.5%、超 FA4 至多 10.5%，峰值 1668 TFLOPS；GQA 适配 30 分钟即超 cuDNN 7.0%，同预算比最强 EVO 基线高约 31%。",
-        "limitations": "仅验证单 lineage，种群分支与 archive 留待后续；评测限于 head dim 128、BF16、32k token 的 prefill，短序列 non-causal 增益落在噪声内，且只有一次 7 天运行；依赖内部 agent 与 Claude Opus 4.6，外部难以复现。",
-        "reading_minutes": 4
+        "method_idea": "此前的 LLM 进化搜索把变异拆成两步：框架按启发式挑父代、管种群、跑评测，LLM 只在单轮里照父代写一份候选，不能查资料、试跑或看反馈改主意。AVO 把整个变异交给一个自主编码智能体：它自己决定读哪段历史、翻哪页硬件文档、改哪块代码、何时调用评测，失败就自行诊断修复，直到提交一个通过正确性检查且分数不降的版本。",
+        "method_how": "给智能体的输入有三样：已提交版本及其分数的完整血统、领域知识库（CUDA 与 PTX 文档、Blackwell 架构规格、FlashAttention-4 源码），以及评分函数——先对参考实现做数值正确性检查，不通过记零分，再测 TFLOPS。每一轮它自主规划、改代码、编译、跑分、诊断修复，只有通过正确性且分数不低于当前最优的版本才作为一次 git commit 进入血统，失败尝试只留在内部轨迹里。另有一个 supervisor 监控停滞：长时间无提升时回看整条演化轨迹，把探索引向新的方向。代价是 7 天不间断运行、内部探索了 500 多个优化方向才沉淀出 40 个提交版本，且只在单谱系、前向 prefill、单一 B200 上验证。",
+        "results": "B200 BF16 前向 prefill 上，因果 MHA 最高比 cuDNN 快 3.5%、比 FA4 快 10.5%，GQA 只花 30 分钟适配也有 7.0%/9.3%；同墙钟预算下比最强 EVO 基线高约 31%。",
+        "limitations": "增益幅度小且集中在因果与长序列配置，非因果短序列落在噪声内；只验证单谱系、前向 prefill、单一 B200，驱动用的智能体与内部工具链未公开，复现成本高。",
+        "reading_minutes": 3
       }
     },
     {
@@ -661,7 +723,7 @@
       "arxiv_version": "v2",
       "version_count": 2,
       "title": "Rewirable Circuits in Transformers with Loom Attention",
-      "title_zh": "Loom Attention：Transformer 的可重连电路",
+      "title_zh": "Loom Attention：可按 token 重连电路的 Transformer 双流架构",
       "authors": [
         "Da Xiao",
         "Qingye Meng",
@@ -710,121 +772,116 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 86.0,
-          "novelty": 88.0,
-          "technical_depth": 86.0,
+          "research_value": 88.0,
+          "novelty": 90.0,
+          "technical_depth": 88.0,
           "impact": 96.3,
           "completeness": 76.2
         },
         "tier": "A",
         "l1_reason": "loom attention 让每个 token 动态重组电路，vertical+horizontal 双流；同 300B token 仅增 2% FLOPs 追平 3 倍算力 Transformer",
         "evidence_level": "fulltext",
-        "score": 87.1,
+        "score": 88.6,
         "rank_in_pool": 3,
         "l2_reasons": {
-          "research_value": "把 head 间组合从固定虚拟权重变成逐 token 可选的布线，并用 scaling law、下游评测与机制分析共同支撑，对残差流架构和电路可解释性都有直接意义。",
-          "novelty": "与 HC/mHC、MUDDFormer、AttnRes 的层粒度路由不同，LoomFormer 在 head×QKV 粒度上由向量流生成端口、由矩阵流承载内容，实现逐 token 重连。",
-          "technical_depth": "有 wiring rank 的形式化、可重连性的构造性证明、匹配参数预算的缩放实验、完整消融与端口级机制分析；但最大规模仍限于十亿级，且大模型对比的 serial sub-layer 与静态双流骨干带来公平性保留。"
+          "research_value": "把 head 间电路从固定投影推进到可按 token 重连，并给出理论刻画与大规模预训练验证，对理解残差流与深度路由有直接价值。",
+          "novelty": "用逐 token 生成的 head 级读写端口把垂直 head 间路由与水平 token 注意力交织，矩阵记忆作为第二残差流；与层粒度聚合的秩一/秩三方案有本质区别。",
+          "technical_depth": "有 wiring rank 的形式化定理与 cover-free 下界，scaling law、大规模预训练、下游、消融、吞吐和机制分析齐全；不足是超大规模只验证一个尺寸。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 33172,
-        "tokens_out": 14045,
-        "cache_hit_tokens": 1664
+        "tokens_in": 33884,
+        "tokens_out": 19813,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "LoomFormer 在相同 300B token 训练下仅增加 2% 的 FLOPs",
+          "claim": "额外前向 FLOPs 为 2.0%–3.7%。",
           "numbers": [
-            "300",
-            "2"
+            "2.0",
+            "3.7"
           ],
-          "source_span": "Abstract",
-          "quote": "trained on the same 300B tokens with only 2% extra FLOPs",
+          "source_span": "Section 1",
+          "quote": "LoomFormer adds only 2.0–3.7% FLOPs",
           "verified": true
         },
         {
-          "claim": "并匹配使用 3× 以上算力训练的 Transformer",
+          "claim": "训练吞吐为 Transformer 的 89%–92%，推理为 84%–92%。",
           "numbers": [
-            "3"
+            "89",
+            "92",
+            "84"
           ],
-          "source_span": "Abstract",
-          "quote": "over 3× compute",
+          "source_span": "Section 5.4",
+          "quote": "89%–92% of Transformer training speed and 84%–92% of",
           "verified": true
         },
         {
-          "claim": "scaling law 覆盖 432M、778M、1.4B 三个规模",
+          "claim": "在 300B Pile token 上训练。",
           "numbers": [
-            "432",
-            "778",
-            "1.4"
-          ],
-          "source_span": "Section 5.1",
-          "quote": "Medium (432M), Large (778M) and XL (1.4B)",
-          "verified": true
-        },
-        {
-          "claim": "LoomFormer 匹配 Transformer++ 的 3.19–3.25× 算力",
-          "numbers": [
-            "3.19",
-            "3.25"
-          ],
-          "source_span": "Section 5.1",
-          "quote": "matches Transformer++ trained with 3.19–3.25× compute",
-          "verified": true
-        },
-        {
-          "claim": "并匹配残差流基线 1.73–2.76× 算力",
-          "numbers": [
-            "1.73",
-            "2.76"
-          ],
-          "source_span": "Section 5.1",
-          "quote": "all four residual-stream baselines at 1.73–2.76×",
-          "verified": true
-        },
-        {
-          "claim": "2.8B 模型在 300B token 上训练",
-          "numbers": [
-            "2.8",
             "300"
           ],
-          "source_span": "Abstract",
-          "quote": "trained on the same 300B tokens with only 2% extra FLOPs, LoomPythia-2.8B achieves",
+          "source_span": "Section 5.2",
+          "quote": "on 300B Pile tokens",
           "verified": true
         },
         {
-          "claim": "LoomPythia-2.8B 的 0-shot/5-shot 平均为 59.9/61.6，0-shot 匹配 Pythia-12B，5-shot 超过 Pythia-12B 的 60.8",
+          "claim": "LoomPythia 的 0-shot 平均 59.9，与 Pythia-12B 的 59.9 持平。",
           "numbers": [
             "59.9",
+            "12"
+          ],
+          "source_span": "Section 5.2",
+          "quote": "0-shot average (59.9) matches Pythia-12B (59.9)",
+          "verified": true
+        },
+        {
+          "claim": "LoomPythia 的 5-shot 平均 61.6，超过 Pythia-12B 的 60.8。",
+          "numbers": [
             "61.6",
             "12",
             "60.8"
           ],
           "source_span": "Section 5.2",
-          "quote": "Its 0-shot average (59.9) matches Pythia-12B (59.9), its 5-shot average (61.6) exceeds Pythia-12B (60.8)",
+          "quote": "5-shot average (61.6) exceeds Pythia-12B (60.8)",
           "verified": true
         },
         {
-          "claim": "Pile ppl 6.02 与 Pythia-12B 的 6.01 持平",
+          "claim": "下游平均增益约为 mHC-Pythia 的 1.6 倍。",
           "numbers": [
-            "6.02",
-            "12",
-            "6.01"
+            "1.6"
           ],
           "source_span": "Section 5.2",
-          "quote": "LoomPythia-2.8B reaches Pile ppl 6.02, on par with Pythia-12B (6.01)",
+          "quote": "1.6× the gain of mHC-Pythia-2.8B",
           "verified": true
         },
         {
-          "claim": "固定读写端口后退化为 TfmK,Q，仍保留 56% 的增益",
+          "claim": "LoomPythia 的 Pile ppl 为 6.02。",
           "numbers": [
-            "56"
+            "6.02"
           ],
-          "source_span": "Section 5.5 / Table 4",
+          "source_span": "Section 5.2",
+          "quote": "LoomPythia-2.8B reaches Pile ppl 6.02",
+          "verified": true
+        },
+        {
+          "claim": "FLAN ppl 6.94 为表中最低。",
+          "numbers": [
+            "6.94"
+          ],
+          "source_span": "Section 5.2",
+          "quote": "FLAN ppl 6.94",
+          "verified": true
+        },
+        {
+          "claim": "固定读写端口仍保留 56.0% 的增益。",
+          "numbers": [
+            "56.0"
+          ],
+          "source_span": "Section 5.5",
           "quote": "cuts the gain to 56.0%",
           "verified": true
         }
@@ -847,25 +904,26 @@
         "warnings": []
       },
       "content": {
-        "why_read": "提出 LoomFormer，用逐 token 的垂直线性注意力在矩阵记忆上读写各 head 的输出，使电路可按 token 重连，并以约 2% 的额外 FLOPs 匹配 3× 算力训练的 Transformer。",
-        "task": "Transformer 通过跨层 head 组合成 circuit 解题，但两个 head 是否相连由固定的 $W^O_i W^s_j$ 决定；横向注意力可以选择 token，纵向跨层通路却在训练后固定。现有残差流改进（DenseFormer、HC/mHC、MUDDFormer、AttnRes）只做到层粒度路由：一层所有 head 的输出先求和再分配，无法让某个 head 单独读取或屏蔽另一个 head。模型于是把所需电路全部同时接上，让它们竞争残差流，只能借 attention sink 间接关闭 head。",
+        "why_read": "提出 LoomFormer，用逐 token 生成的读写端口在矩阵记忆上做垂直线性注意力，让每个 head 按 token 重连电路，以少量额外计算匹配更大计算量训练的 Transformer。",
+        "task": "Transformer 依靠 head 间固定的输出/输入投影组成电路：上游 head 写入残差流的特征，下游 head 只能按固定投影读取。token 内可变的只有整体开关 head，无法为不同输入选择不同的上游 head；于是需要多种电路的任务只能让它们同时存在、竞争同一条残差流。DenseFormer、HC/mHC、MUDDFormer、AttnRes 把跨层连接做成动态聚合，但仍在层粒度上先把各 head 输出求和，reader 无法单独选中某个上游 head。",
         "findings": [
           {
-            "point": "pre-LN 把布线矩阵限制为秩一 node gating",
-            "detail": "同一 token 内 pre-LN 只给所有 writer 一个共享缩放，reader 收到的有效连接是 $c_{ij}\\bar C_{ij}$，而 $C=gg'^\\top$ 至多秩一；只能整行/整列开关 head，非矩形连接模式要么在稠密权重下互相干扰，要么在稀疏权重下不可达。"
+            "point": "固定虚拟权重把可表达电路限制为矩形",
+            "detail": "head 间连接由输出投影与输入投影的乘积决定，训练后不变；pre-LN 只给所有 writer 一个共享缩放，token 内的 wiring matrix 只能整行整列开关 head，形成秩一的 node gating，非矩形模式要么让无关 head 互连，要么不可达。"
           },
           {
-            "point": "层粒度残差路由没有提供 head 级端口",
-            "detail": "HC/mHC、AttnRes、MUDDFormer 的 read/write port 按层共享，wiring rank 只有秩一（MUDDFormer 按 Q/K/V 也只有三）；要让 $r$ 个 reader 各自独立选 writer，node-gated 架构每个 reader 至少需要 $N(w,r-1)$ 个 head，实际规模下是 $\\Theta(w)$。"
+            "point": "层粒度聚合丢失 head 身份",
+            "detail": "已有跨层残差方法在同一层先把所有 head 输出求和再路由，reader 看到的只是层向量；因此 wiring rank 至多为一，MUDDFormer 按 Q/K/V 拆开也只到三。"
           },
           {
-            "point": "naive 逐 head 纵向注意力代价随总 head 数二次增长",
-            "detail": "直接让每个 reader 对同一 token 的所有早期 head 输出做 softmax，需要按总 head 数二次增长的端口生成参数与乘加；论文估算在 XL 配置下已接近整个模型成本的七成，无法直接用于大模型。"
+            "point": "逐 head 重连的两种代价",
+            "detail": "node gating 要覆盖任意 writer-reader 组合，每个 reader 至少需要与 writer 数同阶的 head；naive loom attention 的端口生成则随总 head 数平方增长，单 token 乘加接近整个模型。"
           }
         ],
-        "method": "Loom attention 把纵向与横向注意力交织：每个 head 从同一 token 的矩阵记忆 $M\\in\\mathbb{R}^{d_k\\times d}$ 读出 query/key/value/output bypass，再做因果横向注意力，输出写回 $M$。纵向读写用 normalized + gated linear attention 实现：writer 写外积 $k_i^m\\otimes o_i$，reader 用 $q_j^m M$ 读取；$M$ 沿深度累积，成为第二条残差流。向量流承载控制（端口、门控、RoPE），矩阵流承载跨 token 内容；MShift 混合前一 token 记忆，FFN 是向量流写入 $M$ 的主要后嵌入通道。槽数约为 head 数两倍，并调整 FFN 宽度保持参数预算；每 token 最多精确表达 $d_k$ 个 writer，更多 writer 会共享槽并干扰。",
-        "results": "在 432M–1.4B 的 scaling law 中匹配 Transformer++ 的 3.19–3.25× 算力与残差基线 1.73–2.76×；2.8B/300B token 下 0-shot/5-shot 平均 59.9/61.6，Pile ppl 6.02 与 Pythia-12B 的 6.01 持平。",
-        "limitations": "最大仅 2.8B/300B token，未覆盖更大模型与长上下文；$d_k$ 限制每 token 可精确重连的 writer 数，超出后共享槽并干扰；静态双流骨干仍贡献约 56% 的增益。",
+        "method_idea": "标准 Transformer 用固定投影连接 head，token 内只能整体开关 head，无法为不同输入换电路。LoomFormer 把每个 head 的输出写入按 token 维护的矩阵记忆，让后续 head 从记忆里按需读取自己的 query、key、value；读写端口由当前 token 的向量流现场生成，于是垂直的 head 间路由与水平的 token 注意力在每个 head 处交织，形成可按 token 重连的双流结构。",
+        "method_how": "实现上，每个 token 维护一张固定槽数的矩阵记忆，槽宽等于 head 维度；写端口把 head 输出做外积累加，读端口用归一化后的 query 与门控幅度从记忆取向量，读写方向与强度分离。每个 head 用四个读端口分别取 query、key、value 和输出旁路，query/key 再拼接少量带 RoPE 的向量坐标，水平注意力用严格因果 mask，当前 token 只走旁路。层间用门控的 MShift 混入上一 token 的记忆；FFN 另设小分支把向量流内容写入矩阵记忆，embedding 也初始化写入一次，最后一块不再写。槽数取两倍 head 数，参数量通过调整 FFN 宽度匹配基线；代价是额外 2.0%–3.7% 前向 FLOPs，训练吞吐为 Transformer 的 89%–92%，推理为 84%–92%。",
+        "results": "在 Pile 300B token 上，LoomPythia 的 0-shot 平均 59.9 与 Pythia-12B 持平，5-shot 61.6 超过其 60.8；Pile ppl 6.02、FLAN ppl 6.94，下游增益约为 mHC 的 1.6 倍。",
+        "limitations": "只在单一规模验证 300B token，未覆盖更大模型；固定读写端口仍保留 56.0% 增益，说明相当一部分收益来自双流骨干而非逐 token 重连。",
         "reading_minutes": 4
       }
     },
@@ -879,7 +937,7 @@
       "arxiv_version": "v1",
       "version_count": null,
       "title": "ViDecide: Teaching Video Diffusion Models to Reason and Plan Step by Step",
-      "title_zh": "ViDecide：让视频扩散模型逐步推理与规划",
+      "title_zh": "ViDecide：教视频扩散模型逐步推理与规划",
       "authors": [
         "Kaiwen Zhang",
         "Yiming Gao",
@@ -947,29 +1005,29 @@
         "score": 85.0,
         "rank_in_pool": 4,
         "l2_reasons": {
-          "research_value": "把视频扩散模型的多步推理与规划作为可检验的决策过程来研究，并构建 RoboTwin-Plan，问题对世界模型与具身规划都关键。",
-          "novelty": "将自回归分段生成、可学习视觉 EOS、决策聚焦时间步偏移与基于失败噪声映射的 CFT 组合起来；CFT 的决策级校正区别于视频级 RL，但多数组件是已有技术的针对性重组。",
-          "technical_depth": "在统一严格 verifier 下做受控消融，覆盖两个骨干、三类基准与 OOD 测试；生成范式、时间步偏移、CFT 各有对照，结论由数据支撑。"
+          "research_value": "把视频扩散模型的多步推理从固定视频生成改写为可变长决策链，并用统一严格指标覆盖抽象游戏、规划任务和机器人操作，问题重要，结果有说服力。",
+          "novelty": "相对已有固定长度或分层去噪的视频推理工作，核心改动是因果分段生成、视觉 EOS 终止，以及把失败决策的噪声映射到成功延续，不只是换骨干或加模块。",
+          "technical_depth": "在两组主干和三类基准上用相同数据与训练预算对照，逐项消融生成范式、噪声调度与 CFT 的噪声映射，并用探针分析决策分布，证据链完整。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 35655,
-        "tokens_out": 6042,
-        "cache_hit_tokens": 1664
+        "tokens_in": 36365,
+        "tokens_out": 8549,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "ViDecide 平均严格成功率为 83.8%，标准 SFT 为 23.3%，最强先前方法为 67.8%。",
+          "claim": "在多个规划基准上，ViDecide 的平均严格成功率为 83.8%，标准微调为 23.3%，最强先前方法为 67.8%。",
           "numbers": [
             "83.8",
             "23.3",
             "67.8"
           ],
           "source_span": "Abstract",
-          "quote": "ViDecide achieves an average strict success rate of 83.8%, far above 23.3% for standard fine-tuning and 67.8% for the strongest prior method",
+          "quote": "achieves an average strict success rate of 83.8%, far above 23.3% for standard fine-tuning and 67.8% for the strongest prior method",
           "verified": true
         }
       ],
@@ -993,25 +1051,26 @@
         "warnings": []
       },
       "content": {
-        "why_read": "提出 ViDecide，将视频推理建模为逐段因果生成并学习视觉 EOS 终止，配合决策聚焦的时间步偏移与 Corrective Fine-tuning，把平均严格成功率从 23.3% 提升到 83.8%。",
-        "task": "视频生成模型被视为世界模拟器与具身规划的基础，但多步推理要求模型在像素空间中连续做出合法决策，而不只是生成逼真画面。现有模型即使经过大规模推理数据微调或扩散 RL，仍常出现物体消失、穿墙、非法移动等违反物理/逻辑约束的转移；作者指出，仅增加数据或视频级奖励并不能解决。",
+        "why_read": "提出 ViDecide，把视频扩散模型的多步推理拆成逐段因果状态转移并学习视觉 EOS 终止，配合高噪声决策训练与 CFT 纠正失败决策，将平均严格成功率从 23.3% 提升到 83.8%。",
+        "task": "视频扩散模型正被用于在像素空间做多步推理与规划，要求生成的状态序列每一步都合规并最终到达目标，这决定它能否成为可靠的世界模拟器与具身规划器。现有做法把整段解法当固定长度视频一次性联合去噪，模型主要学习重建可见画面，只拿到视频级奖励；于是常出现物体消失、复制或非法移动，即便用大规模推理数据或扩散 RL 微调，严格成功率仍很低。",
         "findings": [
           {
-            "point": "固定长度联合去噪割裂了决策链",
-            "detail": "模型一次性生成整段固定长度视频，既忽略状态之间的因果先后，也把推理长度预先写死；步数随谜题难度变化时，这种设定直接失配。"
+            "point": "固定长度联合生成切断了状态之间的因果依赖",
+            "detail": "模型一次性去噪整段视频，后续状态不以前一状态为条件，推理长度又预先固定，错误无法在发生处被定位和纠正。"
           },
           {
-            "point": "训练噪声分布偏向视觉重建",
-            "detail": "标准 flow-matching 大量时间步落在低噪声区，目标外观已可见，模型主要学局部重建；真正需要推断下一状态的决策发生在其被噪声遮住的高噪声区。"
+            "point": "训练噪声分布偏向低噪声的外观重建",
+            "detail": "低噪声时目标已大致可见，模型只需补细节；真正要推断下一状态的高噪声区间反而训练样本少，决策能力没有被重点优化。"
           },
           {
-            "point": "视频级奖励无法定位错误决策",
-            "detail": "现有扩散 RL 对整条视频给一个标量奖励，少数错误动作被大量合法转移稀释，credit assignment 噪声大，也没有对失败决策给出显式纠正。"
+            "point": "视频级奖励把少数错误决策的信用摊薄",
+            "detail": "一个成功或失败标量覆盖整段高维视频，大量合法转移稀释了少数错误步的信号，策略梯度既稀疏又噪声大，且不告诉模型应改成什么。"
           }
         ],
-        "method": "针对因果顺序，ViDecide 把解建模为逐段条件生成，每段以全部历史状态为条件，并学习一个视觉 EOS 帧来终止，使推理长度随任务变化；逐帧或短块生成对应不同动作粒度。针对决策发生在高噪声区，训练时把 flow-matching 时间步采样向高噪声偏移，例如 $t=\\frac{s t'}{1+(s-1)t'}$，让模型多学“下一状态是什么”而非外观重建。针对失败决策，CFT 先 rollout 并定位首次失败，从同一历史重采样成功续写，把导致失败的噪声 $\\epsilon_d^-$ 与成功段 $X_d^+$ 配对做回归校正，目标为 $L_{\\text{CFT}}=L_{\\text{corr}}+L_{\\text{suffix}}+\\lambda L_{\\text{DF}}^{\\text{exp}}$，无需 policy-gradient，训练更稳定。",
-        "results": "在 FlowFree、Sokoban、VBVR-MultiStep 与 RoboTwin-Plan 上按严格成功率评估：平均 83.8%，标准 SFT 23.3%，最强先前方法 67.8%；消融显示三个组件各自有效，并在更大谜题与未见布局上部分泛化。",
-        "limitations": "作者承认按 benchmark 分别训练、依赖规则 verifier，且只评估生成视频而非真实机器人动作；在 RoboTwin 新布局上 CFT 因自生成视频的视觉缺陷使成功率略降。",
+        "method_idea": "传统视频扩散把整段解法当固定长度片段一次性去噪，状态间没有因果顺序，也无法按题决定何时停。ViDecide 改为逐段生成状态转移，每段只依赖此前状态，并学习带红框的视觉结束帧自行终止；训练把噪声水平整体推向高噪声区，并在失败后用模型自己重采样的成功延续做纠正。",
+        "method_how": "实现上，模型按时间顺序逐段生成，每段以已生成历史为条件并用 KV cache 保留上下文；训练时在专家视频末尾接视觉 EOS 帧，推理检测到红框即停止，使不同难度的题长度自适应。为把训练集中到决策发生处，作者把 flow-matching 的噪声时间步采样向高噪声端平移，默认 shift 调大，让模型多面对下一状态尚不可见的情形。CFT 先 rollout 当前模型，用验证器定位首个错误，再从错误前几步重采样成功延续；训练时复用失败决策的初始噪声并映射到成功片段，后续片段和专家数据保留常规损失。代价是逐段自回归解码慢于双向生成，且依赖规则验证器，目前一次只训练一个基准。",
+        "results": "在 VideoRLVR、VBVR-MultiStep 和新建 RoboTwin-Plan 上，按每步合法且到达目标的严格标准，ViDecide 的平均成功率为 83.8%，标准 SFT 为 23.3%，最强先前方法为 67.8%。",
+        "limitations": "每个基准单独训练一个模型，CFT 依赖规则验证器，真实机器人执行还需把视频转成动作；在 RoboTwin 新布局上，自生成纠正会引入视觉缺陷，成功率反低于未纠正模型。",
         "reading_minutes": 3
       }
     },
@@ -1025,7 +1084,7 @@
       "arxiv_version": "v3",
       "version_count": 3,
       "title": "Generative Modeling via Drifting",
-      "title_zh": "Drifting Models：以漂移场在训练时演化前推分布的单步生成",
+      "title_zh": "Drifting Models：用漂移场在训练中演化生成分布",
       "authors": [
         "Mingyang Deng",
         "He Li",
@@ -1080,76 +1139,67 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 90.0,
-          "novelty": 92.0,
-          "technical_depth": 86.0,
+          "research_value": 92.0,
+          "novelty": 94.0,
+          "technical_depth": 88.0,
           "impact": 100.0,
           "completeness": 47.0
         },
         "tier": "A",
         "l1_reason": "提出漂移场生成范式，训练中演化 pushforward，单步推理 ImageNet FID 1.54，思路与结果都硬",
         "evidence_level": "fulltext",
-        "score": 86.9,
+        "score": 88.4,
         "rank_in_pool": 5,
         "l2_reasons": {
-          "research_value": "把训练迭代本身作为分布演化机制，给出不依赖蒸馏或 SDE/ODE 轨迹的单步生成范式，并在 ImageNet 上取得领先的单步结果。",
-          "novelty": "不是换骨干或加模块：把漂移场 $V$ 作为一等设计对象，用反对称性定义训练时平衡点，由此统一解释 GAN/DMD/MMD 并支持特征空间聚合与训练时 CFG。",
-          "technical_depth": "有破坏性消融、样本分配/特征编码器/归一化消融、Precision/Recall、DINO-FD 与记忆化分析；但 $V=0$ 是否推出 $p=q$ 仅特殊情形可证，ImageNet 依赖冻结编码器。"
+          "research_value": "把生成建模从推理时迭代转到训练时分布演化，单步生成在 ImageNet 上达到新 SOTA，问题重要且结果有说服力。",
+          "novelty": "以可设计的漂移场替代扩散/流轨迹、蒸馏或对抗目标，训练目标与推理路径都与既有单步方法不同。",
+          "technical_depth": "给出反对称平衡与可识别性分析，配 2D 玩具、ImageNet 消融、latent/像素系统对比和 Diffusion Policy 实验，证据链较完整。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 36546,
-        "tokens_out": 10205,
-        "cache_hit_tokens": 1664
+        "tokens_in": 37243,
+        "tokens_out": 7712,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "在 ImageNet 上，latent 模型单步 FID 为 1.54，pixel 模型为 1.61。",
+          "claim": "实验在 ImageNet 256×256 类条件生成上进行",
+          "numbers": [
+            "256"
+          ],
+          "source_span": "Sec. 5.2 / Table 5",
+          "quote": "ImageNet 256×256",
+          "verified": true
+        },
+        {
+          "claim": "latent L/2 单步生成达到 FID 1.54、IS 258.9",
           "numbers": [
             "1.54",
+            "258.9"
+          ],
+          "source_span": "Table 5 (left), row 'Drifting Model, L/2'",
+          "quote": "1.54 258.9",
+          "verified": true
+        },
+        {
+          "claim": "iMF-XL/2 的单步 FID 为 1.72",
+          "numbers": [
+            "1.72"
+          ],
+          "source_span": "Table 5 (left), row 'iMeanFlow-XL/2'",
+          "quote": "1.72 282.0",
+          "verified": true
+        },
+        {
+          "claim": "像素空间 L/16 单步生成达到 FID 1.61",
+          "numbers": [
             "1.61"
           ],
-          "source_span": "Abstract; Table 5",
-          "quote": "FID 1.54 in latent space and 1.61 in pixel space",
-          "verified": true
-        },
-        {
-          "claim": "GMMN 式 MMD 生成器在 SD-VAE latent 上 FID 为 214.6。",
-          "numbers": [
-            "214.6"
-          ],
-          "source_span": "Table 17, row (a); Sec. C.4",
-          "quote": "214.6 FID",
-          "verified": true
-        },
-        {
-          "claim": "反对称默认设置的 FID 为 8.46。",
-          "numbers": [
-            "8.46"
-          ],
-          "source_span": "Table 1, row 'anti-symmetry'",
-          "quote": "8.46",
-          "verified": true
-        },
-        {
-          "claim": "破坏反对称的 attraction 变体 FID 为 41.05。",
-          "numbers": [
-            "41.05"
-          ],
-          "source_span": "Table 1, row '1.5× attraction'",
-          "quote": "41.05",
-          "verified": true
-        },
-        {
-          "claim": "attraction-only 变体的 FID 为 177.14。",
-          "numbers": [
-            "177.14"
-          ],
-          "source_span": "Table 1, row 'attraction-only'",
-          "quote": "177.14",
+          "source_span": "Table 5 (right), row 'Drifting Model, L/16'",
+          "quote": "1.61 307.5",
           "verified": true
         }
       ],
@@ -1167,29 +1217,35 @@
         ],
         "dropped_claims": 0,
         "downgraded_reason": null,
-        "warnings": []
+        "warnings": [
+          {
+            "kind": "length",
+            "note": "method_how 字数 276 超出 [100, 250]"
+          }
+        ]
       },
       "content": {
-        "why_read": "提出 Drifting Models，把生成建模为训练时由反对称漂移场驱动前推分布演化，推理仅单步，在 ImageNet 上取得 FID 1.54（latent）与 1.61（pixel）。",
-        "task": "生成建模要学习映射 $f$，使前推分布匹配数据分布。Diffusion 与 Flow Matching 把复杂前推拆成推理时的多步迭代，每次生成都要多次网络评估，采样成本高；已有单步方法多依赖蒸馏预训练多步模型，或用辅助网络近似 SDE/ODE 轨迹，仍受教师或轨迹监督约束。",
+        "why_read": "提出 Drifting Models，将扩散/流模型的迭代从推理搬到训练，用真实样本吸引与生成样本排斥构成的漂移场驱动生成分布演化，在 ImageNet 256×256 上实现单步 FID 1.54。",
+        "task": "生成建模要学习一个映射，把先验分布搬到数据分布；扩散和流模型把这一步拆成推理时的多步去噪，采样成本高。已有单步方法多靠蒸馏预训练多步模型，或拟合扩散/流轨迹，仍受教师模型与轨迹约束；GAN 类方法则依赖对抗优化。高维图像上，直接用核方法度量分布差异还会因批内样本估计方差过大而失效。",
         "findings": [
           {
-            "point": "迭代被固定在推理端",
-            "detail": "Diffusion/Flow 把复杂前推拆成推理时多步复合；但训练本身已产生模型序列，参数更新会让生成样本自然漂移，因此分布演化可在训练时完成。"
+            "point": "单步方法受制于轨迹拟合或对抗训练",
+            "detail": "已有一步扩散/流模型需在训练中近似扩散/流轨迹，常依赖预训练教师；GAN 则要判别器与生成器对抗，二者都不是直接演化生成分布。"
           },
           {
-            "point": "高维原始空间中的核估计退化",
-            "detail": "GMMN 式 MMD 在 SD-VAE latent 上 FID 为 214.6；作者归因于有限 batch 下核/漂移估计方差随维度快速增长，使相似度核趋于平坦。"
+            "point": "漂移场必须在分布相等时严格归零",
+            "detail": "吸引减排斥的反对称形式使交换两个分布时漂移反号，因而分布相等时漂移为零；破坏反对称的消融出现灾难性失败。"
           },
           {
-            "point": "缺少零漂移平衡点会失稳",
-            "detail": "反对称场保证 $p=q$ 时 $V=0$；一旦破坏反对称，FID 从 8.46 恶化到 41.05，attraction-only 达 177.14，说明训练信号必须在平衡点归零。"
+            "point": "高维原始空间的核估计方差过大",
+            "detail": "批内正负样本估计的漂移在维度升高时方差迅速增大，需用自监督特征编码器把样本映射到语义空间，核权重才可靠。"
           }
         ],
-        "method": "定义漂移场 $V_{p,q}(x)=V_p^+(x)-V_q^-(x)$：正样本来自数据、负样本来自当前生成分布，核加权 mean-shift 同时给出吸引与排斥；反对称性保证 $p=q$ 时 $V=0$。训练用 stop-gradient 固定点目标，把 $x$ 拉向冻结的 $x+V$，由优化器在训练中演化 $q$。为降低高维核估计方差，在冻结自监督编码器的多尺度、多位置特征上计算漂移，并做特征/漂移归一化与多温度聚合；CFG 通过混入无条件真实负样本在训练时实现，推理仍为单步。",
-        "results": "在 ImageNet 上，latent 模型单步 FID 1.54，pixel 模型 1.61，均优于此前单步方法；机器人控制中单步策略与多步 Diffusion Policy 大体相当。",
-        "limitations": "依赖冻结的自监督特征编码器；无编码器时 ImageNet 训练失败，且一般情形下 $V=0$ 是否蕴含 $p=q$ 仍未证明；实验仅限类别条件 ImageNet，文本条件与其他模态未验证。",
-        "reading_minutes": 2
+        "method_idea": "扩散/流模型把分布搬运拆成推理时的多步去噪，单步方法多靠蒸馏或拟合这些轨迹，仍依赖教师或轨迹约束。Drifting Models 把迭代搬到训练：参数更新本身推动生成分布向数据分布演化，并用一个在两个分布相等时归零的漂移场定义每个样本的移动目标。漂移场由真实样本的吸引和生成样本的排斥构成，推理只需一次前向。",
+        "method_how": "生成器是单次前向的 DiT，输入高斯噪声与类别条件，直接输出 latent 或像素图像。每个训练步从数据取正样本、从当前生成批取负样本，用归一化核计算每个生成样本受正样本吸引、受负样本排斥的加权位移，再把停止梯度的“当前样本加位移”作为回归目标，用均方误差更新生成器；吸引项减排斥项保证两个分布交换时位移反号。为降低高维核估计方差，位移在冻结自监督编码器的多尺度、多位置特征上计算，并对特征和位移做尺度归一化、聚合多个温度。CFG 不作为推理时的双分支，而是在训练时把其他类真实样本加为负样本，使单步推理仍保留。代价是训练需额外编码器前向与反向、像素空间还要过 VAE 解码器，且强编码器预训练带来额外成本；换来的是一次网络评估生成。",
+        "results": "ImageNet 256×256 上，latent L/2 单步 FID 1.54、IS 258.9，优于 iMF-XL/2 的 1.72；像素 L/16 单步 FID 1.61，且无需扩散教师或对抗训练。",
+        "limitations": "作者承认图像实验仅限类条件 ImageNet，且依赖冻结编码器；我读到的关键限制是，零漂移推出分布相等只在特殊情形得证，编码器预训练与多尺度特征还带来显著训练开销。",
+        "reading_minutes": 3
       }
     },
     {
@@ -1203,7 +1259,7 @@
       "arxiv_version": "v1",
       "version_count": 1,
       "title": "Single-Transformer Latent Diffusion",
-      "title_zh": "UNIFIED：单 Transformer 隐扩散模型",
+      "title_zh": "单 Transformer 潜扩散：一个骨干完成编码、生成与解码",
       "authors": [
         "Hao-Yu Hsu",
         "Shenlong Wang",
@@ -1252,64 +1308,56 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 84.0,
-          "novelty": 79.0,
-          "technical_depth": 87.0,
+          "research_value": 82.0,
+          "novelty": 78.0,
+          "technical_depth": 85.0,
           "impact": 61.4,
           "completeness": 90.0
         },
         "tier": "A",
         "l1_reason": "把编码器、生成器和解码器折叠进单个transformer，单阶段训练，215M参数下gFID 2.08",
         "evidence_level": "fulltext",
-        "score": 80.6,
+        "score": 79.3,
         "rank_in_pool": 6,
         "l2_reasons": {
-          "research_value": "把 latent diffusion 的三网络拆解推进到单个全共享 DiT，并在匹配参数下证明统一解码带来收益，对单阶段生成模型有实际意义。",
-          "novelty": "相对 UNITE 不只是多共享一个 decoder：位置对齐序列、模式 token 与独立解码时间步是实质设计差异，但整体仍是 DiT 多模式共享路线的延续。",
-          "technical_depth": "给出 UNITE++ 负结果、逐因素消融、CKA 诊断、三个参数规模与文生图验证，证据链较完整，基线与训练协议对齐清楚。"
+          "research_value": "把潜扩散的三网络流水线真正压成一个骨干，并在匹配参数下于三个尺度稳定超过 UNITE，对「单阶段、无预训练表征」这条路线是明确推进。",
+          "novelty": "相对 UNITE 的实质增量是位置对齐的序列布局与独立解码时间步，而不是堆模块；但整体仍是 UNITE 的延续，共享权重的思路在 LDM-is-AE、DSD 中已出现。",
+          "technical_depth": "消融逐项拆开解码器位置、序列布局、编码与解码时间步，并用 CKA 定位冲突发生的层与噪声水平，同参数同 epoch 对比且报告五个评估种子均值；但 CKA 只作诊断，未解释共享为何在容量受限时更省参数。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 14599,
-        "tokens_out": 12735,
-        "cache_hit_tokens": 1664
+        "tokens_in": 15311,
+        "tokens_out": 6967,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "UNIFIED-B 以 215M 参数达到 gFID 2.08。",
+          "claim": "UNIFIED-B 以 215M 参数在 ImageNet-1K 256×256 上取得 gFID 2.08",
           "numbers": [
             "215",
             "2.08"
           ],
-          "source_span": "Abstract",
-          "quote": "reaches 2.08 with 215M parameters",
+          "source_span": "Abstract / Table 4 row 'UNIFIED-B'",
+          "quote": "2.08 with 215M parameters",
           "verified": true
         },
         {
-          "claim": "UNITE 的 gFID 为 2.23。",
+          "claim": "Tiny UNIFIED 以 62M 参数的 2.78 接近 117M 的 Small UNITE 的 2.76",
           "numbers": [
-            "2.23"
+            "2.78",
+            "62",
+            "2.76",
+            "117"
           ],
-          "source_span": "Section 1",
-          "quote": "vs. UNITE’s 2.23",
+          "source_span": "Figure 1 caption / Section 4.1",
+          "quote": "2.78 at 62M vs. 2.76 at 117M",
           "verified": true
         },
         {
-          "claim": "512×512 文生图 UNIFIED-B（218M）GenEval 0.87。",
-          "numbers": [
-            "512",
-            "218",
-            "0.87"
-          ],
-          "source_span": "Section 1",
-          "quote": "At 512 × 512, UNIFIED-B (218M) reaches 0.87 on GenEval",
-          "verified": true
-        },
-        {
-          "claim": "UNITE++ 的 rFID 为 2.20，UNITE 为 1.41。",
+          "claim": "UNITE++ 的 rFID 退化到 2.20，而 UNITE 为 1.41",
           "numbers": [
             "2.20",
             "1.41"
@@ -1319,13 +1367,41 @@
           "verified": true
         },
         {
-          "claim": "位置对齐但编码仍用噪声端点时 gFID 为 2.31，改为干净端点后为 2.15。",
+          "claim": "把编码时间步改为干净端点后，gFID 从 2.31 改善到 2.15",
           "numbers": [
             "2.31",
             "2.15"
           ],
-          "source_span": "Section 4.3",
+          "source_span": "Section 4.3, 'Clean endpoint for encoding'",
           "quote": "improves gFID from 2.31 to 2.15",
+          "verified": true
+        },
+        {
+          "claim": "在 t=0.995 处层间 CKA 下降，tdec=1 的 UNIFIED 为 0.37",
+          "numbers": [
+            "0.995",
+            "0.37"
+          ],
+          "source_span": "Section 4.3, CKA analysis / Figure 3",
+          "quote": "0.37 for UNIFIED with tenc = tdec = 1",
+          "verified": true
+        },
+        {
+          "claim": "Base 规模下模式专属参数只占 1.63%",
+          "numbers": [
+            "1.63"
+          ],
+          "source_span": "Section 3.2",
+          "quote": "1.63% of the parameters at Base",
+          "verified": true
+        },
+        {
+          "claim": "UNIFIED-B（218M）在 512×512 文生图上 GenEval 达到 0.87",
+          "numbers": [
+            "0.87"
+          ],
+          "source_span": "Table 6, row 'UNIFIED-B'",
+          "quote": "reaches 0.87 on GenEval",
           "verified": true
         }
       ],
@@ -1342,30 +1418,31 @@
           "pdf",
           "project"
         ],
-        "dropped_claims": 0,
+        "dropped_claims": 1,
         "downgraded_reason": null,
         "warnings": []
       },
       "content": {
-        "why_read": "提出 UNIFIED，将隐扩散的编码、生成、解码并入同一个全共享 DiT，以位置对齐序列、模式 token 和独立解码时间步区分三种模式，在 ImageNet-1K 上以 215M 参数取得 2.08 gFID。",
-        "task": "隐扩散通常把编码器、生成器、解码器分成三个网络，先训练并冻结自编码器，再让生成器拟合其 latent；这既固定了表示，也让容量分配对生成的影响难以预测。UNITE 把编码与生成合并，但解码器仍是独立网络；作者要问：最后这张网能否也折进同一个 DiT，并真正带来收益。",
+        "why_read": "提出 UNIFIED，把潜扩散的编码器、生成器、解码器折进同一个 DiT，用位置对齐的序列布局、模式 token 和独立解码时间步区分三种模式，单阶段训练在 ImageNet-256 上取得 gFID 2.08。",
+        "task": "潜扩散由三个网络组成：编码器把像素变成 latent，生成器建模 latent 分布，解码器还原像素；它们分阶段训练，自编码器先重建、冻结后才训生成器，表征在采样器训练前就被固定，容量如何分配的影响也难以预测。此前 LDM-is-AE 按深度切分同一个 DiT、DSD 另加 diffusion head 并依赖 DINO 对齐，UNITE 共享编码与生成但解码器仍独立；直接让 UNITE 的共享骨干兼做解码（UNITE++）并不奏效。",
         "findings": [
           {
-            "point": "读出 token 布局迫使解码绕道 attention",
-            "detail": "UNITE++ 让像素从像素 readout token 反查 latent，而 latent token 与图像位置无固定对应；每个图像位置都要通过 attention 汇聚内容，密集重建因此变差，rFID 2.20 对 UNITE 的 1.41。"
+            "point": "readout token 让解码多绕一层注意力",
+            "detail": "把 latent 放在自己一组 readout token 上，像素与 latent 没有固定空间对应，解码只能靠注意力逐位置汇集内容；UNITE++ 生成不差，rFID 却退化到 2.20（UNITE 为 1.41）。"
           },
           {
-            "point": "编码时间步与输入内容不匹配",
-            "detail": "改成位置对齐后，编码器读的是干净图像 patch，却仍用纯噪声端点作条件；backbone 收到与生成起点相同的条件，反而损害生成。改为干净端点后 gFID 从 2.31 降到 2.15。"
+            "point": "编码时间步必须与它实际读到的输入一致",
+            "detail": "换成位置对齐后编码器读的是干净图像块，若仍标成纯噪声的 t=0，骨干对完全观测的图像与纯噪声给出相同条件，gFID 反倒从 2.15 退到 2.31。"
           },
           {
-            "point": "干净端点上的输出冲突",
-            "detail": "编码和生成都输出干净 latent，解码却输出像素；接近干净端点时生成输入与解码输入几乎相同，AdaLN 条件也相同，最后几个 block 必须同时服务两个输出空间。给解码单独的时间步嵌入后，末层 CKA 恢复，gFID 降到 2.08。"
+            "point": "干净端点处解码与生成抢同一个输出空间",
+            "detail": "t 接近 1 时生成输入几乎等于解码输入，CFG 无条件分支下两者条件也相同，只剩模式 token 可区分，最后一层被迫同时输出 latent 与像素特征，t=0.995 处层间 CKA 掉到 0.37。"
           }
         ],
-        "method": "把三种模式都写成等长、位置对齐的序列图：像素 patch、latent token、加噪 latent token 共用同一序列下标与 RoPE 位置，序列长度为 $N+1$。主干是完整共享的 DiT，模式只靠序列首位的可学习 mode token、轻量输入/输出 head 与 AdaLN 条件区分；编码在干净端点运行，生成用采样时间步，解码改用独立学习的时间步嵌入以避开输出冲突。训练仍是单阶段，只用重建损失 $\\mathcal{L}_{rec}$（$\\ell_1$ 与 LPIPS）和 flow-matching 损失 $\\mathcal{L}_{gen}$，生成损失对 latent 目标做 stop-gradient，无对抗损失、无预训练编码器。代价是位置对齐把 latent 长度钉死为 $K=N$，失去 readout 的可压缩性。",
-        "results": "ImageNet-1K UNIFIED-B（215M）gFID 2.08，优于 UNITE 2.23；512² 文生图 UNIFIED-B（218M）GenEval 0.87，超过更大单阶段像素扩散基线。",
-        "limitations": "位置对齐把 latent 长度钉死为 patch 数，高分辨率下序列变长、成本上升；小模型上学习解码时间步并非总优，文生图也只在有限基准与数据上验证。",
+        "method_idea": "潜扩散把编码、生成、解码交给三个网络，UNITE 已把前两者合成一个生成式编码器，解码器却仍独立；直接让共享骨干兼做解码反而更差。UNIFIED 把三种模式都写成同一序列索引对应同一图像位置的等长序列映射，只靠模式 token 与各自的时间步区分，砍掉全部 readout token，并用一个轻量像素输出头替掉独立解码器。",
+        "method_how": "三种模式各跑一遍共享 DiT：编码读图像块、在干净端点取输出为 latent，生成读同一位置的加噪 latent 并按噪声水平预测干净 latent，解码把 latent 原位读入、经新增像素输出头出图。三者只差四个轻量输入输出头、一个前置模式 token、AdaLN 的时间步与类别条件，Base 下模式专属参数占 1.63%。生成损失对 latent 目标做 stop-gradient，使其不回流塑造 latent、避免潜变量塌缩；总损失为重建与 flow-matching 的加权和。代价是位置对齐把 latent 长度固定为 patch 数、失去 readout 的可变压缩比，序列变长后注意力开销上升。",
+        "results": "Tiny 62M 的 2.78 已接近 Small UNITE 117M 的 2.76。512×512 文生图 GenEval 0.87，超过约十亿参数的单阶段像素扩散模型。",
+        "limitations": "stop-gradient 是防 latent 塌缩的唯一机制，未分析潜空间的可压缩性；位置对齐把 latent 长度绑死为 patch 数，高分辨率下注意力开销上升；512×512 仍靠 256×256 预训练加微调，未验证原生高分辨率训练。",
         "reading_minutes": 3
       }
     },
@@ -1435,79 +1512,109 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 86.0,
-          "novelty": 78.0,
-          "technical_depth": 84.0,
+          "research_value": 82.0,
+          "novelty": 76.0,
+          "technical_depth": 82.0,
           "impact": 100.0,
           "completeness": 90.0
         },
         "tier": "B",
         "l1_reason": "Mamba 递推状态+持久内容记忆解决长程历史，配 CUDA Graph 等推理优化，39.5s 末端控制；系统扎实但属已有路线扩展",
         "evidence_level": "fulltext",
-        "score": 86.1,
+        "score": 84.0,
         "rank_in_pool": 7,
         "l2_reasons": {
-          "research_value": "面向长时程、实时可交互的人形运动生成，在数十秒滚动基准与 Unitree G1 实机上同时验证控制精度和推理延迟，问题对交互动画与人形机器人均关键。",
-          "novelty": "在 ARDY 的根–体扩散框架上引入 PCM，将 Mamba 递归状态汇总、状态差分与文本条件写入注意力可读槽位，并区分扩散采样迭代与已接受运动历史的提交。",
-          "technical_depth": "统一训练预算下对比大量基线，包含架构消融、推理组件消融、配对加速测量与实机多任务评估；但部分短时程语义指标并非全面领先，结论边界较克制。"
+          "research_value": "长时程、可随时改指令的人形动作生成是交互动画与机器人共用的瓶颈，论文在三个 G1 基准与真机闭环上同时给出终端空间精度与推理代价，属于能直接落到系统里的一类工作。",
+          "novelty": "核心不是把 Mamba 与注意力并列，而是把已接受的循环状态经门控写成语义相关、随会话演进的注意力内容槽，并提出\"仅提交已接受窗口\"的更新规则把扩散采样迭代与物理时间分开。",
+          "technical_depth": "所有基线在同一 G1 语料、同一训练预算下重训，配对评估覆盖多档时程，PCM 的文本条件与状态差分分别消融，延迟用配对 bootstrap 区间并逐位校验输出一致；不足是语义指标未全面占优、延迟对比未与最快基线对齐。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 24039,
-        "tokens_out": 7048,
-        "cache_hit_tokens": 1664
+        "tokens_in": 24751,
+        "tokens_out": 9787,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "在重定向 HiPHI 的 39.52 s 滚动上，Root CE 为 7.55 cm、End CE 为 13.64 cm。",
+          "claim": "eager 执行下 host launch 与 GPU kernel 数远多于实际计算需要",
+          "numbers": [
+            "83,777",
+            "5,519"
+          ],
+          "source_span": "Sec. 5.4 Execution profile and consistency",
+          "quote": "ordinary host launches decrease from 83,777 to 5,519",
+          "verified": true
+        },
+        {
+          "claim": "GPU kernel 数从 86,849 降到 44,877",
+          "numbers": [
+            "86,849",
+            "44,877"
+          ],
+          "source_span": "Sec. 5.4 Execution profile and consistency",
+          "quote": "GPU kernels decrease from 86,849 to 44,877",
+          "verified": true
+        },
+        {
+          "claim": "重定向 HiPHI 上滚动 39.52 s 时 Root/End CE 达到 7.55/13.64 cm",
           "numbers": [
             "39.52",
             "7.55",
             "13.64"
           ],
-          "source_span": "Sec. 5.2 / Table 1, row 'Motion Mamba 2.0', 39.52 s column",
+          "source_span": "Sec. 5.2 Results on HiPHI, Table 1",
           "quote": "At 39.52 s, our method achieves 7.55/13.64 cm",
           "verified": true
         },
         {
-          "claim": "End CE 优于 ARDY 的 14.84 cm。",
+          "claim": "ARDY 在同一评测量纲下的最佳 End CE 为 14.84 cm",
           "numbers": [
             "14.84"
           ],
-          "source_span": "Sec. 5.2, 39.52 s comparison",
-          "quote": "End CE of 14.84 cm from ARDY",
+          "source_span": "Sec. 5.2 Results on HiPHI",
+          "quote": "14.84 cm from ARDY",
           "verified": true
         },
         {
-          "claim": "优化后 p50 完整窗口延迟由 1685.35 ms 降至 276.14 ms。",
+          "claim": "ARDY 在 39.52 s 的 Root CE 为 10.09 cm",
+          "numbers": [
+            "10.09"
+          ],
+          "source_span": "Table 1, row 'ARDY', 39.52 s block",
+          "quote": "10.09",
+          "verified": true
+        },
+        {
+          "claim": "完整优化把窗口 p50 延迟从 1685.35 ms 降到 276.14 ms，中位配对加速 6.138×",
           "numbers": [
             "1685.35",
-            "276.14"
+            "276.14",
+            "6.138"
           ],
-          "source_span": "Sec. 5.4 / Table 7",
+          "source_span": "Table 7, row with Flow+Fusion+Graph",
           "quote": "reduces p50 latency from 1685.35 to 276.14 ms",
           "verified": true
         },
         {
-          "claim": "配对加速中位数为 6.138 倍。",
-          "numbers": [
-            "6.138"
-          ],
-          "source_span": "Sec. 5.4 / Table 7",
-          "quote": "median paired speedup is 6.138×",
-          "verified": true
-        },
-        {
-          "claim": "Unitree G1 上 100 次试验中 94 次全任务成功，未观察到摔倒。",
+          "claim": "实机 100 次试验中 94 次全任务成功且无跌倒",
           "numbers": [
             "94",
             "100"
           ],
-          "source_span": "Table 8 / Sec. 6.3",
-          "quote": "Across all four tasks, 94/100 trials achieve full-task success, 97/100 meet the stability criterion, and no falls are observed",
+          "source_span": "Sec. 6.3 / Table 8",
+          "quote": "94/100 trials achieve full-task success",
+          "verified": true
+        },
+        {
+          "claim": "ARDY 单窗延迟为 95.6 ms，快于本文优化后的单窗延迟",
+          "numbers": [
+            "95.6"
+          ],
+          "source_span": "Table 1, row 'ARDY', 52 frames block, Lat. 列",
+          "quote": "95.6",
           "verified": true
         }
       ],
@@ -1529,29 +1636,35 @@
         ],
         "dropped_claims": 0,
         "downgraded_reason": null,
-        "warnings": []
+        "warnings": [
+          {
+            "kind": "length",
+            "note": "method_how 字数 254 超出 [100, 250]"
+          }
+        ]
       },
       "content": {
-        "why_read": "提出 Motion Mamba 2.0，将局部注意力、可恢复的 Mamba-3 递归状态与持久内容记忆（PCM）整合进自回归根–体扩散，实现长时程可交互人形运动生成并在 Unitree G1 上完成真实部署。",
-        "task": "任务是在线生成可被下游跟踪器执行的人形运动，对交互动画与人形机器人很关键：智能体要在运动过程中响应新文本指令与空间目标，而非离线合成固定片段。现有自回归扩散逐窗生成，但有限注意力缓存会丢弃较早运动特征，无限缓存又随序列增长；重复去噪还带来显著推理开销。",
+        "why_read": "提出 Motion Mamba 2.0，把可续接的 Mamba-3 循环状态经门控写成注意力可读的持久内容槽，并只在窗口被接受后提交历史，实现长时程可控的人形动作生成。",
+        "task": "交互式动画与人形机器人在动作执行中要响应新指令与空间目标，生成器得逐窗产出并接上已产生的动作，而不是合成一段孤立片段。自回归扩散提供了这种窗口式接口，但注意力缓存有界就丢掉远端历史、无界又让存储与计算随时长增长；短窗口的重复去噪还带来可观的执行开销。这两件事分别属于历史表示与推理实现，不能互相替代。",
         "findings": [
           {
-            "point": "有限注意力缓存丢失远端历史，无限缓存成本随序列增长",
-            "detail": "逐窗生成时缓存只能保留最近若干窗，更早运动特征被逐出；若改为不设界，存储与计算又随时长增长，因此需要压缩但有界的运动历史表示。"
+            "point": "有界缓存与压缩循环状态暴露历史的方式不可互换",
+            "detail": "缓存只保留最近若干窗口的 key/value，无界缓存则随序列增长；Mamba 状态压缩了历史，但它本身不是注意力可读的条目，两条分支并列不能让注意力取到它。"
           },
           {
-            "point": "压缩递归状态不能直接被注意力读取",
-            "detail": "Mamba 递归状态携带演化上下文，但与注意力缓存暴露历史的方式不同；简单把注意力与 Mamba 并置，并不会让递归历史成为注意力可检索的内容。"
+            "point": "扩散的中间候选不能当作历史写入",
+            "detail": "同一窗口的连续噪声候选是同一输出的不同备选，不是动作流的时间推进；把它们写进状态等于把去噪步数混进物理时间，因此必须等干净窗口被接受后统一提交。"
           },
           {
-            "point": "扩散中间候选不能写入运动历史",
-            "detail": "同一窗口的多次去噪候选只是采样迭代，并非按物理时间推进的运动；若把中间状态提交为历史，会把采样迭代与真实时间混在一起。"
+            "point": "窗口延迟主要不是花在去噪计算上",
+            "detail": "eager 执行下 host launch 达 83,777 次、GPU kernel 86,849 次而单算子计算量很小，说明重复派发与小算子调度才是每窗固定开销的来源。"
           }
         ],
-        "method": "模型沿用根–体分解：根网络先预测全局轨迹，体网络再以其局部特征为条件生成关节运动。每个去噪器内，局部注意力检索最近窗口，Mamba-3 从已接受前缀恢复递归状态。PCM 把递归状态汇总、相邻已接受窗口的状态差分和文本条件映射为动态内容槽，经门控写入后供注意力读取；槽位、缓存与递归状态只在干净窗口被接受后一起提交。推理侧用只读去噪、融合 Mamba 预处理核、三路 CFG 的 CUDA Graph 重放和流程简化降低调度与显存开销。",
-        "results": "HiPHI 39.52 s 上 Root/End CE 7.55/13.64 cm，End CE 优于 ARDY 的 14.84 cm；p50 延迟 1685.35→276.14 ms（6.138×）；G1 上 94/100 全任务成功、无摔倒。",
-        "limitations": "作者只承认尚未覆盖物体操作；此外短时程语义指标并非全面领先，实机部署仍依赖外部 SONIC 跟踪器，生成与控制未联合优化。",
-        "reading_minutes": 2
+        "method_idea": "逐窗自回归扩散在生成每个窗口时都要重读历史，而这份历史要么放在会被截断的注意力缓存里，要么压进一个注意力根本读不到的循环状态。这篇把已接受动作累积出的循环状态、它与上一窗口的差、以及当前文本一起，经门控写成一组随会话更新的记忆槽，让注意力在滑动缓存之外还能取到压缩历史，并规定历史只在窗口被接受后整体提交。",
+        "method_how": "根网络先预测全局位置与朝向，体网络再以此为条件预测关节；两个去噪器都把局部注意力与可续接的 Mamba-3 扫描并联，按层内门控相加。Mamba 头携带循环矩阵与上一拍输入，在窗口边界从已提交状态续扫，状态大小不随时长增长。PCM 每层把循环状态池化成摘要、与上一窗口作差，用当前文本嵌入调制差值后拼成候选槽；写入门控读取候选与旧槽并截断门值上限，使同一状态变化在不同指令下写入不同内容。读出时槽插在 sink token 之后参与注意力，其与基注意力的差由初值为零的可学习标量缩放后残差相加，故初始退化为原混合器。代价是每层多出槽投影与更大的键值集合，延迟与显存上升，且不保证精确召回远端事件。",
+        "results": "重定向 HiPHI 滚动到 39.52 s 时 Root/End CE 为 7.55/13.64 cm，优于 ARDY 的 10.09/14.84 cm；RTX 4090 上完整优化把窗口 p50 从 1685.35 ms 降到 276.14 ms（6.138×），输出逐位一致；实机 100 次试验 94 次成功、无跌倒。",
+        "limitations": "作者只承认未涉及物体操作；更实际的是语义指标并未全面领先（单窗 R@3、L2-FID 多落后），且完整优化后单窗 276.14 ms 仍远慢于 ARDY 的 95.6 ms。",
+        "reading_minutes": 3
       }
     },
     {
@@ -1617,19 +1730,19 @@
         "dimensions": {
           "research_value": 82.0,
           "novelty": 72.0,
-          "technical_depth": 76.0,
+          "technical_depth": 70.0,
           "impact": 66.0,
           "completeness": 72.3
         },
         "tier": "A",
         "l1_reason": "4条轨迹将4B成功率49%→82%，恢复27B教师90%差距，含匹配SFT对照",
-        "evidence_level": "fulltext",
-        "score": 74.9,
+        "evidence_level": "abstract",
+        "score": 73.7,
         "rank_in_pool": 8,
         "l2_reasons": {
-          "research_value": "研究少量交互经验能否把教师策略迁移到视觉智能体，跨多个环境和学生规模给出系统证据，对降低 agent 训练的数据与交互成本有直接意义。",
-          "novelty": "将技能–情境覆盖与有序视觉决策相似度用于整条轨迹选择，并系统比较固定历史 replay 与少任务 online OPD；选择目标组合已有组件，但问题设定和对照设计有新意。",
-          "technical_depth": "包含选择消融、matched SFT、全池与在线对照及跨规模实验；但核心端点多单次训练，部分聚合由合作者报告未本地审计，计算预算未对齐且选择目标无理论保证。"
+          "research_value": "研究少任务或少历史蒸馏视觉智能体，覆盖 Navigation、Sokoban 与 SpatialGym 三个环境和 4B/9B 两个学生规模，并系统对照固定回放与在线交互，对数据效率路线有直接参考价值。",
+          "novelty": "把技能–情境覆盖与有序视觉决策相似度结合，用于选择完整轨迹，并在匹配任务与响应预算下比较固定历史回放和在线 OPD，不同于单纯换数据集、换骨干或堆模块。",
+          "technical_depth": "提供了匹配 SFT、选择器消融、重复训练和独立面板，但核心结果多为单次训练，部分端点为合作者报告且未本地审计，关于选择指标与迁移之间因果机制的主张也未被隔离验证。"
         }
       },
       "recommendation_type": "frontier",
@@ -1718,7 +1831,7 @@
       "arxiv_version": "v1",
       "version_count": 1,
       "title": "Embo-Harness: Towards Understanding Frontier-Model-as-Policy Harness",
-      "title_zh": "Embo-Harness：理解「前沿模型即策略」式机器人 harness 的设计与能力来源",
+      "title_zh": "Embo-Harness：理解前沿模型作为策略的机器人闭环框架",
       "authors": [
         "Xiao-Ming Wu",
         "Kang Liao",
@@ -1779,39 +1892,39 @@
       "topics_source": "rule",
       "quality": {
         "dimensions": {
-          "research_value": 86.0,
-          "novelty": 73.0,
-          "technical_depth": 77.0,
+          "research_value": 89.0,
+          "novelty": 82.0,
+          "technical_depth": 84.0,
           "impact": 100.0,
           "completeness": 90.0
         },
         "tier": "B",
         "l1_reason": "系统消融 prompting/planning/action/tool 四环节，提炼六条经验；RoboLab-120 高出基线 26.2 点且 20 例真机中 15 成功，但为工程配方",
         "evidence_level": "fulltext",
-        "score": 83.4,
+        "score": 88.0,
         "rank_in_pool": 9,
         "l2_reasons": {
-          "research_value": "针对「前沿多模态模型直接当闭环机器人策略」这一新范式，系统回答了两个基础问题：harness 的哪些设计带来增益、性能究竟来自哪种能力，结论对后续 harness 与 RFM 设计都有直接指导性。",
-          "novelty": "范式本身已有 GPT-as-Policy、SenseNova-RoboRSI 等工作，新意在于四个维度的受控消融配方，以及用 direct-joint / direct-chunk 探针与空间定位误差实验把性能归因到空间感知而非低层动作先验。",
-          "technical_depth": "消融覆盖动作表示、chunk、规划、上下文、视角、分辨率、工具与 VLA 集成，并与定位误差探针互相印证；但消融只在 20 任务 ×3 次子集、单一 GPT-6-Astra 模型族上做，逐步累进协议没有独立重跑与方差估计。"
+          "research_value": "系统拆解前沿模型直接作机器人策略的 harness 设计空间，并给出可复现配方与能力归因，对 agentic robotics 的系统构建和评测有直接参考价值。",
+          "novelty": "不是提出新模型，而是用逐项受控消融把提示、规划、动作执行和工具使用串成配方，并用干预实验把性能来源归到空间目标估计而非低层动作先验。",
+          "technical_depth": "在任务子集上做多次重复消融、全基准对比和真实机器人零样本验证，证据链较完整；但消融限于单一模型家族和任务子集，部分探测仅单次运行且未报告方差。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 11869,
-        "tokens_out": 8578,
-        "cache_hit_tokens": 1664
+        "tokens_in": 12581,
+        "tokens_out": 8815,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "Embo-Harness 在 RoboLab-120 上 SR 83.3%、Score 89.2",
+          "claim": "在 RoboLab-120 全基准上成功率达 83.3%，完成分 89.2",
           "numbers": [
             "83.3",
             "89.2"
           ],
-          "source_span": "Section 3.6.1",
+          "source_span": "Section 3.6.1, Table 2",
           "quote": "Embo-Harness achieves an SR of 83.3% and a Score of 89.2",
           "verified": true
         },
@@ -1820,65 +1933,27 @@
           "numbers": [
             "57.1"
           ],
-          "source_span": "Section 1",
+          "source_span": "Introduction",
           "quote": "compared with 57.1% for SenseNova-RoboRSI",
           "verified": true
         },
         {
-          "claim": "相对该基线 SR 提升 26.2 个百分点、Score 提升 19.3",
+          "claim": "Embo-Harness 较最强基线高 26.2 个百分点",
           "numbers": [
-            "26.2",
-            "19.3"
+            "26.2"
           ],
           "source_span": "Section 3.6.1",
-          "quote": "it improves SR by 26.2 percentage points and Score by 19.3",
+          "quote": "improves SR by 26.2 percentage points",
           "verified": true
         },
         {
-          "claim": "真机四个任务零样本成功 15/20 次",
+          "claim": "四个真实任务 20 次零样本尝试成功 15 次",
           "numbers": [
-            "15",
-            "20"
+            "20",
+            "15"
           ],
           "source_span": "Abstract",
-          "quote": "It also succeeds in 15 of 20 zero-shot trials across four real-world manipulation tasks",
-          "verified": true
-        },
-        {
-          "claim": "逐帧直接生成轨迹比目标位姿预测低 18.3 个百分点",
-          "numbers": [
-            "18.3"
-          ],
-          "source_span": "Section 4.1",
-          "quote": "this approach underperforms target pose prediction by 18.3 percentage points",
-          "verified": true
-        },
-        {
-          "claim": "固定动作块长度 8 在消融中最优",
-          "numbers": [
-            "8"
-          ],
-          "source_span": "Section 3.1",
-          "quote": "a chunk size of 8 achieves the best performance by balancing movement speed and execution horizon",
-          "verified": true
-        },
-        {
-          "claim": "最终采用 640×360 的输入分辨率",
-          "numbers": [
-            "640",
-            "360"
-          ],
-          "source_span": "Section 3.3",
-          "quote": "we adopt a higher visual resolution of 640 × 360",
-          "verified": true
-        },
-        {
-          "claim": "短多动作序列在约 30% 的场景被使用，平均每次约三个连续动作",
-          "numbers": [
-            "30"
-          ],
-          "source_span": "Section 3.4",
-          "quote": "short multi-action sequences are used in approximately 30% of cases, with an average of three actions generated per sequence",
+          "quote": "It also succeeds in 15 of 20 zero-shot trials across four real-world manipulation tasks.",
           "verified": true
         }
       ],
@@ -1899,31 +1974,32 @@
           "pdf",
           "project"
         ],
-        "dropped_claims": 3,
+        "dropped_claims": 0,
         "downgraded_reason": null,
         "warnings": []
       },
       "content": {
-        "why_read": "",
-        "task": "把前沿多模态模型直接当闭环策略（frontier-model-as-policy）生成机器人动作，已在操作基准上超过专门的 VLA 与 WAM。但现有工作（GPT-as-Policy、SenseNova-RoboRSI 等）只展示或改进某个系统，既没说清 harness 里哪些设计真正带来增益，也没解释通用模型为何能胜过专用控制策略。",
+        "why_read": "提出 Embo-Harness，通过逐步消融提示、规划、动作执行与工具使用，形成让前沿多模态模型直接充当机器人策略的构建配方，在 RoboLab-120 上达到 83.3% 成功率，并把性能来源归因于空间目标感知。",
+        "task": "前沿多模态模型已能直接从图像与指令生成机器人动作，在闭环 harness 中充当策略；但这类系统为何有效、哪些设计真正带来增益尚不清楚。已有工作多展示单个系统或做递归自改进，缺少对提示、规划、动作执行和工具使用的逐项控制比较，难以区分模型原生能力与手工机器人先验的贡献。",
         "findings": [
           {
-            "point": "能力来源是空间目标定位，不是低层动作生成",
-            "detail": ""
+            "point": "性能主要来自空间目标估计，而非低层动作先验",
+            "detail": "直接生成关节角或逐帧轨迹会明显掉点，而预测末端目标再由 IK/插值执行更好；位置估计误差随推理强度与分辨率下降，并与失败抓取误差同量级。"
           },
           {
-            "point": "模型对执行视界不敏感，chunk 必须固定且偏短",
-            "detail": "不同 chunk 下模型预测的目标位置几乎不变：大 chunk 动作变慢、耗尽步数预算，小 chunk 到不了目标需重复下发；异步推理也因无法预判执行后状态而失败。"
+            "point": "动作时间尺度与模型预判能力不匹配",
+            "detail": "模型对不同动作块长度给出相近目标位置，说明对执行时域不敏感；块过大拖慢动作并耗尽步数预算，块过小又需反复执行，异步执行则因难以预判未来状态而未带来收益。"
           },
           {
-            "point": "空间分辨率与推理强度是主要瓶颈",
-            "detail": "显式规划、失败经验提醒、直接写关节角等手工先验均无收益，加进去反而掉点。"
+            "point": "工具收益取决于补足还是替代原生能力",
+            "detail": "显式规划和失败提醒增加开销却不提升；VLA 选择因模型高估其可靠性而退化，VLA 修正与短多动作序列则分别补上低层精度和输出效率。"
           }
         ],
-        "method": "",
-        "results": "",
-        "limitations": "",
-        "reading_minutes": 1
+        "method_idea": "现有 harness 要么调用工具或代码执行动作，要么交给专用策略；让前沿模型直接作策略时，又常套用为 VLA 设计的手工计划和低层动作先验。这篇改为顺应原生能力：让它预测末端执行器的空间目标，用短动作块和短多动作序列组织执行，并提供多视角高分辨率观察，把 VLA 降为动作修正器。",
+        "method_how": "方法不训练新模型，而是在统一的机器人闭环里逐步替换设计项：先比较关节空间与末端执行器空间、绝对与增量动作、不同动作块长度，再调模型与推理强度、隐式与显式规划、上下文保留方式，最后加入短多动作序列和 VLA 修正。最终配方采用绝对末端执行器动作、较短固定动作块、高推理强度、高分辨率多视角输入，并让 VLA 每步先给动作、再由前沿模型修正后执行。代价是更高分辨率与更强推理抬高单次调用成本，短序列和 VLA 集成增加系统复杂度；配方只在单一模型家族和任务子集上逐步验证，异步执行因模型无法预判未来状态被放弃。",
+        "results": "在 RoboLab-120 全基准上，Embo-Harness 成功率 83.3%、完成分 89.2，较最强基线 SenseNova-RoboRSI 的 57.1% 高 26.2 个百分点；四个真实任务 20 次零样本尝试成功 15 次。",
+        "limitations": "作者承认结论依赖当前前沿模型，且只覆盖夹爪式桌面操作，灵巧操作、移动与触觉未验证；消融主要基于任务子集且部分探测仅单次运行，缺少跨模型家族验证与方差报告。",
+        "reading_minutes": 3
       }
     },
     {
@@ -1937,7 +2013,7 @@
       "arxiv_version": "v1",
       "version_count": 1,
       "title": "World Models as Native Latent Action Models",
-      "title_zh": "世界模型作为原生潜在动作模型",
+      "title_zh": "世界模型作为原生潜动作模型",
       "authors": [
         "Qinyue Li",
         "Weijie Qiao",
@@ -1996,60 +2072,62 @@
       "quality": {
         "dimensions": {
           "research_value": 88.0,
-          "novelty": 86.0,
-          "technical_depth": 84.0,
+          "novelty": 87.0,
+          "technical_depth": 86.0,
           "impact": 73.0,
           "completeness": 70.0
         },
         "tier": "A",
         "l1_reason": "用预训练视频DiT同时充当IDM与FDM，只加dynamics registers，思路新且可作VLA预训练",
         "evidence_level": "fulltext",
-        "score": 82.7,
+        "score": 83.3,
         "rank_in_pool": 10,
         "l2_reasons": {
-          "research_value": "把视频世界模型直接转成可从无动作视频提取可迁移 latent action 的教师，并用于 VLA 预训练，问题重要且路线有复用价值。",
-          "novelty": "不改架构、不加独立 encoder/decoder，仅用动力学寄存器与反事实时序对让同一世界模型自读自放，区别于从零训练 LAM 和生成视频的 WAM。",
-          "technical_depth": "LARY、RoboTwin/RoboDojo、真机与算力对比齐全，并有反事实对消融；但仅一个 backbone、grounding 贡献未隔离，部分榜单结果由作者自评。"
+          "research_value": "把预训练视频世界模型直接转化为潜动作模型，并验证其作为 VLA 预训练教师可跨本体、跨场景迁移，对利用无动作视频这一长期问题有实质推进。",
+          "novelty": "关键不是换骨干或加模块，而是让同一 DiT 以两种模式兼任 IDM/FDM，以寄存器作唯一因果桥，并用反事实时序对消除首帧捷径，属于范式层面的改动。",
+          "technical_depth": "训练目标、反事实消融、LARY 探针、仿真与真机闭环、推理成本均有交代，基线统一了数据与增强；扣分在 RoboDojo 由作者自评且只验证一个世界模型骨干。"
         }
       },
       "recommendation_type": "frontier",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 14806,
-        "tokens_out": 7724,
-        "cache_hit_tokens": 1664
+        "tokens_in": 15514,
+        "tokens_out": 8503,
+        "cache_hit_tokens": 2304
       },
       "claims": [
         {
-          "claim": "Native LAM 在 LARY 上平均分类 71.77%、回归 MSE 0.25，WLA3 为 70.75% 与 0.37。",
+          "claim": "LARY 上 Native LAM 分类 71.77%、回归误差 0.25，优于 WLA3 的 70.75% 和 0.37",
           "numbers": [
             "71.77",
             "0.25",
             "70.75",
             "0.37"
           ],
-          "source_span": "Sec. 4.2.1",
+          "source_span": "Sec. 4.2.1, Table 2",
           "quote": "It reaches 71.77% classification accuracy and 0.25 regression error on average, against 70.75% and 0.37 for WLA3, the best previous LAM.",
           "verified": true
         },
         {
-          "claim": "PAWlicy 在 RoboTwin 2.0 上平均成功率达到 93.6%。",
+          "claim": "PAWlicy 在 RoboTwin 2.0 上平均成功率达到 93.6%",
           "numbers": [
             "93.6"
           ],
-          "source_span": "Abstract",
-          "quote": "With a 3.8B model, PAWlicy reaches a 93.6% average success rate on RoboTwin 2.0 trained with domain-randomized demonstrations, the highest among VLAs.",
+          "source_span": "Abstract; Sec. 4.3",
+          "quote": "PAWlicy reaches a 93.6% average success rate",
           "verified": true
         },
         {
-          "claim": "真机上 PAWlicy 在叠三块与放鞋任务分别达到 76.7% 与 90.0%，高于 π0.5。",
+          "claim": "真实机器人两任务成功率为 76.7% 和 90.0%，高于同增强 π0.5 的 66.7% 和 80.0%",
           "numbers": [
             "76.7",
-            "90.0"
+            "90.0",
+            "66.7",
+            "80.0"
           ],
-          "source_span": "Introduction",
-          "quote": "On a real robot, it lifts π0.5 from 23.3% to 76.7% on stacking three blocks and from 33.3% to 90.0% on putting shoes in a box.",
+          "source_span": "Sec. 4.3, Table 4",
+          "quote": "PAWlicy reaches 76.7% and 90.0%, against 66.7% and 80.0% for π0.5 with the same past frame and augmentation and 23.3% and 33.3% for π0.5.",
           "verified": true
         }
       ],
@@ -2069,33 +2147,29 @@
         ],
         "dropped_claims": 0,
         "downgraded_reason": null,
-        "warnings": [
-          {
-            "kind": "length",
-            "note": "method 字数 258 超出 [50, 250]"
-          }
-        ]
+        "warnings": []
       },
       "content": {
-        "why_read": "提出 Native LAM，将预训练视频世界模型同时用作 IDM 与 FDM、以动力学寄存器为唯一因果桥，并据此预训练 VLA 策略 PAWlicy，在 RoboTwin 2.0 域随机演示上达到 93.6% 平均成功率。",
-        "task": "视频记录了智能体在物理世界中的动作，但人类第一视角视频没有机器人动作标签，不同机器人数据的动作空间也不共享，难以直接作为策略监督。现有 LAM 从零训练 IDM 与 FDM，用像素重建约束潜动作，重建质量与潜变量容量、精度互相牵制，训练不稳定；预训练视频世界模型虽具备强前向动力学，却把动力学稠密地纠缠在各层隐藏状态中，缺少可读写的紧凑动作接口。",
+        "why_read": "提出 Native LAM，把预训练视频世界模型同时用作逆动态与正动态模型，仅靠动力学寄存器提取紧凑潜动作，并据此提出不生成视频的 VLA 预训练范式 PAWlicy。",
+        "task": "从无动作标签或动作空间不统一的视频中学习可迁移动作表示，是让 VLA 利用人类视频和异构机器人数据的关键。现有 LAM 从零训练逆动态与正动态模型，重建像素与潜变量容量相互牵制：瓶颈松会泄漏未来帧，紧则描述不了运动，中间又容易漂向相机运动或干扰物。",
         "findings": [
           {
-            "point": "从零训练的重建目标制造了瓶颈两难",
-            "detail": "IDM/FDM 从零学，潜动作既要压缩又要支撑像素重建：瓶颈松会泄漏未来帧，紧则无法描述运动，居中又易漂向相机运动或干扰物，潜空间因此不纯。"
+            "point": "从零训练编码器—解码器把动作学习和像素重建绑死",
+            "detail": "单独训练 IDM/FDM 时，瓶颈松会泄漏未来帧、紧则描述不了运动，中间又漂向相机运动或干扰物，潜动作容量与重建保真难以兼得。"
           },
           {
-            "point": "预训练 FDM 会绕过新初始化的 latent 通路",
-            "detail": "世界模型仅凭首帧就能生成合理未来，直接训练时优化会抑制 adapter 与寄存器，梯度进不到寄存器，形成 posterior collapse（register bypass），latent 对生成结果不敏感。"
+            "point": "预训练世界模型的首帧先验会压垮新增潜动作通路",
+            "detail": "FDM 仅凭首帧已能想象出合理未来，随机初始化的寄存器与适配器被优化压制，梯度消失，形成后验坍塌。"
           },
           {
-            "point": "动力学与外观在稠密隐藏状态中纠缠",
-            "detail": "世界模型没有现成的紧凑动作表示；若用稠密视觉特征或生成像素监督策略，监督会被外观主导，视觉偏移下策略更脆弱。"
+            "point": "世界模型的动态信息与外观纠缠在稠密隐状态中",
+            "detail": "它没有可直接读取的紧凑动作接口，大量视频 token 中动态与外观混在一起，不能直接当潜动作使用。"
           }
         ],
-        "method": "不设独立 encoder/decoder，保持预训练视频 DiT 与 VAE 不变，在 token 序列中加入一组可学习动力学寄存器，同一权重跑两种模式：IDM 模式下寄存器经只读注意力读取整段干净视频，由输出 MLP 得到按时间分组的紧凑 latent action；FDM 模式把该 latent 经适配 MLP 注入，替代文本/动作条件，仅凭首帧与 latent 用原 flow-matching 损失重建未来，不看文本和干净未来。为防世界模型凭首帧抄近路，用同一视频重定时构造反事实对，共享首帧、上下文、噪声与扩散时刻，只让运动不同，迫使 latent 携带运动差异；在少数有动作标签的数据上加浅层运动学头做 grounding。再冻结 Native LAM 作教师，为机器人、人类与仿真视频打 latent 标签，训练共享注意力的 VLM、latent action DiT 与 action DiT；策略只预测紧凑 latent 并据此出动作，不生成视频。",
-        "results": "LARY 平均分类 71.77%、回归 MSE 0.25，优于 WLA3 的 70.75%/0.37；RoboTwin 2.0 随机演示训练下平均 93.6%，真机两项 76.7% 与 90.0%，均高于 π0.5。",
-        "limitations": "只在单一预训练视频世界模型上验证，训练来源中仅少数提供运动学 grounding，其独立贡献未隔离；RoboDojo 的 Memory 维度未评估，部分结果由作者自行复现，真实机器人任务也有限。",
+        "method_idea": "现有 LAM 另训编码器和解码器，靠重建未来帧逼出潜动作，重建保真与潜变量容量互相牵制。Native LAM 让同一个预训练视频扩散 Transformer 兼任两者：一组可学习动力学寄存器只读地汇总片段内部状态，得到紧凑潜动作，再由同一网络从首帧和该潜动作重建未来；训练时用首帧相同、运动不同的反事实副本，逼模型只能靠潜动作解释运动差异。",
+        "method_how": "以公开 Kairos 3.1 为骨干，VAE 与视觉语言编码器冻结。IDM 模式把动力学寄存器接到干净片段后，用只读注意力读取视频内部状态，再由输出 MLP 压成紧凑潜动作；FDM 模式把潜动作经适配器替换文本条件，与首帧和噪声送入同一 DiT，用原 flow-matching 损失重建未来。反事实副本共享首帧、噪声与扩散时间，只有运动不同；AgiBot World 与 DROID 另加运动学头预测末端轨迹，其余源不加动作监督。PAWlicy 冻结该模型生成潜动作标签，VLM 用 π0.5 初始化的 PaliGemma，潜动作 DiT 与动作 DiT 规模相同并通过逐层共享注意力耦合；代价是新增两个专家、训练需先跑教师，且只在单一骨干上验证。",
+        "results": "LARY 上 Native LAM 分类 71.77%、回归误差 0.25，优于 WLA3 的 70.75%/0.37；PAWlicy 在 RoboTwin 2.0 平均成功率 93.6%，真机两任务 76.7%/90.0%，高于同增强 π0.5 的 66.7%/80.0%。",
+        "limitations": "结论主要建立在 Kairos 3.1 单一骨干上；运动学 grounding 只覆盖少数数据源，跨本体迁移以定性展示为主；RoboDojo 结果由作者自行评测，且不覆盖 Memory 维度。",
         "reading_minutes": 3
       }
     },
@@ -2163,8 +2237,8 @@
       "topics_source": "pending_llm",
       "quality": {
         "dimensions": {
-          "research_value": 89.0,
-          "novelty": 76.0,
+          "research_value": 86.0,
+          "novelty": 72.0,
           "technical_depth": 83.0,
           "impact": 0.0,
           "completeness": 70.0
@@ -2172,23 +2246,33 @@
         "tier": "A",
         "l1_reason": "按不确定性注入位置建taxonomy，连model-agnostic与intrinsic，附跨范式实证，指出无单一方法占优",
         "evidence_level": "fulltext",
-        "score": 69.3,
+        "score": 67.4,
         "rank_in_pool": 1,
         "l2_reasons": {
-          "research_value": "把统计、机器学习、时空与生成模型中的概率预测统一到“不确定性在何处注入”这一主线下，并用跨范式实验和选型指南回应方法碎片化。",
-          "novelty": "分类轴从架构或应用转为不确定性注入机制，跨范式实验和数据驱动/领域选型框架是增量；但方法条目本身多为已有工作总结。",
-          "technical_depth": "对共形可交换性、贝叶斯推断近似、分位数交叉、engression 的能量分数、扩散采样成本等写到机制与代价，并配公式和对比表；部分应用列举偏密，理论保证边界讨论不均衡。"
+          "research_value": "把散落在统计、机器学习、生成模型与时空文献里的概率预测收进同一张分类图，并配上跨范式实证，直接回答“面对具体任务该选哪类方法”。",
+          "novelty": "以“不确定性在流水线哪一步注入”作为一级划分，并把“没有哪类范式全面占优”写成实证结论，是作者自己的判断；但具体条目多是已有方法的归位。",
+          "technical_depth": "逐类讲到机制层面：conformal 覆盖依赖可交换性与有限样本分位数修正、GP 的协方差求逆成本与诱导点降复杂度、平均场变分低估后验、diffusion 的迭代采样开销，并用对比表列出假设与代价。"
         }
       },
       "recommendation_type": "survey",
       "recommended_at": "2026-11-25T20:07:39.655985+00:00",
       "cost": {
         "model_used": "deepseek-flash",
-        "tokens_in": 30553,
-        "tokens_out": 5520,
-        "cache_hit_tokens": 1280
+        "tokens_in": 30640,
+        "tokens_out": 6237,
+        "cache_hit_tokens": 1408
       },
-      "claims": [],
+      "claims": [
+        {
+          "claim": "综述指出 bagging 类集成对深度网络不划算，因为每个基学习器只用到约 63% 的不重复训练数据。",
+          "numbers": [
+            "63"
+          ],
+          "source_span": "Section 3.2.3",
+          "quote": "63%) of the unique training data",
+          "verified": true
+        }
+      ],
       "affiliations": [
         "Sorbonne University Abu Dhabi",
         "Sorbonne Université"
@@ -2207,35 +2291,35 @@
         "warnings": []
       },
       "content": {
-        "why_read": "梳理时间与时空概率预测的模型无关和模型内生路线，按不确定性注入位置分为两支并细分，跨范式实验指出没有单一范式在校准、锐度与算力上全面占优。",
-        "scope": "覆盖单变量、多变量与时空概率预测，从预控制限、集成与共形校准，到贝叶斯、参数分布、分布回归、生成模型和时间序列基础模型；不按点预测架构或单一应用领域组织，重点在方法论、评估指标与选型。",
-        "evolution": "早期靠残差同方差假设和固定宽度区间；集成与共形校准把不确定性外挂在任意预测器上；贝叶斯、分位数回归和混合密度把分布写进模型；扩散、归一化流等生成模型转向学习完整轨迹分布；基础模型再推向零样本概率预测，但校准与迁移性仍未验证。",
+        "why_read": "按“不确定性在哪一步注入”把时间序列与时空概率预测分成模型无关与模型内生两支，串起从残差区间到 diffusion 和基础模型的完整谱系，并指出没有任何一类范式在校准、锐度、精度与成本上全面占优。",
+        "scope": "覆盖单变量、多变量与时空的概率预测：模型无关侧含前控限、集成与 conformal 校准，模型内生侧含贝叶斯建模、参数化预测分布、分布回归以及从 copula 到 diffusion 的生成模型，另加时序基础模型、评测指标与开源工具。不涉及纯点预测的架构设计与具体业务系统落地。",
+        "evolution": "早期做法把独立同分布的高斯残差乘固定倍数当区间；随后用重采样、模型随机化和深度集成制造多样性；conformal 把“给定覆盖率”变成可校准的后处理层，滚动窗口与局部邻域用来应对非可交换性。另一条线把不确定性写进模型本身：贝叶斯后验预测、DeepAR 式分布参数输出、分位数回归与 engression 的损失驱动，再到 GAN/flow/diffusion 学联合分布，最后是零样本的时序基础模型。",
         "approaches": [
           {
-            "point": "模型无关：残差、集成与共形校准",
-            "detail": "不改预测器，用残差尺度、重采样/随机化集成或校准集构造区间；共形给有限样本边际覆盖，但依赖可交换性，时空相关下需滑窗或局部校准。"
+            "point": "模型无关：集成与 conformal 校准",
+            "detail": "在已有预测器外面加一层，用残差重采样、随机化或滚动窗口校准换覆盖率；深度集成靠独立初始化造多样性，避开 bagging 每个成员只见约 63% 数据的问题；代价是集成与重训成本。"
           },
           {
-            "point": "贝叶斯建模与近似推断",
-            "detail": "用先验和后验预测传播参数、状态或函数不确定性；MCMC 接近精确但昂贵，VI、MC Dropout 和 INLA 以速度换后验精度，INLA 受潜高斯模型限制。"
+            "point": "贝叶斯建模：先验加后验预测分布",
+            "detail": "用分层模型、状态空间、GP/DP/BART 或贝叶斯神经网络显式写出依赖结构，再用 MCMC、变分、MC Dropout、INLA 近似后验；换来可分解的不确定性与可解释性，代价是推断成本高、平均场会低估后验。"
           },
           {
-            "point": "参数分布与分布回归",
-            "detail": "DeepAR/MDN 直接输出分布参数，QR 估分位数，engression 用能量分数学完整分布；前两者受分布族或混合数限制，QR 有分位数交叉，engression 需设定噪声。"
+            "point": "参数化预测分布与分布回归",
+            "detail": "网络直接输出分布参数（DeepAR、混合密度网络）或分位数与区间，用似然、pinball loss 或 energy score 训练；换来训练与采样便宜，代价是分布族假设、分位数交叉、只拿到有限分位数。"
           },
           {
-            "point": "生成模型",
-            "detail": "copula、HMM、VAE、GAN、normalizing flow 与 diffusion 学习联合预测分布；表达力强，但高维依赖、训练稳定性和迭代采样成本是主要代价。"
+            "point": "生成模型：学联合预测分布",
+            "detail": "copula 管变量间依赖，HMM 与层次离散化管离散结构，VAE/GAN/flow/diffusion 学可采样的生成机制；换来多模态与联合时空建模，代价是采样慢、似然常不可算、训练不稳。"
           },
           {
-            "point": "时间序列基础模型",
-            "detail": "以零样本/少样本方式输出概率预测，优势是跨序列迁移；但校准、可解释性以及向时空结构的扩展仍是开放问题。"
+            "point": "时序基础模型",
+            "detail": "在跨域序列上预训练，零样本或少样本直接给出预测分布；省掉任务特定训练，但校准、可迁移性与向时空结构的扩展都还没有定论。"
           }
         ],
-        "key_differences": "分歧在于不确定性放在预测器外还是内：外挂法兼容、便宜，但覆盖依赖残差或校准集与可交换性；贝叶斯提供结构化先验但推断贵；参数分布和分布回归便宜却受分布族或分位数限制；生成模型表达力最强，代价是采样与训练成本；基础模型用零样本换校准确定性。",
-        "bottlenecks": "时空依赖随时间与外部驱动变化，平稳性、可交换性和可分协方差假设常失效；极端事件、零膨胀计数、方向数据和连续时间序列仍缺可靠的概率建模与统一软件。",
-        "future_directions": "作者主张发展概率基础模型、自适应与 agentic 预测，并把物理知识写入预测分布；我判断近期更可行的是把共形/贝叶斯校准嵌入生成模型，先在时空基准上统一覆盖与成本评估。",
-        "reading_minutes": 2
+        "key_differences": "分歧集中在三点：不确定性在哪注入（预测后处理、训练目标还是生成机制）、保证属于哪种类型（可交换性下的有限样本边际覆盖、模型假设下的解析分布、或只有经验校准）、以及成本长在哪（集成成员数、采样步数、MCMC 迭代、诱导点数）。代价互换很直接：conformal 最便宜但只保边际、怕非平稳；贝叶斯能拆开认知与偶然不确定性但推断贵；生成模型表达力最强却慢且似然不可算；参数化与分位数回归最快，但被分布族与有限分位数卡住。",
+        "bottlenecks": "非平稳与时空非可交换下的校准仍无保证：conformal 只给边际覆盖，依赖结构一变就失效；极端事件外推、零膨胀计数与方向型数据的分布建模也缺通用解，还缺统一基准与软件。",
+        "future_directions": "作者主张把物理约束写进预测分布、发展概率基础模型、统一软件栈。我更看重把有限样本覆盖保证推广到时空依赖，以及让评测从区间指标转向下游决策损失。",
+        "reading_minutes": 3
       }
     }
   ],
@@ -2349,9 +2433,10 @@
   },
   "validation": {
     "items_dropped": 0,
-    "claims_dropped": 3,
-    "downgraded": 0,
+    "claims_dropped": 2,
+    "downgraded": 1,
     "link_failures": 0,
-    "warnings": 1
+    "warnings": 3,
+    "reread_rolled_back": 1
   }
 }

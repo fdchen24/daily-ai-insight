@@ -1,0 +1,76 @@
+{
+  "title_zh": "Embo-Harness：理解前沿模型作为策略的机器人闭环框架",
+  "affiliations": [
+    "Nanyang Technological University",
+    "ACE Robotics",
+    "SenseTime Research",
+    "Xiamen University",
+    "Lenovo Robotics Lab"
+  ],
+  "scores": {
+    "research_value": 89,
+    "research_value_reason": "系统拆解前沿模型直接作机器人策略的 harness 设计空间，并给出可复现配方与能力归因，对 agentic robotics 的系统构建和评测有直接参考价值。",
+    "novelty": 82,
+    "novelty_reason": "不是提出新模型，而是用逐项受控消融把提示、规划、动作执行和工具使用串成配方，并用干预实验把性能来源归到空间目标估计而非低层动作先验。",
+    "technical_depth": 84,
+    "technical_depth_reason": "在任务子集上做多次重复消融、全基准对比和真实机器人零样本验证，证据链较完整；但消融限于单一模型家族和任务子集，部分探测仅单次运行且未报告方差。"
+  },
+  "reading": {
+    "why_read": "提出 Embo-Harness，通过逐步消融提示、规划、动作执行与工具使用，形成让前沿多模态模型直接充当机器人策略的构建配方，在 RoboLab-120 上达到 83.3% 成功率，并把性能来源归因于空间目标感知。",
+    "task": "前沿多模态模型已能直接从图像与指令生成机器人动作，在闭环 harness 中充当策略；但这类系统为何有效、哪些设计真正带来增益尚不清楚。已有工作多展示单个系统或做递归自改进，缺少对提示、规划、动作执行和工具使用的逐项控制比较，难以区分模型原生能力与手工机器人先验的贡献。",
+    "findings": [
+      {
+        "point": "性能主要来自空间目标估计，而非低层动作先验",
+        "detail": "直接生成关节角或逐帧轨迹会明显掉点，而预测末端目标再由 IK/插值执行更好；位置估计误差随推理强度与分辨率下降，并与失败抓取误差同量级。"
+      },
+      {
+        "point": "动作时间尺度与模型预判能力不匹配",
+        "detail": "模型对不同动作块长度给出相近目标位置，说明对执行时域不敏感；块过大拖慢动作并耗尽步数预算，块过小又需反复执行，异步执行则因难以预判未来状态而未带来收益。"
+      },
+      {
+        "point": "工具收益取决于补足还是替代原生能力",
+        "detail": "显式规划和失败提醒增加开销却不提升；VLA 选择因模型高估其可靠性而退化，VLA 修正与短多动作序列则分别补上低层精度和输出效率。"
+      }
+    ],
+    "method_idea": "现有 harness 要么调用工具或代码执行动作，要么交给专用策略；让前沿模型直接作策略时，又常套用为 VLA 设计的手工计划和低层动作先验。这篇改为顺应原生能力：让它预测末端执行器的空间目标，用短动作块和短多动作序列组织执行，并提供多视角高分辨率观察，把 VLA 降为动作修正器。",
+    "method_how": "方法不训练新模型，而是在统一的机器人闭环里逐步替换设计项：先比较关节空间与末端执行器空间、绝对与增量动作、不同动作块长度，再调模型与推理强度、隐式与显式规划、上下文保留方式，最后加入短多动作序列和 VLA 修正。最终配方采用绝对末端执行器动作、较短固定动作块、高推理强度、高分辨率多视角输入，并让 VLA 每步先给动作、再由前沿模型修正后执行。代价是更高分辨率与更强推理抬高单次调用成本，短序列和 VLA 集成增加系统复杂度；配方只在单一模型家族和任务子集上逐步验证，异步执行因模型无法预判未来状态被放弃。",
+    "results": "在 RoboLab-120 全基准上，Embo-Harness 成功率 83.3%、完成分 89.2，较最强基线 SenseNova-RoboRSI 的 57.1% 高 26.2 个百分点；四个真实任务 20 次零样本尝试成功 15 次。",
+    "limitations": "作者承认结论依赖当前前沿模型，且只覆盖夹爪式桌面操作，灵巧操作、移动与触觉未验证；消融主要基于任务子集且部分探测仅单次运行，缺少跨模型家族验证与方差报告。"
+  },
+  "claims": [
+    {
+      "claim": "在 RoboLab-120 全基准上成功率达 83.3%，完成分 89.2",
+      "numbers": [
+        "83.3",
+        "89.2"
+      ],
+      "source_span": "Section 3.6.1, Table 2",
+      "quote": "Embo-Harness achieves an SR of 83.3% and a Score of 89.2"
+    },
+    {
+      "claim": "最强基线 SenseNova-RoboRSI 的成功率为 57.1%",
+      "numbers": [
+        "57.1"
+      ],
+      "source_span": "Introduction",
+      "quote": "compared with 57.1% for SenseNova-RoboRSI"
+    },
+    {
+      "claim": "Embo-Harness 较最强基线高 26.2 个百分点",
+      "numbers": [
+        "26.2"
+      ],
+      "source_span": "Section 3.6.1",
+      "quote": "improves SR by 26.2 percentage points"
+    },
+    {
+      "claim": "四个真实任务 20 次零样本尝试成功 15 次",
+      "numbers": [
+        "20",
+        "15"
+      ],
+      "source_span": "Abstract",
+      "quote": "It also succeeds in 15 of 20 zero-shot trials across four real-world manipulation tasks."
+    }
+  ]
+}

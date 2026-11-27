@@ -1,0 +1,760 @@
+RESEARCH ARTICLE
+System 1 agents: a method for local, reliable
+and fast agentic AI
+Eleftherios Tzanis1,2,*, Michail E. Klontzas1,2,3
+Abstract
+Agentic artificial intelligence could automate analyses of sensitive clinical data, but current
+agents depend on large language models (LLMs). Cloud LLMs expose patient data. Local LLMs
+hallucinate, and an invented value in a tool call propagates through every later step. Here
+we present a method to build System 1 agents: local agents that call tools without generating
+text. A deterministic compiler turns each tool’s schema and the request into multiple-choice
+questions whose options come from the request and the schema, then a one-pass decision
+model answers them. On 1,952 requests to 157 imaging and biomedical tools, the best System
+1 agent chose the right tool, or correctly declined, for 97.0% of requests, significantly ahead
+of all 18 local LLM-agent settings (best 95.2%). The System 1 agent filled 97.0% of 6,056
+stated argument values. No System 1 call contained invented content, against 5.5–19.7% of
+LLM calls. The System 1 Agents framework is freely available as open-source software at
+https://github.com/eltzanis/SystemOneAgents.
+MAIN
+Agentic artificial intelligence (AI) systems plan and ex-
+ecute analyses by calling software tools1–3. In clinical
+research and practice, such agents could prepare imag-
+ing studies, train and apply models, and query biomedi-
+cal databases on request. The Model Context Protocol
+(MCP) gives tools a common interface for this purpose,
+where each tool publishes a name, a description and a
+JSON schema of its arguments4.
+Two obstacles keep such agents out of clinical use.
+The first is privacy. The most capable language models
+run as cloud services, so every request and the data
+it refers to leave the institution. For patient data, this
+conflicts with data protection rules and institutional
+policy5,6. Local models remove this risk, because data
+never leave the site7. The second obstacle is reliability.
+Local language models are smaller, and an agent built on
+any language model writes each tool call token by token.
+It can call a tool that does not exist, use an argument the
+tool lacks or fill an argument with a value the user never
+gave8–11. In an analysis pipeline, such a hallucinated
+value does not fail visibly. It changes the result of that
+step, and every later step builds on it. Reasoning modes
+reduce some errors but multiply the text generated per
+call and, together with it, time and energy12,13.
+Nonetheless, most of a tool call is not open-ended and
+tools are listed in the catalogue. Almost every value a
+1Artificial Intelligence and Translational Imaging (ATI) Lab, Department of Radiology,
+School of Medicine, University of Crete, Heraklion, Crete, Greece. 2Division of Radiology,
+Department of Clinical Science Intervention and Technology (CLINTEC), Karolinska Institute,
+Huddinge, Sweden. 3Department of Medical Imaging, University Hospital of Heraklion, Crete,
+Greece. *Corresponding author: Eleftherios Tzanis, PhD. E-mail: eleftherios.tzanis@ki.se;
+etzanis@uoc.gr; tzaniseleftherios@gmail.com. ORCID: 0000-0003-0353-481X.
+correct call needs is written in the request, follows from
+it by a fixed rule, such as a unit conversion, or is listed
+in the tool’s schema. What remains is a series of choices.
+Specifically, which tool, which written value for which
+argument, whether to call at all. Decision models are
+built for such choices. They read a state, a question and
+a finite list of options, and return a probability for each
+option in one forward pass14–17. Dual-process accounts
+of cognition call this kind of fast, single-step judgement
+System 118.
+Here we present a method to build System 1 agents,
+local agents in which every decision is a multiple-choice
+question answered by a decision model, and no text
+is generated. We describe the architecture, the devel-
+opment method and the system we built with it for
+biomedical research. We then compare six System 1
+agents with nine local LLM-based agents, in accuracy,
+reliability and efficiency.
+RESULTS
+A method to build System 1 agents. The method
+rests on the principle that the model judges, and code
+executes verbatim what is requested. A System 1 agent
+therefore has three components with one responsibility
+each (Fig. 1a): (i) the agent, (ii) the compiler and (iii)
+the decision model.
+The agent controls the workflow. It asks one question
+over every tool of the catalogue plus ‘none of these’.
+The System 1 model outputs a probability score for
+each option. If the two most probable tools are within
+a probability of 0.3, it queries which of the two has
+parameters for the values the request gives. It then asks
+1
+arXiv:2611.21053v1  [cs.AI]  16 Nov 2026
+System 1 agents
+2
+whether the chosen tool can do what is requested, and
+declines below a probability of 0.5. Subsequently, it
+passes the chosen tool and the request to the compiler.
+In case a required value is missing, the agent does not
+fill it. Instead, it shows the user a fixed prompt, the
+argument’s name and its schema description, and waits
+for the value. When the value is present it sends the call.
+The prompt is a template filled from the schema and
+no stochastic generation happens at any step.
+The compiler is deterministic code that turns the cho-
+sen tool’s JSON schema and the request into questions
+with finite options. An enumeration is asked over its val-
+ues, a boolean over ‘on’, ‘off’ or ‘not mentioned’. Paths,
+numbers, names and other free values are asked over
+candidates that the compiler extracts from the request
+and the schema, plus ‘not specified’. Candidates include
+values derived by fixed rules, such as unit conversions,
+numbers written as words and paths composed from
+written parts. List items are chosen one at a time, so
+candidates compete. An optional value is set only when
+the probability on the request’s values reaches 0.7, and
+a value equal to the documented default is not passed.
+A required value that the request does not give is never
+filled and instead the compiler reports it to the agent
+as missing.
+The decision model answers each question with a
+probability for every option, in one forward pass. A ques-
+tion has four parts, a state, a question text, an option
+list and a kind (choice or yes/no). Any decision model
+that answers this interface can be used unchanged.
+This division makes hallucinated content impossible
+by design. A decision model can only pick among the
+options it is shown. Every tool in a System 1 call there-
+fore comes from the catalogue, every argument name
+from the schema and every value from the request,
+the schema or the agent’s policy. Every decision car-
+ries a probability that thresholds turn into declines and
+prompts for missing values. On the same hardware and
+software, the same input gives the same output, and
+a run can be replayed exactly from its stored answers
+and audited question by question. Figure 1b follows
+one request through these steps.
+We developed the compiler with a loop that keeps
+model failures and compiler failures apart (Methods).
+A compiler oracle, which replaces the decision model
+with a component that knows the label, shows whether
+the compiler can express each labelled call. Requests
+the oracle cannot complete reveal values that no ques-
+tion offers. These are fixed by general rules about how
+requests write values and not by rules for a particular
+tool. A change is accepted only if it raises the summed
+number of correct calls across models on development
+requests, loses no earlier reference request beyond a
+fixed tolerance and survives leave-one-out runs.
+A local System 1 agent for biomedical research. We
+applied the method to multiple biomedical research
+fields (Methods). A total of 157 tools of 18 MCP servers
+for image classification, segmentation, radiomics, Au-
+toML, a computed tomography foundation model, pro-
+teomics, metabolomics, genomics, single-cell and spatial
+transcriptomics, clinical trials and chemistry. We used
+six published decision models with 4 to 35 billion pa-
+rameters, without fine-tuning (Extended Data Table
+1). Each ran locally on one GPU through llama.cpp.
+We compared the System 1 agents with nine open-
+weight LLM-based agents, each with reasoning on and
+off (Extended Data Table 2). Three of the LLMs are
+the base models of five of the decision models. Each
+LLM-based agent ran as distributed, on the same GPU,
+with the request as the only message and every tool as
+a native function. The evaluation set comprised 2,126
+requests: 2,003 custom prompts and 123 prompts taken
+verbatim from published research studies19,20. Together
+they contain 1,645 complete requests, which state 6,056
+argument values, 307 out-of-scope requests, which no
+tool can serve, and 174 underspecified requests, which
+omit a required value. All 123 published prompts are
+complete requests. The 1,952 complete and out-of-scope
+requests (1,829 custom and 123 published) form the
+main benchmark for accuracy; the 174 underspecified
+requests were evaluated separately. A scorer tool was
+developed to judge every agent (Methods).
+Comparison by category. System 1 agents were more
+accurate in most pairwise comparisons. They never in-
+vented content and, instead of inventing a missing re-
+quired value, left it for the user to supply. On declining
+out-of-scope requests and on schema validity, the opti-
+mal LLM-agent configurations were comparable. Three
+of the four LLM-agent configurations that declined re-
+quests as often as System 1 agents, left 13.7-36.5% of
+complete requests without a call. At higher accuracy,
+OpenJev-based System 1 agent was faster and used less
+energy than the best LLM-based agent configuration. On
+argument filling, five LLM-based agents were not signif-
+icantly different from the best System 1 agent, and the
+cheapest LLM-based agent without reasoning, matched
+the cheapest System 1 agents on energy and time. Table
+1 summarizes the comparison between System 1 agents
+and LLM-based agents.
+Accuracy. We measured accuracy in three ways on the
+main benchmark of 1,952 requests (1,645 complete and
+307 out-of-scope). Tool calling, counts the requests for
+which the agent called the labelled tool or, when the
+request was out of scope, declined. Argument filling,
+counts the 6,056 values that the complete requests state,
+with a value considered right only in a call to the right
+tool. A request is fully correct when its entire outcome
+is right. For a complete request, the agent must call
+the labelled tool, provide all stated values correctly,
+and leave no required arguments empty. For an out-
+of-scope request, the agent must decline. Values not
+specified in the request are not counted as errors in this
+System 1 agents
+3
+assessment, as we evaluated invented values separately
+(see Reliability section).
+The six System 1 agents reached 91.7-97.0% accu-
+racy on tool calling, 89.8-97.0% on argument filling and
+81.4-93.9% on fully correct request assessment (Fig. 2
+and Extended Data Table 3). pplx-decider-27b reached
+97.0%, 97.0% and 93.9% (95% confidence interval (CI)
+92.7-94.8%), and OpenJev 96.1%, 96.1% and 92.9%,
+respectively. The best LLM-based agent, Qwen3.5-27B
+with reasoning off, reached 95.1%, 97.2% and 91.3%
+accuracy on the tool calling, argument filling and fully
+correct criteria, respectively. Neither reasoning setting
+consistently outperformed the other across LLMs. En-
+abling reasoning improved full correctness for five mod-
+els but reduced it for four.
+We compared each System 1 agent with each LLM-
+agent in each mode, 108 pairs per measure, with Holm
+correction (Fig. 3). On fully correct requests, System
+1 was significantly ahead in 73 pairs and the LLM in
+11, with no significant difference in 24. pplx-decider-
+27b-based agent was ahead of all 18 LLM-based agents
+and OpenJev-based agent of 17. All 11 LLM leads were
+over the two weakest System 1 agents. The advantage
+was primarily in tool selection, with System 1 agents
+outperforming the LLM-based agents in 76 pairs com-
+pared with just 5 pairs in which the LLM-based agents
+performed better. On argument filling, the larger LLMs
+were closer (46 System 1 leads, 19 LLM leads, 43 ties).
+The two pplx-decider models were ahead of their own
+base model run as an agent, by 2.6-9.6 percentage
+points on fully correct requests; decider-35b-a3b-based
+System 1 agent was behind its base model with rea-
+soning on (Extended Data Table 4). By tool group,
+System 1 led most on medical imaging tools whose calls
+carry many technical values, such as nnU-Net21, and
+the LLM-based agents filled values better for identifier-
+heavy biomedical databases such as ClinicalTrials.gov
+and ChEMBL22 (Extended Data Table 5).
+Reliability. No System 1 call contained hallucinated
+content (Fig. 4a and Extended Data Table 7). Across
+10,888 System 1 calls, every tool and argument name
+was in the catalogue, and none of 33,945 argument
+values was ungrounded. We counted a value as un-
+grounded when it matched neither the labelled value,
+nor text or a number written in the request, nor an
+option the compiler offered for that argument, nor the
+tool’s schema. This test counts any value written any-
+where in the request as grounded, so it undercounts hal-
+lucination. The LLM-based agents never called a nonex-
+istent tool, but three of the nine agents used argument
+names absent from the schema, in 19-53 calls per set-
+ting. A total of 5.5–19.7% of LLM-based agent calls
+contained at least one invented value. Most invented
+values were settings the user never stated, such as hy-
+perparameters, file paths and options. Reasoning did
+not remove them.
+System 1 agents did not guess missing values. On
+the 174 underspecified requests, they chose the right
+tool, filled the stated values and reported the missing
+required argument, for which the agent prompts the
+user, in 86.2-93.7% of cases (Fig. 4b). In 2-6 cases
+per agent, they filled a missing required value with an-
+other value written in the request, which represents a
+wrong choice, not an invention. The LLM-based agents
+behaved correctly in at most 5.7% of cases. They mostly
+answered without a call or filled the missing value with
+an invented one in up to 62.1% of underspecified re-
+quests. Even the most accurate LLM setting invented
+the missing value in 27.6% of them (Table 1).
+System 1 agents declined 87.0-94.5% of the 307 out-
+of-scope requests and left 1.0-3.3% of complete requests
+without a call (Fig. 4c). The LLM-based agents declined
+41.4-97.4% and left 0.0-36.5% without a call. The two
+that declined most, left 24.3% and 36.5% of complete
+requests without a call. Of the three kinds of out-of-
+scope request, those for which a tool performs the task
+but not on the given input were the hardest for every
+agent. In 22 of the 10,888 System 1 calls, a value written
+in the request was placed where the schema requires
+another form, such as an identifier pattern. The LLM-
+based agents made such calls at a similar rate (Table
+1).
+Efficiency. System 1 agents used 0.072-0.407 Wh of
+GPU energy per fully correct request, against 0.198-
+2.481 Wh for LLM-based agents with reasoning and
+0.080-0.853 Wh without (Fig. 5 and Extended Data
+Table 6). A request took 1.2-10.1 s with System 1, in
+comparison to 2.6-26.1 s for LLM-based agents with
+reasoning and 1.1-9.2 s without. At the top of the ac-
+curacy range, OpenJev-based System 1 agent was fully
+correct on 92.9% of requests, with 2.6 s per request and
+0.228 Wh per fully correct request, against 91.3%, 4.5
+s and 0.413 Wh for the best LLM-based agent setting. A
+System 1 agent asked about 12 questions per request
+and generated no text, whereas the LLM-based agents
+generated 123-340 tokens per request without reason-
+ing and 417-952 with it. All agents fitted on one 48-GB
+GPU, with peak GPU memory of 7,368-35,057 MiB for
+System 1 agents and 12,044-45,532 MiB for LLM-based
+agents.
+Robustness and reproducibility. The comparison was
+independent of the value-matching method. Two values
+were considered equivalent when they would have been
+treated as equivalent by the server, for example, through
+its own name-matching table (Methods). However, the
+servers did not resolve equivalence in two cases: stop
+words, such as “and” or “the”, in database search text,
+and model names that an AutoML server passed directly
+to its underlying library. To assess the sensitivity of the
+results to these choices, we rescored all agents using
+the alternative matching rule for each case. Search text
+was compared exactly as written, while model names
+System 1 agents
+4
+were matched using the library’s own name table. The
+first alternative did not change any pairwise compar-
+isons. The second changed one of the 324 comparisons
+from a System 1 advantage to no statistically significant
+difference (Extended Data Table 8).
+The comparison was also independent of the reason-
+ing mode. For fully correct requests, System 1 agents
+outperformed the LLM-based agents in 37 of the 54 pairs
+with reasoning enabled, while the LLM-based agents
+performed better in 6. With reasoning disabled, the
+corresponding counts were 36 and 5. When each LLM-
+based agent was evaluated using its better-performing
+mode, selected retrospectively based on the results, a
+choice that favored the LLMs, System 1 agent still out-
+performed the LLM-based agent in 33 of 54 pairs, com-
+pared with 8 in which the LLM-based agent performed
+better. The advantage was also not limited to generated
+requests. On the 123 prompts taken verbatim from the
+notebooks of two published agent systems, System 1
+agents achieved mean tool-calling and argument-filling
+accuracy at least as high as that of LLM agents in either
+reasoning mode (Extended Data Table 5).
+Every result can be traced to the released data (Data
+availability). Replaying the stored decision-model an-
+swers through the released code rebuilds all 12,756
+System 1 records of the evaluation set. Rescoring each
+System 1 record from its recorded call reproduced its
+stored verdict, and rescoring the LLM completions re-
+produced the totals of the run summaries of all 18 LLM-
+agent settings. The released scripts can be used to re-
+generate every figure, Table 1, Extended Data Tables
+3-8 and every statistic in the text.
+DISCUSSION
+Clinical and other sensitive data call for agents that
+run locally and do not invent content. Current options
+force a trade-off. Cloud LLMs are capable but move data
+off site. Local LLMs keep data on site but, as we show,
+put invented values into 5.5-19.7% of their tool calls
+and invent missing required values for up to 62.1% of
+underspecified requests. In a pipeline, each such value
+silently changes the analysis and every step that follows.
+System 1 agents remove this trade-off for tool calling.
+They run on a local GPU and cannot hallucinate content,
+because they never generate text. Every tool, argument
+and value in a call is chosen from options that come from
+the catalogue, the request, the schema or the agent’s
+policy. We observed no invented content in 10,888 calls.
+When a required value is missing, they leave it empty
+and prompt the user for it with a template built from
+the schema. Every decision carries a probability and
+every run can be replayed, which makes the behaviour
+of the agent auditable.
+These properties did not cost accuracy. The two
+strongest System 1 agents were ahead of every local LLM
+setting or level with the best one, mainly because they
+chose tools and declined more reliably. On average they
+were faster and used less energy than LLM-based agents
+with reasoning, although Qwen3.5-35B-A3B with rea-
+soning used less energy than OpenJev-based System
+1 agent. At the top of the accuracy range, OpenJev-
+based System 1 agent was faster and cheaper than the
+best LLM setting. The decision model mattered since
+the two pplx-decider System 1 models were better tool
+callers than their base model run as an agent, whereas
+decider-35b-a3b was not.
+System 1 agents are not error-free. They still make
+wrong choices among grounded options. In a limited
+number of cases, they picked wrong tools, put written
+values into the wrong argument and, in 22 of 10,888
+calls, sent grounded text in a form the schema rejects.
+Checking each option against the argument’s schema,
+pattern and type, before offering it would remove the
+last of these. Requests for which a tool performs the task
+but not on the given input were hard for every agent.
+On argument filling, five LLM-based agents were not
+significantly different from the best System 1 agent.
+In conclusion, herein we present a general method
+to develop System 1 agents. As scientific and clinical
+tools adopt common interfaces such as MCP, System 1
+agents offer a route to local, reliable and fast automation
+of analyses on sensitive data, in which every step is
+grounded, scored and auditable.
+METHODS
+Decision models. A decision model maps a state, a
+question and a list of options to a probability distribu-
+tion over the options, in one forward pass and without
+sampling. We used six published models from three
+protocol families, unchanged and without fine-tuning
+(Extended Data Table 1)14–17. Each was served by
+llama.cpp (build b11929)23 entirely on one GPU, with
+one request slot; every question was its own request.
+Decider family models (decider-4b, decider-35b-a3b).
+The prompt is the family’s state-first layout, built as to-
+ken ids with the checkpoint’s tokenizer: a context block
+with the state, the question, the options labelled (A),
+(B), ... and an answer prefix. The answer is read at the
+final position. The log-probabilities of the option-label
+tokens returned by llama-server before sampling, are di-
+vided by the model’s fitted temperature and normalized
+over the valid labels. Up to ten options use the letters
+A-J and larger questions use one single-token label per
+option, up to 255.
+pplx-decider family models (pplx-decider-flash, pplx-
+decider-27b). The prompt is the checkpoint’s chat tem-
+plate around a fixed system prompt and a user turn
+with the state, the question and the options, ending in
+a marker token. The model’s full-attention layers are
+non-causal. llama-server runs in embeddings mode and
+returns the final hidden state at the marker. The agent
+applies the model’s read-out matrix (255 × hidden size)
+and temperature and normalizes over the options. We
+verified this path against the reference implementation
+System 1 agents
+5
+on the 4B model.
+Native SystemOne models (OpenJev, Clef). llama.cpp
+implements their prompt, read-out head and tempera-
+tures. Its /v1/systemone endpoint takes the state and
+one question whose criteria are the option texts and
+returns one probability per option. OpenJev takes at
+most 52 options per question. Larger questions are split
+into balanced groups. The model answers within each
+group and then among the group winners, and an op-
+tion’s probability is the product of its group winner’s
+final probability and its probability within the group.
+Determinism and stored answers. For a given model,
+hardware and llama.cpp build, the same state, ques-
+tion, options and kind give the same distribution. Every
+answer was stored under the SHA-256 hash of (model,
+kind, state, question, options).
+Compiler. The compiler turns one tool’s input schema
+and the request into questions, sends them to the deci-
+sion model and assembles the answers into argument
+values.
+Argument kinds. Each property gets a kind from its
+type, name and description: enumeration, boolean,
+number, path, column, free text, list, array of arrays
+or object. A union type (anyOf or oneOf, such as Op-
+tional[X]) is read as its single non-null type.
+Questions. The state of every question is the request,
+the tool’s name and description, and any earlier steps.
+An enumeration is asked as ‘Which value should the
+argument x take?’ over its values, plus ‘not specified
+in the request (keep the default)’ for an optional ar-
+gument. A boolean is asked as ‘Does the request turn
+the option x on or off?’ over on, off and, if optional,
+‘not mentioned’. Numbers, paths, columns and free text
+use the value question over their candidates plus ‘not
+specified’. List items are picked one at a time over the
+remaining candidates plus ‘no further item’. Written
+arrays and dictionaries are offered whole, otherwise an
+object is filled through a yes/no question, its keys and
+one value question per key.
+Candidates. Candidates come from four sources. (1)
+The request: paths, numbers in digits or words, ranges,
+quoted strings, identifiers and compact codes, phrases
+of up to three words for name and search arguments,
+written lists and dictionaries, and text after a label.
+(2) Forms derived from the request for arguments that
+take them: unit conversions, fractions and percentages,
+class counts, dataset identifiers, chromosome and allele
+notations, and paths composed from written parts. (3)
+The schema: values a description lists and documented
+list items. (4) The environment and earlier steps: the
+header of a CSV file another argument points to, and
+earlier results. Words that name the tool or its server
+are not offered.
+Settling and acceptance. Independent questions are
+sent together and settle in a fixed order: free values
+settle highest probability first, so a written value goes
+to the argument that wants it most. A value fills at
+most as many arguments as the request writes it. Used
+values stay visible but cannot be picked again. When
+two arguments claim the same value, the model is asked
+which argument the value belongs to, and that answer
+decides only if its probability reaches 0.7. An optional
+argument is set only when the probability on its allowed
+values reaches 0.7, and a list’s first item must reach 0.7.
+A value equal to the documented default is not passed.
+A required argument without a value is reported as
+missing, and one answered below 0.5 as uncertain.
+Agent. The agent state consisted of the current user
+request and all preceding steps. Tool selection was
+performed through a multiple-choice question that in-
+cluded all available tools, each represented by its server
+and name followed by the first 220 characters of its de-
+scription, as well as a ‘none of these’ option for requests
+that could not be handled by any available tool. When
+the two most probable tools had selection probabilities
+within 0.3 of each other, a second question presented
+the two tools and their parameter names to determine
+which tool had parameters corresponding to the values
+specified in the request.
+A subsequent yes/no question presented the selected
+tool’s full description and parameter names to assess
+whether it could fulfil the request. The agent declined
+requests when the probability of a positive answer was
+below 0.5. In deployment, the agent also declined when
+its selection confidence, calculated as the product of
+the probabilities assigned to the steps, fell below 0.3.
+This threshold was not applied during evaluation, so
+declines resulted only from selecting ‘none of these’ or
+failing the capability check.
+When a required argument was missing or uncer-
+tain, the agent presented the user with a fixed prompt
+containing the argument name and the first 120 char-
+acters of its schema description, and used the value
+provided by the user. If the request did not specify an
+output folder, the agent populated this argument accord-
+ing to a predefined policy. Because the evaluation was
+conducted without user interaction, the agent instead
+listed missing arguments in its plan. An underspecified
+request was considered correctly handled when this list
+contained exactly the arguments labelled as missing.
+For multi-step requests, each tool call and the first
+1,200 characters of its result were added to the agent
+state. The agent then used an additional question to
+determine whether another step was required.
+Development method. All development was confined
+to the compiler and agent and was conducted exclusively
+on development requests. First, every textual value re-
+quired by a tool call was presented to the model as
+an option, while operations that could be performed
+exactly through code were handled by the compiler. Sec-
+ond, a compiler oracle replaced the decision model with
+a component that selected the labelled value whenever
+System 1 agents
+6
+it was available. This provided a measure of which la-
+belled calls could be expressed by the compiler. Third,
+each failure was classified as a compiler failure, a model
+failure or a labelling error. Compiler failures occurred
+when a value was not offered or was offered in an in-
+correct form. Model failures occurred when an offered
+value was not selected. Only compiler failures were
+addressed. Fourth, each modification introduced a gen-
+eral rule governing how requests expressed values or
+how schemas described arguments, rather than a tool-
+specific rule. Its acceptance criteria were documented
+before any model was evaluated against it. Fifth, a set
+of modifications was retained only if it increased the
+aggregate number of fully correct calls across models
+on the development requests, did not cause any earlier
+reference request to fall beyond a predefined tolerance,
+and could not be simplified by removing an individual
+modification without increasing the aggregate score.
+Sixth, stored model responses made repeated evalua-
+tions inexpensive and exactly reproducible. Seventh,
+the code and configuration were hashed before the test
+evaluation.
+Tools and catalogues. A catalogue is a JSON snap-
+shot of each server’s tool list: every tool’s name, de-
+scription and input schema as the server returns
+it. The tested 157 tools were indexed in two cata-
+logues: (i) the imaging catalogue with 42 tools of 11
+MCP servers24: 2D and 3D image classification, nnU-
+Net21, the Merlin CT foundation model25, PyCaret26
+classification and regression, exploratory data anal-
+ysis, feature importance, model comparison, PyRa-
+diomics27 and TotalSegmentator28 (ii) the biomedical
+catalogue has 115 tools of 7 MCP servers: proteomics-
+mcp (53 tools), AlphaGenome29 (22), MSMCP (13),
+ClinicalTrials.gov (7), ChEMBL22 (7), Scanpy30 (7)
+and TISSUE (6). The AlphaGenome, Scanpy and TIS-
+SUE servers come from Paper2Agent3, and the Clin-
+icalTrials.gov and ChEMBL servers from CyanHeads
+(https://github.com/cyanheads/chembl-mcp-server).
+Prompt Requests, labels and evaluation set. Prompt
+requests were designed to resemble explicit, researcher-
+style instructions and to cover a range of linguistic and
+numerical phenomena, including paraphrasing, distrac-
+tor values, alternative number formats, quotation, nega-
+tion and textual noise. Out-of-scope requests covered
+three categories: far, referring to tasks unrelated to the
+available tools, near, referring to related tasks for which
+no available tool provided the required functionality,
+and modality, referring to tasks supported by an avail-
+able tool but not for the specified input type.
+Each request was labelled with the tool whose execu-
+tion would fulfil it and no tool for out-of-scope requests.
+Labels included only argument values explicitly stated
+in the request and represented in forms accepted by
+the corresponding server. Values not specified in the
+request, values requiring external knowledge and val-
+ues appearing only in schema examples were excluded.
+Requests that required a tool but omitted a mandatory
+argument were classified as underspecified, with the
+missing arguments recorded in their labels.
+The evaluation set comprised 2,126 requests: 2,003
+custom prompts (1,179 for the imaging catalogue and
+824 for the biomedical catalogue) and 123 prompts
+taken verbatim from published research studies (73
+from ReclAIm19 and 50 from mAIstro20, both for the
+imaging catalogue). All 123 published prompts are com-
+plete requests. The evaluation set therefore contains
+1,645 complete requests (1,522 custom and 123 pub-
+lished) specifying 6,056 argument values (5,467 and
+589), 307 out-of-scope requests that could not be han-
+dled by any available tool and 174 underspecified re-
+quests that omitted at least one required argument; all
+out-of-scope and underspecified requests are custom.
+The 1,952 complete and out-of-scope requests (1,829
+custom and 123 published) form the main benchmark,
+on which tool calling, argument filling and fully correct
+requests are measured. The 174 underspecified requests
+are evaluated separately.
+LLM agents. Nine open-weight LLMs served as the core
+reasoning engine of the LLM-based agents (Extended
+Data Table 2). The request was the only user message,
+with no specific system prompt. Each request received
+one completion (seed 20261102, at most 16,384 gen-
+erated tokens), and no tool was executed. llama.cpp
+(build b11929) parsed tool calls with its native parser.
+The first call was scored, and an answer without a call
+counted as a decline. Each model ran with reasoning on
+and off through its chat template. Muse Glimmer 30B
+has no off setting, so its lowest level stood for off.
+Scoring. A scoring tool was developed to evaluate ev-
+ery agent. Tool calling was considered correct when the
+labelled tool was called for a complete request or no
+tool was selected for an out-of-scope request. Argument-
+filling accuracy was calculated as the proportion of la-
+belled values that were correctly provided in calls to
+the correct tool. A request was considered fully correct
+when the correct tool was called, all labelled values were
+provided correctly and no required value was missing,
+or when an out-of-scope request was declined.
+Values were compared as received by the server.
+Case differences were ignored, comma-separated lists
+were compared as sets, numerical values were com-
+pared numerically, and values that a server mapped to
+the same entry through its own name-matching table
+were considered equivalent. For ClinicalTrials.gov, the
+scorer applied the server's own normalisation proce-
+dures, whereas for ChEMBL it used the server's assay-
+type codes. Search text was compared after removing
+English stop words31, irrespective of word order.
+Two matching rules were determined by the scorer.
+Their sensitivity was assessed by repeating all pairwise
+comparisons under alternative rules. First, search text
+System 1 agents
+7
+was compared exactly as provided, without removing
+stop words. Second, model names passed by the PyCaret
+regression server, which did not have its own name-
+matching table, were matched using PyCaret's table of
+model identifiers and names rather than compared as
+written.
+Values not specified in the request were not counted
+as errors, but were reported separately. String values
+corresponding to an argument's declared type were con-
+verted in the same way as a schema-validating server
+would convert them. For underspecified requests, cor-
+rect behaviour required calling the correct tool, provid-
+ing all stated values correctly and leaving the missing
+required arguments unfilled.
+Fabricated content. For every call in the evaluation
+set, we recorded four types of errors: (i) the use of a
+nonexistent tool, defined as a function absent from the
+tool catalogue, (ii) the use of a nonexistent argument,
+defined as an argument name absent from the schema
+of the selected tool, (iii) the inclusion of an invented
+value and (iv) for underspecified requests, the filling of
+a missing required argument.
+A value, including a string, number, list item, ob-
+ject key or object value, was considered grounded if
+it matched a labelled value, appeared in the request
+text (ignoring differences in case, spaces, underscores,
+hyphens and slashes), was a number explicitly stated
+in the request, was an option offered by the compiler
+for that argument and request, or appeared in the tool
+schema. Booleans, empty values and the output folder
+were excluded from this assessment. Values that vio-
+lated the schema's type or pattern constraints were
+recorded separately as schema-validity errors.
+Local deployment. All inference ran on one worksta-
+tion with one GPU, through local llama.cpp servers. No
+request, tool schema or answer was sent to an external
+service during the runs and the scorer’s normalizers
+also run locally. Inference was performed on a machine
+with an NVIDIA RTX PRO 5000 Blackwell GPU (48 GB),
+32 CPU threads and 62 GB of memory under Ubuntu
+24.04.
+Time and energy. For each request we recorded wall-
+clock time, prompt and generated tokens, GPU energy
+from the NVML total-energy counter of the whole board,
+mean power, utilization and peak memory. Idle power
+was measured for 20 s with the model loaded before
+each run. Energy per fully correct request is the GPU
+energy over the 1,952 (1,645 complete and 307 out-
+of-scope) main requests divided by the number fully
+correct.
+Statistics. Each System 1 agent was compared with
+each LLM-based agent in each reasoning mode (108
+pairs per measure). Tool calling and fully correct re-
+quests were compared with the exact two-sided McNe-
+mar test on discordant requests and argument filling
+with an exact two-sided paired sign-flip test on per-
+request differences in right values. P-values were ad-
+justed with Holm’s method over the 108 pairs of each
+measure, with significance at an adjusted P < 0.05.
+Fully correct requests are the primary measure; both
+reasoning modes are co-primary. Same-backbone com-
+parisons are reported with unadjusted P-values. Propor-
+tions have 95% Wilson intervals and argument filling
+has 95% percentile intervals from 4,000 bootstrap re-
+samples of requests.
+DATA AVAILABILITY
+The requests of the evaluation set with their labels, the
+two tool catalogues, the records of every agent, the
+stored decision-model answers, the LLM completions
+and the review of flagged values are available in the
+folders data and results of the repository at https:
+//github.com/eltzanis/SystemOneAgents.
+CODE AVAILABILITY
+The System 1 Agents framework, including the agent
+implementation, deterministic compiler, evaluation har-
+ness, scoring tools, and scripts for reproducing the re-
+sults presented in this study, is publicly available at
+https://github.com/eltzanis/SystemOneAgents.
+FUNDING
+Funded by the European Union under the Horizon
+grant agreement No. 101287679. Views and opinions
+expressed are however those of the author(s) and do
+not necessarily reflect those of the European Union nor
+European Research Executive Agency (REA). Neither
+the European Union nor REA can be held responsible
+for them.
+ACKNOWLEDGEMENTS
+None
+USE OF LARGE LANGUAGE MODELS
+During the preparation of this manuscript, Claude Opus
+5.5 was used for language polishing and text formatting.
+The authors reviewed and edited the content as needed
+and take full responsibility for the final publication.
+AUTHOR CONTRIBUTIONS
+Eleftherios Tzanis: Conceptualization, Software, Re-
+sources, Project administration, Methodology, Investiga-
+tion, Formal analysis, Data curation, Validation, Writing
+- original draft, Writing - review & editing.
+Michail E. Klontzas: Supervision, Conceptualization,
+Project administration, Visualization, Validation, Writ-
+ing - review & editing.
+System 1 agents
+8
+COMPETING INTERESTS
+None

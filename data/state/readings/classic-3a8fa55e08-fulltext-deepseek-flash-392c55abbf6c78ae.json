@@ -1,0 +1,87 @@
+{
+  "title_zh": "LoRA：大语言模型的低秩适配",
+  "affiliations": [
+    "Microsoft Corporation"
+  ],
+  "scores": {
+    "research_value": 93,
+    "research_value_reason": "把低秩增量与可合并权重绑在一起的这套做法，至今仍是各类大模型微调工具链默认提供的适配接口。",
+    "novelty": 88,
+    "novelty_reason": "相对 adapter 与 prefix-tuning，它换掉了“适配必须改变计算图形状”这一默认前提，把权重更新写成可并回原权重的低秩乘积，因此不增加层，也不占用序列长度。",
+    "technical_depth": 82,
+    "technical_depth_reason": "方法本身只是一次秩分解，但证据链覆盖 GPT-3 175B 规模的对照实验、按权重类型与秩的消融，以及用子空间相似度和 Frobenius 范数分析增量与预训练权重的关系。"
+  },
+  "reading": {
+    "why_today": "提出 LoRA：冻结预训练权重，只训练注入 self-attention 的小秩分解矩阵，把 GPT-3 175B 的可训练参数减少 10,000 倍，且增量能在推理前合并、不增延迟；这套做法仍是参数高效微调的默认方案。",
+    "historical_context": "2021 年前后，把预训练模型迁到下游任务的主流做法仍是全参数微调，每个任务都要保存一份与基座同样大的 checkpoint。参数高效方向已有两条线：Houlsby 等人在 Transformer 块里插入 bottleneck 的 adapter 层，prefix-tuning 则在输入前拼上可训练向量。前者按构造串行增加计算，后者占用本可用于任务的序列长度，且两者在大规模场景下都没能稳定追平全参数微调。",
+    "problem_then": "GPT-3 175B 使全参数微调的存储与部署成本不可行；已有参数高效方法要么加延迟（实测短序列在线推理下 adapter 层使单次前向慢 20.7%，达 23.9 ms），要么占用序列长度，还常追不平微调质量。核心问题：能否让可训练参数极小，又不改变推理结构与延迟。",
+    "contributions": [
+      {
+        "point": "把下游适配改写为对冻结权重的低秩增量",
+        "detail": "冻结预训练权重，只训练一对小矩阵，其乘积作为该层权重的增量；可训练参数随秩线性增长，与层宽解耦。"
+      },
+      {
+        "point": "增量可在推理前合并，做到零额外延迟",
+        "detail": "小矩阵一侧零初始化，训练从原模型出发；部署时把乘积加回权重，结构不变，切换任务只换一对小矩阵。"
+      },
+      {
+        "point": "在 175B 规模上给出效率与质量的证据",
+        "detail": "在 GPT-3 175B 上训练显存从 1.2TB 降到 350GB，吞吐提升 25%，原文报告三个数据集均达到或超过全参数微调。"
+      }
+    ],
+    "core_idea": "对 Transformer 中的稠密权重矩阵，冻结预训练值，另学一对小矩阵：一个把输入投影到很低的秩 r，另一个把 r 维映回输出维度，两者相乘作为该层权重的增量，与原权重并排作用在同一个输入上。小矩阵一侧随机初始化、另一侧零初始化，训练开始时增量恰为零，模型从预训练状态出发；增量按 r 等比缩放，改 r 时不必重调学习率。实验只加在 self-attention 的 query 与 value 投影上，MLP 冻结。推理前把乘积加回原权重，得到的模型与全参数微调同构。",
+    "influence": "LoRA 权重成了可插拔的独立产物：同一个基座加多份小模块即可服务多个任务，这一形态被主流工具链（如 HuggingFace PEFT、diffusers）直接采纳。后续方法沿低秩增量继续推进，例如在量化基座上做 LoRA 的 QLoRA、按层自适应分配秩的 AdaLoRA，以及把它用到 diffusion 个性化与 RLHF 的策略适配中。",
+    "modern_reading": "原文报告在 GPT-3 上同时适配 query 与 value 投影时，极小的秩就已在 WikiSQL 上达到 73.4%；今天默认配置多用更大的秩，因为更难的任务与更多数据下小秩会欠拟合。“零延迟”只在把增量合并进权重时成立，这与一个批次混用多个 adapter 的在线服务冲突，实际部署要在合并与动态切换之间取舍。"
+  },
+  "claims": [
+    {
+      "claim": "以 GPT-3 175B 为例，LoRA 把可训练参数减少 10,000 倍、GPU 显存需求减少 3 倍",
+      "numbers": [
+        "10,000",
+        "3"
+      ],
+      "source_span": "Abstract",
+      "quote": "reduce the number of trainable parameters by 10,000 times and the GPU memory requirement by 3 times"
+    },
+    {
+      "claim": "在 GPT-3 175B 上训练显存从 1.2TB 降到 350GB",
+      "numbers": [
+        "1.2",
+        "350"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "reduce the VRAM consumption during training from 1.2TB to 350GB"
+    },
+    {
+      "claim": "在短序列小批量在线推理下，AdapterL 的单次前向延迟比基线高 20.7%，为 23.9 ms",
+      "numbers": [
+        "20.7",
+        "23.9"
+      ],
+      "source_span": "Table 1",
+      "quote": "23.9±2.1 (+20.7%)"
+    },
+    {
+      "claim": "GPT-3 175B 上 LoRA 训练相对全参数微调有 25% 的吞吐提升",
+      "numbers": [
+        "25"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "a 25% speedup during training on GPT-3 175B"
+    },
+    {
+      "claim": "原文报告在 GPT-3 175B 上，LoRA 在三个数据集上均达到或超过全参数微调基线",
+      "numbers": [],
+      "source_span": "Section 5.5",
+      "quote": "As shown in Table 4, LoRA matches or exceeds the"
+    },
+    {
+      "claim": "在 GPT-3 175B 上同时适配 query 与 value 投影时，极小的秩在 WikiSQL 上达到 73.4% 验证准确率",
+      "numbers": [
+        "73.4"
+      ],
+      "source_span": "Table 6",
+      "quote": "73.4"
+    }
+  ]
+}

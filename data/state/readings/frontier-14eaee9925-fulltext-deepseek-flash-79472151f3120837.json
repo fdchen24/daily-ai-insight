@@ -1,0 +1,117 @@
+{
+  "title_zh": "Loom Attention：可按 token 重连电路的 Transformer 双流架构",
+  "affiliations": [
+    "Beijing University of Posts and Telecommunications",
+    "ColorfulClouds Technology"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把 head 间电路从固定投影推进到可按 token 重连，并给出理论刻画与大规模预训练验证，对理解残差流与深度路由有直接价值。",
+    "novelty": 90,
+    "novelty_reason": "用逐 token 生成的 head 级读写端口把垂直 head 间路由与水平 token 注意力交织，矩阵记忆作为第二残差流；与层粒度聚合的秩一/秩三方案有本质区别。",
+    "technical_depth": 88,
+    "technical_depth_reason": "有 wiring rank 的形式化定理与 cover-free 下界，scaling law、大规模预训练、下游、消融、吞吐和机制分析齐全；不足是超大规模只验证一个尺寸。"
+  },
+  "reading": {
+    "why_read": "提出 LoomFormer，用逐 token 生成的读写端口在矩阵记忆上做垂直线性注意力，让每个 head 按 token 重连电路，以少量额外计算匹配更大计算量训练的 Transformer。",
+    "task": "Transformer 依靠 head 间固定的输出/输入投影组成电路：上游 head 写入残差流的特征，下游 head 只能按固定投影读取。token 内可变的只有整体开关 head，无法为不同输入选择不同的上游 head；于是需要多种电路的任务只能让它们同时存在、竞争同一条残差流。DenseFormer、HC/mHC、MUDDFormer、AttnRes 把跨层连接做成动态聚合，但仍在层粒度上先把各 head 输出求和，reader 无法单独选中某个上游 head。",
+    "findings": [
+      {
+        "point": "固定虚拟权重把可表达电路限制为矩形",
+        "detail": "head 间连接由输出投影与输入投影的乘积决定，训练后不变；pre-LN 只给所有 writer 一个共享缩放，token 内的 wiring matrix 只能整行整列开关 head，形成秩一的 node gating，非矩形模式要么让无关 head 互连，要么不可达。"
+      },
+      {
+        "point": "层粒度聚合丢失 head 身份",
+        "detail": "已有跨层残差方法在同一层先把所有 head 输出求和再路由，reader 看到的只是层向量；因此 wiring rank 至多为一，MUDDFormer 按 Q/K/V 拆开也只到三。"
+      },
+      {
+        "point": "逐 head 重连的两种代价",
+        "detail": "node gating 要覆盖任意 writer-reader 组合，每个 reader 至少需要与 writer 数同阶的 head；naive loom attention 的端口生成则随总 head 数平方增长，单 token 乘加接近整个模型。"
+      }
+    ],
+    "method_idea": "标准 Transformer 用固定投影连接 head，token 内只能整体开关 head，无法为不同输入换电路。LoomFormer 把每个 head 的输出写入按 token 维护的矩阵记忆，让后续 head 从记忆里按需读取自己的 query、key、value；读写端口由当前 token 的向量流现场生成，于是垂直的 head 间路由与水平的 token 注意力在每个 head 处交织，形成可按 token 重连的双流结构。",
+    "method_how": "实现上，每个 token 维护一张固定槽数的矩阵记忆，槽宽等于 head 维度；写端口把 head 输出做外积累加，读端口用归一化后的 query 与门控幅度从记忆取向量，读写方向与强度分离。每个 head 用四个读端口分别取 query、key、value 和输出旁路，query/key 再拼接少量带 RoPE 的向量坐标，水平注意力用严格因果 mask，当前 token 只走旁路。层间用门控的 MShift 混入上一 token 的记忆；FFN 另设小分支把向量流内容写入矩阵记忆，embedding 也初始化写入一次，最后一块不再写。槽数取两倍 head 数，参数量通过调整 FFN 宽度匹配基线；代价是额外 2.0%–3.7% 前向 FLOPs，训练吞吐为 Transformer 的 89%–92%，推理为 84%–92%。",
+    "results": "在 Pile 300B token 上，LoomPythia 的 0-shot 平均 59.9 与 Pythia-12B 持平，5-shot 61.6 超过其 60.8；Pile ppl 6.02、FLAN ppl 6.94，下游增益约为 mHC 的 1.6 倍。",
+    "limitations": "只在单一规模验证 300B token，未覆盖更大模型；固定读写端口仍保留 56.0% 增益，说明相当一部分收益来自双流骨干而非逐 token 重连。"
+  },
+  "claims": [
+    {
+      "claim": "额外前向 FLOPs 为 2.0%–3.7%。",
+      "numbers": [
+        "2.0",
+        "3.7"
+      ],
+      "source_span": "Section 1",
+      "quote": "LoomFormer adds only 2.0–3.7% FLOPs"
+    },
+    {
+      "claim": "训练吞吐为 Transformer 的 89%–92%，推理为 84%–92%。",
+      "numbers": [
+        "89",
+        "92",
+        "84"
+      ],
+      "source_span": "Section 5.4",
+      "quote": "89%–92% of Transformer training speed and 84%–92% of"
+    },
+    {
+      "claim": "在 300B Pile token 上训练。",
+      "numbers": [
+        "300"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "on 300B Pile tokens"
+    },
+    {
+      "claim": "LoomPythia 的 0-shot 平均 59.9，与 Pythia-12B 的 59.9 持平。",
+      "numbers": [
+        "59.9",
+        "12"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "0-shot average (59.9) matches Pythia-12B (59.9)"
+    },
+    {
+      "claim": "LoomPythia 的 5-shot 平均 61.6，超过 Pythia-12B 的 60.8。",
+      "numbers": [
+        "61.6",
+        "12",
+        "60.8"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "5-shot average (61.6) exceeds Pythia-12B (60.8)"
+    },
+    {
+      "claim": "下游平均增益约为 mHC-Pythia 的 1.6 倍。",
+      "numbers": [
+        "1.6"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "1.6× the gain of mHC-Pythia-2.8B"
+    },
+    {
+      "claim": "LoomPythia 的 Pile ppl 为 6.02。",
+      "numbers": [
+        "6.02"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "LoomPythia-2.8B reaches Pile ppl 6.02"
+    },
+    {
+      "claim": "FLAN ppl 6.94 为表中最低。",
+      "numbers": [
+        "6.94"
+      ],
+      "source_span": "Section 5.2",
+      "quote": "FLAN ppl 6.94"
+    },
+    {
+      "claim": "固定读写端口仍保留 56.0% 的增益。",
+      "numbers": [
+        "56.0"
+      ],
+      "source_span": "Section 5.5",
+      "quote": "cuts the gain to 56.0%"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "title_zh": "PyRUA-Dex：用编码 agent 学习灵巧双臂操作的程序化策略",
+  "affiliations": [
+    "Peking University",
+    "National University of Singapore",
+    "NVIDIA",
+    "Tongji University",
+    "University of Chicago"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把灵巧双手操作的策略来源从示教数据换成编码 agent 写出的程序，并在 Bench2Dex 与 DexJoCo 两个基准上超过全部示教训练策略，问题重要且结论可被基准检验。",
+    "novelty": 80,
+    "novelty_reason": "coding agent 写机器人程序、程序化策略都有先例，实质差异在于面向多指多手型的两阶段开发流程（并行探索共享记忆 + 按阶段成功率定位瓶颈精修）以及测试时完全冻结、零 LLM 调用。",
+    "technical_depth": 84,
+    "technical_depth_reason": "把任务成功率分解为阶段条件成功率的乘积并据此设计两阶段，四个对照问题（对示教策略、精修消融、对同模型在线闭环、跨基准）均有实验，还报告了失败分类与 token/工时成本；不足是精修贡献只有整体消融，真机可靠性只在标定仿真中测量。"
+  },
+  "reading": {
+    "why_read": "提出 PyRUA-Dex，让编码 agent 在仿真中经并行探索与阶段瓶颈精修两阶段写出可冻结执行的 Python 操控程序，Bench2Dex 得分 72.9 居首。",
+    "task": "多指灵巧操作目前主要靠示教学习，但高质量示教稀缺：从人类视频重定向不精确、遥操作在接触时没有力反馈、外骨骼采集难扩展，数据还与特定手型绑定。结果是训练出的策略在 Bench2Dex 上成功率勉强过半，布局外观或物体位置一变就明显退化。",
+    "findings": [
+      {
+        "point": "串联阶段把成功率变成乘积，整体由最弱一环决定",
+        "detail": "任务由若干有序阶段组成，总体成功率是各阶段条件成功率的乘积，五个阶段各 80% 只剩 33%，所以必须先按阶段测量再修最低的那个。"
+      },
+      {
+        "point": "失败来自不可靠阶段，不是步数预算不够",
+        "detail": "探索后程序在 341 次失败验证中，68% 剩余至少 30% 步数就退出，59% 是一个阶段失败后其余函数直接跳过，仅 2% 耗尽预算。"
+      },
+      {
+        "point": "训练策略在扰动下退化，因为它复现示教中的映射",
+        "detail": "程序每回合重新测量场景再算动作，四个通道成功率只差 4.1 点；而 GR00T N1.7 在等变通道从 39.4% 掉到 13.2%。"
+      }
+    ],
+    "method_idea": "已有的机器人程序要么由 prompt 一次写成、要么在小 DSL 里搜索得到，都不针对跨布局鲁棒性迭代；让 LLM 在线闭环操控则每回合重新推理。这里改成让编码 agent 在仿真里把任务开发一次：多个 agent 并行找出各阶段怎么完成并蒸馏成一个程序，再按阶段成功率定位最弱一环反复修，最后冻结成普通 Python 在机器人上跑。",
+    "method_how": "程序通过一层由机器人描述文件生成的 codebox 操控：手按手指与拇指建模、关节按弯曲/并拢/张成分组，原语覆盖整手成形、抓取、闭合到握住与握持检查，接触靠指尖触觉与指令-实测关节角滞后判断。探索时 8 个 agent 各占一个布局、回合内可回滚 8 次只重试未完成阶段并写入共享记忆，结束后程序脱离 agent 评测，蒸馏 agent 逐阶段挑最优函数拼成一个程序。精修先定位最弱阶段再修，用只跑到该阶段的部分 rollout 摊薄测量，每 160 个布局以留出布局决定替换。代价是每任务探索中位数约 427M token 与 21.6 agent 小时，且接触力主导的任务偏弱。",
+    "results": "Bench2Dex 上四通道平均成功率 60.6%、得分 72.9，超过全部示教训练策略；DexJoCo 全随机化下 81.0%，最强示教策略 π0.5 只有 40.3%。相同步数预算下，冻结程序的成功率是同一模型在线闭环的 2.4 倍。",
+    "limitations": "接触力与滑移主导的任务最弱（DexJoCo 装配 34.0%），仿真触觉只对正对指腹的平面有响应；真机只演示了冻结程序能跑通，可靠性在标定仿真里测，缺少重复硬件试验，且每个任务单独学习。"
+  },
+  "claims": [
+    {
+      "claim": "在 Bench2Dex 上得分 72.9，为新的 SOTA",
+      "numbers": [
+        "72.9"
+      ],
+      "source_span": "Section 4.2, first sentence",
+      "quote": "PyRUA-Dex scores 72.9 on Bench2Dex, a new SOTA"
+    },
+    {
+      "claim": "四通道平均成功率 60.6%，阶段完成率 82.3%",
+      "numbers": [
+        "60.6",
+        "82.3"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "success rate of 60.6% and stage completion of 82.3%"
+    },
+    {
+      "claim": "DexJoCo 上物体随机化 88.5%、全随机化 81.0%，最强示教策略 π0.5 为 54.1% 与 40.3%",
+      "numbers": [
+        "88.5",
+        "81.0",
+        "54.1",
+        "40.3"
+      ],
+      "source_span": "Section 4.5 / Table 2",
+      "quote": "88.5% of the rand-obj episodes and 81.0% of the rand-full ones"
+    },
+    {
+      "claim": "相同步数预算下冻结程序成功率是同一模型在线闭环的 2.4 倍",
+      "numbers": [
+        "2.4"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "2.4 times the online agent"
+    },
+    {
+      "claim": "五个阶段各 80% 成功率时整体只剩 33%",
+      "numbers": [
+        "80",
+        "33"
+      ],
+      "source_span": "Section 1",
+      "quote": "five stages at 80% each give an overall success rate of only 33%"
+    },
+    {
+      "claim": "探索后的 341 次失败验证中 68% 剩余至少 30% 步数就退出，59% 是单阶段失败后其余跳过，仅 2% 耗尽步数",
+      "numbers": [
+        "341",
+        "68",
+        "30",
+        "59",
+        "2"
+      ],
+      "source_span": "Section 4.3 / Figure 4a",
+      "quote": "In 68% of them the program had returned with at least 30% of the step budget unused"
+    },
+    {
+      "claim": "程序在四个扰动通道上的成功率只相差 4.1 点",
+      "numbers": [
+        "4.1"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "varies by only 4.1 points across the four channels"
+    },
+    {
+      "claim": "GR00T N1.7 在等变通道从 39.4% 掉到 13.2%",
+      "numbers": [
+        "39.4",
+        "13.2"
+      ],
+      "source_span": "Section 4.2",
+      "quote": "GR00T N1.7 drops from 39.4% to 13.2%"
+    },
+    {
+      "claim": "每任务探索阶段开发成本中位数为 427M token 与 21.6 agent 小时",
+      "numbers": [
+        "427",
+        "21.6"
+      ],
+      "source_span": "Section 4.4",
+      "quote": "a median of 427M tokens and 21.6 agent hours in exploration"
+    },
+    {
+      "claim": "DexJoCo 装配任务在物体随机化下只有 34.0%，是该基准上最低的任务类别",
+      "numbers": [
+        "34.0"
+      ],
+      "source_span": "Section 6, Limitations",
+      "quote": "assembly is the lowest of the DexJoCo tasks (34.0% under object randomization)"
+    }
+  ]
+}

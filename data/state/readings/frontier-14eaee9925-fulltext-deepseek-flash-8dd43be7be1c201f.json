@@ -1,0 +1,80 @@
+{
+  "title_zh": "WeightCode：用权重空间编程为已训练网络安装新能力",
+  "affiliations": [
+    "University of Macau",
+    "National University of Singapore",
+    "The Chinese University of Hong Kong",
+    "Sun Yat-sen University",
+    "Sichuan University"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把“在已训练网络中安装能力”拆成安装、机制、复用、叠加四个可检验问题，并在语言、导航、视觉三类任务上给出统一实验框架，问题本身有方向性意义。",
+    "novelty": 86,
+    "novelty_reason": "相对微调、模型编辑和任务算术，保留了可重跑的程序而非一次性权重差，并展示在独立训练网络上的重算编辑与在已编辑网络上的继续写入，这两点是实质差异。",
+    "technical_depth": 90,
+    "technical_depth_reason": "预注册成功准则、独立 held-out 划分、匹配检查次数和保留约束、因果干预、多种子重跑与复制对照都做了，证据链完整；扣分在任务和网络规模仍小、部分比较受作者协议约束。"
+  },
+  "reading": {
+    "why_read": "提出 WeightCode，用冻结 LLM 编写可执行的权重程序，直接读取并改写已训练网络的权重，在语言、导航和图像识别任务上安装新能力并保持旧能力，程序可重跑、可叠加。",
+    "task": "在已训练网络上安装新能力，与从头训练不同：它要把任务知识翻译成网络内部的新计算，同时不破坏已有能力。微调依赖大量标注与梯度，顺序训练会遗忘；模型编辑多针对特定输入改输出，task arithmetic 与模型合并在共享预训练初始化时才有效。现有做法保留的是一次性的权重差，而不是“如何构造这次修改”的过程，因此难以复用或继续叠加。",
+    "findings": [
+      {
+        "point": "独立网络的同一功能不在同一坐标",
+        "detail": "独立训练的网络把相关功能放在不同坐标，所以把源网络的编辑原样复制到目标网络时平均增益接近零；按激活对齐单元也远低于重跑程序。"
+      },
+      {
+        "point": "增益来自程序写出的计算结构，而非被选中的条目",
+        "detail": "程序改动的那组条目本身不决定增益：对同一批权重做梯度训练只恢复很小一部分，而把门控单元换成随机单元仍保留大部分，关键在条件门控计算。"
+      },
+      {
+        "point": "保留旧能力靠修正的条件性激活",
+        "detail": "噪声门在噪声 token 上打开、在干净 token 上基本关闭；强行常开时干净精度明显下降，说明选择性激活本身在保护旧能力，而不只是保留约束。"
+      }
+    ],
+    "method_idea": "微调靠梯度在标注样本上改权重，模型编辑多只改特定输入的输出，二者都难以把一条规则或几次演示变成网络内部的新计算并保住旧能力。WeightCode 让冻结的 LLM 写一段可执行的权重程序：程序读入已训练网络的权重和任务知识，直接算出改写后的权重，靠少量检查反馈挑选，并把程序本身而不是一次性的权重差保留下来。",
+    "method_how": "程序以已训练网络的权重和任务知识为输入，直接输出改写后的权重：它读取权重、跑前向，用统计量、SVD/PCA、闭式拟合和单单元消融构造修改，不通过梯度优化目标。每个候选在检查集上统计新条件净修复数和旧条件净修复数，只保留旧条件损失不超过阈值的候选；被选中的程序保留下来，重跑时在目标网络上重新测量单元、方向和阈值，而不是复制固定权重差。这样新能力可以接到网络已有的表征和闲置单元上，修正只在受影响输入上激活。代价是每个程序要一次数十分钟到两小时的 LLM 会话和相应 API 成本，重跑虽快但改不了程序本身，且沙箱限制编辑幅度，只适用于架构兼容的网络。",
+    "results": "SCAN 未见组合 0.0%→99.8%（257 个权重），BabyAI 新 pickup 0.0%→98.4%；ImageNet ResNet-18 4 个程序净增益 8.84–17.62 分，超过 8 种微调最好的 8.67 分。",
+    "limitations": "验证限于小型网络，未触及 LLM 等基础模型；程序仍依赖一次 LLM 会话和带标签检查集，候选选择可能过拟合检查集，跨架构不能直接复用，沙箱与编辑幅度也限制适用范围。"
+  },
+  "claims": [
+    {
+      "claim": "SCAN 未见组合 0.0%→99.8%，只改 257 个权重",
+      "numbers": [
+        "0.0",
+        "99.8",
+        "257"
+      ],
+      "source_span": "Abstract / Results 4.1",
+      "quote": "modifies 257 weights to raise exact match on previously unseen command compositions from 0.0% to 99.8%"
+    },
+    {
+      "claim": "BabyAI 新 pickup 从 0.0% 到 98.4%",
+      "numbers": [
+        "0.0",
+        "98.4"
+      ],
+      "source_span": "Results 4.1",
+      "quote": "raises pickup success from 0.0% to 98.4%"
+    },
+    {
+      "claim": "ImageNet ResNet-18 上 4 个程序净增益 8.84–17.62 分",
+      "numbers": [
+        "4",
+        "8.84",
+        "17.62"
+      ],
+      "source_span": "Abstract / Fig. 1b",
+      "quote": "four weight programs achieve net gains of 8.84–17.62 points"
+    },
+    {
+      "claim": "超过 8 种微调中最好的 8.67 分",
+      "numbers": [
+        "8",
+        "8.67"
+      ],
+      "source_span": "Fig. 1b",
+      "quote": "best of 8 fine-tuning methods: +8.67 pt"
+    }
+  ]
+}

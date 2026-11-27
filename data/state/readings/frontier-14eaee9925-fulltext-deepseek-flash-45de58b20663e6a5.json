@@ -1,0 +1,127 @@
+{
+  "title_zh": "Agentic Harness Engineering：可观测性驱动的编码 agent harness 自动进化",
+  "affiliations": [
+    "Fudan University",
+    "Peking University",
+    "Shanghai Qiji Zhifeng Co., Ltd",
+    "Shanghai Innovation Institute"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 harness 当作独立于基座模型的可学习适配面，并给出可审计的自动进化闭环，正对编码 agent 当前最实际的性能瓶颈。",
+    "novelty": 80,
+    "novelty_reason": "相对只改系统提示或 in-context playbook 的 ACE、Training-Free GRPO，AHE 联合进化七类组件，并把每次编辑转成带预测、可回滚的文件级契约。",
+    "technical_depth": 78,
+    "technical_depth_reason": "提供组件级消融、跨基准与三个异构基座迁移、自归因精度/召回对照随机基线，但只有单次 campaign、每任务 2 条 rollout，缺多种子重复。"
+  },
+  "reading": {
+    "why_read": "提出 AHE，把编码 agent 的 harness 组件、轨迹证据与每次编辑的预测做成三层可观测闭环，由进化 agent 自动改写并验证，在 Terminal-Bench 2 上把 pass@1 从 69.7% 提到 77.0%。",
+    "task": "编码 agent 在长程软件与终端任务上的表现不只取决于基座模型，还取决于 harness——系统提示、工具、中间件、记忆这组模型外组件；同一模型换 harness 成绩就变，为某个模型调好的 harness 换基座又常失效。目前适配靠人读轨迹手改，基座迭代快过人工节奏；已有的自动化方法大多只动系统提示或 in-context playbook，工具、中间件、记忆这几层没人碰。",
+    "findings": [
+      {
+        "point": "原始轨迹把可行动的信号埋掉",
+        "detail": "每个任务多条 rollout 累计上百万 token 原始消息，失败根因散落其中，直接喂给优化器只会稀释判断。"
+      },
+      {
+        "point": "组件耦合，改动难以定位",
+        "detail": "提示、工具、中间件混在同一份配置里，越过系统提示的编辑容易连带破坏其它部件，增益也无法归到某一类组件。"
+      },
+      {
+        "point": "缺少归因，循环退化成试错",
+        "detail": "编辑若不带可被下一轮实验证伪的预测，就没有机制区分真实增益与噪声，无效改动会留在工作区里累积。"
+      }
+    ],
+    "method_idea": "harness 工程过去靠人读轨迹、手改提示与工具，方法层自动化大多只改系统提示或 in-context playbook，够不到工具、中间件和长期记忆。AHE 把优化对象从一段提示文本换成整套文件化、可提交可回滚的组件，并让每次编辑先写下一个会被下一轮实验检验的预测。瓶颈因此从 agent 能力转到可观测性：组件看得见、轨迹读得动、决策可归因，循环才不会退化成试错。",
+    "method_how": "把 NexAU 框架拆成系统提示、工具描述、工具实现、中间件、技能、子 agent、长期记忆七类文件，各挂在工作区固定路径并用 git 提交，一次编辑就是单文件 diff、可整文件回滚；编辑只许落在工作区，验证器、tracer、模型配置与种子提示只读，堵住换模型或抬预算的捷径。Agent Debugger 把轨迹拆成一消息一文件的可检索目录，先出单任务根因报告再汇总成基准级总览。每轮还要求进化 agent 在清单里写明失败证据、根因、目标修复，以及预测会修好与可能弄坏的 task，下一轮用实测 delta 求交，未命中的按文件回滚。代价是每轮要跑 2 条 rollout 加全量分析，十轮约 32 小时，且消融显示组件增益不可加。",
+    "results": "十轮迭代把 Terminal-Bench 2 的 pass@1 从 69.7% 提到 77.0%，超过人工设计的 Codex 71.9% 与自进化基线 TF-GRPO 72.3%；冻结的 harness 不做再进化，在 SWE-bench-verified 上聚合成功率 75.6% 且比种子少 12% 的 token，三个异构基座上增益 +5.1 到 +10.1 个百分点。",
+    "limitations": "只有一次 campaign、每任务 2 条 rollout，没有多种子重复，增益方差未被刻画；步数预算与超时按 GPT-5.4 high 拟合，跨模型增益与算子点耦合，回归预测精度 11.8% 接近随机。"
+  },
+  "claims": [
+    {
+      "claim": "十轮 AHE 迭代把 Terminal-Bench 2 的 pass@1 从 69.7% 提到 77.0%",
+      "numbers": [
+        "69.7",
+        "77.0"
+      ],
+      "source_span": "Abstract",
+      "quote": "ten AHE iterations lift pass@1 on Terminal-Bench 2 from 69.7% to 77.0%"
+    },
+    {
+      "claim": "该成绩超过人工设计的 Codex harness 的 71.9%",
+      "numbers": [
+        "71.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "surpassing the human-designed harness Codex (71.9%)"
+    },
+    {
+      "claim": "也超过自进化基线 TF-GRPO 的 72.3%",
+      "numbers": [
+        "72.3"
+      ],
+      "source_span": "Figure 1",
+      "quote": "TFGRPO (72.3)"
+    },
+    {
+      "claim": "冻结的 harness 在 SWE-bench-verified 上聚合成功率 75.6%",
+      "numbers": [
+        "75.6"
+      ],
+      "source_span": "Table 2, row 'All'",
+      "quote": "75.6%"
+    },
+    {
+      "claim": "同时比种子 harness 少用 12% 的 token",
+      "numbers": [
+        "12"
+      ],
+      "source_span": "§4.3 Cross-benchmark transfer",
+      "quote": "12% against the seed"
+    },
+    {
+      "claim": "在三个异构基座上取得 +5.1 到 +10.1 个百分点的增益",
+      "numbers": [
+        "5.1",
+        "10.1"
+      ],
+      "source_span": "§4.3 Cross-model transfer",
+      "quote": "five positive pass@1 gains from +2.3 to +10.1 pp"
+    },
+    {
+      "claim": "自归因的修复精度 33.7%、召回 51.4%，约为随机基线 6.5% 与 10.6% 的 5 倍",
+      "numbers": [
+        "33.7",
+        "51.4",
+        "6.5",
+        "10.6",
+        "5"
+      ],
+      "source_span": "§4.4.2, Figure 4",
+      "quote": "Cross-iteration fix-precision of 33.7% and fix-recall of 51.4%"
+    },
+    {
+      "claim": "回归预测精度仅 11.8%，接近随机",
+      "numbers": [
+        "11.8"
+      ],
+      "source_span": "§4.4.2, Figure 4",
+      "quote": "cross-iteration regression-precision of 11.8%"
+    },
+    {
+      "claim": "一次十轮 campaign 约 32 小时",
+      "numbers": [
+        "32"
+      ],
+      "source_span": "§4.2 RQ1",
+      "quote": "finishing in roughly 32 hours"
+    },
+    {
+      "claim": "每任务跑 k≥2 条 rollout 以稳定 pass@1",
+      "numbers": [
+        "2"
+      ],
+      "source_span": "§3.3, Algorithm 1 discussion",
+      "quote": "We run k ≥2 rollouts per task so each task carries a pass-rate signal"
+    }
+  ]
+}

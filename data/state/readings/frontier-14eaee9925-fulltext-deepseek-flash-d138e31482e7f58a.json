@@ -1,0 +1,90 @@
+{
+  "title_zh": "AVO：把自主编码智能体当作进化搜索的变异算子",
+  "affiliations": [
+    "NVIDIA"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把 LLM 从候选生成器提升为整个变异算子，并在被手工优化到极致的 attention 内核上超过 cuDNN 与 FlashAttention-4，对自动内核与算法发现方向有直接推动作用。",
+    "novelty": 76,
+    "novelty_reason": "关键改动是取消已有工作中“固定启发式采样 + 单轮生成”的分解，让智能体自己决定读什么、改什么、何时评测，属于对变异算子这一层的框架重构，而非新的搜索算法。",
+    "technical_depth": 74,
+    "technical_depth_reason": "提供了逐版本消融（Table 1）与同墙钟预算下对三个 EVO 基线的对照，优化分析具体到寄存器分配和流水调度；但只做单谱系、单一 B200、前向 prefill，增益幅度小且部分配置落在噪声内，驱动智能体与内部工具链未公开。"
+  },
+  "reading": {
+    "why_read": "提出 AVO，用自主编码智能体取代经典进化搜索中固定的采样—生成—评估流水线，在 B200 上连续自主演化 7 天，得到的 attention kernel 最高比 cuDNN 快 3.5%、比 FlashAttention-4 快 10.5%。",
+    "task": "attention 是 Transformer 的核心算子，也是被手工优化得最狠的 GPU 内核：FlashAttention 系列与 cuDNN 在 Blackwell 上各需数月工程投入，剩余吞吐只能靠读硬件文档、看 profiler、反复试错挖出来。已有的 LLM 进化搜索（FunSearch、AlphaEvolve 一类）把 LLM 限制在流水线的单轮生成步骤，采样、种群管理与评估由框架固定，候选写完即交、无法自行验证和修正，于是最需要迭代工程的目标恰恰提升有限。",
+    "findings": [
+      {
+        "point": "瓶颈在流水线剥夺了 LLM 的迭代能力，而不在候选生成本身",
+        "detail": "采样、种群管理、评估顺序全部由框架固定，LLM 每轮只输出一份代码就交出去，不能查文档、试跑、读 profiler 后再改，面对需要反复调试的内核几乎无从下手。"
+      },
+      {
+        "point": "FA4 级别内核的剩余性能藏在子系统耦合处，单参数调优碰不到",
+        "detail": "消融中最大单步收益（非因果 +8.1%）来自把带分支的累加器重缩放改成无分支：同时去掉 warp 同步开销、消除分支发散，才换得上更轻的内存栅栏。"
+      },
+      {
+        "point": "长时间自主搜索会停滞或陷入无效编辑循环",
+        "detail": "作者观察到智能体会耗尽当前探索方向，或反复提交没有提升的改动，因此在主智能体之外加了一个 supervisor，在停滞时回看轨迹并重定向探索。"
+      }
+    ],
+    "method_idea": "此前的 LLM 进化搜索把变异拆成两步：框架按启发式挑父代、管种群、跑评测，LLM 只在单轮里照父代写一份候选，不能查资料、试跑或看反馈改主意。AVO 把整个变异交给一个自主编码智能体：它自己决定读哪段历史、翻哪页硬件文档、改哪块代码、何时调用评测，失败就自行诊断修复，直到提交一个通过正确性检查且分数不降的版本。",
+    "method_how": "给智能体的输入有三样：已提交版本及其分数的完整血统、领域知识库（CUDA 与 PTX 文档、Blackwell 架构规格、FlashAttention-4 源码），以及评分函数——先对参考实现做数值正确性检查，不通过记零分，再测 TFLOPS。每一轮它自主规划、改代码、编译、跑分、诊断修复，只有通过正确性且分数不低于当前最优的版本才作为一次 git commit 进入血统，失败尝试只留在内部轨迹里。另有一个 supervisor 监控停滞：长时间无提升时回看整条演化轨迹，把探索引向新的方向。代价是 7 天不间断运行、内部探索了 500 多个优化方向才沉淀出 40 个提交版本，且只在单谱系、前向 prefill、单一 B200 上验证。",
+    "results": "B200 BF16 前向 prefill 上，因果 MHA 最高比 cuDNN 快 3.5%、比 FA4 快 10.5%，GQA 只花 30 分钟适配也有 7.0%/9.3%；同墙钟预算下比最强 EVO 基线高约 31%。",
+    "limitations": "增益幅度小且集中在因果与长序列配置，非因果短序列落在噪声内；只验证单谱系、前向 prefill、单一 B200，驱动用的智能体与内部工具链未公开，复现成本高。"
+  },
+  "claims": [
+    {
+      "claim": "因果 MHA 内核最高比 cuDNN 快 3.5%、比 FlashAttention-4 快 10.5%",
+      "numbers": [
+        "3.5",
+        "10.5"
+      ],
+      "source_span": "Abstract",
+      "quote": "outperform cuDNN by up to 3.5% and FlashAttention-4 by up to 10.5%"
+    },
+    {
+      "claim": "GQA 只需约 30 分钟额外自主适配，即最高比 cuDNN 快 7.0%、比 FlashAttention-4 快 9.3%",
+      "numbers": [
+        "30",
+        "7.0",
+        "9.3"
+      ],
+      "source_span": "Abstract",
+      "quote": "requiring only 30 minutes of additional autonomous adaptation and yielding gains of up to 7.0% over cuDNN and 9.3% over FlashAttention-4"
+    },
+    {
+      "claim": "同墙钟预算下 AVO 比最强的 LLM 进化搜索基线高约 31%",
+      "numbers": [
+        "31"
+      ],
+      "source_span": "Section 1, contribution summary / Appendix B",
+      "quote": "AVO achieves an approximately 31% improvement over the strongest EVO baseline"
+    },
+    {
+      "claim": "把带分支的累加器重缩放改为无分支，使非因果配置几何平均吞吐提升 8.1%、因果提升 1.6%",
+      "numbers": [
+        "8.1",
+        "1.6"
+      ],
+      "source_span": "Section 5.1 / Table 1, row 'Branchless accumulator rescaling'",
+      "quote": "+8.1% geomean throughput on non-causal and +1.6% on causal attention"
+    },
+    {
+      "claim": "7 天演化中智能体内部探索了 500 多个候选优化方向",
+      "numbers": [
+        "500"
+      ],
+      "source_span": "Section 4.4, 'Scale of exploration'",
+      "quote": "the agent explored over 500 candidate optimization directions internally"
+    },
+    {
+      "claim": "7 天自主演化最终只沉淀出 40 个提交版本",
+      "numbers": [
+        "40"
+      ],
+      "source_span": "Section 3.3",
+      "quote": "spanned 40 successive versions"
+    }
+  ]
+}

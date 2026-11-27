@@ -1,0 +1,83 @@
+{
+  "title_zh": "AutoPILOT：面向实时游戏的视觉智能体执行框架",
+  "affiliations": [
+    "University of Illinois Urbana-Champaign",
+    "Georgia Institute of Technology",
+    "Northwestern University"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把动作时序作为 harness 的一等设计维度，并给出实时/暂停双时钟的浏览器游戏基准，对实时智能体评测有直接价值。",
+    "novelty": 78,
+    "novelty_reason": "单步、宏与模型现场写闭环控制器并非全新，但把三者统一进同一 harness、用唤醒事件管理控制权交接并系统评测实时性，是相对 VISTA 的实质推进。",
+    "technical_depth": 86,
+    "technical_depth_reason": "同一模型与预算下对比多种 harness、做工具消融、预算/推理强度/生成速度扫描、跨模型与 GameWorld 验证，并给出配对检验；不足是部分模型仅单次运行。"
+  },
+  "reading": {
+    "why_read": "提出 AutoPILOT 视觉智能体执行框架，让单次模型调用可下发单步动作、开环宏或模型现场编写的闭环控制器，在 AFK-Bench 实时成功率 68.6% 对 VISTA 38.3%。",
+    "task": "多模态基础模型在游戏暂停等待时表现很好，一旦游戏按真实时间运行就明显失败。现有视觉 harness 主要改进模型看到什么、记住什么，却沿用单步循环：一次模型调用最多一个动作，环境被假定会等模型。实时界面、机器人和游戏都要求智能体在思考期间继续行动，这个假设把延迟变成动作滞后和调用预算浪费。",
+    "findings": [
+      {
+        "point": "单步执行循环把模型延迟直接变成动作延迟",
+        "detail": "每个模型调用最多产生一个动作，动作由旧帧算出却要等模型想完才落地；游戏不暂停，调用越慢动作越旧，智能体只能按模型思考频率行动。"
+      },
+      {
+        "point": "改善观察与记忆不能弥补动作时序",
+        "detail": "VISTA 的视觉记忆与检查工具在实时下并不优于朴素 Codex，因为再好的旧帧视图也不能让迟到的动作变及时；暂停时钟才显出收益。"
+      },
+      {
+        "point": "模型调用预算被单步动作耗尽，重试尤其吃亏",
+        "detail": "VISTA 每次动作消耗一次调用，长动作序列和失败重开迅速耗尽固定调用预算；AutoPILOT 一次调用可发多步，失败后仍有预算重试。"
+      }
+    ],
+    "method_idea": "现有视觉 harness 把一次模型调用压成一个动作，游戏不暂停时动作既迟到又受调用预算限制。AutoPILOT 把一次调用改成可覆盖多步的执行委托：模型可以只发一个动作，也可以启动一段开环按键序列，或现场写一个读屏决策的闭环控制器，让它在后台持续玩到需要模型接管。模型像飞行员接通自动驾驶，只在关键事件发生时被唤醒。",
+    "method_how": "在 VISTA 工具集上增加宏与控制器：宏按顺序发一串动作且不读屏；控制器是模型现场写的 Python，在沙箱里读帧、发动作，以远高于模型调用的频率自行决策并可请求 handoff。程序交接、正常结束或报错、宏发完、决策界面、画面剧变或超时都会把控制权交回模型；游戏重开只发通知，控制器可跨重试继续打。模型调用期间工具结果挂起，模型不产生 token。代价是模型要自己写可用的颜色分割与避障代码，沙箱计算与内存受限且无网络，复杂 3D 场景更难，敌意实时场景多数胜局仍依赖重开后的修正。",
+    "results": "AFK-Bench 120 个游戏上，GPT-6.1 Sol 实时成功率 68.6% 对 VISTA 38.3%，敌意实时 62.5% 对 16.7%；GameWorld 实时 80.0% 对 42.9%，token 少 47%。",
+    "limitations": "作者承认：模型现场写感知/控制代码更适合 2D 浏览器游戏，杂乱 3D 场景更难；敌意实时场景多数胜局在重开后，首次尝试即取胜仍未解决。"
+  },
+  "claims": [
+    {
+      "claim": "AFK-Bench 含 120 个浏览器游戏",
+      "numbers": [
+        "120"
+      ],
+      "source_span": "Abstract",
+      "quote": "120 diverse browser games"
+    },
+    {
+      "claim": "GPT-6.1 Sol 在 AFK-Bench 实时成功率 68.6%，VISTA 为 38.3%",
+      "numbers": [
+        "68.6",
+        "38.3"
+      ],
+      "source_span": "Abstract",
+      "quote": "68.6% against 38.3% for VISTA"
+    },
+    {
+      "claim": "敌意实时子集成功率为 62.5% 对 16.7%",
+      "numbers": [
+        "62.5",
+        "16.7"
+      ],
+      "source_span": "Abstract",
+      "quote": "62.5% vs. 16.7%"
+    },
+    {
+      "claim": "GameWorld 实时成功率 80.0%，VISTA 为 42.9%",
+      "numbers": [
+        "80.0",
+        "42.9"
+      ],
+      "source_span": "Abstract",
+      "quote": "80.0% in real time while VISTA drops from 84.1% to 42.9%"
+    },
+    {
+      "claim": "AutoPILOT 比 VISTA 少 47% 的 token",
+      "numbers": [
+        "47"
+      ],
+      "source_span": "Introduction",
+      "quote": "uses 47% fewer tokens"
+    }
+  ]
+}

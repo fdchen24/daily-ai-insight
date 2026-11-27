@@ -1,0 +1,1120 @@
+Training Vision Models for LLM-Driven Weight-Space Programming
+Timo Ropinski
+Ulm University
+timo.ropinski@uni-ulm.de
+Sebastian Kranz
+Ulm University
+sebastian.kranz@uni-ulm.de
+Abstract
+It has been demonstrated that, in certain settings, large lan-
+guage models can perform weight-space programming to
+directly modify the weights of neural networks. However, it
+is unknown how dedicated training of these networks can
+contribute to the successes of weight-space programming.
+We present a benchmark of LLM-driven weight-space pro-
+gramming on vision models, in which five LLMs edit convo-
+lutional networks and vision transformers on relabeling and
+error-correction tasks on Waterbirds, CIFAR-100, PACS and
+Entity-30. We report more than 2,600 such edit processes,
+whereby each edit is scored on held-out images for success,
+side effects and accuracy loss. We compare standard train-
+ing with label smoothing, gradient-based editable training,
+and our Edit-Ready Training (ERT), a novel method that
+rehearses the direct, closed-form weight edits LLMs perform.
+We show that preparing networks for editing raises the suc-
+cess of LLM edits substantially where standard networks are
+hard to edit. ERT further achieves the highest mean score
+for GPT-6 Astra and Claude Opus 5.5 across all evaluated
+baselines. We will release our LLM testing framework along-
+side all tasks, editing trajectories and scores. Project page:
+https://viscom.uni-ulm.de/wsp
+1. Introduction
+Deployed image classifiers often need small, specific
+changes: a fine-grained concept has to move to another class,
+a recurring confusion between two classes has to be repaired,
+or a rare subgroup is misclassified. Collecting data and fine-
+tuning is costly and can change behavior far beyond the
+requested fix. Model editing methods instead compute a tar-
+geted weight change for one request [22, 24, 31]. Recently,
+general-purpose large language models (LLMs) have begun
+to edit networks directly, a practice called weight-space pro-
+gramming [39]. Here, an LLM agent inspects activations
+and weights, finds the units that respond to a concept, writes
+a targeted change and checks its effect with forward passes,
+all without gradient descent.
+The networks such agents edit are, however, trained for
+accuracy alone. Nothing in their training asks that a concept
+be represented in a form that a short, targeted edit can isolate.
+It is therefore unknown how well LLM agents edit standard
+vision models, and whether training can make networks
+easier for them to edit.
+We study both questions for image classification (see
+Fig. 1). Blinded LLM agents receive an edit request with a
+few support images, edit any weight of the network through a
+tool interface, without gradients, under a fixed budget of for-
+ward passes, weight reads and weight edits, and are scored
+on held-out test images for success and side effects. Dur-
+ing these edit processes, they relabel a fine-grained concept,
+fix a confusion between two classes, or fix a misclassified
+subgroup, on Waterbirds [30], CIFAR-100 [19], PACS [20]
+and Entity-30 [32], with ResNet-18, ResNet-50 [12] and
+ViT-B/16 [6] classifiers. Five LLMs act as editors, led by
+GPT-6 Astra and Claude Opus 5.5, to edit networks that are
+trained in four ways: standard empirical risk minimization
+(ERM), label smoothing (LS), gradient-based editable train-
+ing (ENN) [36], and Edit-Ready Training (ERT), which we
+introduce. Our pre-study revealed that agents mostly change
+the classifier head along the contrast between support and
+other images, and ERT rehearses such edits during training,
+so that the features become easy to edit this way.
+On four of the nine tested settings formed by dataset, task
+and backbone, standard networks are already easy to edit,
+and dedicated training adds little on average. Where they are
+hard to edit, ERT helps substantially for both main editors.
+On the Entity-30 confusion fix it raises the net score from
+0.46 to 0.79 for Astra and from 0.44 to 0.74 for Opus, and
+on Waterbirds with ViT-B/16 from 0.50 to 0.74 and from
+0.33 to 0.76. While none of the compared training methods
+is best across the board, ERT has the highest mean net score
+for both leading editors. Thus, our main contributions are as
+follows:
+• We present a systematic study of how well LLM agents
+edit trained vision classifiers, and how the classifier train-
+ing affects edit quality.
+• We propose Edit-Ready Training (ERT), which delivers
+the highest mean net edit score for GPT-6 Astra and Opus
+5.5 among all tested baselines.
+1
+arXiv:2611.26408v1  [cs.CV]  19 Nov 2026
+Claude Opus 5.5
+GPT-6 Astra
+   
+  
+      
+   
+   
+   
+   
+   
+   
+   
+      
+      
+       
+      
+       
+       
+         
+    
+     
+     
+   
+  
+      
+   
+   
+   
+   
+   
+   
+   
+      
+      
+       
+      
+       
+       
+         
+     
+     
+     
+(c) Measured Gains
+(a) Edit-Ready Training
+(b) Weight-Space Programming
+WeightLab
+Opus
+Astra
+GLM
+DeepSeek
+Gemma
+edit request
+“   p         g
+𝑎with 𝑏 ”
+LLM
+Reference 𝑅
+Support 𝑆
+backbone
+1 Edit simulation
+𝜇𝑆
+𝜇𝑅
+𝜇𝑆−𝜇𝑅
+support
+reference
+contrast
+Top-8 units
+Feature direction
+𝑑
+𝑑
+𝑑𝑖= 1 on 8 largest
+𝑊0 = 𝑊
+𝑑= (𝜇𝑆−𝜇𝑅)/‖𝜇𝑆−𝜇𝑅‖
+𝑊0 = 𝑊−(𝑊𝑑) 𝑑T
+source 𝑦
+target 𝑡
+other
++
+=
+𝑊0
+𝛽(𝑒𝑡−𝑒𝑦) 𝑑T
+𝑊′
+𝛽: smallest step 
+that makes 𝑆
+prefer 𝑡over 𝑦
+2 Edit loss
+ℒ= ℒCE + 𝜆𝑒ℒ𝑄+ 𝜆𝑙ℒ𝑅
+Query 𝑄
+predict 𝑡
+ℒ𝑄= CE(𝑊′𝑓(𝑥),𝑡)
+Reference 𝑅keep 𝑝
+ℒ𝑅= KL(𝑝‖ 𝑝′)
+Classification unedited 𝑊
+ℒCE
+Support 𝑆
+Reference 𝑅
+Query 𝑄
+edit episode
+move concept 𝑠
+class 𝑦→ 𝑡
+3 Edit backpropagation
+update original weights
+discard temporary 𝑊′
+gradient
+1 Investigate
+weights
+activations
+2 Edit
+𝑊
++
+Δ𝑊
+=
+𝑊′
+3 Evaluate
+support
+reference
+before
+after
+call
+result
+Figure 1. Training vision models for weight-space programming. (a) Edit-Ready Training (ERT) simulates edits during training to make
+vision models better editable by LLMs. (b) Through our WeightLab an LLM agent can iteratively edit a vision model’s weights to change its
+behavior. (c) ERT improves vision model editability through LLMs, which is indicated by an increased mean net edit score over all nine
+settings, and the gain of ERT over ERM on the three settings that are hardest (bars: 95% bootstrap confidence; ∗: p < 0.05).
+• We release a vision weight-space programming bench-
+mark, alongside more than 75,000 logged tool calls de-
+scribing scored edits from five LLM editors.
+2. Related Work
+Weight-space analysis. Weight-space analysis treats the
+weights of trained networks as data. Test accuracy or train-
+ing hyperparameters can be predicted from the weights
+alone [7, 40], representations learned on model zoos cap-
+ture model characteristics without labels [33, 34], architec-
+tures for learning on weights respect the permutation sym-
+metries of neurons [26, 42], and hypernetworks generate
+weights [11]. Interpretability research can assist the anal-
+ysis of networks by assigning visual concepts to units [2],
+combining weights between units into circuits [28], and by
+describing units in natural language [13, 27].
+Language models have recently taken over parts of this
+analysis. Agents with interpretability tools run experiments
+on vision models and explain their units [35], and language
+models have been trained to read weights [16]. Frontier
+LLMs identify small networks from their raw weights with-
+out such training [39], although their readings of small image
+networks break under label permutation [1].
+Neural network editing. Network editing changes the be-
+havior of a trained network on a specific input or concept
+while leaving the rest intact. Most methods compute the
+weight change with an algorithm: fine-tuning, learned hyper-
+networks that turn a gradient into an edit [4, 24], or closed-
+form low-rank updates at located layers [22, 23]. In vision,
+prediction rules are rewritten at a chosen layer of a classi-
+fier [31] or a generative model [3], and concepts are erased
+from diffusion models [10]. Task arithmetic adds and sub-
+tracts weight differences [15], linear projections remove a
+concept direction from the features [29], and retraining only
+the last layer corrects reliance on spurious features [17],
+which makes the classifier a natural place for small edits.
+Weight-space programming [39] replaces the editing al-
+gorithm with an LLM that decides itself what to inspect and
+what to write. This offloads editing to LLM agents that carry
+out technical work autonomously [14]. Existing work [39]
+judges an edit only by its effect on the target behavior. Our
+benchmark also scores side effects and accuracy cost on held-
+out images, blinds the agent to the origin of the network, and
+compares several agents under one protocol.
+Few works target editability during training. Editable
+Neural Networks (ENN) [36] meta-train a network, in the
+spirit of MAML [8], so that a few gradient steps on new
+examples correct its predictions without harming others. We
+keep this structure but rehearse the edits that LLM agents
+perform. Apart from dedicated techniques, ordinary training
+choices also affect editability [21]. Label smoothing [25, 38]
+produces less extreme logits, and sparse final layers make a
+classifier easier to inspect and debug [41]. To our knowledge,
+none of these methods has been evaluated with LLM editors.
+3. Method
+Our approach has two parts, as shown in Fig. 1. First, Edit-
+Ready Training (ERT) prepares a network for later edits,
+by simulating head weight edits, computing the errors of
+the edited network, and backpropagating them through the
+edit into all weights. Second, Iterative Weight-Space Pro-
+gramming (WSP) edits the trained network afterwards in
+an iterative process. An LLM receives an edit request and
+a few images, and uses our WeightLab sandbox server to
+2
+inspect the network, modify its native weights and check
+the result. We describe WSP first, because the rules of its
+editing protocol determine which edits ERT performs during
+training.
+3.1. Iterative Weight-Space Programming
+To systematically investigate weight-space programming
+of vision models, an LLM edits a trained network through
+WeightLab, our sandbox environment that exposes the net-
+work and enforces a fixed editing protocol (Fig. 1, center).
+The protocol serves five purposes. It keeps the edits direct,
+such that the agent has no gradients, cannot train the network
+and cannot add layers or adapters, so it cannot fall back on
+fine-tuning, which would make it a gradient-based editor. It
+further makes editors and training methods comparable, as
+every editor uses the same tools, budget and system prompt
+(Sec. A). Blinding keeps an editor from recognizing how a
+network was trained. We record every edit by logging all
+calls and changes, which makes the edits analyzable (see
+Sec. 5.3). Finally, a budget limits trial and error on the few
+support images, which would otherwise lead to overfitting.
+For our setup, we consider a classifier with a back-
+bone that computes features f(x) ∈Rd and a linear head
+with weights W and bias b, so that the logits are z(x) =
+Wf(x) + b. An edit request asks to move a concept s, cur-
+rently assigned to class y, to a target class t, while all other
+predictions stay as they are. More generally, an edit request
+consists of a few support images labeled with the class they
+should receive and a set of reference images labeled with
+the network’s current predictions, which should not change.
+Besides relabeling a concept, we consider two kinds of re-
+quests that correct existing errors: fixing a confusion, where
+images of one class are predicted as another class, and fixing
+a subgroup, where images of one class from a particular
+domain, such as sketches, are misclassified (Fig. 2).
+Each edit process addresses a single edit request, such as
+“move this concept to class t”, and starts with a fresh agent.
+Each request provides a few support images labeled with
+the desired class (five for relabeling, eight for the fix tasks)
+and 64 reference images, labeled with the network’s original
+predictions to indicate what should remain unchanged. The
+agent never sees the images themselves, and it observes only
+how the network responds to them.
+Within each edit process, the agent can iteratively inspect,
+modify, and evaluate the network. It inspects predictions,
+layer activations, feature contributions to logits, and parame-
+ter values. It then modifies weights by setting, adding to, or
+scaling individual entries, rows, channels, or whole tensors,
+anywhere in the classification head or the backbone. The
+protocol does not restrict which parameters are changed or
+how, the only limits are the number of calls and the size of a
+single edit call. During the process, the agent can probe the
+modified network on the provided images, revise its changes,
+undo the last edit, or reset the weights.
+The agent submits these tool calls through model re-
+sponses, which can contain several of these calls. Each
+edit process is limited to 20 forward probes, 30 weight reads,
+and 8 edit calls. A single edit call may change up to 65,536
+parameters, and a single read returns at most 512 values.
+This write parameter budget is enough to rewrite the entire
+head of every network in one call (the largest, ResNet-50 on
+Entity-30, has 61,470 parameters) and any row, channel, bias
+or normalization layer of the backbone. At the same time,
+the read parameter budget, stops the agent from exfiltrating
+and retraining the network. Undo and reset do not count
+towards the edit budget, and do not restore it either. During
+editing, the agent further sees only an anonymous request
+ID, never receives images from the test set, and has no in-
+formation about how the network was trained. Its system
+prompt encourages targeted edits that generalize beyond the
+provided examples (full text in Sec. A.3). An edit process
+ends when the agent submits its modified weights. If the
+agent stops without submitting or reaches the limit of 150
+model responses, the original weights are evaluated.
+3.2. Edit-Ready Training
+Standard training minimizes the cross-entropy LCE on the
+training labels and does not enforce editability. Edit-Ready
+Training (ERT) in contrast rehearses during training the edits
+that LLM agents make. To enable an agent to edit any param-
+eter of the head or the backbone, our editing protocol does
+not constrain these edits during weight-space programming.
+However, during training the rehearsed edits are meant to
+simulate real Opus edits. Therefore, during a small pre-
+study, we have tasked Opus to edit ERM-trained networks.
+We found that Opus mainly (>90%) changes head weights,
+an observation which we could also confirm later during our
+full edit analysis (see Sec. 5.3). Furthermore, the performed
+edits were mostly in a rank-one manner, i.e., confined to the
+rows of the source and the target class, and concentrated on
+the few features that differ most between the support and
+the reference images. To simulate such edits during training,
+each training step draws a few edit episodes that simulate an
+edit request to move a concept s of class y to a target class t.
+During these episodes, four support images of s define the
+edit, four unseen query images of s check that it generalizes,
+and reference images of other concepts from the batch check
+that their predictions stay unchanged. Edit episodes draw
+s only from training concepts, concepts that editors later
+changed during testing are never used. During the training
+process, all edit episodes pass through the three ERT steps
+(see Fig. 1 (a)), which we describe below.
+Edit simulation.
+For each episode, ERT computes a tem-
+porary head W ′ that contains a simulated edit of the current
+head W. The edit is built from the mean backbone features,
+3
+i.e., the inputs of the head, of the support images S and the
+reference images R,
+µS = 1
+|S|
+X
+x∈S
+f(x),
+µR =
+1
+|R|
+X
+x∈R
+f(x).
+(1)
+Their contrast µS −µR is large in the feature units that
+respond to the support images but not to the reference images.
+From this contrast, ERT derives an edit vector d in feature
+space, by one of the two pre-study-identified rules, given
+below, and writes it into the rows of the source class y and
+the target class t:
+W ′ = W0 + β (et −ey) d⊤,
+(2)
+where W0 is the head the edit starts from (defined per rule
+below), β ≥0 is the step size, and et, ey are the one-hot
+vectors that select the rows of t and y. Relative to W0,
+the edit adds βd to the target row and subtracts it from the
+source row, and leaves all other rows unchanged. For an
+image x, the logit of t therefore changes by β d⊤f(x) and
+the logit of y by −β d⊤f(x). Images whose features align
+with d (d⊤f(x) > 0), as the support images typically do,
+gain evidence for t and lose it for y, while images with
+features orthogonal to d keep all their logits. Based on our
+pre-study analysis of Opus edits, we have identified closed-
+form representations of the two most frequently used edit
+rules:
+• Top-8 units: d is 1 on the k = 8 feature units with the
+largest entries of µS −µR and 0 elsewhere, and W0 = W,
+giving a sparse edit of 16 numbers.
+• Feature direction: d = (µS −µR)/∥µS −µR∥, and W0 =
+W −(Wd)d⊤first removes what every class currently
+reads along this direction, before the edit sets the readout
+along d to β for t, −β for y and zero for all other classes.
+The total change to W is a dense rank-one edit that shifts
+every row by a multiple of d.
+The step size β is the smallest one that makes the support
+images on average prefer t over y by a margin of δ = 1,
+β = clip[0,10]
+
+mS + δ
+2 max(µ⊤
+S d, 0.1)
+
+,
+(3)
+where mS is the mean logit margin of y over t on the support
+images under W0. The edit shifts this margin by 2β µ⊤
+S d in
+favor of t, which gives the fraction. The floor of 0.1 and the
+clipping to [0, 10] keep β bounded when the support images
+barely align with d. This mirrors an agent that scales its edit
+until the probes show the support images flipped.
+Edit loss.
+The edited network is judged on two sets of
+images. The query loss asks that the query images, held-out
+images of the concept that the edit has not seen, are now
+predicted as the target class, and the reference loss asks that
+the predictions on the reference images match those of the
+original network:
+L = LCE + λe EQ CE
+ W ′f(x) + b, t
+
++ λl ER KL
+ p(x) ∥p′(x)
+
+,
+(4)
+where LCE is the standard cross-entropy on the training
+batch, and p and p′ are the predictions before and after the
+simulated edit, with p treated as a constant.
+Edit backpropagation.
+The simulated edits are a fixed,
+closed-form function of the current network, so both post-
+edit losses are differentiable with respect to all weights, in-
+cluding the backbone. The selection of the top-8 units is held
+fixed in the backward pass, while β and the feature direction
+pass gradients. The update is applied to the original weights
+and the temporary W ′ is discarded, so no edit is ever kept.
+Training therefore does not make one particular edit work.
+Instead, it is meant to shape the features so that edits also
+work for concepts and images not seen during training, with
+the goal that each concept is kept in a few distinctive units or
+a clean direction. The extra cost per training step are the for-
+ward and backward passes over the episode images, which
+are appended to the training batch, and one closed-form edit
+per episode.
+4. Experimental Setup
+4.1. Network Training
+Vision model training.
+All networks to be edited are
+initialized with ImageNet weights and are classification-
+fine-tuned on the dataset’s classes: ResNet-18 [12] and
+ViT-B/16 [6] on Waterbirds (100 epochs), CIFAR-100 (30
+epochs) and PACS (50 epochs), and ResNet-50 on Entity-30
+(20 epochs).
+Since training compute and frontier model requests are
+limited, we train a single network per training method and
+setting, with the exception of multiple trained networks for
+the seed ablation in Sec. 5.2. The intervals we report there-
+fore reflect variation across edit processes, conditional on the
+trained networks. The seed ablation in Sec. 5.2 supports this
+design: the variation between networks trained with different
+seeds is negligible compared to the variation between edit
+processes on the same network.
+Baselines.
+We compare our ERT against three baselines.
+Standard empirical risk minimization (ERM) minimizes
+cross-entropy only. Label smoothing (LS) replaces the one-
+hot target with 0.8 on the true class and 0.2 spread over all
+classes [38], to obtain less peaked logits [25] such that a
+small change can move a decision. ENN denotes Editable
+Neural Networks [36]. ENN is analogous to ERT, but simu-
+lates the edit with one or five gradient steps on the support
+4
+Waterbirds · relabel a concept
+red-winged blackbird → waterbird
+Support
+Reference
+CIFAR-100 · relabel a concept
+orchid: flowers → reptiles
+Support
+Reference
+CIFAR-100 · fix a confusion
+large carnivores as aquatic mammals
+Support
+Reference
+Entity-30 · fix a confusion
+kitchen utensils as tableware
+Support
+Reference
+PACS · fix a subgroup
+misclassified elephant sketches
+Support
+Reference
+Figure 2. Two image types are used during editing. Support images carry the class they should receive after the edit (concept to relabel,
+errors to correct). Reference images are samples whose predictions must stay as they are.
+images, W ′ = W −η∇W ES CE(Wf(x) + b, t). While the
+original ENN paper allows for arbitrary edit locations, we
+choose the head parameters, as these were mainly edited by
+LLM editors in our pre-study (see Sec. 3.2). Like ERT, ENN
+backpropagates the post-edit losses into all weights.
+LS and ENN were the strongest alternatives to standard
+training in a pool of ten methods, which we have filtered
+using scripted edits resembling real LLM edits.
+Other
+techniques in the pool included sharpness-aware minimiza-
+tion [9], dropout [37], auxiliary concept labels [18] and a
+sparse final layer [41] (details in Sec. B.2).
+Hyperparameter tuning.
+ERT, as well as all baseline
+methods, were hyperparameter tuned with the same pro-
+tocol on two ResNet-18 settings: Waterbirds and CIFAR-
+100. To keep compute needs low and the number of frontier
+model requests manageable, we also used scripted edits for
+selection. Furthermore, the ViT models reuse the ResNet-
+18 tuned hyperparameters, and PACS and Entity-30 reuse
+the CIFAR-100 tuned hyperparameters, across all methods.
+Search spaces and selected values can be found in Sec. B.1.
+4.2. Weight-Space Programming
+Editing tasks.
+We evaluate on three kinds of edit requests
+(see Fig. 2). Relabel a concept: a fine-grained concept
+moves to another class. The concept is a bird species on Wa-
+terbirds [30] (two classes) or a fine class on CIFAR-100 [19]
+(20 superclasses). Fix a confusion (CIFAR-100, and Entity-
+30 [32], a 30-class subset of ImageNet [5]): superclass A is
+wrongly predicted as B, which should be corrected. Fix a
+subgroup (PACS [20]): misclassified sketches of one class
+should be corrected.
+LLM editors and protocol.
+The two main editors are GPT-
+6 Astra (high reasoning effort) and Claude Opus 5.5 (default
+effort), each restricted to the WeightLab tools. Both cover all
+nine settings with all training methods. Three open-weight
+editors test how far the results carry over to weaker models:
+GLM-5.3-Flash, DeepSeek-V4.1-Flash and Gemma-4-26B
+(detailed numbers in Sec. E).
+Each editor handles eight edit requests per setting and
+training method, each with its own images, on one trained
+network, or split over two networks on PACS and three
+on the Entity-30 confusion fix (three requests each), which
+the seed ablation in Sec. 5.2 uses. We pair results of the
+same editor for different training methods and compare two
+training methods with an exact two-sided sign-flip test on
+the paired differences. The main grid contains 292 scored
+edit processes of Astra, 308 of Opus and 757 of the three
+open-weight editors. Including ablations and pilots, the five
+editors made more than 2,600 scored edit processes with
+more than 75,000 tool calls, and the median edit process
+takes about three minutes for Astra and Opus (Sec. H).
+Metrics.
+The reported scores are computed on held-out
+test images that no editor sees. For relabeling, success is the
+fraction of test images of the concept predicted as t, and the
+side effect is the fraction of test images of all other concepts
+whose prediction flips. For the two fix tasks, success is the
+fraction of the targeted test errors that the edit corrects, and
+the side effect is the fraction of originally correct test images
+outside the target group that become wrong. The net score
+as our primary measure reports success minus side effect, as
+also reported by Sinitsin et al. [36].
+5. Results
+5.1. Main Results
+Baseline comparison.
+Tab. 1 shows the net scores of the
+two main editors (details on open-weight editors are found
+in Sec. E). ERT has the highest mean net score for both
+editors (Astra: 0.74, against 0.71 for ENN, 0.63 for LS and
+0.63 for ERM; Opus: 0.72, against 0.68, 0.65 and 0.60).
+ERT’s gain over ERM is +0.12 for both (p < 0.001 over the
+paired edit processes), and for Opus it is the only gain that
+stays significant when each of the nine settings counts as one
+observation (p = 0.047; ENN p = 0.17), as each method
+helps strongly on only a few settings. ERT is ahead of ENN
+5
+Table 1. Main Results. Net score (↑) with 95% bootstrap confidence of Astra & Opus edits. WB=Waterbirds, C100=CIFAR-100,
+E30=Entity-30; R18/R50=ResNet-18/50; LS=label smoothing. On CIFAR-100 and PACS, ENN and ERT include label smoothing. ∆rows
+show difference of ERT vs. ERM and ERT vs. best other baseline with p < 0.05 (paired sign-flip test) shown in bold.
+Relabel
+Confusion fix
+Subgroup fix
+WB
+WB
+C100
+C100
+C100
+C100
+E30
+PACS
+PACS
+Method
+R18
+ViT
+R18
+ViT
+R18
+ViT
+R50
+R18
+ViT
+Mean
+GPT-6 Astra
+ERM (standard)
+.40 [.32, .48]
+.50 [.37, .64]
+.64 [.52, .74]
+.77 [.68, .85]
+.60 [.50, .72]
+.67 [.49, .80]
+.46 [.37, .55]
+.77 [.66, .86]
+.82 [.78, .87]
+.63 [.59, .66]
+LS
+.42 [.34, .50]
+.57 [.44, .70]
+.68 [.50, .80]
+.80 [.71, .89]
+.50 [.43, .58]
+.74 [.61, .86]
+.53 [.43, .62]
+.71 [.57, .83]
+.72 [.60, .81]
+.63 [.59, .67]
+ENN
+.47 [.42, .52]
+.74 [.68, .81]
+.58 [.45, .73]
+.85 [.76, .92]
+.73 [.60, .85]
+.68 [.54, .81]
+.81 [.72, .89]
+.74 [.60, .84]
+.78 [.74, .82]
+.71 [.68, .74]
+ERT (ours)
+.63 [.54, .71]
+.74 [.65, .82]
+.71 [.53, .84]
+.81 [.70, .91]
+.65 [.42, .84]
+.75 [.69, .80]
+.79 [.71, .87]
+.81 [.71, .88]
+.81 [.77, .84]
+.74 [.70, .78]
+∆vs. std.
++.23
++.24
++.07
++.05
++.04
++.08
++.33
++.03
+−.02
++.12
+∆vs. best
++.16
+.00
++.03
+−.04
+−.08
++.01
+−.02
++.03
+−.02
++.03
+Claude Opus 5.5
+ERM (standard)
+.41 [.29, .52]
+.33 [.21, .46]
+.68 [.57, .77]
+.81 [.69, .89]
+.59 [.51, .67]
+.61 [.49, .75]
+.44 [.32, .56]
+.72 [.59, .83]
+.81 [.77, .84]
+.60 [.56, .64]
+LS
+.48 [.34, .60]
+.62 [.43, .77]
+.80 [.77, .85]
+.81 [.59, .94]
+.48 [.36, .60]
+.64 [.58, .70]
+.51 [.39, .62]
+.74 [.62, .84]
+.77 [.71, .83]
+.65 [.61, .69]
+ENN
+.52 [.41, .63]
+.79 [.71, .86]
+.66 [.59, .73]
+.91 [.90, .93]
+.60 [.47, .72]
+.71 [.59, .84]
+.60 [.50, .71]
+.72 [.57, .84]
+.65 [.45, .79]
+.68 [.65, .72]
+ERT (ours)
+.63 [.54, .71]
+.76 [.68, .83]
+.67 [.52, .80]
+.86 [.81, .90]
+.61 [.46, .73]
+.74 [.65, .82]
+.74 [.63, .83]
+.70 [.55, .83]
+.80 [.77, .84]
+.72 [.69, .76]
+∆vs. std.
++.16
++.44
+.00
++.05
++.02
++.12
++.30
+−.02
+−.01
++.12
+∆vs. best
++.10
+−.02
+−.13
+−.05
++.01
++.03
++.14
+−.04
+−.01
++.04
+by +0.03 (Astra) and +0.04 (Opus) on average, which is
+not significant (p = 0.10 and p = 0.07). It is also never far
+below ERM: its largest loss is 0.02 for both editors, and its
+weakest setting with Opus still reaches 0.61, against 0.33 for
+ERM, 0.48 for LS and 0.52 for ENN.
+Per setting, ERT is the best or second-best method for As-
+tra everywhere, whereas for Opus each preparation method is
+best on at least two settings, LS and ENN notably on CIFAR-
+100 relabeling (+0.13, p = 0.02, with ResNet-18; +0.10,
+p = 0.008, with ViT). Preparation loses significantly against
+ERM on three settings (LS for Astra on the CIFAR-100 con-
+fusion fix with ResNet-18 and on PACS with ViT, −0.10 and
+−0.11; ENN for Opus on PACS with ViT, −0.16). Directly
+compared, ERT beats ENN on Waterbirds with ResNet-18
+for both editors (+0.16, p = 0.02, and +0.10, p = 0.04),
+and ENN is nowhere significantly ahead of ERT.
+Editor differences.
+Astra and Opus are about equally
+strong and rank the networks alike (36 cells: mean net 0.68
+and 0.66, rank correlation 0.78; their gains from preparation
+correlate at 0.77), so the conclusions do not depend on which
+of the two is used.
+Of the open-weight editors,
+DeepSeek-V4.1-Flash
+matches the main editors on many of the completed cells.
+GLM-5.3-Flash and Gemma-4-26B are much weaker (0.45
+and 0.30, against 0.68 for Opus), rank the networks unlike
+Opus (0.02 and −0.14), and gain reliably from no prepa-
+ration method. LS even lowers the score of GLM (−0.12,
+p = 0.048). On Waterbirds with ResNet-18, ERT is ahead
+of ERM for four of the five editors (+0.09 to +0.23; not for
+GLM), so a prepared network should be evaluated with the
+editor that will work on it.
+Edit complexity.
+Without preparation, Astra and Opus
+already edit CIFAR-100 relabeling and PACS well (Astra
+with ResNet-18: 0.64 and 0.77; Opus: 0.68 to 0.81), and
+on these four settings the average gain of every preparation
+method for Opus is close to zero (−0.02 to +0.03).
+Waterbirds is the hardest benchmark under ERM-trained
+networks (Astra: 0.40 with ResNet-18 and 0.50 with ViT;
+Opus: 0.41 and 0.33). ERT raises these scores by +0.23 and
++0.24 for Astra (p ≤0.02) and by +0.16 (p = 0.13) and
++0.44 (p = 0.008) for Opus, ENN by +0.06 and +0.23,
+and +0.09 and +0.46. On the similarly hard Entity-30 con-
+fusion fix (Astra: 0.46; Opus: 0.44), ERT gains +0.33 and
++0.30, and ENN +0.36 and +0.16 (all p ≤0.03). On the
+CIFAR-100 confusion fixes, only ERT with ViT gains reli-
+ably, for Opus (+0.12, p = 0.02), although it rehearses only
+relabeling.
+For both Astra and Opus, the gain from preparation falls
+with the score of the standard network (rank correlation
+over the nine settings for ERT, ENN and LS: −0.83, −0.62
+and −0.47 for Astra; −0.82, −0.78 and −0.60 for Opus).
+Measured on disjoint random halves of the edit requests, so
+that noise in the standard score cannot create the relation
+(2,000 splits), it remains for ERT and ENN (medians −0.65
+and −0.50 for Astra, −0.67 and −0.53 for Opus, negative
+in at least 98% of splits) and is weaker for LS (−0.28 and
+−0.35, negative in 88% and 92%). In practice, a few agent
+edits on the standard network show whether preparation is
+worth it.
+6
+0
+50
+100
+attempts (%)
+All attempts
+Standard
+LS
+ENN
+ERT
+Waterbirds relabel
+CIFAR-100 relabel
+CIFAR-100 confusion
+Entity-30 confusion
+PACS subgroup
+ResNet-18
+ResNet-50
+ViT
+292
+73
+73
+73
+73
+64
+64
+64
+36
+64
+128
+36
+128
+GPT-6 Astra
+n
+Training method
+Task
+Backbone
+0
+50
+100
+attempts (%)
+308
+73
+73
+81
+81
+80
+64
+64
+36
+64
+144
+36
+128
+Claude Opus 5.5 n
+Final-layer weights only
+Final-layer weights + bias
+Backbone (alone or with final layer)
+Bias only or no change
+Figure 3. Edit locations. Edits changing only the weights of the
+final layer, its weights and bias, the backbone (alone or with the
+final layer), or only the bias or nothing, for the n edit processes of
+Astra and Opus behind Tab. 1, in total and split by training method,
+task and backbone.
+5.2. Ablations
+We have run four main ablations to investigate ERT’s depen-
+dence on type, location and number of edits, as well as seed
+used during training.
+Edit rule ablation.
+To obtain insights on the effect of edit
+rules used during training, we retrained ERT on Waterbirds
+with ResNet-18 with seven edit variants: more units, larger
+steps, a bias shift or sparse edits of the size of Opus’s own
+(see Sec. 5.3), ENN’s gradient step as additional rule, and
+stronger rehearsal. No variant differs reliably from the ref-
+erence for Opus (differences from −0.06 to +0.06, none
+significant), and stronger rehearsal, trained for eight of the
+nine settings (all but the Entity-30 confusion fix), is ahead in
+three and behind in five. The benefit of ERT thus does not
+seem to depend on matching the editor’s edit closely (details
+in Sec. F.1).
+Backbone edit ablation.
+All of the tested rules edit only
+the final layer, whereas Opus sometimes also edits the back-
+bone (see Fig. 3). To investigate if ERT should facilitate also
+backbone edits, we retrained a modified ERT on Waterbirds
+with ResNet-18, where most backbone edits occur. During
+this training we introduced a third rule: lower the input of
+the last ReLU on the selected channels, the backbone edit
+Opus makes most often on ERM trained networks. While the
+network keeps its accuracy (92.6% against 92.9%) under this
+edit, Opus does not profit: its net score is 0.61 against 0.73
+for default ERT on the same eight species (difference −0.12,
+ahead on 2 of 8, p = 0.13). Although, in this scenario Opus
+edits the backbone in 3 of 8 edit processes against 1 of 8,
+this indicates no added benefits.
+Training seed ablation.
+As most cells of Tab. 1 rest on
+a single trained network per method, it is crucial that the
+training methods have a low training seed variance. To check
+this, we use the 26 cells of Tab. 1 that have several trained
+networks per method (PACS, the Entity-30 confusion fix,
+and ENN and ERT on Waterbirds ResNet-18 with Opus), in
+which every edit request is run on each network. The mean
+net score of a network varies between networks by a standard
+deviation of 0.00 (95% CI upper bound 0.03), whereas edit
+processes on the same network vary by 0.17.
+Edit budget ablation.
+Our weight-space programming
+protocol allows a maximum of 8 edit calls (see Sec. 3.1),
+and the editor knows this limit from the start. To investigate
+the impact of the maximum number of allowed edits, we
+let Opus repeat the Waterbirds relabeling requests on ERM
+and ERT trained ResNet-18 with budgets of 1, 4, 8 and 12
+edits (Fig. 4). Against 8 calls in the same pilot, neither 4 nor
+12 calls change the net score detectably (pooled over both
+networks −0.01, p = 0.86, and +0.03, p = 0.43; 16 pairs
+each). Only a single call is lower (−0.10, p = 0.08). Even
+with 12 calls allowed, Opus uses a median of 5 to 6. ERT
+is ahead of ERM at every budget, by 0.18 with one call and
+0.24 to 0.29 with 4 to 12, and this gap does not depend on
+the budget (all interactions p ≥0.36).
+5.3. LLM Edit Patterns
+To obtain insights into the edit patterns of LLMs, we ana-
+lyzed the submitted weight changes of the edit processes
+behind Tab. 1, 292 of Astra and 308 of Opus. As detailed
+above, edits on ERM-trained networks observed in early runs
+motivated the edits that ERT rehearses (see Sec. 3.2). The
+observed edit processes confirm the pre-study observations:
+in 69 of its 73 edit processes on ERM-trained networks Opus
+edits the head, with a rank-one change along the contrast
+between support and reference images, and the paragraphs
+1
+4
+8
+12
+0.4
+0.6
+0.56
+0.68
+0.69
+0.69
+ERT
+0.38
+0.39
+0.43
+0.45
+ERM
+Figure 4. Edit budget ablation. Opus net score (vertical) on ERM
+and ERT trained ResNet-18 on Waterbirds for 1 to 12 allowed edit
+calls (horizontal; bars: ±1 SE). Beyond a budget of 8 the net score
+does not increase detectably.
+7
+below show that this shape holds for all tasks, architectures
+and training methods.
+Edit progression.
+To obtain insights on the progress dur-
+ing an edit process, we rebuilt the weights after every edit
+call from the logged tool calls and scored them like a sub-
+mission (all 308 edit processes of Opus and 292 of Astra).
+Both editors reach most of their final net score with the first
+edit, which also costs the most accuracy on the full test sets
+(about −10 points for Opus, −5 to −10 for Astra). The later
+edits repair a substantial share of this side effect (see Fig. 5).
+Astra trades some success for fewer side effects after the
+first edit (ERT from 0.77 to 0.73, ERM from 0.69 to 0.63),
+whereas Opus passes through clearly worse intermediate
+states (0.50 to 0.58) before it recovers. ERT is ahead of
+ERM after every edit, by 0.04 to 0.13 for Opus and 0.03 to
+0.12 for Astra, so the comparison does not depend on when
+an edit process is stopped.
+For all training methods, accuracy on the full test sets
+still ends 3 to 4 points below the unedited network after the
+final edit. Even with frontier LLMs, targeted edits by weight-
+space programming thus still can cost overall accuracy.
+Edit locations.
+Fig. 3 shows what the edit processes be-
+hind Tab. 1 change. Both editors almost always edit the final
+layer: Astra changes its weights in 291 of 292 edit processes
+and Opus in 296 of 308, in 151 and 199 of them together
+with its bias. Edits to the backbone are rare, 4 edit processes
+of Astra and 14 of Opus, and all but one of them change
+the batch-norm bias before the last ReLU of a ResNet-18.
+For Opus they concentrate on Waterbirds with ResNet-18
+(12 of 48 edit processes, against 2 of 260 elsewhere), and
+on networks that were not prepared for editing: 5 of 8 edit
+processes on ERM networks and 2 of 8 with LS, against 4
+0.5
+0.6
+0.7
+0.8
+net score
+GPT-6 Astra
+0
+2
+4
+6
+8
+edits used
+−0.1
+0
+accuracy
+Claude Opus 5.5
+0
+2
+4
+6
+8
+edits used
+ERM
+LS
+ENN
+ERT
+Figure 5. Progress per edit. Net score (upper curves) and change
+in test accuracy (lower curves, as a fraction) after each of the 8
+edit calls, averaged over the nine settings and all edit processes of
+Tab. 1. Bands show ±1 standard error.
+of 16 on ENN and 1 of 16 on ERT networks.
+Edit shapes.
+In every task, dataset and architecture, Opus’s
+change to the final layer is rank one (median share of its en-
+ergy in the first singular value above 99% in every setting),
+confined to the rows of the source and the target class, and
+sparse (median 11 to 64 feature columns, 2–8% of the fea-
+tures). The columns are chosen by contrast. Of the eight
+features that differ most between the concept and the refer-
+ence images, the edit contains 3.2 to 4.5, against 0.1 to 1.4
+by chance. The training method does not seem to change
+this shape.
+Among closed-form edits computed from the same sup-
+port images, the closest to Opus’s edits, on the entries it
+changed, is a rank-one re-route along the contrast, ERT’s
+direction rule without removal (mean cosine 0.72 to 0.93 on
+eight of the nine settings), followed by a gradient step, the
+edit ENN rehearses (0.51 to 0.87); on the Entity-30 confu-
+sion fix, neither is close (0.38 and 0.40). An LLM that edits
+by hand thus arrives at a sparse version of the edits that both
+edit-aware methods rehearse, and how gradient-like an edit
+is does not seem to predict which method wins.
+Method differences.
+What differs between training meth-
+ods is the size of the edit. On Waterbirds with ResNet-18,
+Opus’s change to the classifier weights is about five times
+larger on ERM-trained networks than on prepared ones (me-
+dian ℓ2 norm 7.5, against 1.4 for ERT and 1.6 for ENN), with
+a similar number of changed units. Preparation thus does not
+change what kind of edit Opus makes, as it makes a small, or-
+dinary edit sufficient where an ERM-trained network needs
+a large one or an edit inside the backbone.
+6. Conclusion and Future Work
+We presented the first systematic study of weight-space pro-
+gramming for vision models, with a benchmark of LLM
+agents that edit trained classifiers and with Edit-Ready Train-
+ing (ERT), which rehearses the head edits these agents write.
+Over more than 2,600 scored edit processes, ERT has the
+highest mean net score for both GPT-6 Astra and Claude
+Opus 5.5. Further, standard networks already support tar-
+geted edits in easy settings, and preparation pays off where
+they resist.
+Our study also leaves several directions open. It covers
+image classification with three backbones and four datasets.
+Other vision tasks, larger backbones and generative mod-
+els remain to be tested. With 8 to 16 paired edit processes
+per cell, only large differences between methods are de-
+tectable. Hyperparameters were tuned and baselines selected
+with scripted editors on ResNet-18 rather than with agents.
+Finally, with every training method, edits still lower test ac-
+curacy. Preparation that also preserves accuracy, rehearsal of
+8
+edits inside the backbone or tailored to a specific editor, and
+sequences of edits to one network are natural next steps. We
+release all tasks, trajectories and scores so that new methods
+and editors can be compared directly.
+Acknowledgments
+The authors acknowledge support by the state of Baden-
+Württemberg through bwHPC.
+LLM Usage Statement
+The authors take full responsibility for all submitted content,
+regardless of any LLM or AI tool use. Beyond the LLM
+editors that are the object of study, we used Claude Code
+(Opus and Fable) as well as GPT-6 Astra as described below.
+Ideas and conclusions. The research questions, the method
+and the conclusions are the authors’ own. Claude was used
+to discuss and sharpen their formulation.
+Related work and writing. Claude proposed related liter-
+ature, from which the authors selected the cited works and
+checked each reference against its source. Claude and GPT-6
+edited text for grammar, clarity and structure and provided
+LaTeX code for tables, while the authors approved all edits.
+Code, experiments and figures. Claude Code implemented
+the method, the tool interface and the analysis with limited
+step-by-step direction, launched and monitored the training
+and editing runs, and generated the result tables. The authors
+specified the method, tasks, protocol and metrics, performed
+code checks, verified the reported numbers, and interpreted
+the results.

@@ -1,0 +1,64 @@
+{
+  "title_zh": "张量网络遇见神经网络：跨架构综述与未来方向",
+  "affiliations": [
+    "Hong Kong Institute of AI for Science",
+    "City University of Hong Kong",
+    "Harbin Institute of Technology Shenzhen",
+    "Fudan University",
+    "Shanghai Academy of AI for Science"
+  ],
+  "scores": {
+    "research_value": 88,
+    "research_value_reason": "把数据侧与模型侧的 TNN 工作统一到一张跨架构地图上，并给出可检验的设计判断与受控基准。",
+    "novelty": 82,
+    "novelty_reason": "提出以张量化、秩、拓扑、收缩成本、归纳偏置和部署约束为主轴的跨架构综合，而非按分解格式罗列。",
+    "technical_depth": 86,
+    "technical_depth_reason": "读到卷积、循环、注意力、图与量子各层的张量替换机制，并用解析与 CIFAR-10 受控实验拆开参数、MAC、内存和实际延迟。"
+  },
+  "reading": {
+    "why_read": "梳理张量网络与 CNN、RNN、Transformer、GNN、LLM、QNN 交叉的 TNN 版图，按数据侧融合/压缩与模型侧结构化参数共享分类，指出核心权衡是表达力与可收缩性，并给出 CP 秩 64 压缩 8.73×、精度降 4.21 点的受控结果。",
+    "scope": "覆盖 TNN 的基础张量格式、数据侧的多源融合/多模态池化/压缩/多任务/量子数据，以及模型侧的 CNN、RNN、Transformer、GNN、LLM/MoE、QNN 张量化；还讨论训练稳定性、秩搜索、硬件、工具链与可解释性。不追求逐篇穷举，LLM 部分明确以代表性预印本方向为主。",
+    "evolution": "先由量子物理与信号处理中的 CP/Tucker/TT 等格式解决高维张量存储；随后这些格式被嵌入 CNN/RNN 做权重压缩；Transformer/LLM 时代转向注意力、KV Cache、PEFT 与 MoE 的结构化参数共享；同时 GNN/QNN 把高阶相关建模和量子线路模拟纳入；近期重点从套分解转向秩、拓扑、收缩顺序与硬件的联合设计。",
+    "approaches": [
+      {
+        "point": "数据侧张量融合与池化",
+        "detail": "用外积、CP/Tucker 低秩层建模多模态高阶交互；TFL 表达强但参数爆炸，LMF 以降秩换可训练性却限制交互阶数，PTP 用多项式张量缓解这一限制。"
+      },
+      {
+        "point": "卷积/循环网络的权重张量化",
+        "detail": "把卷积核或 RNN 的输入/隐状态矩阵重塑为高阶张量，用 CP、Tucker、TT、TR、BTT 分解；压缩率高，但秩与层几何决定精度和实际延迟。"
+      },
+      {
+        "point": "Transformer/LLM 的结构化压缩与适配",
+        "detail": "用 MPO/Tucker 分解注意力与 FFN，Tuformer 把多头注意力写成 Tucker 形式，TT 适配器与 MoE 张量化服务 PEFT；换得参数共享，但要付重建与置换开销。"
+      },
+      {
+        "point": "图网络与量子架构的张量化",
+        "detail": "TGNN 用对称 CP 聚合邻居，Nimble GNN 用 TT 压缩嵌入；MPS/ConvAC 把量子态映射与线路模拟写成张量网络；换得高阶相关与量子可部署性，受收缩与近似误差约束。"
+      },
+      {
+        "point": "训练、秩搜索与硬件协同",
+        "detail": "混合精度与 Yu 初始化稳训练，PSTRN/Bayesian/RL 搜秩，TIE/ETTE 等加速 TT 层；换得可训练性，但搜索成本高，硬件对置换和收缩仍不友好。"
+      }
+    ],
+    "key_differences": "差异不在分解名字，而在张量放在哪：数据侧融合用 CP/Tucker 换高阶交互，模型侧压缩用 TT/TR 换参数共享，Transformer 偏好 MPO 对齐多头结构，PEPS 类拓扑换表达力但牺牲可收缩性。CP 压缩最高但精度风险大，Tucker 更平衡，TR 比 TT 端点灵活；同一格式跨架构也要重做重塑与秩分配。",
+    "bottlenecks": "核心瓶颈是表达力与可收缩性冲突：PEPS 类结构难精确收缩，GPU 对置换/收缩不友好，理论 MAC 下降难转成训练加速；秩选择仍是 NP-hard 且与形状、模式顺序耦合。",
+    "future_directions": "作者主张联合优化张量化、拓扑、秩与收缩顺序，并在固定收缩预算下报告精度/内存/延迟；我认为可复现基准与近似收缩误差如何传到任务损失的理论最迫切。"
+  },
+  "claims": [
+    {
+      "claim": "受控 CIFAR-10 实验中，CP 秩 64 保留 74.56% 精度，参数量减少 8.73 倍、MAC 减少 7.23 倍、峰值训练内存降 43.4%，推理快 1.69 倍，但训练略久且精度低 4.21 个百分点。",
+      "numbers": [
+        "64",
+        "74.56",
+        "8.73",
+        "7.23",
+        "43.4",
+        "1.69",
+        "4.21"
+      ],
+      "source_span": "Section 4.1, Table 5",
+      "quote": "CP with rank 64 retains 74.56% accuracy while reducing parameters by 8.73×, MACs by 7.23×, and peak training memory by 43.4%. Its mean full-test inference time is 1.69× faster than Dense, but its total training time is slightly longer and its accuracy is lower by 4.21 percentage points."
+    }
+  ]
+}

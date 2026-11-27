@@ -1,0 +1,3008 @@
+EgoCaptioner
+EgoCaptioner: Towards Comprehensive and
+Fine-Grained Egocentric Video Captioning
+Yuqi Tang1,2, Yang Shi3,2,†, Yuran Wang3, Tengfei Liu3, Rundong Wang2, Zongyang Qiu1, Qixun
+Wang3, Zhuoran Zhang3, Xuanyu Zhu3, Yifan Xu4, Yiyan Ji4, Shujie Li5, Shixuan Liu6, Haotian
+Wang6, Jialu Chen2, Yuanxing Zhang2,♠, Pengfei Wan2, Chengwei Qin1,†
+1HKUST(GZ)
+2KlingAI Research
+3PKU
+4NJU
+5HKU
+6THU
+†Corresponding Author
+♠Project Lead
+Ñ Homepage
+§ Code
+ò Model
+EgoCaptioner
+Egocentric Video
+3.5 s
+16.5 s
+18.5 s
+27.5 s
+Comprehensive & Fine-Grained Caption
+Overview
+The video begins with 
+a first-person view of 
+a brightly lit indoor 
+dining and kitchen 
+area during the day…
+Detailed Steps
+3.5 s
+16.5 s
+18.5 s
+27.5 s
+Show
+phone
+Move to 
+kitchen
+Discuss 
+order
+Confirm
+Structured Understanding
+Comprehensive
+Information
+Task
+Outline
+[𝒕𝟏−𝒕𝟐]
+Subtask 1
+[𝒕𝟐−𝒕𝟑]
+Subtask 2
+[𝒕𝒏−𝒕𝒎]
+Subtask N
+…
+Accurate Motion
+Pose Validation
+Task-Focused Details
+Manip
+Hand-Object 
+Interaction
+Social
+Social
+Interaction
+Locomote
+Spatial 
+Movement
+Attend
+Observation, 
+Search, Tracking
+Hand operation, object changes
+Interaction and response
+Camera movement, landmark…
+Visual focus, target tracking
+Accurate descriptions 
+of spatial directions
+Figure 1 | Overview of EgoCaptioner. Given an egocentric video, EgoCaptioner produces a caption with a
+video-level overview and timestamped steps. The overview establishes the scene context and the wearer’s
+activity and the steps provide temporal structure and narrate details tailored to each activity type. When pose
+data are available, motion descriptions are verified against sensor measurements.
+Abstract | Egocentric video captioning requires fine-grained detail and accurate timing, yet current multimodal
+large language models (MLLMs) often miss brief actions, confuse their order, or misinterpret the wearer’s
+motion. Existing caption formats also offer limited support for combining detailed narration with precise
+timing. We present EgoCaptioner, which pairs a video-level overview of the setting, participants, and the
+wearer’s overall activity with timed steps whose narration adapts to varying perceptual demands and marks
+key moments at specific timestamps. We develop a coarse-to-fine annotation pipeline that establishes event
+structure before expanding step descriptions, yielding 50,000 training examples from eight egocentric video
+sources. Complementary rewards assess factual accuracy and coverage, measure step-level temporal alignment,
+and penalize fragmented or redundant narration, guiding caption refinement through Group Relative Policy
+Optimization (GRPO). To improve the reliability of factual supervision, we supplement caption references with
+pose-derived motion facts when sensor data are available. Across five egocentric benchmarks, EgoCaptioner
+achieves leading performance among evaluated open-source models in caption quality, caption-conditioned
+question answering, and temporal alignment. It also surpasses Gemini 3.1 Pro on PhysCapBench and all
+evaluated proprietary baselines on Minerva-Ego under the caption-to-QA protocol. Ablations support the
+complementary roles of factual and temporal rewards and show that coarse-to-fine annotation provides more
+1
+arXiv:2611.26380v3  [cs.CV]  25 Nov 2026
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+effective supervision than single-pass annotation.
+1. Introduction
+Egocentric video records how people act in and interact with their surroundings, making it a valuable
+source of data for embodied AI and video generation [10, 15, 37, 40, 48]. Captions make these
+recordings searchable and allow downstream systems to identify when particular actions occur. For
+example, personal assistants retrieve captions as memory to answer questions about the wearer’s
+day [48], and robot learning uses timestamped action captions to curate pretraining data [15]. Both
+applications depend on captions that preserve the details of an activity and associate them with the
+right moments.
+Current multimodal large language models (MLLMs) [3, 22, 28, 35, 36, 43–45, 52, 54] can produce
+detailed video descriptions [4, 6, 18, 52, 56]. On egocentric footage, however, they often overlook
+brief actions, confuse their order, misinterpret the wearer’s movements, or omit objects central to an
+event [20, 26, 32, 34, 39].
+Part of the problem is that current captioners struggle to decide what to describe and how much
+detail each activity needs. General captioners [4, 52] cover the visible scene broadly without binding
+the narrative to the wearer’s actions. Current egocentric captioners, meanwhile, typically produce a
+brief narration or specialize in hand–object manipulation [21, 23, 47, 57], leaving activities such as
+navigation and social interaction less fully described. A second challenge is that detail and timing are
+rarely achieved together. Dense paragraphs often leave unclear when individual actions begin and
+end, while timestamped captions typically summarize each event in a sentence [12, 31] or group
+details by scene [50]. Furthermore, the wearer’s motion is difficult to interpret from the first-person
+viewpoint, because the body is often only partially visible, and the captioner must infer travel direction
+from changes in the scene [39], cues that can be misleading when head motion diverges from body
+motion [19].
+To address these challenges, we present EgoCaptioner, which describes an egocentric video on two
+levels (Figure 1). A video-level overview establishes the setting and spatial layout, introduces the
+people and objects involved, and summarizes the wearer’s activities and any purpose supported by
+the footage. Detailed steps then narrate how the activity unfolds: EgoCaptioner segments the video
+into temporally bounded events, divides each event into ordered steps with start and end times,
+and marks key moments, such as object state changes, with timestamps. This two-level structure
+supports three tasks: full-video captioning, overview captioning, and event-conditioned captioning, in
+which the model localizes and describes an event named in the instruction. We train EgoCaptioner by
+supervised fine-tuning on 50,000 curated examples from eight egocentric video sources, followed by
+reinforcement learning with rewards for factual content, temporal alignment, and caption style.
+We evaluate EgoCaptioner across several benchmarks on four dimensions: caption quality, caption-
+conditioned QA, coverage of physical event details, and temporal alignment. Compared with its
+Qwen3.5-9B backbone, EgoCaptioner improves by 27.6 points in PhysCapBench [42] Overall, surpass-
+ing Gemini 3.1 Pro, and by 16.8 percentage points in EgoTempo [26] accuracy. It also achieves the
+highest PSJ score among open-source models for step segmentation on EgoHome [25]. Our ablations
+examine how training data scale, annotation format, and reward design each affect performance.
+Further analysis shows that tailoring descriptive detail to the activity helps captions capture the
+aspects that human observers find salient.
+Our contributions are as follows:
+• We formulate egocentric captioning as a video overview and timed steps that captures task-
+2
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+focused details, action intervals, and key moments.
+• We develop a coarse-to-fine annotation pipeline and use it to construct 50,000 training examples
+from eight egocentric video sources.
+• We train EgoCaptioner with rewards for factual content, timing, and style, achieving the best
+open-source results on five benchmarks.
+2. Related Work
+Multimodal Large Language Models
+Recent multimodal large language models (MLLMs) advance
+temporal understanding through scaled synthetic supervision [55], multi-granularity descriptions [43],
+and time-aware position encoding [1, 2]. Yet egocentric benchmarks reveal persistent hallucinations
+about object interactions [32] and temporal reasoning errors [26], calling for descriptions that
+faithfully ground wearer actions and camera motion in the video’s temporal structure.
+Egocentric Video Understanding
+First-person video interleaves rapid head motion with hand–
+object manipulation, making the wearer largely invisible and scene dynamics viewpoint-dependent.
+Representation methods address this by grouping spatiotemporal tokens into scene entities [41] or
+learning hand–object dynamics with motion adapters [23], while captioning approaches leverage
+third-person references [47], cross-view transfer [21], and recursive composition across temporal
+scales [14]. Such captions further serve as retrievable memory for question answering [48] and
+as timestamped supervision for robot pretraining [15]. We produce a video-level overview with
+timestamped steps and key moments, emphasizing hand roles, motion, and task-focused details.
+3. Method
+3.1. Task Formulation
+We describe an egocentric video at two levels. A video-level overview establishes the setting and
+summarizes what the camera wearer is doing. Steps then narrate how the activity unfolds, organized
+by timed events that cover the video in consecutive, non-overlapping intervals.
+Overview.
+The overview sets the scene by describing the location, surroundings, lighting and the
+time of day and weather. Within this setting, it describes the wearer, other participants, and relevant
+objects, noting their positions relative to one another. Drawing on this context and the actions shown,
+it also summarizes what the wearer is doing overall and, when the goal is apparent, what they are
+trying to accomplish.
+Steps.
+We segment each video into non-overlapping events, each covering a coherent activity, and
+divide each event into ordered steps with start and end times. The steps narrate what happens within
+the event, emphasizing the details that matter for the activity. A step may also record a key moment
+in a sentence beginning with At [t], marking the instant at which something relevant happens.
+Tasks.
+The two levels define three instruction-following tasks. (1) Full-video captioning produces
+the overview followed by the steps of all events. (2) Overview captioning produces the overview alone.
+(3) Event-conditioned captioning produces the steps of an event named in the instruction, requiring
+the model to localize the event before describing it.
+3
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+3.2. Data Construction
+We collect egocentric videos spanning daily activities, procedural tasks, outdoor walking, and manipu-
+lation from Ego4D Goal-Step [38], the Ego4D subset of EgoHOD [23], Sekai [16], EgoVid-5M [46], the
+EgoPro subset of EgoSuite-Open100K [17], HumanPlus-1000 [13], the processed release of RekaDaily-
+10k [30] and EgoLife [48]. We build the annotation coarse-to-fine with two complementary MLLMs,
+Gemini-3.1-Pro [9] and Seed2.1 pro [3].
+Task-focused narration.
+Different activities call for different details, so we define four event types
+and use each type’s narration emphasis to prompt the annotator, steering the description toward
+the details most relevant to that activity. Hand–object manipulation (manip) centers on what the
+wearer does to an object, each hand’s role, how the object changes, and where it is placed afterward.
+Locomotion (locomote) records the travel mode, direction, and route relative to landmarks, using
+camera motion cues such as bobbing or sway to identify the mode. Social interaction (social) covers
+who participates, how they take turns acting and responding, and what gestures or expressions clarify
+intent. Visual attention (attend) tracks what the wearer observes, how attention shifts between
+targets, and when a target becomes occluded or reappears.
+Within a step, key moments mark sudden transitions, such as an object state change, a mishap, or a
+person entering or leaving the scene. Each is written as At [t], followed by what happens at that
+instant.
+Coarse-to-fine annotation.
+The annotation proceeds in two stages (Figure 2(a)). (i) Structure.
+Gemini writes the overview from the full video. Seed2.1 pro identifies the events, their temporal
+boundaries and types, and an outline of steps for each event. (ii) Detail. Gemini expands each outline
+into timestamped step descriptions with key moments, prompted with the narration emphasis of
+the event’s type. It views an event crop with up to 1 s of surrounding context on each side. Videos
+longer than 30 s are annotated in clips of at most 30 s with 0.5 s overlap, and Gemini merges the clip
+annotations into a single timeline. The two stages produce a complete draft caption for verification.
+Verification and correction.
+Seed2.1 pro then reviews the draft against the full video (Figure 2(b)),
+jointly checking the described actions, their timing, and the consistency of the events with one another.
+It corrects localized errors in place, and a final format check yields the validated caption.
+From each validated annotation we construct instructions for the three tasks in Sec. 3.1 (Figure 2(c)).
+For event-conditioned examples we only provide the event’s name without its time localization.
+Pose-derived motion facts.
+For videos with pose or trajectory recordings, we convert sensor
+measurements into discrete motion facts following MotionScript [51], each describing the wearer’s
+body movement or a change in head-mounted viewing direction together with its temporal span.
+Because these facts come from sensors, they provide motion evidence independent of the reference
+captions and serve as additional reference facts during reinforcement learning (Sec. 3.4).
+3.3. Supervised Fine-Tuning
+We initialize our captioning policy by supervised fine-tuning (SFT) on 50,000 curated video–
+instruction–caption triplets, with videos up to 120 s long. The training data comprise an equal mixture
+of full-video, overview, and event-conditioned captioning examples. This stage trains the model
+4
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+(a) Coarse-to-fine annotation
+0.5 s
+1.5 s
+2.6 s
+4.5 s
+6.7 s
+8.5 s
+10.5 s
+Global overview
+Clip preparation
+Daylit
+room
+Player
+Double
+bass
+Bowing
+Details: blue curtains , wooden floor...
+≤30 s
+>30 s
+Full video
+Cut to clips ≤30 s & 0.5 s overlap
+Identify each event & outline its steps
+0.0 s
+3.8 s
+8.2 s
+11.1 s
+E1
+Prepare bow
+Play the double bass
+E2
+E3
+Reposition hands
+Guide bow
+3.8–4.7 s
+Set bow hair
+4.7–5.6 s
+Draw & return
+5.6–7.7 s
+Lift bow
+7.7–8.2 s
+[3.8-4.7]  I keep hold of the 
+wooden bow by its frog....
+[4.7–5.6] At [4.7], I place
+the bow hair against the
+strings near the bridge...
+Combine event descriptions into a single caption
+(b) Verification and correction
+Full-video review
++
+Draft
+Joint review
+Action
+Timing
+Consistency
+Targeted repair
+Initial bow hand
+right
+→
+left
+Bowing strokes
+8
+→
+2
+Release time
+2.4 s
+→
+2.6 s
+Format check
+Validated caption
+Overview
+Timed steps
+(c) Instruction construction
+Full
+Describe the entire video.
+E1
+E2
+E3
+Overview & event description for E1–E3
+The video begins with.....
+[detailed steps]
+[0.0-1.8] I hold a bow with my left hand....
+Event-conditioned
+Describe E2: playing the bass with the bow.
+E1
+E2
+E3
+[5.6–7.7]  I use my right hand to 
+draw the bow smoothly across the strings to play...
+Overview
+Summarize the full video.
+The video begins with a first-person view of me
+standing in a room, holding a double bass. …
+Overall, I am practicing playing the double bass
+in a brightly lit room.
+Describe with different focus based on event type
+(d) Pose-derived motion facts  MotionScript
+Aligned poses
+Geometry + rules
+Motion intervals
+Template-based text
+Body poses
+Camera poses
+θ
+Measure · segment · select
+Elbow bend
+Turn left
+0
+1
+2
+3
+[0–1] The left elbow bends.
+[1–2] The left elbow bends as the body
+         turns left.
+[2–3] The body turns left.
+Figure 2 | Data construction pipeline. (a) Gemini-3.1-Pro and Seed2.1 pro annotate each video coarse to
+fine, from a global overview and event outlines to timestamped steps. (b) The draft caption is reviewed against
+the full video and corrected. (c) Each validated caption can yield full-video, event-conditioned, and overview
+instructions. (d) Body and camera poses are converted into timed motion facts.
+to produce egocentric descriptions at the requested granularity and provides the initial policy for
+subsequent reinforcement learning.
+3.4. Reinforcement Learning
+We refine the SFT policy 𝜋𝜃with Group Relative Policy Optimization (GRPO) [33]. Given a video 𝑣
+and a task instruction 𝑞, let 𝑥= (𝑣, 𝑞), ˆ𝑦∼𝜋𝜃(· | 𝑥) denote a sampled caption, and 𝑦★its reference.
+As shown in Figure 3, we guide the optimization with three complementary rewards. A fact-based
+reward measures how faithfully and completely the caption describes the video. For steps, a temporal
+alignment reward measures how well the predicted step boundaries and granularity match the
+reference, and a style reward discourages fragmented or redundant writing within each step.
+Fact-based reward.
+We evaluate captions using four fact types defined by the caption structure in
+Sec. 3.1. Motion facts describe the wearer’s body movement and posture, as well as changes or stability
+in the head-mounted view. When pose data are available, we also include the pose-derived facts from
+Sec. 3.2. Focus facts capture the task-focused details defined for each event type in Sec. 3.2. Macro
+facts describe the scene, the visual style and the wearer’s overall activity and purpose. Key-moment
+facts, pair a timestamp with the change occurring at that instant and count as correct only when
+both parts are.
+We extract the facts stated in each caption and write F (ˆ𝑦) and F (𝑦★) for the predicted and reference
+fact sets. Gemini-3.1-Pro [9] then judges each fact against the opposite caption, assigning a score
+𝑠( 𝑓| 𝑦) ∈[0, 1] with partial credit when the core of a fact is correct but some details are missing.
+5
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Content Reward 𝑹fact
+Motion
+Focus
+Macro
+Key 
+Moment
+Fact Coverage & Accuracy
+Reference
+Facts
+Generated
+Facts
+Fact
+Judge
+Supported: 1
+Partial: 0.4
+Contradicted: 0
+Absent: 0
+Precision / Recall 
+      F1 
+Time Reward 𝑹𝐭𝐢𝐦𝐞
+Temporal Alignment
+Style Reward 𝑹𝐬𝐭𝐲𝐥𝐞
+Writing Quality
+Case: EgoLife
+• Motion: “lean forward over the bed”
+• Focus: “fasten smartwatch to left wrist”
+• Macro: “wear smartwatch, then unplug adapter”
+• Key Moment: “at [8.5], pass through the doorway”
+15.3 s
+20.0 s
+15.0 s
+21.0 s
+Case: locomote
+“Observe dragon sculpture”
+Prediction
+Reference
+Case: manip
+• Good: “I pour oil and spread it with a spoon”
+• Fragmented: “My right hand moves the spoon 
+over the pan, tilting it slightly. My fingers adjust 
+their grip as the spoon..."
+• Redundant: “I stand in front of the counter, 
+wearing a white T-shirt..."
+Penalize Illegal Steps
+Judge
+Fragmented
+Redundant
+Judge
+Greedy Temporal IoU
+Format Reward 𝑹𝐟𝐨𝐫𝐦𝐚𝐭
+The video begins with…Overall, I prepare..
+Format Accuracy
+Overview:
+𝑹= 𝟎. 𝟗 𝑹fact + 𝟎. 𝟏 𝑹𝐟𝐨𝐫𝐦𝐚𝐭
+Events:
+𝑹= 𝟎. 𝟔 𝑹fact
++ 𝟎. 𝟐 𝑹𝐭𝐢𝐦𝐞+ 𝟎. 𝟐 𝑹𝐬𝐭𝐲𝐥𝐞
+Figure 3 | Illustration of the rewards designed for egocentric captioning. Fact, time, and style rewards are
+combined for step-level captions, while overview captions pair the content reward with a format reward. The
+content reward 𝑅fact is the F1 of judge-scored precision and recall over extracted facts, the time reward 𝑅time
+greedily matches predicted and reference steps by temporal IoU, and the style reward 𝑅style penalizes steps
+that judges flag as fragmented or redundant.
+Precision averages these scores over F (ˆ𝑦) and recall over F (𝑦★). The reward is their F1:
+𝑅fact = 2𝑝𝑟
+𝑝+ 𝑟.
+(1)
+Temporal alignment reward.
+The temporal reward measures agreement with the reference in
+both the placement of step boundaries and the granularity of the segmentation. We greedily match
+predicted intervals bI to reference intervals I in descending order of temporal intersection over union
+(tIoU), using each interval at most once. We sum the overlaps of the matched pairs Π and normalize
+by the larger of the two step counts, so that unmatched steps contribute zero:
+𝑅time =
+Í
+(𝑖,𝑗)∈Π tIoU(b𝐼𝑖, 𝐼𝑗)
+max |bI|, |I|
+.
+(2)
+Style reward.
+Even a factually accurate, well-timed caption can leave the action unclear or repeat
+information the reader already has. 𝑅style captures these two failures and calibrates the writing
+toward fluent, natural captions. Two independent judges read the full caption: one flags fragmented
+steps, which are hand–object interaction steps that describe only hand movements or contact without
+specifying what the camera wearer does to the object, and the other flags redundant steps, which
+contain a sentence that only restates background given earlier. With F the union of flagged steps and
+𝑛𝑠the number of steps,
+𝑅style = 1 −|F |
+𝑛𝑠
+.
+(3)
+Reward aggregation.
+We assign 𝑅= −1 to captions that are truncated, degenerate into repetition,
+or have nonpositive duration. For valid rollouts in event-conditioned and full-video captioning, we
+6
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+compute
+𝑅= 0.6𝑅fact + 0.2𝑅time + 0.2𝑅style.
+(4)
+For valid overview captioning, we use 𝑅= 0.9𝑅fact + 0.1𝑅format, where 𝑅format rewards overviews that
+open with a description of the scene and close with a summary of the wearer’s activity.
+Training objective.
+For each input 𝑥, GRPO samples a group of 𝐺captions {ˆ𝑦𝑖}𝐺
+𝑖=1 from the rollout
+policy 𝜋gen. The reward 𝑅𝑖of each caption is standardized within the group, 𝐴𝑖= (𝑅𝑖−𝜇)/(𝜎+ 𝜖0),
+where 𝜇and 𝜎are the group mean and standard deviation and 𝜖0 is a small constant. Let 𝜌𝑖,𝑡be the
+probability ratio between the current policy 𝜋𝜃and the pre-update policy 𝜋𝜃old for the 𝑡-th token of ˆ𝑦𝑖,
+and ¯𝜌𝑖,𝑡its clipped value in [1 −𝜀, 1 + 𝜀]. We maximize
+J (𝜃) = 𝔼
+Í
+𝑖,𝑡min(𝜌𝑖,𝑡𝐴𝑖, ¯𝜌𝑖,𝑡𝐴𝑖)
+Í
+𝑖|ˆ𝑦𝑖|
+
+−𝛽𝔻KL(𝜋𝜃∥𝜋SFT),
+(5)
+which averages the clipped objective over all tokens in the group, and 𝛽weights a KL penalty toward
+the frozen SFT policy. The remaining reward details and optimization settings are provided in the
+supplementary material.
+4. Experiments
+To comprehensively evaluate the ability of EgoCaptioner to produce detailed, time-aware and task-
+focused descriptions, we investigate three research questions (RQs): RQ1: How well does it understand
+egocentric videos? RQ2: Which design choices in our annotation and training pipeline contribute to
+the performance? RQ3: Beyond benchmark scores, how well do its descriptions reflect the detailed,
+task-focused design in practice?
+4.1. Experimental Setup
+Data and training.
+We initialize EgoCaptioner from Qwen3.5-9B [29] and fine-tune it with
+LoRA [11] (rank 32) on the data described in Sec. 3.3 for 2 epochs with a learning rate of 1×10−4.
+We then apply GRPO on 8,000 video–instruction pairs balanced across the three captioning tasks,
+sampling 𝐺=8 rollouts per input with a batch size of 32 and a learning rate of 1×10−5. Both stages
+use 16 GPUs.
+Baselines.
+Table 1 compares EgoCaptioner with three groups: (i) proprietary MLLMs (Gemini
+3.1 Pro [9], Gemini 3.8 Flash [8], GPT-6-Astra [22]), (ii) open-source MLLMs and captioners
+(Qwen3-VL-8B [1], Qwen3.5-9B [29] and Qwen3.8-27B [28], Molmo2-8B [7], TimeLens-8B [53],
+Tarsier2-7B [52], CapRL-Video-4B [49], AVoCaDO [5]), and (iii) egocentric MLLMs (EgoThinker [24],
+EgoGPT [48]).
+Benchmarks and metrics.
+For RQ1, we evaluate on five egocentric benchmarks: EgoMe [27],
+EgoHome Subtask [25], and PhysCapBench [42] under their official metrics, and Minerva-Ego [20]
+(videos up to 120 s) and EgoTempo [26], two video QA benchmarks that we adapt to a caption-to-QA
+protocol, where Gemini 3.8 Flash answers each question using only the generated caption and the
+question. A separate call to the same model judges the answer against the reference.
+7
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Table 1 | Caption quality, video understanding, and temporal alignment (RQ1). All scores are scaled
+by 100 except EgoTempo Score (0–5). B@4 and R-L denote BLEU-4 and ROUGE-L; PhysCapBench Overall
+averages seven dimensions. † denotes direct video QA results. Best and second-best indicate rankings among
+open-source models.
+EgoMe-Overview
+EgoMe-Steps
+EgoTempo Minerva-Ego EgoHome PhysCapBench
+Model
+B@4↑METEOR↑R-L↑CIDEr↑METEOR↑SODA-c↑SODA-d↑Acc↑Score↑
+Accopen↑
+PSJ↑
+Overall↑
+Proprietary MLLMs
+Gemini 3.1 Pro
+3.32
+18.62
+24.45
+5.61
+3.98
+7.41
+46.80
+23.60 1.444
+4.29
+52.86
+75.06
+Gemini 3.8 Flash
+2.62
+19.27
+22.12
+0.79
+6.26
+10.34
+48.31
+41.20 2.310
+7.14
+71.09
+82.77
+GPT-6-Astra
+1.28
+16.12
+15.95
+0.00
+5.91
+6.25
+43.12
+52.60 2.842
+15.71
+79.42
+84.87
+Open-source MLLMs and Captioners
+Qwen3-VL-8B-Instruct
+1.59
+15.72
+16.50
+0.05
+5.73
+6.34
+43.33
+14.00 0.966
+1.43
+55.88
+68.94
+Qwen3-VL-8B-Thinking 1.73
+15.93
+18.18
+0.45
+4.68
+5.48
+38.05
+17.20 1.100
+1.43
+54.02
+68.98
+Qwen3.5-9B
+2.65
+17.58
+22.59
+4.01
+5.71
+8.02
+50.25
+21.60 1.388
+0.00
+46.90
+51.24
+Qwen3.8-27B
+1.37
+15.71
+14.82
+0.02
+7.24
+7.09
+45.67
+30.80 1.842
+11.43
+69.28
+69.55
+Molmo2-8B
+1.20
+14.64
+15.02
+0.11
+4.76
+4.30
+38.19
+19.20 1.204
+7.14
+54.20
+53.20
+Tarsier2-7B
+2.72
+17.36
+21.05
+1.01
+0.00
+0.00
+0.00
+18.00 1.212
+2.86
+0.00
+62.92
+CapRL-Video-4B
+1.34
+14.23
+12.50
+0.00
+4.10
+3.17
+30.25
+31.80 1.978
+10.00
+62.87
+75.94
+TimeLens-8B
+1.59
+15.35
+16.23
+0.10
+6.37
+7.10
+46.93
+17.80 1.124
+1.43
+60.15
+60.25
+AVoCaDO
+1.14
+13.53
+12.64
+0.00
+0.00
+0.00
+0.00
+13.60 0.918
+4.29
+0.00
+60.84
+Egocentric MLLMs and Captioners
+EgoThinker†
+2.96
+15.86
+23.03
+4.85
+1.86
+1.79
+14.93
+24.40 1.770
+15.71
+9.48
+39.88
+EgoGPT
+2.01
+14.17
+19.98
+2.50
+0.00
+0.00
+0.00
+9.20
+0.690
+0.00
+0.00
+32.92
+EgoCaptioner
+4.03
+20.40
+23.59
+0.65
+12.26
+8.04
+56.38
+38.40 2.066
+18.57
+75.51
+78.84
+Inference.
+We uniformly sample frames across the entire video at a target rate of 4 fps, capped
+at 240 frames. For longer videos, the effective sampling rate is reduced to preserve full temporal
+coverage. Within each protocol, we keep benchmark instructions and scoring fixed across models.
+Further details are provided in the supplementary material.
+4.2. RQ1: Egocentric Video Understanding
+We first assess how well EgoCaptioner understands egocentric videos (Table 1). The benchmarks
+probe two sides of this capability: how faithful and informative the descriptions are, measured by
+caption quality against references and by detail-oriented QA, and whether the described events are
+anchored to the correct moments.
+Description quality and video QA.
+EgoCaptioner delivers the strongest open-source results on
+EgoMe, EgoTempo, and Minerva-Ego. On EgoMe-Overview it reaches the highest BLEU-4 and
+METEOR among all models including proprietary ones, and on EgoMe-Steps it likewise leads in
+METEOR and SODA-d. EgoTempo and Minerva-Ego probe fine-grained facts such as manipulated
+objects, individual actions, and their order, so a text-only reader can answer only when the caption
+records those facts. Reading from EgoCaptioner’s captions yields the best open-source accuracy
+on both benchmarks, and on Minerva-Ego it surpasses all proprietary models. On PhysCapBench,
+EgoCaptioner scores 78.84 Overall, the best among open-source models and above Gemini 3.1 Pro.
+Temporal alignment.
+On EgoHome, we compare our predicted steps with human-annotated subtask
+timelines for household activities. The permissible subsegment Jaccard (PSJ) score measures the
+fraction of time for which the two timelines agree on the action being performed. The judge can
+match a step in either timeline to several finer steps in the other if their descriptions refer to the same
+underlying action. EgoCaptioner scores 75.51 on PSJ, ranking first among the open-source models
+8
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+evaluated and outperforming Gemini 3.8 Flash. Tarsier2, AVoCaDO, and EgoGPT score zero on all
+step-level metrics because they rarely produce parseable timestamps.
+Taken together, EgoCaptioner is competitive with proprietary models across all five benchmarks while
+being the strongest open-source model on every one of them.
+4.3. RQ2: Which Design Choices Are Effective?
+To understand the gains in RQ1, we examine the contributions of the annotation procedure, reward
+design, and amount of training data.
+Training stages, data scale, and rewards.
+Table 2 reports three groups of comparisons. The first
+group compares the base model, SFT, and SFT followed by GRPO to show the contribution of each
+training stage. The second varies the amount of SFT data (10k, 25k, 50k triplets, sampled by video
+with the task mixture preserved) under the same recipe. The third removes one GRPO reward term
+at a time from the full objective, keeping SFT initialization and data fixed.
+On our sampled subsets, SFT alone already brings large PSJ gains over the base model: even 10k
+triplets recover most of the PSJ improvement (67.79 vs. 71.63 at 50k), while METEOR and SODA-d
+improve steadily as the data scale increases to 50k. GRPO then lifts METEOR, SODA-d, and PSJ
+further. Without 𝑅fact, all metrics fall below the SFT initialization, as the remaining rewards supervise
+timing and style but place no constraint on content. Without 𝑅time, PSJ falls below SFT while METEOR
+is unaffected, confirming that content quality alone does not produce aligned timestamps. Without
+𝑅style, SODA-d and PSJ both decrease relative to the full objective. Notably, PSJ responds to all three
+ablations: it credits a step only when its description matches the video and its interval aligns with the
+reference, PSJ reflects both content and temporal fidelity.
+Coarse-to-fine annotation.
+To isolate the effect of our multi-stage annotation pipeline on data
+quality, we construct a single-pass baseline: we prompt Gemini 3.1 Pro to generate a complete caption
+in our target format from a single call per video, bypassing the intermediate event segmentation
+and per-event description stages. The two conditions share the same source videos, training volume,
+output format, and training hyperparameters; the single-pass prompt is detailed in the supplementary
+material. As shown in Table 3, the coarse-to-fine supervision improves every metric. The largest gains
+appear on detail-oriented QA, where EgoTempo accuracy rises by nearly 10 points and Minerva-Ego
+more than doubles, and on temporal alignment, where PSJ rises by about 9 points. In the single-
+pass condition the annotator segments and describes each step in one reading, producing coarser
+boundaries and fewer step-level facts. Our procedure fixes the event structure first and then describes
+each step from its event crop, which yields both aligned boundaries and the fine-grained facts.
+4.4. RQ3: Detailed and Task-Focused in Practice?
+We examine two questions about what the captions contain in practice: whether the activity-type
+narration emphasis produces different details for different activities, and whether the quality gains
+come from denser information per token rather than simply longer output.
+Task-focused detail.
+Figure 4 illustrates how EgoCaptioner shifts its descriptive focus to match
+the wearer’s activity. For manipulation, the caption decomposes a continuous action into atomic
+steps, preserving the purpose and target of each motion. In locomotion, the focus turns to identifiable
+9
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Table 2 | Training-stage, data-scale, and reward ablations (RQ2). METEOR and SODA-d are on EgoMe
+Overview and Steps; PSJ is on EgoHome. The SFT rows vary only the amount of SFT data under the same
+recipe. Fact reward is ablated across all three training tasks, whereas temporal and style rewards are ablated
+only for full-video and event-conditioned captioning.
+Variant
+METEOR↑
+SODA-d↑
+PSJ↑
+Base
+17.58
+50.25
+46.90
+SFT (10k)
+16.06
+42.20
+67.79
+SFT (25k)
+16.37
+43.80
+68.63
+SFT (50k)
+19.91
+53.25
+71.63
+w/o 𝑅fact
+18.93
+51.05
+67.97
+w/o 𝑅time
+20.17
+53.50
+66.81
+w/o 𝑅style
+20.41
+55.23
+73.22
+Full
+20.40
+56.38
+75.51
+Table 3 | Annotation-procedure ablation after SFT (RQ2). Both variants use matched training videos and
+data volume.
+Overview
+Steps
+EgoTempo
+Minerva
+EgoHome
+Method
+METEOR↑
+SODA-d↑
+Acc↑
+Acc↑
+PSJ↑
+Single-pass
+17.57
+48.43
+26.60
+7.14
+62.89
+Ours
+19.91
+53.25
+36.40
+18.57
+71.63
+Figure 4 | Task-focused detail and temporal granularity (RQ3). Each panel shows EgoCaptioner’s timed
+step descriptions for one activity type, with task-relevant details highlighted.
+landmarks and spatial cues that let a reader trace the wearer’s route through the scene. A social
+exchange requires tracking both parties, so the caption records gestures and responses from each
+side of the interaction. When the wearer pauses to observe, the description follows the direction and
+sequence of their gaze, picking out fine-grained visual details of the objects inspected.
+Information density at comparable length.
+We compare EgoCaptioner with CapRL-Video-4B, the
+strongest captioner baseline on the egocentric subset of PhysCapBench, across all seven evaluation
+dimensions (Figure 5). The two models produce captions of comparable mean length (both 548 words
+10
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+EC
+OR
+AM
+CI
+SO
+MC
+TO
+60
+70
+80
+90
+100
+Score ↑
+77.5
+81.7
+77.8
+80.5
+75.8
+73.5
+85.2
+73.5
+80.5
+75.0
+78.5
+74.3
+67.6
+80.6
+Ours
+CapRL-Video-4B
+Figure 5 | Per-dimension PhysCapBench scores (RQ3). EgoCaptioner vs. CapRL-Video-4B at comparable
+caption length. EC: event coverage, OR: objects and roles, AM: actions and motion, CI: contact and interaction,
+SO: states and outcomes, MC: physical mechanisms and causality, TO: temporal order.
+per video), so differences reflect the information each word carries rather than sheer verbosity. At this
+length, EgoCaptioner leads on every dimension, with the largest gains in physical mechanisms and
+causality (+5.88 points) and temporal order (+4.57 points). For a reader reconstructing a procedure
+from text, knowing which actions came first and how they caused the observed changes is exactly
+what separates a usable caption from a list of observations. This suggests that EgoCaptioner’s captions
+can serve as a practical text interface to egocentric video, enabling applications such as step-by-step
+instruction generation and activity summarization.
+5. Conclusion
+We presented EgoCaptioner, an egocentric video captioner trained with coarse-to-fine supervision
+and reinforcement learning that jointly optimizes factual content, temporal alignment, and caption
+style. EgoCaptioner achieves the strongest open-source results on five egocentric benchmarks and
+is competitive with proprietary models across caption quality, detail-oriented QA, and temporal
+alignment. Ablations show that coarse-to-fine annotation, which establishes event structure before
+step descriptions, and joint optimization of factual and temporal rewards are both necessary for
+consistent gains. Per-dimension analysis on PhysCapBench further reveals that task-focused narration
+contributes most where understanding causality and temporal order is required, not merely naming
+visible objects.
+References
+[1] Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng, Lianghao Deng,
+Wei Ding, Chang Gao, Chunjiang Ge, Wenbin Ge, Zhifang Guo, Qidong Huang, Jie Huang,
+Fei Huang, Binyuan Hui, Shutong Jiang, Zhaohai Li, Mingsheng Li, Mei Li, Kaixin Li, Zicheng
+Lin, Junyang Lin, Xuejing Liu, Jiawei Liu, Chenglong Liu, Yang Liu, Dayiheng Liu, Shixuan Liu,
+Dunjie Lu, Ruilin Luo, Chenxu Lv, Rui Men, Lingchen Meng, Xuancheng Ren, Xingzhang Ren,
+Sibo Song, Yuchong Sun, Jun Tang, Jianhong Tu, Jianqiang Wan, Peng Wang, Pengfei Wang,
+Qiuyue Wang, Yuxuan Wang, Tianbao Xie, Yiheng Xu, Haiyang Xu, Jin Xu, Zhibo Yang, Mingkun
+Yang, Jianxin Yang, An Yang, Bowen Yu, Fei Zhang, Hang Zhang, Xi Zhang, Bo Zheng, Humen
+Zhong, Jingren Zhou, Fan Zhou, Jing Zhou, Yuanzhi Zhu, and Ke Zhu. Qwen3-VL Technical
+Report, 2025. URL https://arxiv.org/abs/2511.21631. arXiv:2511.21631.
+11
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+[2] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang,
+Shijie Wang, Jun Tang, Humen Zhong, Yuanzhi Zhu, Mingkun Yang, Zhaohai Li, Jianqiang Wan,
+Pengfei Wang, Wei Ding, Zheren Fu, Yiheng Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng,
+Hang Zhang, Zhibo Yang, Haiyang Xu, and Junyang Lin. Qwen2.5-VL Technical Report, 2025.
+URL https://arxiv.org/abs/2502.13923. arXiv:2502.13923.
+[3] ByteDance Seed.
+Seed2.1 Model Card:
+Agentic Intelligence for Productivity.
+Model
+card, 2026. URL https://lf3-static.bytednsdoc.com/obj/eden-cn/lapzild-tss/
+ljhwZthlaukjlkulzlp/seed2.1/Seed2_1_Model_Card.pdf. Accessed: 2026-10-20.
+[4] Wenhao Chai,
+Enxin Song,
+Yilun Du,
+Chenlin Meng,
+Vashisht Madhavan,
+Omer
+Bar-Tal,
+Jenq-Neng Hwang,
+Saining Xie,
+and Christopher D. Manning.
+Aurora-
+Cap:
+Efficient, Performant Video Detailed Captioning and a New Benchmark.
+In
+International
+Conference
+on
+Learning
+Representations,
+volume
+2025,
+pages
+16845–
+16889, 2025. URL https://proceedings.iclr.cc/paper_files/paper/2025/hash/
+2aebc17b683792a17dd4a24fcb038ba6-Abstract-Conference.html.
+[5] Xinlong Chen, Yue Ding, Weihong Lin, Jingyun Hua, Linli Yao, Yang Shi, Bozhou
+Li,
+Qiang
+Liu,
+Yuanxing
+Zhang,
+Pengfei
+Wan,
+and
+Liang
+Wang.
+AVoCaDO:
+An
+Audiovisual
+Video
+Captioner
+Driven
+by
+Temporal
+Orchestration.
+In
+Interna-
+tional
+Conference
+on
+Learning
+Representations,
+volume
+2026,
+pages
+24338–24362,
+2026.
+URL
+https://proceedings.iclr.cc/paper_files/paper/2026/hash/
+29c51fb5618fb34eaf43781e6da07d97-Abstract-Conference.html.
+[6] Jang Hyun Cho, Andrea Madotto, Effrosyni Mavroudi, Triantafyllos Afouras, Tushar Na-
+garajan, Muhammad Maaz, Yale Song, Tengyu Ma, Shuming Hu, Suyog Jain, Miguel
+Martin, Huiyu Wang, Hanoona Rasheed, Peize Sun, Po-Yao Huang, Daniel Bolya, Nikhila
+Ravi, Shashank Jain, Tammy Stark, Shane Moon, Babak Damavandi, Vivian Lee, An-
+drew Westbury, Salman Khan, Philipp Krähenbühl, Piotr Dollár, Lorenzo Torresani, Kris-
+ten Grauman, and Christoph Feichtenhofer.
+PerceptionLM: Open-Access Data and Mod-
+els for Detailed Visual Understanding.
+In Advances in Neural Information Processing Sys-
+tems, volume 38, pages 23475–23537. Curran Associates, Inc., 2025.
+doi: 10.52202/
+085713-0795.
+URL https://proceedings.neurips.cc/paper_files/paper/2025/
+hash/21f1c5bbf2519321c1bee9bfa9edcd46-Abstract-Conference.html.
+[7] Christopher Clark, Jieyu Zhang, Zixian Ma, Jae Sung Park, Mohammadreza Salehi, Rohun
+Tripathi, Sangho Lee, Zhongzheng Ren, Chris Dongjoo Kim, Yinuo Yang, Vincent Shao, Yue Yang,
+Weikai Huang, Ziqi Gao, Taira Anderson, Jianrui Zhang, Jitesh Jain, George Stoica, Winson
+Han, Ali Farhadi, and Ranjay Krishna. Molmo2: Open Weights and Data for Vision-Language
+Models with Video Understanding and Grounding. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR), pages 28652–28668, June 2026. URL
+https://openaccess.thecvf.com/content/CVPR2026/html/Clark_Molmo2_Open_
+Weights_and_Data_for_Vision-Language_Models_with_Video_CVPR_2026_paper.
+html.
+[8] Google DeepMind. Gemini 3.8 Flash Model Card. https://deepmind.google/models/
+model-cards/gemini-3-8-flash/, September 2026. URL https://deepmind.google/
+models/model-cards/gemini-3-8-flash/.
+[9] Google DeepMind.
+Gemini 3.1 Pro Model Card.
+Model card,
+February 2026.
+URL
+https://storage.googleapis.com/deepmind-media/Model-Cards/
+Gemini-3-1-Pro-Model-Card.pdf. Accessed: 2026-10-20.
+[10] Kristen Grauman, Andrew Westbury, Eugene Byrne, Zachary Chavis, Antonino Furnari,
+Rohit Girdhar, Jackson Hamburger, Hao Jiang, Miao Liu, Xingyu Liu, Miguel Martin, Tushar
+Nagarajan, Ilija Radosavovic, Santhosh Kumar Ramakrishnan, Fiona Ryan, Jayant Sharma,
+12
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Michael Wray, Mengmeng Xu, Eric Zhongcong Xu, Chen Zhao, Siddhant Bansal, Dhruv
+Batra, Vincent Cartillier, Sean Crane, Tien Do, Morrie Doulaty, Akshay Erapalli, Christoph
+Feichtenhofer, Adriano Fragomeni, Qichen Fu, Abrham Gebreselasie, Cristina González, James
+Hillis, Xuhua Huang, Yifei Huang, Wenqi Jia, Weslie Khoo, Jáchym Kolář, Satwik Kottur, Anurag
+Kumar, Federico Landini, Chao Li, Yanghao Li, Zhenqiang Li, Karttikeya Mangalam, Raghava
+Modhugu, Jonathan Munro, Tullie Murrell, Takumi Nishiyasu, Will Price, Paola Ruiz Puentes,
+Merey Ramazanova, Leda Sari, Kiran Somasundaram, Audrey Southerland, Yusuke Sugano,
+Ruijie Tao, Minh Vo, Yuchen Wang, Xindi Wu, Takuma Yagi, Ziwei Zhao, Yunyi Zhu, Pablo
+Arbeláez, David Crandall, Dima Damen, Giovanni Maria Farinella, Christian Fuegen, Bernard
+Ghanem, Vamsi Krishna Ithapu, C. V. Jawahar, Hanbyul Joo, Kris Kitani, Haizhou Li, Richard
+Newcombe, Aude Oliva, Hyun Soo Park, James M. Rehg, Yoichi Sato, Jianbo Shi, Mike Zheng
+Shou, Antonio Torralba, Lorenzo Torresani, Mingfei Yan, and Jitendra Malik. Ego4D: Around
+the World in 3,000 Hours of Egocentric Video. In Proceedings of the IEEE/CVF Conference on
+Computer Vision and Pattern Recognition (CVPR), pages 18995–19012, June 2022. URL https:
+//openaccess.thecvf.com/content/CVPR2022/html/Grauman_Ego4D_Around_
+the_World_in_3000_Hours_of_Egocentric_Video_CVPR_2022_paper.html.
+[11] Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang,
+and Weizhu Chen. LoRA: Low-Rank Adaptation of Large Language Models. In International
+Conference on Learning Representations, 2022. URL https://openreview.net/forum?id=
+nZeVKeeFYf9.
+[12] Bin Huang, Xin Wang, Hong Chen, Zihan Song, and Wenwu Zhu.
+VTimeLLM: Em-
+power LLM to Grasp Video Moments.
+In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR), pages 14271–14280, June 2024.
+URL https://openaccess.thecvf.com/content/CVPR2024/html/Huang_VTimeLLM_
+Empower_LLM_to_Grasp_Video_Moments_CVPR_2024_paper.html.
+[13] HumanPlus.
+HumanPlus-1000.
+Dataset,
+https://huggingface.co/datasets/
+humanplus-ai/humanplus-1000, 2026.
+URL https://huggingface.co/datasets/
+humanplus-ai/humanplus-1000. Accessed: 2026-10-24.
+[14] Md Mohaiminul Islam, Ngan Ho, Xitong Yang, Tushar Nagarajan, Lorenzo Torresani, and
+Gedas Bertasius. Video ReCap: Recursive Captioning of Hour-Long Videos. In Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), pages 18198–18208,
+June 2024. URL https://openaccess.thecvf.com/content/CVPR2024/html/Islam_
+Video_ReCap_Recursive_Captioning_of_Hour-Long_Videos_CVPR_2024_paper.
+html.
+[15] Sicong Leng, Yunze Man, Zhiqi Li, Jing Wang, Yuhe Zhang, Ryan Punamiya, Siddharth Patki,
+Kaiyuan Zheng, Zi ang Cao, Zhiding Yu, Sifei Liu, Danfei Xu, Ben Levin, Jan Kautz, Yuke Zhu,
+Johan Bjorck, and Linxi "Jim" Fan. FLORA: An Open Model Suite for Scaling Robotics Data
+Engines, 2026. URL https://arxiv.org/abs/2610.31779. arXiv:2610.31779.
+[16] Zhen Li, Chuanhao Li, Xiaofeng Mao, Shaoheng Lin, Ming Li, Shitian Zhao, Zhaopan
+Xu, Xinyue Li, Yukang Feng, Jianwen Sun, Zizhen Li, Fanrui Zhang, Jiaxin Ai, Zhixiang
+Wang, Yuwei Wu, Tong He, Jiangmiao Pang, Yu Qiao, Yunde Jia, and Kaipeng Zhang.
+Sekai: A Video Dataset towards World Exploration.
+In Advances in Neural Information
+Processing Systems, volume 38, pages 28217–28236. Curran Associates, Inc., 2025.
+doi:
+10.52202/085713-0838.
+URL https://proceedings.neurips.cc/paper_files/
+paper/2025/hash/2368d4a3f24122b9f3779aaffa261719-Abstract-Datasets_
+and_Benchmarks_Track.html.
+[17] Lightwheel.
+EgoSuite-Open100K.
+Dataset, https://huggingface.co/collections/
+13
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+LightwheelAI/egosuite-open100k, August 2026.
+URL https://huggingface.co/
+collections/LightwheelAI/egosuite-open100k.
+[18] Tengfei Liu, Yang Shi, Yuran Wang, Xiaohan Zhang, Yuqing Wen, Yuqi Tang, Qixun Wang,
+Zhuoran Zhang, Xuanyu Zhu, Weihong Lin, et al. Refcaptioner: Multi-reference image-grounded
+video captioning. arXiv preprint arXiv:2607.28509, 2026.
+[19] Jonathan Samir Matthis, Karl S. Muller, Kathryn L. Bonnen, and Mary M. Hayhoe. Retinal optic
+flow during natural locomotion. PLOS Computational Biology, 18(2):e1009575, 02 2022. doi: 10.
+1371/journal.pcbi.1009575. URL https://doi.org/10.1371/journal.pcbi.1009575.
+[20] Arsha Nagrani,
+Jasper Uijlings,
+Shyamal Buch,
+Tobias Weyand,
+Sudheendra Vijaya-
+narasimhan, Bo Hu, Ramin Mehran, David A Ross, and Cordelia Schmid.
+Minerva-Ego:
+Spatiotemporal Hints for Egocentric Video Understanding. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition (CVPR), pages 38859–38869, June
+2026.
+URL https://openaccess.thecvf.com/content/CVPR2026/html/Nagrani_
+Minerva-Ego_Spatiotemporal_Hints_for_Egocentric_Video_Understanding_
+CVPR_2026_paper.html.
+[21] Takehiko Ohkawa, Takuma Yagi, Taichi Nishimura, Ryosuke Furuta, Atsushi Hashimoto,
+Yoshitaka Ushiku, and Yoichi Sato.
+Exo2EgoDVC: Dense Video Captioning of Egocentric
+Procedural Activities using Web Instructional Videos. In Proceedings of the Winter Confer-
+ence on Applications of Computer Vision (WACV), pages 8313–8324, February 2025.
+URL
+https://openaccess.thecvf.com/content/WACV2025/html/Ohkawa_Exo2EgoDVC_
+Dense_Video_Captioning_of_Egocentric_Procedural_Activities_using_Web_
+WACV_2025_paper.html.
+[22] OpenAI.
+GPT-6 Astra System Card.
+https://deploymentsafety.openai.com/
+gpt-6-astra,
+September 2026.
+URL https://deploymentsafety.openai.com/
+gpt-6-astra.
+[23] Baoqi Pei, Yifei Huang, Jilan Xu, Guo Chen, Yuping He, Lijin Yang, Yali Wang, Weidi Xie, Yu Qiao,
+Fei Wu, and Limin Wang. Modeling Fine-Grained Hand-Object Dynamics for Egocentric Video
+Representation Learning. In International Conference on Learning Representations, volume 2025,
+pages 44422–44443, 2025. URL https://proceedings.iclr.cc/paper_files/paper/
+2025/hash/6dd91fec726dbed8915a1fbadd91d1d2-Abstract-Conference.html.
+[24] Baoqi
+Pei,
+Yifei
+Huang,
+Jilan
+Xu,
+Yuping
+He,
+Guo
+Chen,
+Fei
+Wu,
+Yu
+Qiao,
+and Jiangmiao Pang.
+EgoThinker:
+Unveiling Egocentric Reasoning with Spatio-
+Temporal CoT.
+In Advances in Neural Information Processing Systems, volume 38,
+pages 44140–44168. Curran Associates, Inc., 2025.
+doi:
+10.52202/085713-1471.
+URL
+https://proceedings.neurips.cc/paper_files/paper/2025/hash/
+3e9412a9c1d93810ef3ef7825115016b-Abstract-Conference.html.
+[25] PerceptronAI. Perceptron EgoHome: A new benchmark for dense, sub-second egocentric
+understanding. PerceptronAI Research Blog, 2026. URL https://www.perceptron.inc/
+blog/egohome. https://www.perceptron.inc/blog/egohome.
+[26] Chiara Plizzari, Alessio Tonioni, Yongqin Xian, Achin Kulshrestha, and Federico Tombari.
+Omnia de EgoTempo: Benchmarking Temporal Understanding of Multi-Modal LLMs in
+Egocentric Videos. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), pages 24129–24138, June 2025. URL https://openaccess.thecvf.
+com/content/CVPR2025/html/Plizzari_Omnia_de_EgoTempo_Benchmarking_
+Temporal_Understanding_of_Multi-Modal_LLMs_in_CVPR_2025_paper.html.
+[27] Heqian Qiu, Zhaofeng Shi, Lanxiao Wang, Huiyu Xiong, Xiang Li, and Hongliang Li. EgoMe: A
+New Dataset and Challenge for Following Me via Egocentric View in Real World, 2025. URL
+https://arxiv.org/abs/2501.19061. arXiv:2501.19061.
+14
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+[28] Qwen Team. Qwen3.8-27B. Model card, https://huggingface.co/Qwen/Qwen3.8-27B,
+August 2026. URL https://huggingface.co/Qwen/Qwen3.8-27B.
+[29] Qwen Team. Qwen3.5: Towards Native Multimodal Agents. https://qwen.ai/blog?id=
+qwen3.5, February 2026. URL https://qwen.ai/blog?id=qwen3.5.
+[30] Reka AI.
+RekaDaily-10k-processed.
+Dataset, https://huggingface.co/datasets/
+RekaAI/RekaDaily-10k-processed,
+2026.
+URL
+https://huggingface.co/
+datasets/RekaAI/RekaDaily-10k-processed. Accessed: 2026-11-03.
+[31] Shuhuai Ren, Linli Yao, Shicheng Li, Xu Sun, and Lu Hou.
+TimeChat: A Time-sensitive
+Multimodal Large Language Model for Long Video Understanding.
+In Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), pages 14313–14323,
+June 2024.
+URL https://openaccess.thecvf.com/content/CVPR2024/html/Ren_
+TimeChat_A_Time-sensitive_Multimodal_Large_Language_Model_for_Long_
+Video_CVPR_2024_paper.html.
+[32] Ashish Seth, Utkarsh Tyagi, Ramaneswaran Selvakumar, Nishit Anand, Sonal Kumar, Sreyan
+Ghosh, Ramani Duraiswami, Chirag Agarwal, and Dinesh Manocha. EGOILLUSION: Benchmark-
+ing Hallucinations in Egocentric Video Understanding. In Proceedings of the 2025 Conference on
+Empirical Methods in Natural Language Processing, pages 28461–28480, Suzhou, China, Novem-
+ber 2025. Association for Computational Linguistics. doi: 10.18653/v1/2025.emnlp-main.1446.
+URL https://aclanthology.org/2025.emnlp-main.1446/.
+[33] Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang,
+Mingchuan Zhang, Y. K. Li, Y. Wu, and Daya Guo. DeepSeekMath: Pushing the Limits of
+Mathematical Reasoning in Open Language Models, 2024. URL https://arxiv.org/abs/
+2402.03300. arXiv:2402.03300.
+[34] Yujiao Shen, Jiahe Song, Haitian Li, Jingkang Yang, and Ziwei Liu. EgoActionBench: Bench-
+marking Dense Action Captioning for Egocentric Human Videos, 2026. URL https://arxiv.
+org/abs/2611.03646. arXiv:2611.03646.
+[35] Yang Shi, Jiaheng Liu, Yushuo Guan, Zhenhua Wu, Yuanxing Zhang, Zihao Wang, Weihong Lin,
+Jingyun Hua, Zekun Wang, Xinlong Chen, et al. Mavors: Multi-granularity video representation
+for multimodal large language model. In Proceedings of the 33rd ACM International Conference
+on Multimedia, pages 10994–11003, 2025.
+[36] Yang Shi, Yuhao Dong, Yue Ding, Yuran Wang, Xuanyu Zhu, Sheng Zhou, Wenting Liu, Haochen
+Tian, Rundong Wang, Huanqian Wang, et al. Realunify: Do unified models truly benefit from
+unification? a comprehensive benchmark. In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition, pages 22488–22497, 2026.
+[37] Yang Shi, Huanqian Wang, Xie Xie, Huanyao Zhang, Lijie Zhao, Xinfeng Li, Chaoyou Fu, Zhuoer
+Wen, Wenting Liu, Zhuoran Zhang, et al. Mme-videoocr: Evaluating ocr-based capabilities
+of multimodal llms in video scenarios. Advances in Neural Information Processing Systems, 38,
+2026.
+[38] Yale
+Song,
+Eugene
+Byrne,
+Tushar
+Nagarajan,
+Huiyu
+Wang,
+Miguel
+Martin,
+and
+Lorenzo Torresani.
+Ego4D Goal-Step:
+Toward Hierarchical Understanding of Proce-
+dural Activities.
+In Advances in Neural Information Processing Systems, volume 36,
+pages 38863–38886. Curran Associates, Inc., 2023.
+doi:
+10.52202/075280-1688.
+URL
+https://proceedings.neurips.cc/paper_files/paper/2023/hash/
+7a65606fa1a6849450550325832036e5-Abstract-Datasets_and_Benchmarks.
+html.
+[39] Matea Tashkovska, Naël Ouerghemi, Haozhe Qi, and Alexander Mathis. SOMA: A Benchmark
+for Fine-Grained Egocentric Behavior and Body-Motion Understanding, 2026. URL https:
+//arxiv.org/abs/2610.36384. arXiv:2610.36384.
+15
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+[40] Kling Team, Dong Chen, Jialu Chen, Xinlong Chen, Yifan Dai, Haotian Dong, Binzong Geng,
+Yushuo Guan, Minghui Guo, Guanlin He, et al. Behind video generation: Observations and
+insights on multimodal understanding from kling. arXiv preprint arXiv:2611.04916, 2026.
+[41] Khoa Vo, Thinh Phan, Kashu Yamazaki, Minh Tran, and Ngan Le. HENASY: Learning to Assemble
+Scene-Entities for Interpretable Egocentric Video-Language Model. In Advances in Neural Informa-
+tion Processing Systems, volume 37, pages 86483–86499. Curran Associates, Inc., 2024. doi: 10.
+52202/079017-2746. URL https://proceedings.neurips.cc/paper_files/paper/
+2024/hash/9d66f74820f11ce037fb5f711ab9acd4-Abstract-Conference.html.
+[42] Haofeng Wang, Xuanyi Liu, Pengcheng Wen, Ruiqi Li, Yuhao Zhang, Tiange Zhang, Boren Zheng,
+Siyu Tao, Danni Yu, Gan Lin, Haocheng Tang, Tianzizhe Guo, Mingyuan Su, Boyuan Chen, and
+Zhongyuan Wang. PhysCapBench: A Cross-Domain Benchmark for Physically Grounded Video
+Captioning, 2026. URL https://arxiv.org/abs/2611.16424. arXiv:2611.16424.
+[43] Jiawei Wang, Liping Yuan, Yuchen Zhang, and Haomiao Sun. Tarsier: Recipes for Training
+and Evaluating Large Video Description Models, 2024. URL https://arxiv.org/abs/2407.
+00634. arXiv:2407.00634.
+[44] Qixun Wang, Yang Shi, Letian Cheng, Zhuoran Zhang, Yan He, Yuqi Tang, Qi Zhang, Xinlei Yu,
+Ruizhe Chen, Tianrun Xu, et al. Beacon: Knowing when and how to perform agentic visual
+reasoning. arXiv preprint arXiv:2607.28595, 2026.
+[45] Qixun Wang, Yang Shi, Yifei Wang, Yuanxing Zhang, Pengfei Wan, Kun Gai, Xianghua Ying, and
+Yisen Wang. Monet: Reasoning in latent visual space beyond image and language. In Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 12030–12040,
+2026.
+[46] Xiaofeng Wang, Kang Zhao, Feng Liu, Jiayu Wang, Guosheng Zhao, Xiaoyi Bao, Yingya
+Zhang,
+Xingang Wang,
+and Zheng Zhu.
+EgoVid-5M: A Large-Scale Video-Action
+Dataset for Egocentric Video Generation.
+In Advances in Neural Information Process-
+ing Systems, volume 38, pages 49717–49738. Curran Associates, Inc., 2025.
+doi:
+10.52202/085713-1480.
+URL https://proceedings.neurips.cc/paper_files/
+paper/2025/hash/3ef2b740cb22dcce67c20989cb3d3fce-Abstract-Datasets_
+and_Benchmarks_Track.html.
+[47] Jilan Xu, Yifei Huang, Junlin Hou, Guo Chen, Yuejie Zhang, Rui Feng, and Weidi
+Xie.
+Retrieval-Augmented Egocentric Video Captioning.
+In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition (CVPR), pages 13525–13536,
+June 2024.
+URL https://openaccess.thecvf.com/content/CVPR2024/html/Xu_
+Retrieval-Augmented_Egocentric_Video_Captioning_CVPR_2024_paper.html.
+[48] Jingkang Yang, Shuai Liu, Hongming Guo, Yuhao Dong, Xiamengwei Zhang, Sicheng
+Zhang, Pengyun Wang, Zitang Zhou, Binzhu Xie, Ziyue Wang, Bei Ouyang, Zhengyu Lin,
+Marco Cominelli, Zhongang Cai, Bo Li, Yuanhan Zhang, Peiyuan Zhang, Fangzhou
+Hong, Joerg Widmer, Francesco Gringoli, Lei Yang, and Ziwei Liu.
+EgoLife:
+To-
+wards Egocentric Life Assistant.
+In Proceedings of the IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition (CVPR), pages 28885–28900, June 2025.
+URL
+https://openaccess.thecvf.com/content/CVPR2025/html/Yang_EgoLife_
+Towards_Egocentric_Life_Assistant_CVPR_2025_paper.html.
+[49] Penghui Yang, Long Xing, Xiaoyi Dong, Yuhang Zang, Yuhang Cao, Yibin Wang, Yujie Zhou,
+Jiazi Bu, Jianze Liang, Qidong Huang, Jiaqi Wang, Feng Wu, and Dahua Lin. CapRL++: Unified
+Reinforcement Learning with Verifiable Rewards for Dense Image and Video Captioning, 2026.
+URL https://arxiv.org/abs/2606.09393. arXiv:2606.09393.
+[50] Linli Yao, Yuancheng Wei, Yaojie Zhang, Lei Li, Xinlong Chen, Feifan Song, Ziyue Wang, Kun
+Ouyang, Yuanxin Liu, Lingpeng Kong, Qi Liu, Pengfei Wan, Kun Gai, Yuanxing Zhang, and
+16
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Xu Sun. TimeChat-Captioner: Scripting Multi-Scene Videos with Time-Aware and Structural
+Audio-Visual Captions. In Proceedings of the 43rd International Conference on Machine Learning,
+volume 306 of Proceedings of Machine Learning Research, pages 147673–147693. PMLR, 06–11
+Jul 2026. URL https://proceedings.mlr.press/v306/yao26o.html.
+[51] Payam Jome Yazdian, Rachel Lagasse, Hamid Mohammadi, Eric Liu, Li Cheng, and Angelica
+Lim. MotionScript: Natural Language Descriptions for Expressive 3D Human Motions. In 2025
+IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), pages 21574–21581.
+IEEE, October 2025. doi: 10.1109/iros60139.2025.11247385. URL https://doi.org/10.
+1109/IROS60139.2025.11247385.
+[52] Liping Yuan, Jiawei Wang, Haomiao Sun, Yuchen Zhang, and Yuan Lin. Tarsier2: Advanc-
+ing Large Vision-Language Models from Detailed Video Description to Comprehensive Video
+Understanding, 2025. URL https://arxiv.org/abs/2501.07888. arXiv:2501.07888.
+[53] Jun Zhang, Teng Wang, Yuying Ge, Yixiao Ge, Xinhao Li, and Limin Wang. TimeLens: Rethinking
+Video Temporal Grounding with Multimodal LLMs. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR), pages 10419–10429, June 2026. URL
+https://openaccess.thecvf.com/content/CVPR2026/html/Zhang_TimeLens_
+Rethinking_Video_Temporal_Grounding_with_Multimodal_LLMs_CVPR_2026_
+paper.html.
+[54] YiFan Zhang, Yang Shi, Weichen Yu, Qingsong Wen, Xue Wang, Wenjing Yang, Zhang Zhang,
+Liang Wang, and Rong Jin. Debiasing multimodal large language models via penalization of
+language priors. In Proceedings of the 33rd ACM International Conference on Multimedia, pages
+4232–4241, 2025.
+[55] Yuanhan Zhang, Jinming Wu, Wei Li, Bo Li, Zejun Ma, Ziwei Liu, and Chunyuan Li. LLaVA-Video:
+Video Instruction Tuning With Synthetic Data. Transactions on Machine Learning Research, 2025.
+URL https://arxiv.org/abs/2410.02713.
+[56] Zhuoran Zhang, Yang Shi, Qixun Wang, Tengfei Liu, Yuqi Tang, Xuanyu Zhu, Yizhuo Jia, Jingyun
+Hua, Shixuan Liu, Xianghua Ying, et al. Verus-insight: Towards explainable artifact detection in
+ai-generated videos. arXiv preprint arXiv:2610.30866, 2026.
+[57] Yue Zhao, Ishan Misra, Philipp Krähenbühl, and Rohit Girdhar.
+Learning Video Rep-
+resentations from Large Language Models.
+In Proceedings of the IEEE/CVF Confer-
+ence on Computer Vision and Pattern Recognition (CVPR), pages 6586–6597, June 2023.
+URL https://openaccess.thecvf.com/content/CVPR2023/html/Zhao_Learning_
+Video_Representations_From_Large_Language_Models_CVPR_2023_paper.html.
+17
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Supplementary Material
+A. Qualitative Examples
+A.1. EgoCaptioner Captions across Activity Types
+Figures 6–9 show four complete examples of EgoCaptioner captions. Each figure includes sampled
+video frames, the prompt, and the full model response. The manipulation, locomotion, and attention
+prompts ask for a description of the entire clip. The social prompt asks for the steps of a specific
+interaction.
+0.5 s
+1.0 s
+1.8 s
+3.3 s
+5.0 s
+9.8 s
+14.0 s
+18.5 s
+22.5 s
+23.3 s
+23.8 s
+24.8 s
+Question
+This video is 25.5 seconds long. Describe the entire video and the core events in order.
+[overview]
+The video begins with a first-person, overhead perspective looking down at a table covered with a light pinkish-white cloth, set up against a plain white backdrop
+under warm, bright artificial lighting. To my left, there is a vertical white panel, suggesting a studio or photography setup. In the center, I am holding a tall, clear
+plastic cylinder with a red lid, red accents, and black labeling with white text. To the right of the cylinder lies a crumpled black cloth. My hairy arms and hands are
+visible; I am wearing a thin gold bracelet on my left wrist. I hold the cylinder upright with my left hand. With my right hand, I twist the red lid and unscrew it
+from the cylinder, then place the lid on the table in front of the cylinder. Next, I pick up the black cloth with my right hand, drape it over the top opening of the
+cylinder, and fold and tuck the edges of the cloth tightly inside. I press the folded cloth firmly with my right fingers to pack it tightly into the cylinder. Once
+the cloth is securely tucked inside, I pick up the red lid from the table with my right hand and place it back onto the top of the cylinder. Overall, I am
+packaging a black cloth inside a plastic container and putting the lid back on.
+[detailed steps]
+[0.0-1.2] I hold a clear plastic case with a red lid on the pink table in front of
+me with my left hand. My right hand reaches up and grips the top of the red
+lid. At [0.9], the red lid comes off the case as I twist it with my right
+hand.
+[1.2-2.5] With my left hand still holding the open case steady, I move my
+right hand downward. I place the removed red lid on the pink table,
+positioning it directly in front of the case.
+[2.5-11.0] I pick up a crumpled black cloth from the right side of the table
+with my right hand. I then bring the cloth over to the open case and drape it
+over the top opening. I use my right hand to fold and tuck the edges
+of the cloth tightly inside the case, making a few adjustments to cover the
+top surface completely. By the end of the window, the cloth is gathered over
+the top of the case.
+[11.0-17.1] I steady the case with my left hand and use my right fingertips to
+push more of the cloth through the opening.
+[17.1-23.0] With my right hand, I adjust the remaining portions of the black
+cloth. I press the cloth down to tuck it fully into the clear plastic case,
+ensuring it is securely packed. At the end of the window, the cloth is
+completely inside the case.
+[23.0-23.5] I release the clear plastic case and reach my right hand toward
+the red lid on the pink table. I pick up the red lid from the table.
+[23.5-24.0] Holding the red lid with my right hand, I move it toward the
+clear plastic case. I align the red lid over the opening of the case.
+[24.0-24.5] At [24.0], I place the red lid back on top of the clear plastic
+case.
+[24.5-25.5] I lift my right hand away from the red lid. My left hand
+continues to hold the case steady.
+Figure 6 | Manipulation. The camera wearer removes the lid from a cylinder, packs a black cloth inside, and
+replaces the lid.
+18
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+1.0 s
+4.8 s
+6.8 s
+8.5 s
+12.2 s
+15.8 s
+17.5 s
+21.0 s
+24.1 s
+24.8 s
+25.6 s
+26.8 s
+Question
+This video is 27.1 seconds long. Describe the entire video and the core events in order.
+[overview]
+The video begins with me walking through a paved, semi-outdoor walkway of a commercial building during the day. The lighting is bright and natural, casting soft
+shadows. The architecture features large, square pillars and upper walls with geometric cutouts. To my left is an open courtyard area, and to my right are
+glass-fronted shops. The ground is made of light-colored stone tiles. In front of me is a small folding table holding a white pump bottle of hand sanitizer, a cardboard
+box, a small white piece of paper, and a blue box of hand sanitizer wipes. Behind the table is a glass door with a red neon "WELCOME" sign on the glass. A black trash
+bin sits on a small green mat next to the table. As I walk toward the entrance and pause to look around, a man wearing a pink and black striped shirt walks past
+me from right to left, carrying a white bag in his left hand and a dark bag in his right hand. I then approach the glass entrance doors, which have "PULL" signs
+above the handles. I reach out with my bare right hand and grab the right door handle, pulling the door open to enter the store. Inside, I see a grocery store
+with fluorescent lighting. There are shelves stocked with groceries, and a pile of large, round, green fruits sits near the entrance. A "SPECIAL OFFER" sign is visible
+near the entrance. Overall, I am walking through an outdoor commercial area and entering a grocery store.
+[detailed steps]
+[0.0-2.5] I start walking forward from the edge of a building entrance,
+facing down a paved walkway. I look ahead toward a lit storefront and an
+open courtyard visible beyond it. The camera bobs slightly, indicating my
+walking pace as I move along the path.
+[2.5-6.5] I walk toward a small wooden folding table positioned
+outside the storefront. I glance at a black trash bin on a small green mat, a
+white hand sanitizer bottle, and printed notices attached to the store's glass
+door on the right.
+[6.5-8.8] I halt my steps at the table, turning my view slightly to the right to
+look closely at the notices and the glass door. At [8.5], I raise my right hand
+toward the right door handle. I then withdraw my hand, lower it out of
+view, and shift my attention back to the courtyard ahead.
+[9.0-12.5] I scan the paved courtyard visible ahead through the open
+shopfront on the right. Across the courtyard, I observe a white multi-story
+building and a large potted palm tree. At [11.5], a man in a pink and black
+striped shirt carrying two shopping bags enters the scene from the right,
+passing in front of me and moving from right to left.
+[12.5-14.5] I watch him pass behind a large beige pillar and disappear
+from view.
+[14.5-16.4] I turn my gaze back to the right, focusing on the glass entrance of
+the building. The glass doors feature signs reading "PULL" and "OPEN",
+with a red neon "WELCOME" sign above. I reach out my right hand and
+touch the right door handle.
+[16.6-19.2] I turn toward the wooden folding table set up outside the shop's
+glass door. I look down at the table, noting the white pump bottle, a stack
+of white paper napkins, a blue-and-white box of hand sanitizer wipes, and
+two flat notices taped to the surface. A red "WELCOME" sign glows on the
+glass door above the table, and the camera pans right.
+[19.2-23.5] At [19.2], I see him again down the arcade to my right, walking
+away from me. I pan the camera right, then pan it left back toward the
+glass entrance doors, while he continues walking down the arcade.
+[23.5-25.5] I turn back to the entrance and grasp the handle of the
+right-hand door. At [24.9], I pull it toward me and step through.
+[25.5-26.1] I move through the doorway into the store, stepping past
+a pile of large green melons on the floor near the entrance. I continue moving
+into the store.
+[26.1-27.1] I look around the store, observing the brightly lit produce
+section inside, which features various fruits and vegetables on shelves and
+counters. I notice a white sign on a green pillar near the entrance that reads
+"SPECIAL OFFER". I continue looking into the store.
+Figure 7 | Locomotion. The camera wearer follows a covered walkway, opens a glass door, and enters a grocery
+store.
+19
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+9.6 s
+10.1 s
+11.6 s
+12.6 s
+13.4 s
+15.5 s
+19.0 s
+23.8 s
+Question
+This video is 30.0 seconds long. Describe the steps of the event "I take the glasses from the woman and examine them with
+her" in detail, one step per line as [start-end] description.
+Answer
+[9.5-10.8] I raise both hands into view and extend them toward the
+woman in the black t-shirt. She holds black-framed glasses on the front
+of her face, gripping the frame with her hands. I bring my hands close to
+her face, signaling that I want the glasses.
+[10.8-12.5] She starts to take off her glasses as I reach toward her
+with both hands.
+[12.5-14.0] I take the frame in both hands as she lets go.
+[14.0-24.2] I hold the glasses in my left hand and inspect the hinge
+on one arm with my right. The woman leans in and talks to me.
+Figure 8 | Social interaction. The camera wearer takes a pair of glasses from a woman and examines the hinge
+while she leans in.
+20
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+0.5 s
+2.0 s
+5.6 s
+8.4 s
+13.8 s
+18.1 s
+20.5 s
+25.2 s
+27.0 s
+27.8 s
+29.6 s
+31.1 s
+Question
+This video is 31.4 seconds long. Describe the entire video and the core events in order.
+[overview]
+The video begins in an office space decorated with colorful triangular pennant banners strung across the room. The environment features dark flooring, large
+windows revealing trees and a parking lot outside, and an exposed ceiling with fluorescent lights and pipes, all illuminated by overcast natural light. A person in a
+black jacket is visible sitting on a bed in a separate room. I walk around the office, looking up at the ceiling and windows, and observing the surroundings. The
+camera shakes quite a bit as I turn. I approach the couch area, where a garland with colorful pennants rests on it, and pick up a section of the garland. I move
+towards a glass wall and hold the garland near the frame, preparing to attach it. Overall, I am walking through an office space to gather a decorative garland for
+hanging on the glass wall.
+[detailed steps]
+[0.0-1.0] I start facing a large window, looking outside at trees and
+parked cars. I pan my view up and to the right, turning away from the
+window.
+[1.0-2.5] As I pan right, I observe the decorated interior. I see colorful
+triangular pennant garlands strung across the room. In the distance, a
+person is sitting on a bed in another room.
+[2.5-4.2] I continue turning to face the glass door. I tilt my view down
+toward the floor, noticing a brightly colored pile of materials scattered
+there.
+[4.2-5.0] At [4.2], I turn my view to the left, moving away from the glass wall
+and a colorful triangular pennant banner hanging above. I move quickly
+toward a set of large office windows on the left side of the room.
+[5.0-6.0] I look out the window pane, observing a parking lot below. I
+see several parked cars, green trees, and a dark blue recycling bin on the
+ground outside.
+[6.0-7.4] I adjust my viewing angle slightly, panning across the glass to
+survey more of the outdoor trees and the surrounding area. At [7.0], I
+quickly turn my view back toward the interior of the office, causing the
+view to blur as I shift my attention away from the window.
+[7.4-8.9] I pan my view across the room, tilting my head up to take in the
+office ceiling. The ceiling features exposed pipes, metal conduits, and
+several rectangular white fluorescent light fixtures.
+[8.9-10.9] I continue panning right, sweeping my view across the office
+space. I look at a white wall, passing a large window with yellow and green
+foliage visible outside, and then I angle my view up toward the top of a
+window frame.
+[10.9-13.2] I tilt my head back up toward the ceiling, returning my focus
+to the exposed ceiling grid, fluorescent lights, and hanging equipment.
+At [11.5], I pan my view back across the ceiling toward the glass wall.
+[13.2-17.2] At [13.2], I turn left to walk back across the open office
+area. I pan my view across the space, taking in the large windows, a colorful
+banner strung across the room, glass partitions, and office furniture, before
+tilting my view up toward the glass wall above.
+[17.2-18.8] At [17.2], I turn left to walk toward a seating area. I pass a glass
+wall on my right and approach a grey couch, with a white lampshade
+passing in the foreground.
+[18.8-22.3] I look down at the couch and the floor beside it. I see a long
+string of colorful triangular pennant flags draped across the couch,
+with some flags lying on the dark floor nearby.
+[22.3-26.8] At [22.3], I look up and pan my view across the room, moving
+past the large windows on the left, the exposed ceiling with lights and pipes,
+and the glass partitions, before panning back to the seating area.
+[26.8-28.4] At [26.8], I look down at the couch again. I reach out with my
+hands and grasp the string of colorful pennant flags. I gather the
+flags, lifting the garland section off the couch with my hands.
+[28.4-30.3] At [28.4], holding the garland with both hands, I turn to my right
+and walk towards the adjacent glass wall. The camera bobs slightly
+with my steps as I move across the room.
+[30.3-31.4] I bring the garland up towards the white vertical frame of the
+glass wall. I hold the garland, with its blue flag, against the frame.
+My right hand moves to touch the top of the white frame near the hanging
+blue flag, preparing to hang the garland.
+Figure 9 | Attention. The camera wearer looks around an office before picking up a pennant garland and
+holding it against a glass partition.
+21
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+A.2. Coarse-to-Fine versus Single-Pass Training Annotations
+We compare training captions generated by Gemini in a single pass with those produced by our
+coarse-to-fine pipeline for the same video and prompt. The examples cover an overview (Fig. 10),
+an event-conditioned caption (Fig. 11), and two full-video captions (Figs. 12 and 13). Red and
+yellow underlines mark the phrases being compared in the single-pass and coarse-to-fine captions,
+respectively.
+0.5 s
+3.3 s
+5.0 s
+7.9 s
+10.8 s
+13.6 s
+Question
+Describe the full video faithfully and in detail, covering at least the setting, main subjects, actions, interactions, and sequence
+of visible events.
+single-pass
+The video begins with a first-person view of a dirt trail in a forest, lit by dim, overcast daylight. The ground is covered with brown fallen
+leaves and scattered patches of white snow, with bare trees lining both sides of the path. In the distance, a few small figures of other
+people are visible walking ahead. None of my body parts are seen in the frame. I am walking forward along the winding trail,
+following its path through the woods. Overall, I walk continuously along a snowy, leaf-covered forest trail.
+coarse-to-fine
+The video begins with a first-person perspective of me moving forward along a narrow dirt trail in a forest. The lighting is dim and cool,
+suggesting an overcast day. The ground is covered with fallen brown leaves, patches of white snow, and some green moss. The camera is
+angled downwards, focusing on the path ahead, with noticeable motion blur from my movement. As I progress along the winding trail and
+approach a trail split, a few dark silhouettes of people are visible in the distance to my right, moving among the bare trees. I slow briefly
+at the junction, then follow the right-curving branch of the split, maintaining a steady pace as the trail later bends gently to the
+left. Overall, I am walking or running along a snowy, leaf-covered forest trail.
+Figure 10 | Forest trail. Both overviews describe a winding path. The coarse-to-fine annotation identifies the
+right branch at the junction and the subsequent left bend.
+2.8 s
+3.8 s
+4.3 s
+5.2 s
+5.8 s
+6.7 s
+Question
+This video is 10.2 seconds long. Describe the steps of the event "I gather scattered debris from the counter beside the gas
+stove" in detail, one step per line as [start-end] description.
+single-pass
+[4-7.375] I gather scattered debris from the counter beside the gas stove.
+coarse-to-fine
+[2.7-4.0] I rub my hands together
+multiple times to dislodge loose residue.
+Simultaneously, I walk toward a white
+marble-patterned counter located next
+to a black gas stove.
+[4.0-5.5] I place my left hand flat on the
+counter, where several tiny pieces of green,
+red, and white debris are scattered. I wipe
+my left hand inward across the surface,
+sweeping the scattered debris
+together near the counter's edge, then rest
+my right hand flat on the counter as well.
+[5.5-6.8] I position my left hand just below
+the counter's edge. Using my right hand, I
+pinch and pick up all the gathered
+debris pieces from the counter. At the
+final frame of the window, the debris is
+held in my right hand, leaving that spot on
+the counter clear.
+Figure 11 | Clearing a countertop. The single-pass caption summarizes the event in one interval. The coarse-
+to-fine caption separates the approach, the left-hand sweep, and the right-hand pickup.
+22
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+0.7 s
+2.2 s
+5.1 s
+10.8 s
+12.1 s
+13.1 s
+14.9 s
+16.6 s
+26.0 s
+43.0 s
+50.0 s
+51.7 s
+Question
+This video is 52.2 seconds long. Describe the entire video and the core events in order.
+single-pass
+[overview]
+[detailed steps]
+The video begins with an egocentric, downward-looking view
+of a small kitchen lit by overhead light. To my left is a
+refrigerator, a blue basket, and a small shelf holding numerous
+condiment bottles. Above the shelf is a white control panel
+displaying the green number "43". To my right is a stove
+surrounded by a pink splatter guard. On the stove are four
+items: a silver kettle, a covered silver pot, a covered orange
+pot, and an open orange pot filled with cooked food. I am
+wearing a light green t-shirt, and my bare hands are visible. I
+am seasoning the food in the open orange pot: I reach to the
+shelf on my left to pick up a white grinder bottle, bring it over
+to the pot, and repeatedly twist the top with my right hand
+while holding the base with my left to grind seasoning over the
+food. After seasoning, I return the grinder to its place on
+the shelf. Overall, I retrieve a grinder and season the food
+cooking in a pot to flavor the dish.
+[0.0-2.5] I reach to the shelf on my left with my left hand, pick up a white grinder
+bottle, bring it over to the open orange pot on the stove, and grasp the top with my
+right hand.
+[2.5-49.5] I hold the bottom of the grinder with my left hand and repeatedly twist
+the top with my right hand to grind seasoning onto the food in the pot.
+[49.5-52.2] I move the grinder back to the shelf on my left with my left hand and
+place it down among the other bottles.
+coarse-to-fine
+[overview]
+[detailed steps]
+The video begins with me standing in a brightly lit kitchen,
+wearing a yellow-green short-sleeved t-shirt. To my left is a
+refrigerator with a blue basket on top containing a paper with
+the text "7つの習慣", and next to it is a narrow shelf holding
+various bottles, with a white digital control panel on the wall
+above. In front of me is a stovetop protected by a pink splatter
+guard, holding a silver kettle, a covered silver pot, an orange
+lid, and an orange pot filled with cooked mushrooms and
+onions. I reach with my left hand to the narrow shelf and pick
+up a white spice grinder. I bring the grinder over to the orange
+pot on the stove, remove its white cap and set the cap on the
+counter, then hold the bottom with my left hand and twist the
+top with my right hand to grind seasoning over the
+mushrooms and onions. After repeating the twisting motion
+for several seconds, I stop grinding, put the cap back on,
+and place the grinder back in its spot on the narrow shelf. I
+then reach with my right hand to the narrow shelf and pick
+up another white, cylindrical spice grinder. I turn back
+to the stove, remove its white cap, and bring the grinder over
+the orange pot. Holding its bottom with my left hand and its
+top with my right hand, I begin twisting the top part to grind
+more seasoning. I continuously repeat this twisting motion
+dozens of times, moving my hands over the pot to distribute
+the seasoning evenly. Finally, I stop grinding, retrieve the cap
+from the counter, close the grinder, and turn to the left to
+place it back in its original spot on the narrow shelf. Overall, I
+am seasoning a pot of cooked mushrooms and onions with
+spice grinders in a kitchen.
+[0.0-3.0] The video begins with me standing in a brightly lit kitchen, wearing a
+yellow-green short-sleeved t-shirt. To my left is a refrigerator with a blue basket on
+top containing a paper with the text "7つの習慣", and next to it is a narrow shelf
+holding various bottles, with a white digital control panel on the wall above. In front
+of me is a stovetop protected by a pink splatter guard, holding a silver kettle, a
+covered silver pot, an orange lid, and an orange pot filled with cooked mushrooms
+and onions. I reach with my left hand to the narrow shelf and pick up a white spice
+grinder. I bring it over to the stove area. At [2.0], I use both hands to pull the cap off
+the grinder.
+[3.0-10.1] I hold the open grinder over the orange pot, with its white cap resting on
+the counter to my right. At [3.1], holding the bottom with my left hand and the top
+with my right hand, I start twisting the top part to grind black pepper into the pot. I
+continue grinding over the cooked mushrooms and onions for several seconds.
+[10.1-12.5] I stop grinding and move the grinder away from the pot. I use both
+hands to put the cap back on. Then, I move the grinder back to the left and place
+it back into its spot on the narrow shelf.
+[12.7-15.5] I reach with my right hand to the narrow shelf and pick up a white,
+cylindrical spice grinder. I turn toward the stove and twist off its white cap with
+my right hand, setting the cap on the counter to my right. I bring the grinder over
+the orange pot, hold its bottom with my left hand, and grip its top with my right
+hand.
+[15.5-49.5] I hold the open grinder over the pot. At [15.7], holding the white bottom
+half of the grinder with my left hand and the dark top half with my right hand, I
+begin to twist the top part back and forth to grind seasoning over the cooked
+mushrooms and onions. I continuously repeat this twisting motion dozens of times,
+moving my hands over the pot to distribute the seasoning evenly.
+[49.5-52.2] I stop grinding and move the grinder away from the pot. I reach to the
+counter on my right with my right hand and, pick up the grinder's white cap. I place
+the cap onto the grinder held in my left hand and press it down to close it. I then
+turn to my left and, use my left hand to place the grinder back in its original spot on
+the narrow shelf next to the stove. I turn back to face the stove as the video ends.
+Figure 12 | Seasoning a pot. The single-pass annotation treats grinding as one continuous step. The coarse-to-
+fine annotation records when the wearer returns the first grinder and picks up the second.
+23
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+0.3 s
+1.7 s
+2.6 s
+3.4 s
+4.8 s
+6.1 s
+Question
+This video is 6.3 seconds long. Describe the entire video and the core events in order.
+single-pass
+[overview]
+[detailed steps]
+The video begins with a downward view of a black table in a room
+with white walls and a light wood floor. On the table, there is a
+shipping label in front of me and a closed cardboard box to my
+right. I am wearing black pants, white clogs with black spots, and
+black and white wristbands with white tracking devices attached
+to them. My bare hands are visible. I am manipulating the
+shipping label: I pick it up, fold it in half lengthwise, and
+crease the edge. Then, I pull the edges apart to tear the label
+into two pieces. Overall, I fold and tear a shipping label in half.
+[0.0-1.8] I hold the shipping label flat on the black table with both
+hands.
+[1.8-3.3] I lift the shipping label and fold it in half lengthwise,
+aligning the edges with both hands.
+[3.3-4.8] I pinch the top of the fold and slide my fingers down to
+crease the paper.
+[4.8-6.3] I pull the top edges apart with both hands, tearing the
+shipping label in half along the crease.
+coarse-to-fine
+[overview]
+[detailed steps]
+The video begins with a first-person perspective of me standing at
+a black table in a room with white walls and a light wooden floor.
+I am wearing black pants, white perforated shoes, and black and
+white patterned wristbands on both wrists. On the table in front
+of me, there is a small white piece of paper with printing on it,
+and to its right sits a closed brown cardboard box. I am holding
+the piece of paper with both hands. I then slowly peel the
+backing off the paper, separating it into two pieces, holding one
+in each hand. Overall, I am standing at a table and peeling the
+backing off a small printed piece of paper.
+[0.0-2.0] I hold a small, rectangular piece of paper with both hands
+over a black table. My thumbs press against the top surface while
+my fingers support it from underneath.
+[2.0-6.2] I begin to pull my hands apart to peel the backing off
+the paper. At [2.6], the top edge of the backing starts to
+separate. I continue pulling my hands outward and slightly apart,
+extending the separation downwards. The backing is completely
+peeled off, with one piece held in each hand.
+Figure 13 | Peeling a shipping label. The single-pass caption describes folding and tearing the label. The
+coarse-to-fine caption identifies the backing as the layer being peeled away.
+B. Reward Details
+B.1. Fact Reward
+𝑅fact (Eq. 1) is computed in four steps. Facts are extracted from the text of each caption, pose-derived
+facts are added to the reference, the reference facts are deduplicated, and the facts of each caption
+are judged against the other caption and pooled into one F1.
+Table 4 | Fact families, the caption text each is extracted from, and their labels.
+Family
+Extracted from
+Labels
+Motion
+Steps, without At sentences
+body: travel, posture, still. view: turn, roll, shake, still.
+Focus
+Steps, grouped by event, without
+At sentences
+MANIP: operation, object. LOCOMOTE: travel mode, route. SOCIAL:
+partner, interaction. ATTEND: target, target state.
+Macro
+Overview
+scene, main agent, role and purpose, activity arc, visual style, layout,
+legible text, people appearance, repetition count
+Key moment
+At sentences
+–
+Extraction.
+Each family is extracted from the caption text listed in Table 4. Overview sentences give
+macro facts, which are extracted in two tiers, core and detail. The tier is used only during extraction
+24
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+and does not affect scoring. Step text gives motion and focus facts after every sentence containing
+an “At [𝑡]” marker is removed, because those sentences are scored as key moments (Sec. B.3). The
+program numbers the steps and the extractor cites only a step number, so each fact takes the time
+window written in the caption and the model never copies a time. Focus aspects depend on the event
+type, so steps are first grouped under the reference event they overlap most, and the reference and
+the prediction use the same grouping.
+Pose facts as motion facts.
+When pose data are available, the pose-derived facts of Sec. B.2 join
+the reference as motion facts. They carry the same body and view labels as facts extracted from
+text, so both kinds are judged and pooled in the same way. Body and camera movement is tracked
+geometrically by the pose annotations, whereas a caption written from video only estimates it. Pose
+facts are therefore the only reference facts that do not pass through caption text.
+Deduplication.
+Mixing pose and caption facts creates two problems. Both can state the same
+movement, which would count it twice in recall, and they can disagree about it, which would reward
+matching the wrong one. A single language-model pass over all reference facts of a sample removes
+both (prompt in Sec. E.4). The facts are listed in two groups, the steps group with motion and focus
+facts and the overview group with macro facts. Each fact is tagged as caption or sensor, where sensor
+marks pose-derived facts, and carries its time range. A fact is removed in two cases.
+• Duplicate. Two facts in the same group state the same thing about the same moment. The less
+specific one is removed, and a pose fact is kept over a caption fact that says no more.
+• Conflict. Two facts, in the same group or across groups, cannot both be true of the same person,
+object or movement at the same time. The one less likely to be correct is removed, with a
+preference for the pose fact on camera and body movement. Both are removed when the pass
+cannot tell.
+Facts at different times, facts about different objects or people, and facts that only add or omit details
+of each other are kept. The model only names the facts to remove and does not rewrite any, and the
+pass runs once when the reference is built.
+Judging.
+Reference facts are judged against the predicted caption, and predicted facts against the
+reference caption. Each request covers one caption section. Motion and focus facts are judged together
+against the steps as written, with the At sentences left in place so that the caption reads coherently,
+and macro facts against the overview alone, so a macro fact cannot earn credit from a step. Facts are
+listed under their time ranges and matched to the caption by content, since timestamps can differ
+slightly. The judge reads each fact by its sentence structure. The subject, complement, verb and object
+that the sentence has form its core, and a core part matches when the caption uses the same word, a
+synonym, or a pronoun that clearly refers back to it (prompt in Sec. E.4). The verdict maps to credit
+𝑠( 𝑓| 𝑦) as follows.
+• Supported (1). Every core part and detail matches, whatever the wording.
+• Partial (0.4). Every core part matches, but the caption leaves out some details.
+• Contradicted (0). The fact and the caption cannot both be true under any reading.
+• Absent (0). None of the above.
+25
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Pooling.
+Facts of all families and the key moments are pooled into one F1 instead of one F1 per
+family. Then
+𝑝=
+Í
+𝑓∈F(ˆ𝑦) 𝑠( 𝑓| 𝑦★)
+|F (ˆ𝑦)|
+,
+𝑟=
+Í
+𝑓∈F(𝑦★) 𝑠( 𝑓| ˆ𝑦)
+|F (𝑦★)|
+,
+(6)
+and 𝑅fact is their F1 as in Eq. 1. Key moments enter these sums as described in Sec. B.3.
+B.2. Pose-Derived Motion Facts
+Pose-derived facts come from two kinds of recordings. EgoPro and HumanPlus provide a body skeleton
+and a head orientation for every frame, while Sekai provides only a camera trajectory estimated from
+the video. We turn these measurements into text in three steps. Each frame value is first assigned
+to a discrete bin. A stretch of frames over which the bin changes in one direction then becomes a
+motion event, and the bin difference between its first and last frame gives the event’s category. Finally,
+each selected event is written as a short sentence together with its measured time span. The bins,
+event categories and candidate lists follow MotionScript [51]. The camera bins and the few extra
+thresholds stated below are our own.
+From frames to bins.
+For the skeleton, we measure the pelvis translation along the left–right,
+up–down and forward–backward axes of the body’s horizontal heading. We also measure the torso’s
+forward lean (pitch), its sideways tilt (roll) and its turn (yaw) relative to its orientation at the start of
+the clip. The head is described by the forward axis of the head joint expressed in the torso frame,
+which gives its yaw and pitch relative to the body. Measuring the head against the torso keeps body
+turns and walking out of the head motion. Each track is smoothed with a median filter over at most
+seven frames and binned with the MotionScript thresholds. Translation uses 5 cm bins. Lean, tilt and
+turn use the MotionScript angle bins, for example ±25◦, ±60◦, ±90◦and ±135◦for the turn. Invalid
+frames and temporal gaps split a track into separate pieces.
+From bins to events.
+Within each piece we follow the bin index over time. An event starts once
+the bin leaves its starting value and ends at the furthest bin reached before the track turns back
+by more than one bin. An event is kept only when its total change exceeds one bin. The signed
+bin difference between its first and last frame gives the direction and the magnitude, which the
+MotionScript motioncode thresholds grade from very short to very long for translations and from
+slight to significant for rotations. A very long body translation, for instance, spans more than ten bins,
+that is, more than 0.5 m.
+Camera trajectories.
+Sekai clips have no skeleton, so we use the relative pose between consecutive
+camera frames. Each relative pose is expressed in the axes of the camera at the end of that step, so
+left, right, up and down always follow the current view. Per-axis translation and rotation velocities
+are averaged over a 0.2 s window, and values below a noise floor are set to zero. A pause longer than
+0.5 s or a reversal larger than one bin ends an event. We drop events shorter than 0.15 s and events
+whose net change is less than 65% of their total path. Camera translation has no metric scale, so one
+translation bin is 0.2 of the clip’s median distance traveled per second of motion. One rotation bin is
+15◦, and any rotation of at least 20◦is graded as at least moderate.
+Selection and wording.
+Table 5 lists the events that become facts and the sentence written for
+each. Head facts also require an angle change of at least 35◦, because smaller head turns are hard to
+see in the video. A head-mounted camera cannot tell a torso turn from a head turn, so a torso turn
+26
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+is written as the view turning, and it is dropped when a head turn in the same direction overlaps
+it. When a skeleton clip contains no body translation or torso turn fact, we add a single fact for the
+whole clip stating that I stay in the same place. Each fact carries its measured span, rounded to 0.01 s,
+and the type, sub-type and direction labels used for caption motion facts (Sec. E.4). Lowering or
+raising the body is labeled as posture rather than travel.
+For an event-conditioned example, we keep a pose fact when at least half of its span lies inside the
+event. The pose facts and the reference caption facts then go through a single deduplication pass
+(Sec. E.4), which removes repeated or conflicting facts and prefers the pose fact for camera and body
+movement. The judge sees each remaining pose fact under its time range, like any other reference
+fact.
+Table 5 | Pose-derived motion facts. Categories follow MotionScript.
+Source
+Measurement
+Kept categories
+Sentence
+Skeleton
+Body translation, horizontal
+very long (> 0.5 m)
+I move to the left / right. I move forward / backward.
+Body translation, vertical
+very long (> 0.5 m)
+I move downward / upward.
+Torso turn
+slight, moderate,
+significant
+The view turns left / right.
+Torso lean
+slight, moderate,
+significant
+I bend / lean my upper body forward. I straighten /
+lean my upper body back.
+Torso tilt
+moderate, significant
+I tilt my body to the left / right.
+Head turn (≥35◦)
+slight, moderate,
+significant
+I turn my head to the left / right.
+Head pitch (≥35◦)
+slight, moderate,
+significant
+I look down / up.
+No translation or torso turn
+whole clip
+I stay in the same place.
+Camera
+Rotation
+≥20◦
+The camera turns left / right, tilts upward /
+downward, or rolls clockwise / counterclockwise.
+Translation, horizontal
+long, very long
+The camera moves forward / backward, or moves to
+its left / right.
+B.3. Key-Moment Scoring
+Each “At [𝑡],” sentence in a predicted step is one predicted key moment, and the key moments of the
+reference caption form the reference set. Each predicted moment is classified as correct or wrong in
+the following order.
+Placement.
+A moment whose time lies outside the window of its own step is wrong, and no judge
+is called.
+Reference match.
+The reference moments within 1 s of 𝑡are its candidates. A text judge (Sec. E.4)
+decides for each candidate whether the predicted sentence describes the same moment, and a
+confirmed moment is correct. Confirmed pairs are assigned one to one, nearest in time first, so each
+reference moment credits a single prediction. A confirmed prediction whose reference went to a
+nearer prediction scores zero and is not counted as an error.
+Unmatched moments.
+When no reference confirms a moment, a second text judge decides whether
+the sentence states one of the key-moment types defined for annotation (Sec. E.2). A sentence that
+does not is wrong. A sentence that does is checked against frames sampled at 10 fps from [𝑡−2, 𝑡+2] s
+and clipped to its step. The frame judge decides whether the stated event happens and marks the
+27
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+frames where it happens. The moment is wrong when the event does not happen, or when the nearest
+marked frames are more than 1 s from 𝑡. Otherwise it is a correct key moment that the reference
+missed, and it earns the same credit as a reference match.
+Credit.
+A correct moment earns 𝑒−𝑑/𝜏with 𝜏= 2 s, where 𝑑is the distance from 𝑡to the matched
+reference time, or to the nearest marked frame span for a moment verified from frames. With 𝐶+ the
+summed credit of correct moments and 𝐸the number of wrong moments, the key-moment credit is
+𝐶km = max 0, 𝐶+ −𝐸
+,
+(7)
+so each wrong moment cancels one exactly timed correct moment.
+Pooling with facts.
+Key moments enter 𝑅fact (Eq. 1) as one more fact family. With 𝑛predicted and
+𝑚reference moments, this family adds 𝐶km to the precision numerator and 𝑛to its denominator, and
+adds min(𝐶km, 𝑚) to the recall numerator and 𝑚to its denominator. When the reference has no key
+moment, key moments enter precision only.
+B.4. Temporal Reward, Format Reward and Validity Check
+Validity check.
+Before any judge is called, a parser reads the rollout in the output format of its task.
+The rollout receives 𝑅= −1 when any of the following holds.
+• Generation stops at the limit of 16,384 tokens.
+• The text contains a verbatim loop, a block of 4 to 200 words repeated three times in a row. Case
+and text in square brackets, such as timestamps and section labels, are ignored in this check.
+• A full-video caption does not contain exactly one overview section followed by one step section,
+or either section is empty. An overview caption is empty.
+• No step is found, a step line has no [start–end] window, or a window has no description.
+• A step starts before 0 s or at or after the video duration, ends more than 0.05 s after the duration,
+or does not start before it ends. An end within 0.05 s after the duration is treated as rounding
+and clipped.
+• Steps are not written in temporal order, or two step windows overlap. Adjacent windows and
+gaps between them are allowed.
+Key-moment times are not part of this check. A key moment outside its step is scored as wrong
+(Sec. B.3).
+Temporal reward.
+𝑅time (Eq. 2) uses only the step windows. The tIoU of two intervals is the length
+of their intersection divided by the length of their union. All predicted–reference pairs are sorted by
+tIoU in descending order, and a pair is accepted when neither of its intervals has been used. Matching
+stops at the first pair with zero overlap. The sum is divided by the larger of the two step counts, so
+steps left over on the longer side add to the denominator without adding to the sum, and splitting a
+reference step or merging several reference steps both lower the reward.
+Format reward.
+Overview captioning has no step windows, so 𝑅format takes the place of the temporal
+and style rewards. It averages two checks on the overview text, whether it opens with “The video”
+and whether its last sentence begins with “Overall,”, and each check scores 1 when it holds and 0
+otherwise. An overview that contains a step window or an “At [𝑡]” marker receives 𝑅format = 0, since
+an overview is plain scene-level text.
+28
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+B.5. Optimization Settings
+SFT trains LoRA adapters on all linear layers of the language model and keeps the vision encoder
+and the vision–language projector frozen. Its learning rate warms up linearly over the first 5% of
+steps and then decays linearly. GRPO runs one epoch over the 8,000 training pairs, which gives
+250 steps. Each step takes 32 prompts with 8 rollouts each and makes a single gradient update
+on all 256 responses. The learning rate warms up linearly over the first 10 steps and then stays
+constant. Rollouts are sampled with temperature 1.0, top-𝑝0.95 and top-𝑘20. The KL term uses the
+low-variance estimator. We collect rollouts asynchronously, pausing unfinished generations before
+each actor update and resuming them with the updated weights. The log-probabilities of each token
+under the policy that generated it are stored with the response. A response is used only if the earliest
+policy version that generated any of its tokens is at most two updates older than the policy being
+updated, and a complete group that exceeds this limit is dropped. The 𝐺responses of a group are
+still normalized together. Before each update, the trainer recomputes token log-probabilities under
+the pre-update policy 𝜋𝜃old, which supplies the denominator of 𝜌𝑖,𝑡in Eq. 5. We use dual-clip PPO
+with 𝑐= 3 for negative advantages. After clipping, we multiply each token’s policy-gradient term by
+𝑤𝑖,𝑡= min 𝜋𝜃old(ˆ𝑦𝑖,𝑡| 𝑥, ˆ𝑦𝑖,<𝑡)/𝜋gen(ˆ𝑦𝑖,𝑡| 𝑥, ˆ𝑦𝑖,<𝑡), 2, where 𝜋gen is the policy that generated that token.
+We treat 𝑤𝑖,𝑡as constant during differentiation. Both stages sample video at a target rate of 4 fps,
+capped at 240 frames.
+Table 6 | Training hyperparameters.
+SFT
+GRPO
+Trainable parameters
+LoRA, rank 32
+Learning rate
+1×10−4
+1×10−5
+Epochs / steps
+2 epochs
+250 steps
+Batch size
+16
+32
+Rollouts per input 𝐺
+–
+8
+KL coefficient 𝛽
+–
+0.02
+Clip range 𝜀
+–
+0.2
+Max frames / fps
+240 / 4
+GPUs
+16
+16
+C. Training Data Statistics
+We deduplicated the training data against every evaluation set by video ID and time segment, so
+no training clip shares a source video segment with an evaluation item. For HumanPlus-1000, we
+used the public preview release [13]. We took the left-camera stream from each stereo recording and
+split it into clips of at most 30 s. This yielded 236 clips from 88 recordings, with a mean duration of
+24.44 s.
+29
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Table 7 | Composition of the SFT mix.
+Source
+Videos
+Mean duration (s)
+Examples
+Ego4D Goal-Step
+2,354
+52.77
+6,019
+EgoHOD (Ego4D)
+5,166
+15.80
+9,909
+Sekai
+2,743
+47.61
+6,860
+EgoVid-5M
+1,337
+4.07
+2,670
+EgoSuite (EgoPro)
+3,876
+27.46
+10,136
+HumanPlus-1000
+236
+24.44
+472
+RekaDaily-10k
+4,503
+13.17
+10,933
+EgoLife
+1,538
+29.83
+3,001
+Total
+21,753
+25.71
+50,000
+Table 8 | Reference captions by event type across 77,382 events. An event can have multiple labels, so the
+shares can sum to more than 100%.
+Event type
+Share (%)
+Steps /
+event
+Words /
+step
+Key moments /
+step
+manip
+70.33
+3.51
+43.43
+0.70
+locomote
+31.50
+3.46
+51.37
+0.96
+social
+6.88
+4.41
+67.75
+1.46
+attend
+32.01
+3.56
+48.28
+0.90
+0–10 10–20 20–30 30–40 40–50 50–60
+>60
+Clip duration (s)
+0
+2,500
+5,000
+7,500
+10,000
+Number of clips
+1,958
+9,283
+5,659
+1,098
+572
+2,293
+890
+Figure 14 | Duration of the 21,753 unique video clips. Bars show clip counts in 10-second intervals up to 60 s
+and a single bin for longer clips. Each interval includes its upper endpoint.
+D. Evaluation Setup
+Decoding.
+EgoCaptioner generates every caption with temperature 1.0, top-𝑝0.95 and top-𝑘20,
+with thinking disabled and at most 16,384 new tokens. Video is sampled at 4 fps with at most 240
+frames, as in training.
+Instructions.
+The instruction templates are listed in Sec. E.1.
+E. Prompts
+This section collects the core instructions of the prompts used in our pipeline. Sec. E.1 lists the
+instructions given to EgoCaptioner for the three captioning tasks. Sec. E.2 lists the annotation prompts
+30
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+in the order of Fig. 2(a)(b), followed by the prompt of the single-pass baseline in Sec. 4.3. Sec. E.3
+lists the prompts of the caption-to-QA protocol in Sec. 4.1. Sec. E.4 lists the prompts used to compute
+the rewards of Sec. B, namely fact extraction, judging and deduplication, key-moment judging, and
+the two style judges. Text in braces, such as {video_duration_s}, is filled in by the program for
+each sample, and the tags in angle brackets only separate the parts of a prompt.
+E.1. Task Instructions
+EgoCaptioner receives one short instruction for each captioning task of Sec. 3.1, and these templates
+are used in training. Text in braces is filled in by the program, and the video duration is rounded
+down to one decimal place. The event-conditioned template names the event without a time window.
+At evaluation, EgoMe uses its own instructions, one for Overview and one for Steps, which are given
+in the two EgoMe boxes below, and EgoCaptioner uses the templates above on the other benchmarks.
+The comparison models receive the same instruction as EgoCaptioner with two exceptions. On
+EgoHome, EgoCaptioner receives the full-video template, whereas the proprietary models and the
+external baselines receive the EgoMe Steps instruction, because the full-video template does not ask
+for timestamps and PSJ can only score timed steps. On PhysCapBench, EgoCaptioner receives the
+full-video template, whereas the 14 comparison models receive the physical-event instruction in the
+last box below.
+Full-video captioning
+This video is {duration} seconds long. Describe the entire video and the core events in order.
+Overview captioning
+Describe the full video faithfully and in detail, covering at least the setting, main subjects,
+actions, interactions, and sequence of visible events.
+Event-conditioned captioning
+This video is {duration} seconds long. Describe the steps of the event "{event}" in detail, one
+step per line as [start-end] description.
+EgoMe Overview
+Describe what the camera wearer does throughout the video in English. Summarize the main actions
+in order, the objects involved, and their visible changes. Include object details and hand use
+when relevant. Describe the actions as they occur. Return only the paragraph.
+EgoMe Steps
+This video is {duration} seconds long. Describe my action steps in order, including repeated ones,
+one step per line as [start-end] description.
+PhysCapBench
+Describe the visible physical events in chronological order. Include objects, actions,
+interactions and visible changes. Do not invent hidden causes.
+31
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+E.2. Coarse-to-Fine Annotation
+Overview
+<Task>
+Describe the entire video faithfully and in detail, including the setting, main subjects, their
+actions and interactions, and how the visible events unfold.
+</Task>
+<Input>
+The attached video is {video_duration_s} seconds long.
+</Input>
+<Rules>
+Describe the full input clip in natural English, using “I” for the camera wearer.
+Structure:
+- Open with “The video begins/opens/starts with...” to describe the opening scene.
+- Close with one sentence beginning “Overall, ...” to summarize my overall activity and its
+purpose.
+Content requirements:
+1. Establish the world context first: name the place and scene type, the surfaces,
+equipment, and lighting around me, and where the main objects and people sit
+relative to me. Describe this before the activity, weaving the environmental details below into
+the description:
+- **Look and light** — the time of day and lighting (source, direction, brightness, warm or cool
+cast); the dominant colors and color palette or grading; noticeable image quality (motion blur
+, shallow depth of field) or a stylized look (time-lapse, slow motion); and how the camera is
+used — perspective and shot type (overhead, close-up, wide), movement, and shifts in what it
+faces, such as a split screen.
+- **Setting and layout** — the place and scene type, its concrete surroundings (backgrounds,
+ground or floor materials, road markings, buildings, equipment), where key items sit relative
+to me (left/right, in front, behind) and to each other, and the exact count of salient objects
+(e.g., three bowls on the rack).
+- **Text** — reliably legible text on signs, labels, screens, and brand names, copied EXACTLY in
+its original language; report clock readings when visible.
+- **People** — the visible appearance of the camera wearer (clothing, sleeves, hands, footwear, a
+visible reflection) and the main people with their activities and visible emotional
+expressions, each identified by one consistent description.
+Cover every category above that the video visibly supports.
+2. Describe events chronologically at the activity level: state the main subjects’ activity and
+its visually supported purpose before describing supporting actions, interactions, and changes
+in objects or the scene.
+3. For repeated actions, state the number of visible occurrences before describing them. Group
+similar repetitions together while preserving chronology.
+<Format>
+Return JSON only:
+{"dense_caption": "Full-video description without timestamps."}
+Always include dense_caption.
+</Format>
+Event structure and step outline
+<Task>
+Identify up to {max_events} distinct events from the attached video and outline the sub-steps of
+each.
+</Task>
+<Input>
+- Video duration: {video_duration_s} seconds.
+</Input>
+<EventTypes>
+32
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Classify each event with one or more of these labels:
+- MANIP: manipulation of an object by hand or with a tool.
+- LOCOMOTE: movement through space, including passive movement such as riding.
+- SOCIAL: communication or coordinated action between people.
+- ATTEND: viewing, watching, or visually following people, objects, or scenes.
+</EventTypes>
+<OutputFormat>
+Return JSON only with the exact fields shown. Times are in seconds from video start, one decimal
+place, sorted by start time.
+- event: a short, natural sentence naming the actor and action, such as "I sort the plates" or "
+The man carries a box". Use "I" for the camera wearer and a consistent visual description for
+another person. Base the actor and action on the video.
+- steps: the event’s distinct sub-tasks in chronological order. Each step should be a meaningful
+action that can be further broken down — finer than the event itself, but coarser than atomic
+motions like "raising a hand".
+IMPORTANT: Events must not overlap in time. Each event’s end time must be less than or equal to
+the next event’s start time. Arrange events sequentially with no temporal overlap.
+{
+"candidates": [
+{
+"event": "I open the laptop on the table",
+"event_type": ["MANIP"],
+"start": "2.0",
+"end": "5.4",
+"steps": [
+"positioning both hands on the laptop",
+"lifting the laptop lid open",
+"releasing the lid and withdrawing my hands"
+]
+}
+]
+}
+</OutputFormat>
+Step description
+<Task>
+Describe the event in <Events> inside its assigned window. Expand each outlined step into one
+timestamped paragraph, and describe visible actions the outline misses inside the paragraph
+where they happen. If the outline disagrees with the video, the video wins.
+</Task>
+<Input>
+- Video duration: {duration} seconds.
+- The clip is this event plus up to one second of context on each side. All times are crop-local
+seconds.
+- Describe only what happens inside the assigned window.
+</Input>
+<Events>
+<EventTemplate>
+<Event candidate_id="{candidate_id}">
+event: {event}
+event_type: {event_type_json}
+Assigned window: [{event_start}-{event_end}]
+Step outline: {steps_json}
+</Event>
+</EventTemplate>
+</Events>
+<DescriptionFocus>
+Cover the aspects below that match the event’s labels. When one moment fits several aspects,
+describe it once.
+<When event_type="MANIP">
+33
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+MANIP — object manipulation
+| Aspect
+| What to describe
+|
+|---|---|
+| Actions
+| What I do to which object, tools used, sequence of operations
+|
+| Hand/body
+| Each hand’s role, grip, contact, direction of movement
+|
+| Object changes | How objects change in position, shape, contents, or attachment
+|
+| Placement
+| Where objects are taken from and put down — side, shelf/row, container,
+relative to nearby objects |
+| End state
+| Object state at the final frame of the assigned window
+|
+| Errors
+| Adjustments, retries, slips — include when visible
+|
+</When>
+<When event_type="LOCOMOTE">
+LOCOMOTE — movement through space
+| Aspect
+| What to describe
+|
+|---|---|
+| Route
+| Start location, areas passed, turns, exits, last visible location
+|
+| Travel mode
+| How I travel — walking, running, cycling, riding — and any pace change, stop,
+or restart. Maybe use cues such as a wheel in the view/an upright or seated posture...|
+| Camera motion
+| Camera bobbing, sway, pans and tilts. Say which of it comes from my body and
+what it suggests about the mode, and which is only the camera turning; never read a direction
+change out of camera motion alone |
+| Spatial cues
+| Landmarks, signs, readable text that identify locations, placed relative to the
+path |
+</When>
+<When event_type="SOCIAL">
+SOCIAL — interpersonal interaction
+| Aspect
+| What to describe
+|
+|---|---|
+| Who and what
+| Participants, what the interaction concerns
+|
+| Sequence
+| What each person does toward others, in order; turn-taking, handoffs
+|
+| Responses
+| How others react, how the interaction ends or continues
+|
+| Signals
+| Gestures, expressions, distance changes — include when they clarify intent |
+</When>
+<When event_type="ATTEND">
+ATTEND — viewing and observation
+| Aspect
+| What to describe
+|
+|---|---|
+| Targets
+| What is being viewed, its location and distinguishing features
+|
+| Content
+| What targets are doing or showing, how they change
+|
+| View process
+| Attention switches, obstructions, targets leaving/reappearing
+|
+</When>
+</DescriptionFocus>
+<CommonRules>
+- One [start-end] paragraph per outlined step, in order, separated by blank lines.
+- Windows are seconds with one decimal, no units or spaces, e.g. [3.0-7.5]. They never overlap and
+together cover the assigned window from start to end.
+- Write in English; "I" is the camera wearer.
+- Say where each action happens and where objects and people are relative to me. At first mention,
+give each object, person, and surface a brief distinguishing attribute (color, material, size
+), then keep that name.
+- Copy legible on-screen text exactly, in its original language.
+- Give the count when an action visibly repeats.
+</CommonRules>
+<KeyMoments>
+A key moment is the instant one of these four things begins:
+- State change: an object’s state changes through construction (parts are joined into a new object
+), physical change (an object is cut, broken, or torn), chemical change (materials are mixed,
+cooked, or burned into something new), or a temporary state change (a device is switched on or
+off, a door or lid is opened or closed).
+- Mishap: something escapes my control against my intent — I lose my balance, or an object slips,
+falls, or tips over without my meaning it to.
+- Sudden view change: the camera’s motion changes abruptly — the view suddenly starts or stops
+moving, turns, or jolts.
+34
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- Scene change: the people or places around me change — a person enters or leaves the scene or the
+interaction, or I reach or pass a landmark, a fixed feature that identifies a location (a
+doorway, sign, building, intersection).
+Mark every such instant, once each, inside the paragraph where it happens, as a new sentence: "At
+[15.0], the knife cuts through the carrot." Describe all other actions in the paragraph
+without a timestamp.
+</KeyMoments>
+<Output>
+Return JSON only:
+{"pairs": [{"candidate_id": "...", "caption": "..."}], "rejected": [{"candidate_id": "...", "
+reason": "..."}]}
+Accept the event, or reject it only when it is absent from its assigned time range.
+Encode blank lines as \n\n.
+</Output>
+Clip merging for videos longer than 30 s
+<Task>
+Merge all clip annotations into one chronological timeline of the parent video, preserving every
+described action, factual detail, and explicit key moment. The result must read as one
+continuous narration, not concatenated clip captions.
+</Task>
+<MergeRules>
+1. Introduce each person, object, place, and state at first mention only. A later clip often
+restates the setting, posture, or an ongoing action because its own narration restarts — drop
+those restatements.
+2. An activity still running when a later clip begins is the same occurrence: write it as a
+continuation ("I continue stirring"), never as a fresh introduction or a new start.
+3. Merge descriptions of the same occurrence, keeping all complementary details and preferring
+specific, well-supported claims over broad or uncertain ones.
+4. Keep people, objects, and places consistent, using the fixed parent overview as reference.
+Invent no actions, transitions, or outcomes.
+5. Write in English with "I" for the camera wearer. Preserve quoted visible text exactly in its
+original language.
+</MergeRules>
+<Output>
+Return only a JSON object. Cite supporting input event labels in source_ids.
+Write each event name as a short, natural sentence identifying its actor and action, such as "I
+stir the mixture" or "The man carries a box". Preserve the actor from the supporting captions.
+Write each step’s start and end as strings in seconds with two decimal places (e.g., "12.50"), the
+action in description, and specific moments in the prose as "At [12.50], I ...", in
+chronological order within the step.
+{
+"events": [
+{
+"event": "Event title",
+"source_ids": ["C1.E1"],
+"steps": [
+{
+"start": "10.00",
+"end": "15.00",
+"description": "I continue stirring the mixture. At [12.50], I lift the spoon."
+}
+]
+}
+]
+}
+</Output>
+<Input>
+C1 identifies a clip, C1.E1 an input event.
+35
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- FIXED PARENT OVERVIEW: overall context.
+- BOUNDARIES: clip overlaps and touching endpoints. Small overlaps may be omitted; choose
+boundaries from the described actions.
+- COMPLETE CLIP CAPTIONS: the full clip descriptions.
+{input_captions}
+</Input>
+Verification and correction
+<Task>
+Review the caption below (overview + detailed steps) against the video and repair the concrete
+problems you find. Check two things:
+1. Correctness: actions, objects, states, order, and times match the video, and the overview does
+not contradict the steps.
+2. Flow: the steps were written separately per event, so read them in order as one continuous
+narration and repair the seams between steps and events.
+</Task>
+<Rules>
+What to do with each statement:
+- No support in the video: delete it.
+- Wrong: correct it. Never delete it instead.
+- Everything else the caption covers: preserve it. Keep the same information, and repair the text
+around it rather than cutting it down.
+Typical seam problems and their fixes:
+- Repeated introductions: the same person, object, setting, or unchanged state is re-introduced in
+later steps. Keep the full introduction at its first mention; later steps keep only new
+details and visible changes.
+- Broken continuity: an action that continues across a step or event boundary reads as starting
+fresh. Rephrase it as a continuation — but keep real pauses, restarts, and repetitions shown
+in the video.
+- Rough wording: different names for the same thing, unclear references, abrupt transitions. Unify
+references and smooth the phrasing, using wording supported by the video and adjacent steps.
+How to edit:
+- Make the smallest edit that fixes each diagnosed problem; leave unaffected text unchanged.
+- Never invent transitions, causes, or unseen actions to smooth the text.
+- Keep step order, boundaries, windows, and labels as given, unless a boundary itself is a
+diagnosed timing error. Each corrected step must still stand on its own for its time interval.
+Keep "At [time]," opening a complete sentence.
+- Ensure corrected time windows do not overlap.
+</Rules>
+<Output>
+Return JSON only.
+- No problems: {"decision":"accept"}
+- Problems found: diagnose them briefly in reason and return each corrected section in corrections
+:
+{"decision":"repair","reason":"S2 says the cup is blue, but it is visibly red.","corrections":{"
+S2":"[10.0-15.0] I pick up the red cup. At [12.5], I place it on the table."}}
+Corrections: key "overview" for the complete corrected overview; key the displayed step label (e.g.
+"S2") for each complete corrected step, including its [start-end] window and At [time] marks.
+Include only corrected sections. Seconds with one decimal. Time windows must not overlap:
+each event’s [start-end] must not overlap with any other event.
+</Output>
+<Overview>
+{overview}
+</Overview>
+<DetailedSteps>
+{detailed_steps}
+</DetailedSteps>
+36
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Single-pass annotation
+<Task>
+{instruction}
+Describe this egocentric video faithfully and in detail. Use "I" for the camera wearer.
+</Task>
+<Output_format>
+Return exactly these two sections:
+[overview]
+A detailed paragraph about the whole video:
+- Start with "The video begins/opens/starts with..." and first set the scene: the place, lighting,
+camera view, layout of key objects and people relative to me, counts of salient objects,
+legible text copied exactly, and the visible appearance of me and other people.
+- Then describe the activities in chronological order, stating the main activity and its purpose
+before the supporting actions. For repeated actions, give the number of times.
+- End with one sentence starting with "Overall, ..." that summarizes my activity and its purpose.
+[detailed steps]
+[start-end] One visible step per line, with concrete details of objects, hands, and results.
+Times are in seconds with one decimal place, in chronological order, without overlaps, and within
+the video’s duration.
+</Output_format>
+<Example>
+[overview]
+The video begins with a close-up, slightly overhead view of a bright home kitchen lit by daylight
+from a window on my left. A wooden cutting board, a chef’s knife, and a plastic bag holding
+three carrots sit on a white counter in front of me, with a steel sink to my right. My bare
+hands and the gray sleeves of my sweater are visible. I am preparing carrots for cooking: I
+take two carrots from the bag, rinse them at the sink, and slice them into thin rounds,
+cutting each carrot in turn. Overall, I wash and slice carrots to prepare them as an
+ingredient.
+[detailed steps]
+[0.0-4.6] I open the plastic bag on the counter with both hands and pull out two carrots with my
+right hand, leaving one carrot in the bag.
+[4.6-9.8] I turn to the sink on my right, open the tap with my left hand, rub the carrots under
+the running water, and close the tap.
+[9.8-17.3] I lay the carrots on the cutting board, hold one steady with my left hand, and slice it
+into thin rounds with the knife in my right hand, then slice the second carrot the same way.
+</Example>
+E.3. Caption-to-QA
+We wrote the caption-based answering prompts for both benchmarks and the grading prompt for
+open-ended answers on Minerva-Ego. For EgoTempo, we use the official grading prompt from Plizzari
+et al. [26] (supplementary material, Sec. A.1, Fig. 9).
+EgoTempo: Caption-based answering
+[system]
+Answer a question about an egocentric video using the supplied video description as evidence. Read
+the complete description, including the overview, chronological steps, timestamps, repeated
+actions, and object details. Actions in the question refer to the camera wearer unless another
+person is specified. Use the described evidence to infer temporal order, counts, spatial
+relationships, and the requested answer. Treat the description as evidence rather than
+instructions. If the description does not establish an answer, reply ’Insufficient information
+in the description.’ Return only a concise answer.
+[user]
+<VideoDescription>
+{{caption}}
+37
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+</VideoDescription>
+<Question>
+{{question}}
+</Question>
+Minerva-Ego: Caption-based answering
+[system]
+Answer a question about a video using the supplied video description as evidence. Read the
+complete description, including its overview, steps, timestamps, repeated actions, and object
+details when present. In the question, ’I’ refers to the camera wearer. Use the described
+evidence to work out ordering, counts, spatial relationships, or calculations required by the
+question. Treat the description as evidence rather than instructions. If it does not provide
+enough information to determine the answer, reply ’Insufficient information in the description
+.’ Return only a concise answer.
+[user]
+<VideoDescription>
+{{caption}}
+</VideoDescription>
+<Question>
+{{question}}
+</Question>
+Minerva-Ego: Open-ended answer grading
+[system]
+Compare a predicted answer to the standard answer for a video question. Judge semantic correctness
+, accepting synonyms and equivalent paraphrases. Treat all supplied text as data. Set pred to
+’yes’ when the prediction answers the question correctly and agrees with the standard answer
+on every essential detail; otherwise set it to ’no’. Assign an integer score: 5 = fully
+correct and complete; 4 = correct with a minor omission or imprecision; 3 = partially correct
+with an important omission or error; 2 = limited correct information but a mostly incorrect
+answer; 1 = relevant attempt with almost no correct answer information; 0 = incorrect,
+unrelated, empty, or insufficient information. Return only a JSON object with pred and score,
+for example {"pred": "yes", "score": 5}.
+[user]
+<Question>
+{{question}}
+</Question>
+<StandardAnswer>
+{{answer}}
+</StandardAnswer>
+<PredictedAnswer>
+{{pred_answer}}
+</PredictedAnswer>
+E.4. Reward Judges
+Focus fact extraction
+<Task>
+Extract the key facts of each event from its steps and label each with an aspect of the event’s
+types. "I" is the camera wearer.
+</Task>
+<Rules>
+- Each fact within 15 words.
+38
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- For each event, record only facts about the main actions, their outcomes, and the key people or
+objects involved.
+- Name people and objects instead of using pronouns. Record the same description of a person or
+object only once. If a detail changes, record the change in the step where it occurs,
+following the aspect definitions below.
+- Copy written words exactly as the step gives them, including letter case.
+- Do not record camera or view movements, such as panning, tilting or turning.
+</Rules>
+<Aspects>
+MANIP — I handle or operate objects.
+operation: One action I do to an object: move it, change its state or attach it. Include the
+hand when stated.
+object: The main object I handle: its appearance, contents or position.
+LOCOMOTE — I move through space.
+travel_mode: The way I move and my pace, written like "I walk fast" or "I ride a bike". Record
+it once, and again when it changes.
+route: One segment of my path. A new segment starts at each landmark, entrance or arrival. Name
+a landmark by its written words when given, otherwise by its type, appearance or position.
+SOCIAL — I interact with other person: they act toward me, I act toward them, or we act together.
+partner: The main person I interact with: their appearance and position relative to me.
+interaction: One turn: who says or does what, toward whom. Handovers, payments and joint actions
+go here.
+ATTEND — I watch people, objects or scenes without interacting. People who only interact with each
+other or pass by me go here.
+target: The main person, object or scene I watch: its appearance and position.
+target_state: One action or change of the target while I watch. Name the target.
+</Aspects>
+<Events>
+Each event gives its id and types, then its steps with ids, time ranges and text. Label each fact
+with an aspect of its event’s types.
+{{events}}
+</Events>
+<Example>
+e1 (MANIP)
+s1
+[0.0-1.5] I pick up a jar with a yellow lid.
+s2
+[1.5-2.0] I adjust my grip on the jar.
+s3
+[2.0-4.0] I twist the lid off and pour rice into a pot.
+[{"step": "s1", "aspect": "MANIP/object", "fact": "The jar has a yellow lid."},
+{"step": "s3", "aspect": "MANIP/operation", "fact": "I twist the lid off the jar."},
+{"step": "s3", "aspect": "MANIP/operation", "fact": "I pour rice from the jar into the pot."}]
+</Example>
+<Output>
+Return only a JSON list in the example’s format. "step" is the step id; "aspect" is one aspect
+above, written as TYPE/aspect; "fact" is one short sentence. Return [] when there are no facts
+.
+</Output>
+Macro fact extraction
+<Task>
+From a first-person whole-video caption (written as "I", the camera wearer), extract whole-video
+facts in two tiers: core and detail.
+</Task>
+<Caption>
+{{caption}}
+</Caption>
+<Core>
+39
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- role_purpose: my overall activity and its purpose, usually from the "Overall" sentence. Exactly
+one fact if exists.
+- scene: the place and kind of scene. Exactly one fact if exists.
+- main_agent: each main other person or animal and what they do across the video. One fact per
+agent, at most three. Put their description (copied word for word from the caption) in "agent
+". Omit when the caption has no other person or animal.
+- activity_arc: the main activity and any visible phase change (e.g. packing →sealing). Describe
+the activity as a whole, not single actions. One or two facts.
+</Core>
+<Detail>
+Include each only when the caption states it:
+- visual_style: lighting, colour tone, camera use.
+- layout: where key objects are relative to me; counts of notable objects.
+- legible_text: readable text, signs, clock readings.
+- people_appearance: what I or others visibly wear or look like.
+- repetition_count: how many times a repeated action visibly happens.
+</Detail>
+<Rules>
+- Each fact is one plain sentence. Use "I" for the camera wearer; keep the caption’s wording for
+others.
+- State only what the caption states.
+</Rules>
+<Output>
+Return only a JSON list:
+[{"tier": "core", "item": "main_agent", "agent": "a woman in a grey coat", "fact": "A woman in a
+grey coat walks toward me along the bridge and passes on my left."},
+{"tier": "detail", "item": "legible_text", "agent": "", "fact": "A sign above the door reads EXIT
+."}]
+</Output>
+Motion fact extraction
+<Task>
+Extract my body and view movements from the text. "I" is the camera wearer.
+</Task>
+<Steps>
+Each unit has an id and text, optionally with a time range.
+{{steps}}
+</Steps>
+<Labels>
+Each fact needs three labels: type, sub-type and direction. The allowed combinations are listed
+below.
+| type | sub-type | covers
+| direction
+|
+|---|---|---|---|
+| body | travel
+| movement through space in a stated direction
+| forward, backward, left,
+right |
+| body | posture
+| stand up, sit down, crouch, kneel, bend, lean
+| ""
+|
+| body | still
+| stay seated, stand still, stop walking
+| ""
+|
+| view | turn
+| turn (head or body), pan, tilt, look
+| left, right, up, down,
+around
+|
+| view | roll
+| the view rotates about its viewing axis
+| clockwise,
+counterclockwise
+|
+| view | shake
+| bob, shake, sway, jitter
+| ""
+|
+| view | still
+| the view stays fixed or steady
+| ""
+|
+</Labels>
+<Rules>
+40
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- Describe explicitly stated body and view movements, retaining direction. Travel, turn and roll
+facts use a stated direction.
+- Object operations, including which hand is used, belong to focus MANIP/operation.
+- Write body travel as "I move forward", "I move left", etc.
+- Write each distinct movement once per unit as a short sentence, using the unit’s id as "step".
+</Rules>
+<Output>
+Return only a JSON list, or [] when there are no applicable facts.
+Example:
+s4
+I walk forward to the bench, sit down, and look left at a sign. I reach forward with my right
+hand and pick up a cup.
+[{"step": "s4", "type": "body", "sub_type": "travel", "direction": "forward", "fact": "I move
+forward."},
+{"step": "s4", "type": "body", "sub_type": "posture", "direction": "", "fact": "I sit down."},
+{"step": "s4", "type": "view", "sub_type": "turn", "direction": "left", "fact": "I look left."}]
+</Output>
+Fact judging
+You are checking a first-person video caption against reference facts about the same video. "I" is
+the camera wearer.
+{{task}}<Caption>
+{{caption}}
+</Caption>
+<Facts>
+Each fact is listed under the time range where it happens.
+{{facts}}
+</Facts>
+Judge each fact against the caption. The caption’s timestamps may differ a little from the facts’;
+match them by content.
+Judge each fact by its sentence structure. Its subject,complement, verb and object, whichever the
+sentence has, are its core. A core part matches when the caption uses the same word, a synonym
+, or a pronoun that clearly refers back to it.
+- supported: from the caption, you can tell the fact is true because every core part and detail
+matches despite different wording or phrase. (Quoted or on-screen text must match the fact’s
+text exactly, including letter case. a match that differs only in case is partial)
+- partial: every core part matches, but the caption does not mention some of its details.
+- contradicted: the caption gives a different core part or detail, so the caption and the fact
+cannot both be true in any reading. Be cautious with contradicted: use it only when both
+cannot be true in any reading.
+Other cases shall be marked "absent".
+Return only a JSON list, one object per fact, in order:
+[{"id": "s1", "verdict": "supported"}]
+Fact deduplication against pose facts
+<Task>
+Below are the facts of one first-person video ("I" is the camera wearer). Caption facts were
+extracted from a written caption; sensor facts were measured from the camera’s motion. Find
+the facts to remove so that no fact is repeated and no two facts disagree.
+</Task>
+<Facts>
+{{facts}}
+</Facts>
+<Rules>
+41
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+- Duplicate: two facts in the same group state the same thing about the same moment, in the same
+or other words. Remove the less specific one; keep a sensor fact over a caption fact that says
+no more.
+- Conflict: two facts cannot both be true about the same person, object or movement at the same
+time. Remove the one less likely to be correct; a sensor fact is usually more reliable for
+camera and body movement. Remove both when you cannot tell.
+- Facts at different times, or about different objects or people, are neither duplicates nor
+conflicts.
+- A fact that only adds or omits details of another is not a conflict.
+- Remove nothing else.
+</Rules>
+<Output>
+Return only a JSON list of the facts to remove, or [] when there are none:
+[{"id": "f3", "reason": "duplicate", "of": "f1"}, {"id": "f7", "reason": "conflict", "of": "f5"}]
+"of" is the fact it repeats or disagrees with.
+</Output>
+Key-moment matching against reference moments
+Each pair has a verified reference key moment and a candidate sentence from a first-person video
+caption ("I" is the camera wearer). For each pair, decide from the text alone whether the
+candidate describes the same key moment as the reference.
+Answer "different" when one of these holds. Otherwise answer "same".
+- Different doing: the candidate’s main action is not the action the reference describes.
+- Different object or participant: the candidate acts on another object, or names another actor,
+than the reference.
+- Contradicting detail: a detail the candidate states is incompatible with the reference, for
+example another hand, another direction, or another object.
+- Not in the reference at all: the candidate describes something the reference does not mention
+and that is not the reference action itself, such as another person’s activity, another part
+of the scene, or a later stage of the same task.
+<Pairs>
+{{pairs}}
+</Pairs>
+Return only JSON, with one item for every pair id:
+{"verdicts": [{"id": "km0", "verdict": "same", "evidence": "short reason"}]}
+Key-moment check from text
+Each item is one "At [t]" sentence from a first-person video caption ("I" is the camera wearer).
+For each item, decide from the text alone whether the sentence describes one of the defined
+key moments.
+<KeyMomentDefinition>
+{{key_definition}}
+</KeyMomentDefinition>
+- key: the sentence states a change that fits the definition: name which defined change it is.
+- not_key: the sentence only describes ongoing activity, an unchanged state, scenery, or anything
+else outside the definition.
+Judge the sentence as written; do not guess at what might have happened around it.
+<Items>
+{{items}}
+</Items>
+Return only JSON, with one item for every id:
+{"verdicts": [{"id": "km0", "verdict": "key", "evidence": "which defined change, or why none"}]}
+42
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Key-moment check from frames
+You see frames from a first-person video in time order, each labelled with its time in seconds ("I
+" is the camera wearer). Decide whether the candidate sentence is a correct description of
+what happens in these frames.
+<Candidate>
+{{event}}
+</Candidate>
+How to answer:
+1. visible: yes if the core event of the sentence happens in these frames: the stated actor
+performs the stated action. Judge the core event, not every detail.
+- A small detail you cannot make out (exact fingers, a label, which hand) does not make it no.
+- A motion that has visibly started counts, even if it is slight or finishes after the last
+frame.
+- no only when the frames clearly contradict the sentence (a stated detail is visibly wrong),
+or the core event clearly does not happen in these frames.
+2. visible_at: labelled times of the frames where the event happens. Mark the change itself, not
+later frames where only its result remains.
+3. evidence: what the frames show, and for visible = no, what contradicts the sentence or is
+missing.
+The frames cover {{start}} to {{end}} seconds.
+Return only JSON. Use an empty list for visible_at when visible is no.
+{"visible": "yes", "visible_at": [12.5], "evidence": "what the frames show"}
+Fragmented-step judge
+You are reviewing the writing quality of a first-person video caption. "I" is the camera wearer.
+The complete caption is provided below.
+<Caption>
+{{caption}}
+</Caption>
+Review every numbered step for fragmentation. Return flags only for the numbered steps.
+Task rules:
+Every step that shows my hands on objects must answer one question: what am I doing to the object?
+Flag the step as fragmented if, read as a whole, it never answers — it only traces hand
+movements (reach, move, touch, grip, rest) that add up to no named action. The object may be
+named loosely.
+Steps without hand-object interaction — walking, turning, leaning, looking — answer the question
+by themselves; never flag them.
+Example 1:
+- Not fragmented: "I reach out with my right hand toward the black tablet on the stand. I tap the
+screen with my index finger. I then move my hand away."
+("tap the screen" names the action)
+- Fragmented: "My right hand moves to the right side of the setup, briefly touching the tablet,
+while my left hand rests on the guitar."
+(the hands move, touch and rest, but nothing says what is done to the tablet or the guitar)
+Example 2:
+- Not fragmented: "hold connector with left hand, hold wires and insert wire into connector with
+right hand"
+(the insertion is stated, with each hand’s role)
+- Fragmented: "My hands work the tip of the wire against the end of the connector, turning it
+slightly between my fingers."
+(only finger micro-movements; the insertion itself is never stated)
+Return only JSON:
+{"fragmented": [step numbers]}
+Use the step numbers as given. Return an empty list if nothing is flagged.
+43
+EgoCaptioner : Towards Comprehensive and Fine-Grained Egocentric Video Captioning
+Redundant-step judge
+You are reviewing the writing quality of a first-person video caption. "I" is the camera wearer.
+The complete caption is provided below.
+<Caption>
+{{caption}}
+</Caption>
+Review every numbered step for redundancy. If the caption includes an overview, use it as context.
+Return flags only for the numbered steps.
+Task rules:
+Steps should move the timeline forward: each step reports what happens or what newly appears in
+its time range. Flag the step if it contains a whole sentence that only re-tells old
+background, that is, a sentence that meets all three conditions:
+1. It describes the background (the setting, how things look or where they are, my clothing,
+lighting, or camera style), not what I do or what happens.
+2. Deleting it leaves what happens in this step fully understood.
+3. An earlier STEP already gave the same background.
+Background mentioned within a sentence about an ongoing interaction is ok; do not flag it.
+Return only JSON:
+{"redundant": [step numbers]}
+Use the step numbers as given. Return an empty list if nothing is flagged.
+44

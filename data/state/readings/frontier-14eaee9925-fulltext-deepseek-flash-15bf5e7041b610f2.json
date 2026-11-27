@@ -1,0 +1,90 @@
+{
+  "title_zh": "定点推理器 FPRM：稳定且自适应的深度循环 Transformer",
+  "affiliations": [
+    "ELLIS Institute Tübingen",
+    "Max Planck Institute for Intelligent Systems",
+    "Tübingen AI Center",
+    "ETH Zurich",
+    "Swiss Institute of Bioinformatics"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把循环推理模型的深度可训练性与停机自适应放在同一框架，并在数独、迷宫、状态追踪和 ARC 上给出系统对比与消融，对 latent reasoning 方向有直接参考价值。",
+    "novelty": 78,
+    "novelty_reason": "核心不是换任务或换骨干，而是把 pre-norm 加残差缩放、阻尼 fixed-point 迭代和无层级循环组合成端到端停机方案，相对 HRM/TRM 有实质架构差异。",
+    "technical_depth": 87,
+    "technical_depth_reason": "给出有界性、收缩与阻尼稳定的定理，配合种子方差、归一化/缩放/阻尼消融和深度利用实验；但收敛假设未被训练显式保证，ARC 比较受参数量影响。"
+  },
+  "reading": {
+    "why_read": "提出 FPRM，用预归一化与残差缩放稳定深层循环 Transformer，并以不动点收敛作为端到端停机信号，在数独、迷宫、状态追踪和 ARC-AGI 上以更少层次取得有竞争力的准确率。",
+    "task": "循环架构把测试时算力放在深度方向，适合需要逐步组合的推理任务；但堆叠有效层会带来信号传播问题，且何时停机没有廉价答案。现有 HRM/TRM 用 post-norm 维持有界激活，却抑制深层利用；用 ACT 停机又依赖额外模块和离散决策的连续松弛，常过早或过晚停。",
+    "findings": [
+      {
+        "point": "post-norm 用有界性换掉了可训练深度",
+        "detail": "循环模型沿用 post-norm 压住激活幅度，但反复归一化会抹掉残差流中的径向信息、抬高 token 间相似度，增加有效层不能转化为更强表达，深层甚至出现秩塌缩。"
+      },
+      {
+        "point": "单用 pre-norm 会让激活随循环发散",
+        "detail": "pre-norm 改善梯度与信号传播，却不再约束残差流；循环次数增大时激活范数无界增长，训练在深循环处失稳，无法利用更多有效层。"
+      },
+      {
+        "point": "靠近不动点仍可能绕点振荡",
+        "detail": "当迭代 Jacobian 的特征值实部小于一而模长不小于一时，状态会绕不动点旋转而非收缩，残差停在高位，单纯增加迭代或缩小步长不足以可靠停机。"
+      }
+    ],
+    "method_idea": "循环 Transformer 通常靠 post-norm 压住激活、靠 ACT 决定停不停，但前者限制可用深度，后者要额外训练一个离散停机器且经常判断失准。FPRM 改成 pre-norm 加逐层与逐迭代两组残差缩放来保持有界，并让隐藏状态迭代到不动点，以残差是否收敛直接决定停机，同时用阻尼抑制绕点振荡，且去掉层级循环。",
+    "method_how": "针对深度信号传播，FPRM 把每个子层的归一化移到输入端，并让残差流与子层输出各乘一个全层共享的可学习缩放标量；每次外层循环再把上一轮末状态与原始输入按另一组标量混合，使迭代保持有界。停机不再依赖 ACT 头，而是每轮计算更新前后的相对残差，低于阈值即停，并用最大迭代数和最小步长兜底；若残差连续若干轮不降，就加入阻尼并按几何速率缩小步长以压住绕点振荡。训练用截断 BPTT 分窗反传，并在每个监督点解码当前状态、算交叉熵后断开计算图。代价是新增缩放与阻尼超参数，固定点收敛假设训练中未显式保证，且只在算法型任务上验证。",
+    "results": "同参数规模下，FPRM 在 Sudoku-Extreme 达 94.2%，高于 TRM 的 74.7%；状态追踪 A5/S5 的长序列外推为 98.1%/98.8%，高于 TRM+conv 的 91.4%/97.2%，且算力随题目难度变化。Maze 与 ARC-1 也领先，ARC-2 略低。",
+    "limitations": "只在数独、迷宫、状态追踪和 ARC 等算法型任务上验证，未涉及自然语言；固定点收敛的理论条件训练中未显式保证，求解器可能因迭代上限或最小步长提前终止。"
+  },
+  "claims": [
+    {
+      "claim": "FPRM 在 Sudoku-Extreme 上达到 94.2%",
+      "numbers": [
+        "94.2"
+      ],
+      "source_span": "Table 1, row 'FPRM'",
+      "quote": "94.2%"
+    },
+    {
+      "claim": "TRM 在 Sudoku-Extreme 上为 74.7%",
+      "numbers": [
+        "74.7"
+      ],
+      "source_span": "Table 1, row 'TRM'",
+      "quote": "74.7%"
+    },
+    {
+      "claim": "FPRM 在 A5 长序列外推上达到 98.1%",
+      "numbers": [
+        "98.1"
+      ],
+      "source_span": "Table 2, row 'FPRM', State tracking, A5",
+      "quote": "98.1 ± 2.2"
+    },
+    {
+      "claim": "FPRM 在 S5 长序列外推上达到 98.8%",
+      "numbers": [
+        "98.8"
+      ],
+      "source_span": "Table 2, row 'FPRM', State tracking, S5",
+      "quote": "98.8 ± 0.9"
+    },
+    {
+      "claim": "TRM+conv 在 A5 长序列外推上达到 91.4%",
+      "numbers": [
+        "91.4"
+      ],
+      "source_span": "Table 2, row 'TRM+conv', State tracking, A5",
+      "quote": "91.4 ± 2.3"
+    },
+    {
+      "claim": "TRM+conv 在 S5 长序列外推上达到 97.2%",
+      "numbers": [
+        "97.2"
+      ],
+      "source_span": "Table 2, row 'TRM+conv', State tracking, S5",
+      "quote": "97.2 ± 2.5"
+    }
+  ]
+}

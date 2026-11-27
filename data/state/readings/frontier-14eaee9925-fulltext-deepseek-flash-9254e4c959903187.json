@@ -1,0 +1,102 @@
+{
+  "title_zh": "RLVB：用可验证信念的强化学习让视觉智能体按自己的信念行事",
+  "affiliations": [
+    "Nanyang Technological University"
+  ],
+  "scores": {
+    "research_value": 85,
+    "research_value_reason": "把长程视觉智能体的\"何时该停\"落成可用精确后验验证的停止决策，覆盖三模型三基准并给出行为级归因，对 agentic RL 的信用分配有直接参考价值。",
+    "novelty": 78,
+    "novelty_reason": "与用 LLM judge 或学习型过程奖励模型给每步打分不同，这里直接用模拟器的精确后验构造过程奖励，只评动作、不读智能体写下的信念行。",
+    "technical_depth": 86,
+    "technical_depth_reason": "有 POMDP 形式化、带前瞻的后验教师、两种学习器与逐项消融，并用后验回放把增益拆成\"答在更高证据水平\"和\"同等证据下更准\"两部分，同时如实报告取证动作没变好、证据充分时误读上升。"
+  },
+  "reading": {
+    "why_read": "提出 RLVB，用模拟器算出的精确后验构造可验证过程奖励，训练视觉语言智能体在证据不足时继续取证、证据充分后再作答，九个设定平均超基座 17.1%。",
+    "task": "长程视觉智能体常在证据不足时就作答，即使自己刚写下的信念行仍列出多个可能答案。终点结果奖励只评最终答案，猜对与有据可依同酬，学不会何时该停；LLM judge 看得到真值，会奖励幸运猜测、惩罚仍然谨慎的信念；PPO 的 critic 同样依赖隐藏目标。加了信念行有提升，早答却没有减少。",
+    "findings": [
+      {
+        "point": "早答不是不知道，而是行动不跟随自己的信念",
+        "detail": "基座在证据不足、自己信念行仍列出多个答案的回合里照样提交，占这类回合的 3–68%，说明监控与决策控制没有连上。"
+      },
+      {
+        "point": "看真值的过程奖励无法给\"是否该停\"定价",
+        "detail": "LLM judge 见到隐藏答案，会把只报真答案的猜测判对、把仍列多个可能但正确的信念判错，奖励因此仍在为猜测付钱；PPO 的 critic 也拟合依赖隐藏目标的回报。"
+      },
+      {
+        "point": "只奖励信念行本身改变不了行为",
+        "detail": "去掉动作项、只按后验给信念行打分后，HiddenGames 准确率 24.6% 对基座 24.5%，且模型只要行里只剩一个答案就提交，不管证据是否支持。"
+      }
+    ],
+    "method_idea": "原来用终点结果或看真值的 LLM judge 给每步打分：前者分不清猜中与查实，后者会把幸运猜测判成好步。RLVB 改用模拟器每步可算的精确后验作为过程奖励：后验仍留多个答案就奖励继续取证，收窄到唯一答案才奖励提交，奖励只读证据、不读模型写的信念行。回合似然被整体抬高，信念行一并训练，模型于是学会照它行事。",
+    "method_how": "每步用先验和观测似然算出隐藏答案的精确后验；教师在后验上做深度二前瞻，比较提交答案与各取证动作的价值，给出提交概率与动作分布。同一历史采样多个回合，按教师对该动作的对数概率给奖励，远低于教师最优动作的回合权重归零；用组内相对权重或按奖励指数加权的 EM 更新，每阶段受 KL 上限约束，并混入教师动作与随机开局覆盖罕见状态。信念行打分项经消融证实不涨点。代价是不需要 critic 与 LLM judge（74.2 对 120.1 GPU-hour），但要求环境已知先验与观测模型，前瞻成本随动作与观测数增长，学到的取证动作也不比基座更有信息量。",
+    "results": "九设定（三模型 × 三基准）全部超过基座，平均 +17.1%；结果奖励的 GRPO/PPO 平均反而下降 1.0% 与 5.1%；对带 LLM judge 的过程奖励 PPO 平均高 9.3%，GPU 时间少 1.6 倍。",
+    "limitations": "依赖已知先验与观测模型，开放规则任务需先估计后验；大动作空间要更浅或采样的前瞻；信念行只列可能集合，表示不了细粒度置信；证据充分仍答错的比例升到 10–15%。"
+  },
+  "claims": [
+    {
+      "claim": "RLVB 在九个设定上全部超过基座，平均提升 17.1%",
+      "numbers": [
+        "17.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "RLVB improves the base model in all nine settings, by 17.1% on average"
+    },
+    {
+      "claim": "结果奖励的 GRPO 与 PPO（action-only）平均分别下降 1.0% 与 5.1%",
+      "numbers": [
+        "1.0",
+        "5.1"
+      ],
+      "source_span": "Section 4.3, Comparison with the baselines",
+      "quote": "loses 1.0% and PPO (action-only) loses 5.1%"
+    },
+    {
+      "claim": "对带 LLM judge 过程奖励的 PPO，RLVB 平均高 9.3%，且 GPU 时间少 1.6 倍",
+      "numbers": [
+        "9.3",
+        "1.6"
+      ],
+      "source_span": "Abstract",
+      "quote": "RLVB also outperforms PPO with a process reward from an LLM judge by 9.3% on average while using 1.6 times fewer GPU-hours."
+    },
+    {
+      "claim": "基座在证据不足、自己信念行仍列多个答案时提交的比例为 3–68%",
+      "numbers": [
+        "3",
+        "68"
+      ],
+      "source_span": "Section 1 Introduction",
+      "quote": "commit at 3 to 68% of the turns at which the evidence is insufficient"
+    },
+    {
+      "claim": "只用信念行打分时 HiddenGames 准确率 24.6%，与基座 24.5% 持平",
+      "numbers": [
+        "24.6",
+        "24.5"
+      ],
+      "source_span": "Section 4.4 Ablation, Table 3 讨论",
+      "quote": "at 24.6% against 24.5%"
+    },
+    {
+      "claim": "证据充分却给出错误答案的比例从 2–4% 升到 10–15%",
+      "numbers": [
+        "2",
+        "4",
+        "10",
+        "15"
+      ],
+      "source_span": "Section 5 Limitations",
+      "quote": "rise from 2–4% to 10–15% of the episodes"
+    },
+    {
+      "claim": "RLVB 一次训练用 74.2 GPU-hour，带 LLM judge 的 PPO 为 120.1",
+      "numbers": [
+        "74.2",
+        "120.1"
+      ],
+      "source_span": "Section 4.5 Training time, Table 4",
+      "quote": "as many GPU-hours as RLVB (120.1 against 74.2)"
+    }
+  ]
+}

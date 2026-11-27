@@ -1,0 +1,65 @@
+{
+  "title_zh": "DyLoMo-DiT：动态循环混合专家扩散 Transformer",
+  "affiliations": [],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把扩散 Transformer 的参数、前向计算与深度解耦，并在同预算下给出系统性对照，直接回应生成模型 scaling 的效率问题。",
+    "novelty": 74,
+    "novelty_reason": "权重共享循环、稀疏专家和按噪声调深度各自已有，实质新意在于把三者放在同一预算下联合配置并给出噪声级调度与路由分析。",
+    "technical_depth": 88,
+    "technical_depth_reason": "同参数同前向计算匹配、逐项消融、训练步数延长与放大基线对照完整；但 DiT-MoE 为作者复现，文生图只训练单模型且无消融。"
+  },
+  "reading": {
+    "why_read": "提出 DyLoMo-DiT，让中间层共享权重并按噪声水平重复不同次数，把省下的参数预算给多头稀疏专家，在匹配参数与计算下降低 ImageNet FID，并在文生图 GenEval 上超过 FLUX.1。",
+    "task": "DiT 靠同时加宽加深扩展容量，参数、前向计算和深度被绑死；MoE-DiT 用稀疏专家把参数与每 token 计算解耦，却仍要存大量参数，且所有噪声水平走同样深度。扩散过程高噪声主要定全局结构、低噪声才修细节，统一深度会把计算花在收益低的高噪声步，现有循环 DiT 也未按噪声分配遍数。",
+    "findings": [
+      {
+        "point": "统一增加循环遍数本身不涨点",
+        "detail": "在 DiT-MoE-B 同预算消融中，无循环模型与每步两遍循环的 FID 几乎相同，说明只加深度而不改变计算在去噪轨迹上的分布，收益会被抵消。"
+      },
+      {
+        "point": "额外遍数的收益集中在低噪声段",
+        "detail": "逐 timestep 的噪声预测误差显示，多一遍只在低噪声段稳定下降；把更多遍数放在高噪声、更少放在低噪声会让 B 档 FID 明显变差，反向分配不可取。"
+      },
+      {
+        "point": "路由按噪声水平自发分化，且跨遍复用专家",
+        "detail": "路由器没有显式 timestep 输入，却在相邻 timestep 间出现锐利的专家使用切换；第二遍复用了第一遍多数专家，残差写入方向也高度一致，支持共享权重与按遍数缩放残差。"
+      }
+    ],
+    "method_idea": "DiT 把参数量、前向计算与深度捆在宽度和层数上，MoE-DiT 虽用稀疏专家扩展容量，却仍为每层存一份参数、在每个噪声水平走同样深度。DyLoMo-DiT 让中间一段层共享权重、按噪声水平重复不同次数，并把省下的参数预算投给多头稀疏专家，使参数量、计算量和深度可以分别配置。",
+    "method_how": "实现上，除首尾层外的 FFN 换成多头稀疏专家：输入分成多个路由头，每头自选少量专家并加一个始终开启的共享专家，专家偏置只参与选择、按路由计数更新，不加辅助损失。中间约三分之一到一半的层组成共享段，前向重复执行，每遍重算路由，子层残差按重复次数缩小后写回。重复次数由 timestep 决定，低噪声多走、高噪声少走，平均前向计算与基线对齐；省下的参数预算用于增加专家或路由头。代价是调度与训练绑定，换调度需重训或掉点，随机采样遍数虽可在推理时选深度但同预算精度略低。",
+    "results": "匹配参数与计算时，ImageNet-256 上 FID 较 DiT 降 11–24%、较 DiT-MoE 降 36–56%；文生图 GenEval 0.714，高于 FLUX.1-schnell 的 0.673，活跃参数仅 1.05B。",
+    "limitations": "文生图只训练一个模型且无消融，GenEval 的小幅领先需谨慎解读；循环调度与训练绑定，推理换调度需重训或掉点，收益在更大规模与视频上的泛化也只做了初步验证。"
+  },
+  "claims": [
+    {
+      "claim": "在 ImageNet-256 匹配参数与计算预算下，FID 较 DiT 降低 11–24%，较 DiT-MoE 降低 36–56%。",
+      "numbers": [
+        "11",
+        "24",
+        "36",
+        "56"
+      ],
+      "source_span": "Abstract, matched-budget results",
+      "quote": "DyLoMo-DiT reduces FID by 11-24% relative to DiT and 36-56% relative to DiT-MoE at matched parameter and compute budgets."
+    },
+    {
+      "claim": "文生图模型 GenEval 得 0.714，高于 FLUX.1-schnell 的 0.673。",
+      "numbers": [
+        "0.714",
+        "0.673"
+      ],
+      "source_span": "Sec. 5.8, text-to-image results",
+      "quote": "DyLoMo-DiT achieves a GenEval score of 0.714 at 10242, surpassing FLUX.1-schnell (0.673)"
+    },
+    {
+      "claim": "其每 token 活跃参数为 1.05B，而 FLUX.1 为 12B，不到后者的十分之一。",
+      "numbers": [
+        "1.05",
+        "12"
+      ],
+      "source_span": "Abstract",
+      "quote": "with less than one tenth of its active parameters (1.05B vs. 12B)"
+    }
+  ]
+}

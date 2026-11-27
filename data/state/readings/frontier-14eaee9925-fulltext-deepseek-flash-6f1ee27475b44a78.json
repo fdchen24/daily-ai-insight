@@ -1,0 +1,110 @@
+{
+  "title_zh": "单 Transformer 潜扩散：一个骨干完成编码、生成与解码",
+  "affiliations": [
+    "University of Illinois Urbana-Champaign"
+  ],
+  "scores": {
+    "research_value": 82,
+    "research_value_reason": "把潜扩散的三网络流水线真正压成一个骨干，并在匹配参数下于三个尺度稳定超过 UNITE，对「单阶段、无预训练表征」这条路线是明确推进。",
+    "novelty": 78,
+    "novelty_reason": "相对 UNITE 的实质增量是位置对齐的序列布局与独立解码时间步，而不是堆模块；但整体仍是 UNITE 的延续，共享权重的思路在 LDM-is-AE、DSD 中已出现。",
+    "technical_depth": 85,
+    "technical_depth_reason": "消融逐项拆开解码器位置、序列布局、编码与解码时间步，并用 CKA 定位冲突发生的层与噪声水平，同参数同 epoch 对比且报告五个评估种子均值；但 CKA 只作诊断，未解释共享为何在容量受限时更省参数。"
+  },
+  "reading": {
+    "why_read": "提出 UNIFIED，把潜扩散的编码器、生成器、解码器折进同一个 DiT，用位置对齐的序列布局、模式 token 和独立解码时间步区分三种模式，单阶段训练在 ImageNet-256 上取得 gFID 2.08。",
+    "task": "潜扩散由三个网络组成：编码器把像素变成 latent，生成器建模 latent 分布，解码器还原像素；它们分阶段训练，自编码器先重建、冻结后才训生成器，表征在采样器训练前就被固定，容量如何分配的影响也难以预测。此前 LDM-is-AE 按深度切分同一个 DiT、DSD 另加 diffusion head 并依赖 DINO 对齐，UNITE 共享编码与生成但解码器仍独立；直接让 UNITE 的共享骨干兼做解码（UNITE++）并不奏效。",
+    "findings": [
+      {
+        "point": "readout token 让解码多绕一层注意力",
+        "detail": "把 latent 放在自己一组 readout token 上，像素与 latent 没有固定空间对应，解码只能靠注意力逐位置汇集内容；UNITE++ 生成不差，rFID 却退化到 2.20（UNITE 为 1.41）。"
+      },
+      {
+        "point": "编码时间步必须与它实际读到的输入一致",
+        "detail": "换成位置对齐后编码器读的是干净图像块，若仍标成纯噪声的 t=0，骨干对完全观测的图像与纯噪声给出相同条件，gFID 反倒从 2.15 退到 2.31。"
+      },
+      {
+        "point": "干净端点处解码与生成抢同一个输出空间",
+        "detail": "t 接近 1 时生成输入几乎等于解码输入，CFG 无条件分支下两者条件也相同，只剩模式 token 可区分，最后一层被迫同时输出 latent 与像素特征，t=0.995 处层间 CKA 掉到 0.37。"
+      }
+    ],
+    "method_idea": "潜扩散把编码、生成、解码交给三个网络，UNITE 已把前两者合成一个生成式编码器，解码器却仍独立；直接让共享骨干兼做解码反而更差。UNIFIED 把三种模式都写成同一序列索引对应同一图像位置的等长序列映射，只靠模式 token 与各自的时间步区分，砍掉全部 readout token，并用一个轻量像素输出头替掉独立解码器。",
+    "method_how": "三种模式各跑一遍共享 DiT：编码读图像块、在干净端点取输出为 latent，生成读同一位置的加噪 latent 并按噪声水平预测干净 latent，解码把 latent 原位读入、经新增像素输出头出图。三者只差四个轻量输入输出头、一个前置模式 token、AdaLN 的时间步与类别条件，Base 下模式专属参数占 1.63%。生成损失对 latent 目标做 stop-gradient，使其不回流塑造 latent、避免潜变量塌缩；总损失为重建与 flow-matching 的加权和。代价是位置对齐把 latent 长度固定为 patch 数、失去 readout 的可变压缩比，序列变长后注意力开销上升。",
+    "results": "ImageNet-1K 256×256 上 UNIFIED-B（215M）gFID 2.08，优于同规模 UNITE 的 2.23，为 ≤250M 参数模型中最低；Tiny 62M 的 2.78 已接近 Small UNITE 117M 的 2.76。512×512 文生图 GenEval 0.87，超过约十亿参数的单阶段像素扩散模型。",
+    "limitations": "stop-gradient 是防 latent 塌缩的唯一机制，未分析潜空间的可压缩性；位置对齐把 latent 长度绑死为 patch 数，高分辨率下注意力开销上升；512×512 仍靠 256×256 预训练加微调，未验证原生高分辨率训练。"
+  },
+  "claims": [
+    {
+      "claim": "UNIFIED-B 以 215M 参数在 ImageNet-1K 256×256 上取得 gFID 2.08",
+      "numbers": [
+        "215",
+        "2.08"
+      ],
+      "source_span": "Abstract / Table 4 row 'UNIFIED-B'",
+      "quote": "2.08 with 215M parameters"
+    },
+    {
+      "claim": "同规模下 UNITE++ 的 gFID 为 2.24，UNITE 为 2.23",
+      "numbers": [
+        "2.24",
+        "2.23"
+      ],
+      "source_span": "Section 1, comparison of UNITE++ and UNITE",
+      "quote": "it reaches a gFID of 2.24 vs. UNITE's 2.23"
+    },
+    {
+      "claim": "Tiny UNIFIED 以 62M 参数的 2.78 接近 117M 的 Small UNITE 的 2.76",
+      "numbers": [
+        "2.78",
+        "62",
+        "2.76",
+        "117"
+      ],
+      "source_span": "Figure 1 caption / Section 4.1",
+      "quote": "2.78 at 62M vs. 2.76 at 117M"
+    },
+    {
+      "claim": "UNITE++ 的 rFID 退化到 2.20，而 UNITE 为 1.41",
+      "numbers": [
+        "2.20",
+        "1.41"
+      ],
+      "source_span": "Section 1",
+      "quote": "rFID 2.20 vs. 1.41"
+    },
+    {
+      "claim": "把编码时间步改为干净端点后，gFID 从 2.31 改善到 2.15",
+      "numbers": [
+        "2.31",
+        "2.15"
+      ],
+      "source_span": "Section 4.3, 'Clean endpoint for encoding'",
+      "quote": "improves gFID from 2.31 to 2.15"
+    },
+    {
+      "claim": "在 t=0.995 处层间 CKA 下降，tdec=1 的 UNIFIED 为 0.37",
+      "numbers": [
+        "0.995",
+        "0.37"
+      ],
+      "source_span": "Section 4.3, CKA analysis / Figure 3",
+      "quote": "0.37 for UNIFIED with tenc = tdec = 1"
+    },
+    {
+      "claim": "Base 规模下模式专属参数只占 1.63%",
+      "numbers": [
+        "1.63"
+      ],
+      "source_span": "Section 3.2",
+      "quote": "1.63% of the parameters at Base"
+    },
+    {
+      "claim": "UNIFIED-B（218M）在 512×512 文生图上 GenEval 达到 0.87",
+      "numbers": [
+        "0.87"
+      ],
+      "source_span": "Table 6, row 'UNIFIED-B'",
+      "quote": "reaches 0.87 on GenEval"
+    }
+  ]
+}

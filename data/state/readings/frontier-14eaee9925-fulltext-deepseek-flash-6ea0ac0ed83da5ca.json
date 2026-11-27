@@ -1,0 +1,105 @@
+{
+  "title_zh": "从表格到时间：把 TabPFN-v2 扩展到时间序列预测",
+  "affiliations": [
+    "University of Freiburg",
+    "Prior Labs",
+    "Meta",
+    "ELLIS Institute Tübingen"
+  ],
+  "scores": {
+    "research_value": 72,
+    "research_value_reason": "验证了只由合成表格数据预训练的基础模型可直接做零样本概率预测，并在协变量场景取得最优，为表格与时序的统一提供了较坚实的经验证据",
+    "novelty": 62,
+    "novelty_reason": "方法本身是特征工程加现成 TabPFN-v2 的组合，新意主要在于用相位嵌入的可逆性解释其时序能力、以及把协变量当普通特征的统一处理",
+    "technical_depth": 72,
+    "technical_depth_reason": "包含特征消融、替换表格骨干、可控合成实验和单列的局限分析，但协变量对比中基线无法摄入协变量，优势部分来自设定不对称，指标多为聚合曲线"
+  },
+  "reading": {
+    "why_read": "提出 TabPFN-TS，把每个时间步编码成含时间索引、日历与 FFT 季节项的一行表格特征，交给预训练的 TabPFN-v2 做零样本概率预测，11M 参数在 fev-bench 协变量任务上取得最优。",
+    "task": "时间序列 foundation model 靠大规模序列预训练实现零样本预测，但架构围绕纯序列输入设计，协变量要靠额外适配器接入，模型往往上百 M 到 B 级参数。这里要问的是：一个只在合成表格任务上预训练的表格基础模型，能否不做任何时序预训练就完成概率预测，并把协变量当成普通特征直接使用。",
+    "findings": [
+      {
+        "point": "时序能力来自把时间映射成可逆的相位表示",
+        "detail": "只用 $\\sin(t)$ 时模型只能重建奇次谐波，补上 $\\cos(t)$ 把时间投到单位圆后各次谐波都能重建；频率升高时精度按混叠规律下降，说明模型是在相位空间里做检索式插值，而不是拟合一个全局函数。"
+      },
+      {
+        "point": "趋势外推失败是预训练目标的结构性后果",
+        "detail": "TabPFN-v2 预训练时上下文与查询点取自同一分布，查询目标通常落在观测目标的凸包内，模型只被优化成条件插值器，预测因此被压在历史取值范围内，加协变量也救不回线性增长。"
+      },
+      {
+        "point": "三类时间特征各自不可替代",
+        "detail": "消融显示只用序号或只用 FFT 自动季节项都明显变差：序号给出单调的时间轴，日历与自动周期提供互补的多尺度季节性，三者合用才最好。"
+      }
+    ],
+    "method_idea": "原做法要在大规模时间序列上预训练专门的序列模型，协变量还得靠额外适配器塞进去。这篇把每个时间步变成表格的一行——时间戳导出的周期特征、序列内的序号、自动检出的季节项，加上未来已知的协变量——历史行带观测值当上下文，未来行只有特征，直接丢给预训练的表格回归器，一次前向输出整段预测。",
+    "method_how": "每个时间步变成一行特征：按顺序编号的 running index、由时间戳算出的八个周期各自成对的正余弦与日历年、对去趋势加窗序列做 FFT 后取最大若干峰展开的自动季节项，未来已知的协变量直接拼在行尾。因为不用滞后特征，历史行带目标值、未来行只带特征，整段 horizon 一次前向输出。TabPFN-v2 返回目标取值网格上的离散后验，按需取均值或分位数。代价是每条序列都要单独前向一次并沿用对序列长度二次复杂度的全注意力，推理开销远高于序列基础模型，趋势外推依旧做不到。",
+    "results": "在 GIFT-Eval 的 97 个任务上平均 WQL 排名 5.392，落后 TiRex 的 2.515，但与 TimesFM-2.0、Chronos-Bolt 持平；在 fev-bench 28 个含未来协变量的任务上相对 WQL 0.503、MASE 0.666，为所有基线中最低。",
+    "limitations": "无法外推超出历史取值范围的趋势，且推理时间约为 Chronos-Bolt 的 30 倍；协变量对比中基线本身不能吃协变量，这项 SOTA 打了折扣。"
+  },
+  "claims": [
+    {
+      "claim": "TabPFN-TS 只有 11M 参数，且未做时间序列专用预训练",
+      "numbers": [
+        "11"
+      ],
+      "source_span": "Conclusion, Summary of Contributions",
+      "quote": "a compact (11M) model"
+    },
+    {
+      "claim": "GIFT-Eval 共含 97 个基准任务",
+      "numbers": [
+        "97"
+      ],
+      "source_span": "Section 4.1, Datasets",
+      "quote": "97 distinct benchmarking tasks"
+    },
+    {
+      "claim": "TabPFN-TS 在 GIFT-Eval 上的平均 WQL 排名为 5.392",
+      "numbers": [
+        "5.392"
+      ],
+      "source_span": "Figure 2, Mean WQL Rank",
+      "quote": "5.392"
+    },
+    {
+      "claim": "TiRex 在 GIFT-Eval 上的平均 WQL 排名为 2.515",
+      "numbers": [
+        "2.515"
+      ],
+      "source_span": "Figure 2, Mean WQL Rank",
+      "quote": "2.515"
+    },
+    {
+      "claim": "fev-bench 协变量评测最终使用 28 个任务",
+      "numbers": [
+        "28"
+      ],
+      "source_span": "Section 4.2, Datasets",
+      "quote": "leaving 28 tasks for the final evaluation"
+    },
+    {
+      "claim": "TabPFN-TS 在 fev-bench 上的相对 WQL 为 0.503",
+      "numbers": [
+        "0.503"
+      ],
+      "source_span": "Figure 3, Relative WQL",
+      "quote": "0.503"
+    },
+    {
+      "claim": "TabPFN-TS 在 fev-bench 上的相对 MASE 为 0.666",
+      "numbers": [
+        "0.666"
+      ],
+      "source_span": "Figure 3, Relative MASE",
+      "quote": "0.666"
+    },
+    {
+      "claim": "同等硬件下 TabPFN-TS 的推理时间约为序列基础模型的 30 倍",
+      "numbers": [
+        "30"
+      ],
+      "source_span": "Section 6.2, Inference Time",
+      "quote": "TabPFN-TS requires roughly 30× more inference time"
+    }
+  ]
+}

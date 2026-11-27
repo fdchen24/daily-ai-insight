@@ -1,0 +1,126 @@
+{
+  "title_zh": "什么数据才适合训练编码 agent：对 SWE-Gym 的系统审计",
+  "affiliations": [
+    "AMD",
+    "University of Michigan",
+    "Tulane University",
+    "Georgia Institute of Technology",
+    "University College London"
+  ],
+  "scores": {
+    "research_value": 86,
+    "research_value_reason": "把 RL 训练数据的奖励标签正确性从口号变成可测量、可复现的对象，发布审计后的任务集与逐条执行证据，并证明常用的通过率过滤不能替代审计，直接影响 coding agent 的训练配方。",
+    "novelty": 83,
+    "novelty_reason": "相对以往用 LLM 对整题打分的过滤，这里逐条断言审计并强制用执行复现，还按是否携带梯度拆解错误类型，并用同规模同难度三 seed 对照说明增益不是难度差异造成的。",
+    "technical_depth": 87,
+    "technical_depth_reason": "每条误判都要求执行证据（替代修复被拒、反例脚本暴露补丁），配双家族一致性、人类抽查、难度匹配的 Orig+Filter 对照与三 seed 方差，RQ4 还用重打分控制解释奖励下降；弱点是单一模型与配方、删除与修复效果无法分离。"
+  },
+  "reading": {
+    "why_read": "提出 SWE-Gym-Verified，用可执行见证逐条断言核验 SWE-Gym 的隐藏测试并修复或剔除错误奖励标签，得到 1,087 个任务，同规模同难度下训练的策略在 SWE-bench Verified 与 Pro 上分别高 2.4 与 2.7 个百分点。",
+    "task": "编码 agent 的 RL 训练把任务的隐藏测试当奖励标签，而任务集收录时只验证参考修复能通过、原始代码不能通过，这只能说明奖励可达，不能说明别的正确修复也拿得到、错误修复拿不到。于是从未解出的任务常被当成难任务直接丢弃，而其中相当一部分其实是测试写错了。",
+    "findings": [
+      {
+        "point": "零通过率更多是标签错误而非难度",
+        "detail": "在原始任务里，从未解出任务的 74% 有一条会拒绝正确修复的断言，偶尔解出的只有 20%；根因是断言要求了 issue 未指定的接口、精确字符串或任意设计选择。"
+      },
+      {
+        "point": "通过率过滤只删掉不携带梯度的错误",
+        "detail": "从未解出的误判任务几乎不产生梯度，只占携带梯度样本组的 0.9%；偶尔解出的误判任务却贡献 19.5%，因此按通过率或奖励方差过滤恰好放过真正训练策略的那批错误。"
+      },
+      {
+        "point": "假阳性普遍存在，但加固难以改变策略",
+        "detail": "通过的补丁里 26.1% 是假阳性；新测试能抓住其中 25%，训练奖励随之下降约 13 个百分点，但用同一批新测试重打分旧策略的补丁也降同样多，held-out 分数无可测变化。"
+      }
+    ],
+    "method_idea": "任务集原来的收录检查只保证参考修复能通过测试、原始代码不能通过，这既不说明别的正确修复也能拿分，也不说明错误补丁拿不到分。这篇把审计从整题打分改成逐条断言加执行复现：让模型写出遵循 issue 的替代修复去实跑测试，被拒绝的才算测试有错；再用反例脚本暴露骗过测试的补丁。",
+    "method_how": "对每条 fail-to-pass 断言，两个模型家族在看不到通过率的前提下各自评级；被标记的断言由编码 agent 写出一个只在该争议细节上偏离参考修复、又符合 issue 的见证补丁，在容器里实跑测试，跑不过才算误判。误判任务在 issue 后追加一段只说明缺失要求、不泄露解法的 Requirements，重过审计才保留，否则删除；假阳性侧收集每个任务八个采样中通过的补丁，两家族盲评后用反例脚本确认——它在原始代码与参考修复上输出相同、在被测补丁上不同。代价是标注昂贵：每条被标记断言都要实跑一次见证修复，修复仅 184/588 成功，结论也只在一个 9B 模型和一套 RL 配方上验证。",
+    "results": "Qwen3.5-9B 上用 GRPO 训练三个 seed：审计后的 Clean 在 SWE-bench Verified 上比 Orig 高 2.4 个百分点，在 SWE-bench Pro 上高 2.7 个百分点；按通过率过滤的 Orig+Filter 平均只比 base model 高 0.9 个百分点，与 Orig 的 1.4 个百分点无实质差别。",
+    "limitations": "只用一个 base model、一套 scaffold 与 RL 配方和极短训练预算；Clean 与 Orig 同时改变了删除、修复与替换，无法分离各自贡献；假阳性加固在 held-out 上无可测收益。"
+  },
+  "claims": [
+    {
+      "claim": "SWE-Gym-Verified 包含 1,087 个审计后的任务",
+      "numbers": [
+        "1,087"
+      ],
+      "source_span": "Abstract",
+      "quote": "1,087 audited tasks"
+    },
+    {
+      "claim": "审计后任务训练的策略在 SWE-bench Verified 与 SWE-bench Pro 上分别高 2.4 与 2.7 个百分点",
+      "numbers": [
+        "2.4",
+        "2.7"
+      ],
+      "source_span": "Abstract",
+      "quote": "score 2.4 and 2.7 points higher on held-out tasks from SWE-bench Verified and SWE-bench Pro"
+    },
+    {
+      "claim": "从未解出任务中 74% 有拒绝正确修复的断言，偶尔解出的只有 20%",
+      "numbers": [
+        "74",
+        "20"
+      ],
+      "source_span": "Abstract; §5.2 RQ1",
+      "quote": "74% of the tasks that a 9B base model never solves have a test that rejects correct fixes (a false negative), versus 20% of those it sometimes solves"
+    },
+    {
+      "claim": "从未解出的误判任务只占 Orig 携带梯度样本组的 0.9%",
+      "numbers": [
+        "0.9"
+      ],
+      "source_span": "§5.3 RQ2",
+      "quote": "only 0.9% of its gradient-carrying groups"
+    },
+    {
+      "claim": "偶尔解出的误判任务贡献 Orig 携带梯度样本组的 19.5%",
+      "numbers": [
+        "19.5"
+      ],
+      "source_span": "§5.3 RQ2",
+      "quote": "contribute 19.5% of its gradient-carrying groups"
+    },
+    {
+      "claim": "通过的补丁中 26.1% 是假阳性",
+      "numbers": [
+        "26.1"
+      ],
+      "source_span": "§5.2 RQ1",
+      "quote": "26.1% are false positives under our conservative rule"
+    },
+    {
+      "claim": "新增测试能抓住样本中 25% 的假阳性",
+      "numbers": [
+        "25"
+      ],
+      "source_span": "§5.5 RQ4",
+      "quote": "catch 25% of the false positives in a sample of passing training patches"
+    },
+    {
+      "claim": "加固任务的训练奖励比 Clean 低约 13 个百分点",
+      "numbers": [
+        "13"
+      ],
+      "source_span": "§5.5 RQ4, Fig. 5a",
+      "quote": "is about 13 pp below"
+    },
+    {
+      "claim": "追加 Requirements 的修复尝试中仅 184/588 通过重新审计",
+      "numbers": [
+        "184",
+        "588"
+      ],
+      "source_span": "§4.1 Repair",
+      "quote": "184 of 588 attempts"
+    },
+    {
+      "claim": "Orig+Filter 平均只比 base model 高 0.9 个百分点，Orig 为 1.4 个百分点",
+      "numbers": [
+        "0.9",
+        "1.4"
+      ],
+      "source_span": "§5.4 RQ3",
+      "quote": "Orig+Filter gains +0.9 pp over the base model, versus +1.4 pp for Orig"
+    }
+  ]
+}

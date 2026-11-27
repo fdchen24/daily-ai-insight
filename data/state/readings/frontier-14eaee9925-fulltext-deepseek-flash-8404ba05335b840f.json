@@ -1,0 +1,126 @@
+{
+  "title_zh": "Mixture-of-Loops Transformer：用 KV 记忆替代跨 loop 残差反馈",
+  "affiliations": [
+    "Huazhong University of Science & Technology",
+    "ByteDance Seed",
+    "University of Toronto"
+  ],
+  "scores": {
+    "research_value": 84,
+    "research_value_reason": "looped 架构是当前把计算深度与参数规模解耦的主要路线，这篇给出可替换残差反馈的 KV 记忆接口，并在 400B token 的三种规模以及 Qwen 继续预训练上做了验证。",
+    "novelty": 82,
+    "novelty_reason": "相对 LPT、PLT 等仍靠残差反馈、每个 token 逐 loop 串行执行的 looped 模型，用 embedding 重启加 strict-prefix 记忆 KV 真正消掉同位置跨 loop 依赖，换来单次遍历解码。",
+    "technical_depth": 85,
+    "technical_depth_reason": "32 组 S 规模消融逐项拆开反馈形式、depth 源与 decoder KV 设计，配上同 recipe 的 700M/1.5B/3B MoE 对比与实测延迟，并有稳定性推导；不足是缺少算力对齐比较与长上下文解码验证。"
+  },
+  "reading": {
+    "why_read": "提出 Mixture-of-Loops Transformer（MoLT），用可跨层、跨 loop 选择性读取的 KV 记忆替代残差流反馈，配合 loop forcing 训练与单次遍历 MoL 解码，3B MoE 上 10 任务平均准确率较 OLMo3 高 2.1 个百分点。",
+    "task": "looped Transformer 在参数量不变的前提下反复复用同一组层来换表达力，被视为把计算深度与参数规模解耦的一条路线。现有做法跨 loop 只传一条残差流：中间表征被反复压缩，且每个 token 依赖自己上一 loop 的输出，推理必须串行执行全部 loop，loop 越深越慢，收益与成本一起放大。",
+    "findings": [
+      {
+        "point": "单条残差流装不下跨层、跨 loop 的中间结果",
+        "detail": "所有中间表征都被反复压进同一条残差通道，后层与后 loop 无法直接读到前面的局部 KV，作者把由此产生的表征退化归因于信息稀释。"
+      },
+      {
+        "point": "同位置跨 loop 依赖是串行推理的根源",
+        "detail": "每个 token 的下一 loop 都要读自己上一 loop 的输出，解码只能逐 loop 串行，模型也被锁在训练用过的 loop 深度内。"
+      },
+      {
+        "point": "深层同时承担收敛到 next-token 分布与保留干净 KV 两种冲突职责",
+        "detail": "U-MoLT 把记忆构建与预测读出分开后，decoder 改用逐层独立 KV 投影比自建 KV 的 CE 低 0.014–0.021，说明预测层不必再兼做记忆写入。"
+      }
+    ],
+    "method_idea": "残差 loop 把上一 loop 的最终状态整条塞进下一 loop，中间结果被反复压进一条通道，每个 token 还得等自己上一 loop 算完。这篇改成把每层算出的 key/value 当可检索记忆：任意层、任意 loop 在同一次 attention 里直接读当前 loop 前面层与上一 loop 的局部 KV；更进一步让每个 loop 从词嵌入重新起步、只读上一 loop 在更早位置留下的记忆，砍掉同位置跨 loop 依赖，新 token 只走一遍共享栈。",
+    "method_how": "MoLA 让每条 query 在一次 softmax 里同时读序列 KV 与同位置 depth KV：MoLT-KV 每个 loop 从词嵌入重启，上一 loop 的输出经每层独立投影成只在更早位置可见的 memory KV，同位置只读本 loop 的 local KV。训练用 loop forcing，每个 loop 都以同一批目标算交叉熵并加权求和，从上一 loop 的 strict-prefix 记忆并行学习，不必等前缀解码。推理时每个新 token 在 MoL 下只走一遍共享栈，读缓存 prefix memory KV；U-MoLT 再拆成循环 encoder 与 cross-only decoder，decoder KV 从 encoder 输出逐层独立投影，可跳过中间 loop 与非最终位置的 decoder 遍历。代价是每层多一组 memory KV 投影（+1.771M 参数、0.72% FLOPs），fixed 2-loop 的持久 KV 仍为基线的 1.5 倍。",
+    "results": "400B token 从头预训练、与 OLMo3 同 recipe：700M dense 平均准确率 59.1% 对 56.6%，3B MoE 平均 PPL 13.24 对 13.99，700M 上 232.8B token 即追平 OLMo3 最终 CE（1.7× token 效率）。S 规模 MoL-Hybrid-2 延迟 996.6 ms，与非 loop 的 OLMo3 1,000.6 ms 持平。",
+    "limitations": "增益都在等 token 预算下给出，而 2-loop 训练的逻辑 FLOPs 翻倍，算力对齐后的优势未建立；MoL 解码只在短 prompt 的教师强制续写上验证，超出训练 loop 深度的行为靠附录推导；最大规模到 3B MoE。"
+  },
+  "claims": [
+    {
+      "claim": "3B MoE 上 10 任务平均准确率较 OLMo3 高 2.1 个百分点",
+      "numbers": [
+        "2.1"
+      ],
+      "source_span": "Abstract",
+      "quote": "improving 3B MoE 10-domain perplexity by 0.75 and 10-task accuracy by 2.1 percentage points"
+    },
+    {
+      "claim": "700M dense 上 10 任务平均准确率 59.1%，OLMo3 为 56.6%",
+      "numbers": [
+        "59.1",
+        "56.6"
+      ],
+      "source_span": "Section 4.3, 'Both feedback forms improve the 700M baseline'",
+      "quote": "reaching mean accuracies of 59.2% and 59.1% against OLMo3’s 56.6%"
+    },
+    {
+      "claim": "3B MoE 上 10 域平均 PPL 从 13.99 降到 13.24",
+      "numbers": [
+        "13.99",
+        "13.24"
+      ],
+      "source_span": "Section 4.3, 'Quality gains extend across model scales'",
+      "quote": "including a reduction in mean PPL from 13.99 to 13.24 for the MoE model"
+    },
+    {
+      "claim": "700M 上 U-MoLT 在 232.8B token 追平 OLMo3 最终平均验证 CE，相当于 1.7× token 效率",
+      "numbers": [
+        "232.8",
+        "1.7"
+      ],
+      "source_span": "Section 4.3, 'Faster convergence with fewer training tokens'",
+      "quote": "at 232.8B tokens (1.7× token efficiency)"
+    },
+    {
+      "claim": "S 规模上 U-MoLT 的 MoL-Hybrid-2 端到端 996.6 ms，与非 loop 的 OLMo3 1,000.6 ms 持平",
+      "numbers": [
+        "996.6",
+        "1,000.6"
+      ],
+      "source_span": "Section 1, contribution summary",
+      "quote": "U-MoLT with MoL-Hybrid-2 runs in 996.6 ms, matching non-looped OLMo3 at 1,000.6 ms"
+    },
+    {
+      "claim": "U-MoLT 相对 2-loop 基线多 1.771M 参数、0.72% 逻辑训练 FLOPs",
+      "numbers": [
+        "1.771",
+        "0.72"
+      ],
+      "source_span": "Section 4.2, 'Depth sources and decoder KV configuration work together'",
+      "quote": "It adds 1.771M parameters and 0.72% logical training FLOPs relative to the 2-loop baseline."
+    },
+    {
+      "claim": "fixed 2-loop 下持久 KV 与解码遍历为基线的 1.5 倍",
+      "numbers": [
+        "1.5"
+      ],
+      "source_span": "Section 3.5, 'Key properties and inference costs'",
+      "quote": "while keeping decoding traversals and persistent KV storage at 1.5× instead of 2×"
+    },
+    {
+      "claim": "2-loop 训练的逻辑 FLOPs 翻倍",
+      "numbers": [
+        "2"
+      ],
+      "source_span": "Section 4.2, 'Looping and depth reuse improve prediction'",
+      "quote": "The 2-loop recipe doubles logical training FLOPs and increases update time from 494 to 942 ms."
+    },
+    {
+      "claim": "decoder 逐层独立 KV 投影比自建 KV 的 CE 低 0.014–0.021",
+      "numbers": [
+        "0.014",
+        "0.021"
+      ],
+      "source_span": "Section 4.2, 'Independent decoder KV projections improve U-MoLT'",
+      "quote": "Relative to self, re-proj. lowers CE by 0.014–0.021 with the same parameter count"
+    },
+    {
+      "claim": "规模实验最大到 3B MoE",
+      "numbers": [
+        "3"
+      ],
+      "source_span": "Section 5, 'Scaling to larger models'",
+      "quote": "Computational constraints have limited our scaling experiments to 700M and 1.5B dense models and 3B MoE models."
+    }
+  ]
+}

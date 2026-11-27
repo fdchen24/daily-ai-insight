@@ -1,0 +1,1165 @@
+One Prior, Two Dynamics: Repurposing Video Diffusion
+Transformers for Self-Supervised Latent Action Learning
+Yuxin Jiang1,2, Wenqiang Sun3, Jiaqi Li3, Yuchao Gu1, Lvmin Zhang4
+Ivor Tsang2, Mike Zheng Shou1
+1Show Lab, National University of Singapore
+2A*STAR, Singapore
+3Tencent
+4Stanford University
+https://showlab.github.io/o2laf
+turn right · 1st-P
+turn right · 3rd-P
+fire spell
+strafe left · 3rd-P
+turn right · 3rd-P
+right arm +x
+look up · 3rd-P
+left arm +z
+Human demonstration
+→
+GR-1 robot
+remove lid
+Hogwarts Legacy
+→
+Wingsuit
+flying
+turn right
+strafe left
+L-arm +z
+look up
+R-arm +x
+fire spell
+same z ∈ℝ32
+Unified latent action space
+1st-P
+3rd-P
+game
+robot
+Figure 1 | O2LaF: One Prior, Two Dynamics — a self-supervised Latent Action learning Framework. Latent
+actions from unlabeled videos share one unified space (center): e.g., the same 𝑧inferred from 1st- and
+3rd-person videos drives turn right in both navigation and robot scenes (top). They also transfer zero-shot
+across embodiments and domains (bottom).
+Abstract. Videos reveal how the world changes, but rarely the actions that cause those changes. Latent action
+learning recovers such supervision from visual transitions, yet often learns the underlying dynamics largely
+from scratch. We ask whether a pretrained video generator can instead provide the prior for both inverse and
+forward dynamics. We introduce O2LaF, built on a simple principle: one prior, two dynamics. We initialize
+both models from the same pretrained video DiT and adapt them to their distinct roles: a feed-forward
+transition encoder with learnable action queries for inverse dynamics, and a causal, action-conditioned video
+generator for forward dynamics. By controlling information access and optimizing both dynamics end-to-end
+through a compact bottleneck, O2LaF learns transferable actions from unlabeled videos. Across navigation
+and robotic manipulation, O2LaF sets a new state of the art in few-shot action probing and enables stronger
+zero-shot action transfer across visual contexts and embodiments. Beyond generative video priors, we further
+extend our framework to predictive representation priors such as V-JEPA2, achieving competitive performance.
+Our findings suggest a broader paradigm for latent-action learning: repurposing pretrained video models to
+discover transferable actions and predict their consequences.
+1. Introduction
+Videos provide abundant observations of how the world changes, but rarely reveal the actions that cause
+those changes [1–3]. This missing supervision limits our ability to learn controllable world models [4–11] and
+embodied agents [12–16] from internet-scale video.
+Latent action learning [2, 17, 18] offers a way to recover such supervision directly from visual transitions. A
+latent action model typically consists of an inverse dynamics model (IDM), which infers a latent action from
+an observed transition, and a forward dynamics model (FDM), which predicts its consequence:
+𝑧𝑡= IDM(𝑥𝑡, 𝑥𝑡+1),
+^𝑥𝑡+1 = FDM(𝑥𝑡, 𝑧𝑡).
+1
+arXiv:2611.26617v1  [cs.CV]  19 Nov 2026
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+From scratch
+(a)
+LAPA, Genie, AdaWorld
+IDM →
+→FDM
+Frozen visual features
+(b)
+UniVLA, LAWM-in-the-Wild
+DINOv3 / V-JEPA
+↓features
+IDM →
+→FDM
+Pretrained FDM only
+(c)
+VideoWorld 2, CoLA-World
+IDM →
+→Video DiT
+External video prior
+(d)
+Olaf-World
+V-JEPA →
+alignment loss
+IDM →
+→FDM
+No pretrained prior
+Prior defines the feature space
+Video prior on forward dynamics
+Video prior as temporal supervision
+Video priors as IDM & FDM
+Ours
+Video DiT
+as IDM
+→
+→Video DiT
+as FDM
+Video prior in both IDM and FDM
+✓
+V-JEPA
+VLM
+alternative IDM priors
+studied in Sec. 5.3
+trained from scratch
+pretrained, frozen
+pretrained, fine-tuned
+inverse dynamics (IDM)
+forward dynamics (FDM)
+latent actions z
+O2LaF
+Figure 2 | Paradigms for self-supervised latent-action learning. Existing methods learn latent actions
+(a) from scratch [3, 19, 20], (b) on frozen visual features [21, 22], (c) with a pretrained video generator as the
+FDM only [23, 24], or (d) with an external video prior as auxiliary supervision [25]. Ours repurposes one
+pretrained video DiT as both the IDM and the FDM.
+A compact bottleneck limits what 𝑧𝑡can encode, encouraging it to retain important information to explain
+visual changes. Learning useful latent actions therefore depends on both dynamics: the IDM must infer the
+transition, while the FDM must depend on the inferred action to predict its consequence.
+Existing methods differ in where pretrained priors enter this pipeline (Fig. 2), leaving a gap on each side.
+On the inverse side, IDMs are learned from scratch, either on raw pixels [3, 19, 20] or on top of frozen
+pretrained features [21, 22, 26]. They must learn to infer actions from transitions largely through the FDM’s
+reconstruction supervision, and such specialized latent action models are outperformed by general visual
+foundation models [26]. Olaf-World [25] aligns latent actions with an external video representation to improve
+transferability, but its IDM is still learned from scratch. On the forward side, recent methods adopt a
+pretrained video generator as the FDM [23, 24], whose initial-frame conditioning supplies appearance, reducing
+its leakage into the latent actions. However, they keep the standard diffusion recipe, under which the generator
+can learn to disregard the latent action [24], underusing its prior as a learning signal. Yet modern video
+Diffusion Transformers (video DiTs) [27] are pretrained at scale to model how visual states evolve over
+time [28–34]. Their representations encode rich temporal structure, while their generative dynamics learn to
+predict complex visual changes. Much of the prior needed for latent action learning therefore already exists
+inside a pretrained video generator. This raises a simple question: can a pretrained video DiT serve both
+inverse and forward dynamics for latent action learning? Doing so is nontrivial: the two dynamics place
+different demands on the same video prior, requiring careful control over what each can access.
+We introduce O2LaF, a self-supervised latent-action framework built on a simple principle: one prior, two
+dynamics. We initialize the IDM and FDM from the same pretrained video DiT and adapt them independently
+for their respective roles. For inverse dynamics, we repurpose the video DiT as a feed-forward transition
+encoder, where action queries extract one compact latent action per visual transition under causal temporal
+attention. For forward dynamics, we retain the generative role of the video DiT and introduce causal joint
+prediction, which predicts the future state sequence jointly, conditioned on the inferred latent actions, while
+preserving temporal causality. Unlike visual synthesis, where training often emphasizes intermediate-noise
+timesteps [35, 36], the FDM here also provides the learning signal that shapes the latent-action space. At these
+partially noisy timesteps, the noisy future still reveals much of the target, allowing the FDM to predict the
+future with little reliance on the latent action. We therefore train at high noise, which suppresses this target
+leakage and forces the FDM to depend on the inferred action. The two dynamics are optimized end-to-end
+through a compact continuous latent-action space.
+We further systematically study how the two dynamics shape the learned action space. For example, causal
+joint prediction outperforms autoregressive prediction by removing clean-history shortcuts, while role-specific
+noise levels reveal distinct information requirements for the two dynamics. Beyond generative video priors, we
+also extend the repurposing principle to self-supervised predictive representation models [37] and language-
+supervised video multimodal models [38] as alternative IDM backbones. Interestingly, stronger action probing
+performance does not necessarily translate into better downstream generative control, highlighting the
+importance of validating latent actions beyond probing through downstream applications.
+We evaluate O2LaF across camera navigation and robotic manipulation. It sets a new state of the art in
+few-shot action probing across both discrete and continuous action spaces, indicating stronger alignment with
+ground-truth actions. Beyond probing, the learned actions also transfer without target adaptation, enabling
+2
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+zero-shot control across first- and third-person navigation and human-to-robot transfer in manipulation. The
+causal FDM readily serves as a video world model, while its learned action-conditioned dynamics provide a
+strong initialization for higher-fidelity two-stage deployment. Our contributions are threefold:
+• We introduce O2LaF, a self-supervised latent-action framework that repurposes a pretrained video DiT
+into end-to-end trained inverse and forward dynamics models.
+• Through a systematic study, we show that latent-action learning depends critically on how the two
+dynamics are factorized and what information they receive.
+• O2LaF achieves state-of-the-art few-shot action probing across camera navigation and robotic manipula-
+tion, while demonstrating strong zero-shot action transfer across visual contexts and embodiments and
+reusable action-conditioned dynamics for world modeling.
+2. Related Work
+2.1. Latent Action Learning from Videos
+Latent action learning turns large-scale action-unlabeled video into a reusable intermediate control rep-
+resentation. The same representation can be consumed by a world model to control future visual evolu-
+tion [3, 20, 22, 25, 39], or produced by a policy or planner as a surrogate for physical actions [2, 19, 21, 40–42].
+Recent work further seeks to make this control space transferable across contexts and embodiments [25, 43–45].
+Existing methods differ in where pretrained priors enter the inverse–forward dynamics pipeline (Fig. 2). Early
+approaches learn both transition inference and prediction directly from the target videos [2, 3, 19, 20]. To
+reduce shortcuts from raw-pixel reconstruction, later methods move the prediction target into pretrained
+semantic feature spaces, emphasizing motion and task-relevant change over appearance details [21, 41, 46]. A
+related direction strengthens the forward model with pretrained video priors, reducing appearance burden or
+replacing the from-scratch FDM [23, 24, 47]. Pretrained video representations have also been used as external
+temporal supervision to orient latent actions across visual contexts [25].
+Orthogonal to where the prior enters, prior work also constrains the latent space through discrete or continuous
+bottlenecks [22, 47, 48], semantic or cross-view objectives [49–52], motion and consistency supervision [53–56],
+and physical or geometric grounding [40, 57]. These constraints are complementary to the structural question
+of how the dynamics themselves are initialized. Motivated by the shared need for transition reasoning in both
+inverse and forward dynamics, O2LaF repurposes the same pretrained video DiT for both.
+2.2. Repurposing Pretrained Video Diffusion Transformers
+Pretrained video generative models encode reusable spatiotemporal structure beyond synthesis. Prior work
+exploits their internal representations for correspondence, tracking, and geometry [58–60], while more recent
+methods repurpose the generative backbone itself for feed-forward perception and temporal reasoning [61–63].
+Together, these works show that video generative pretraining provides reusable temporal computation, not
+only a synthesis model.
+This repurposing is increasingly extending to action learning. Recent robot-policy and world-action models use
+pretrained video generators as predictive representations, policy backbones, or priors for action experts [64–69].
+These methods transfer video priors into learning a physical action space grounded by robot supervision.
+O2LaF instead uses the video prior to discover the action representation itself from action-free video.
+3. Method
+We introduce O2LaF, a self-supervised latent action learning framework. Our key premise is that large-scale
+video pretraining already captures how visual states evolve, which both inverse and forward dynamics need.
+We therefore initialize both from the same pretrained prior, but adapt each to its role by controlling what
+information it can access.
+3
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+“What is the action in the video?”
+Pretrained Video DiT (t = 0)
+Figure 3 | Action-aware response in a pretrained video DiT. Cross-attention follows the active hands
+and manipulated regions as the interaction changes.
+3.1. Preliminaries and Motivation
+Pretrained Video DiT. O2LaF builds on a pretrained text-to-video model [31, 70] consisting of a video
+VAE, a text encoder, and a video DiT. The VAE maps an RGB video V to 𝐾+1 spatiotemporal latent states
+x = (𝑥0, . . . , 𝑥𝐾). Under rectified flow [35, 71], a clean video latent x is interpolated with Gaussian noise
+𝜖∼𝒩(0, 𝐼) as x𝑡= (1 −𝑡)x + 𝑡𝜖, with target velocity v⋆= 𝜖−x. Here, 𝑡∈[0, 1], where 𝑡= 0 corresponds to
+clean video latents and 𝑡= 1 to pure Gaussian noise.
+Action-aware video prior. Prior work [58–60, 63] has shown that pretrained video DiTs contain strong
+temporal correspondence, enabling subjects or points to be tracked across video frames. We ask a different
+question: do these models also attend to regions relevant to the ongoing action? We conduct a simple diagnostic.
+We feed clean video latents to a frozen video DiT at 𝑡= 0 with the text condition “What is the action in the
+video?” and visualize the resulting cross-attention. As shown in Fig. 3, the responses follow the active hands
+and manipulated regions, shifting as the interaction changes across frames and clips. Although qualitative,
+this observation motivates repurposing the pretrained video prior for transition-level action inference.
+3.2. Problem Formulation: One Prior, Two Dynamics
+Given an action-unlabeled video, our goal is to infer one compact latent action 𝑧𝑖∈R𝑑𝑧for each transition
+𝑥𝑖→𝑥𝑖+1. We couple an IDM 𝑞𝜑, which infers latent actions from observed video, with an FDM 𝑓𝜃, which
+predicts their visual consequences:
+𝑧𝑖∼𝑞𝜑
+(︀
+𝑧𝑖|̃︀x
+IDM
+≤𝑖+1, 𝑡IDM
+)︀
+,̂︀
+v = 𝑓𝜃(̃︀x
+FDM, 𝑡FDM, c0, z) .
+(1)
+Here, c0 = “a video” is a fixed neutral text condition, and z = [ 0, 𝑧0, . . . , 𝑧𝐾−1 ] aligns each 𝑧𝑖with the
+prediction of 𝑥𝑖+1, and̃︀xIDM and̃︀xFDM denote the respective inputs at independently sampled flow timesteps.
+Both dynamics are initialized from the same pretrained video DiT [31, 70] and adapted independently with
+LoRA [72]. The new action-readout and action-conditioning modules are trained from scratch.
+3.3. Video DiT as Inverse Dynamics
+𝑥0
+𝑞0
+𝑥1
+𝑞1
+𝑥2
+𝑞2
+𝑥3
+𝑞3
+𝑥4
+𝑞4
+𝑥
+𝑞
+𝑥
+𝑞
+𝑥
+𝑞
+𝑥
+𝑞
+𝑥
+𝑞
+0
+0
+1
+1
+2
+2
+3
+3
+4
+4
+video → video
+action → video
+masked
+K
+Q
+Figure 4 | Action-query attention in
+IDM.
+The IDM repurposes the pretrained video DiT from an iterative generator
+into a single-pass latent action encoder.
+Feed-forward repurposing. Unlike video generation, inverse dynamics
+operates on an observed video and requires no iterative denoising. We
+therefore perform a single video DiT forward pass at an IDM flow timestep
+𝑡IDM [61]. The input is constructed as̃︀xIDM = (1 −𝑡IDM)x + 𝑡IDM𝜖. At
+𝑡IDM = 0, the model receives clean video latents, while increasing the
+timestep progressively removes visual information. This provides a flexible
+family of noise-dependent representations from which to infer actions.
+Transition readout with action queries. To extract transition-level
+information, we introduce learnable action queries into the video DiT. A
+shared query embedding is replicated across transitions, with temporal
+position encoding distinguishing each query 𝑞𝑖associated with 𝑥𝑖→𝑥𝑖+1.
+We employ an asymmetric attention mask (Fig. 4): (i) video tokens
+attend causally across frames, (ii) each action query 𝑞𝑖reads only the two
+4
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+x0:K
+input video
+VAE latents
+Inverse Dynamics Model
+tIDM ∼ πIDM
+Pretrained
+Video DiT
+frame-causal attention
+LoRA
+q0
+q1
+qK−1
+⋯
+Learnable action queries
+Gaussian
+head
+μ, log σ²
+read out hi
+ℒKL to 𝒩(0, I)
+Latent action
+space
+zi = μi + σi ⊙ ξi
+zi ∈ ℝ32
+Action
+projection
+[0, z0,
+…, zK−1]
+emb(tFDM)
+AdaLN
+Pretrained
+Video DiT
+frame-causal attention
+LoRA
+Forward Dynamics Model
+causal joint prediction
+x0
+context
+x̃1:K noisy future
+tFDM ∼ πFDM
+v̂1:K
+ℒFM
+flow matching
+frozen (pretrained)
+trainable (LoRA)
+action query q
+latent action z
+end-to-end gradient
+ℒ = ℒFM + β ℒKL
+Figure 5 | Overview of O2LaF. Two independently adapted video DiTs share a pretrained prior: the IDM
+infers latent actions, while the FDM predicts their visual consequences. Both employ frame-causal attention
+and role-specific noise sampling, with end-to-end training through latent actions.
+endpoint states (𝑥𝑖, 𝑥𝑖+1), and (iii) action queries do not attend to one another, nor do video tokens attend to
+the queries. This makes each query a read-only transition register rather than an auxiliary communication
+channel.
+Variational action bottleneck. Let ℎ𝑖∈R𝐷denote the final representation of action query 𝑞𝑖. We use a
+linear Gaussian head 𝑔𝜑: R𝐷→R2𝑑𝑧, with 𝑑𝑧≪𝐷, to obtain a compact latent action:
+[ 𝜇𝑖, log 𝜎2
+𝑖] = 𝑔𝜑(LN(ℎ𝑖)) ,
+𝑞𝜑
+(︀
+𝑧𝑖|̃︀xIDM
+≤𝑖+1, 𝑡IDM
+)︀
+= 𝒩
+(︀
+𝜇𝑖, diag(𝜎2
+𝑖)
+)︀
+.
+(2)
+During training, we sample 𝑧𝑖= 𝜇𝑖+ 𝜎𝑖⊙𝜉𝑖, where 𝜉𝑖∼𝒩(0, 𝐼) and use the posterior mean 𝜇𝑖at inference.
+The continuous latent space avoids quantization, allowing fine-grained variations in visual dynamics to be
+represented [20, 22, 25].
+3.4. Video DiT as Forward Dynamics
+The FDM predicts the visual consequences of inferred latent actions, providing the predictive supervision for
+the IDM. To make this supervision informative, we adapt the pretrained video DiT’s temporal structure and
+conditioning to control information access, limiting visual shortcuts while preserving its generative capability.
+Initial-state and action conditioning. The FDM receives the clean initial state 𝑥0 and the temporally
+aligned latent-action sequence z. The initial state provides visual context, including appearance and spatial
+structure, outside the latent-action bottleneck [23], encouraging latent actions to capture transferable dynamics
+rather than scene-specific appearance. Following standard DiT conditioning [27], the aligned actions are
+projected, combined with the corresponding flow-timestep embeddings, and injected into every Transformer
+block through AdaLN.
+Causal joint flow matching. We keep 𝑥0 clean and add noise to all future states using a shared timestep
+𝑡FDM:̃︀xFDM = [ 𝑥0, 𝑥𝑡FDM
+1
+, . . . , 𝑥𝑡FDM
+𝐾
+], 𝑥𝑡FDM
+𝑖
+= (1 −𝑡FDM)𝑥𝑖+ 𝑡FDM𝜖𝑖. The velocities of all future states are
+predicted jointly in a single forward pass at each flow timestep. To prevent information leakage from later
+states, we replace the pretrained video DiT’s bidirectional temporal attention with frame-causal attention,
+such that tokens at 𝑥𝑖cannot attend to later states 𝑥>𝑖. When conditioned on clean preceding frames,
+autoregressive prediction can exploit temporal redundancy by simply copying the previous frame, bypassing
+the latent-action bottleneck. By removing this clean-history shortcut, causal joint prediction encourages the
+FDM to leverage latent actions, providing more effective supervision to the IDM.
+High-noise timestep sampling. Causal attention prevents future-state leakage, but each prediction still
+observes its own noisy target. Common generative training recipes emphasize intermediate noise levels. For
+example, SD3 [35] uses logit-normal timestep sampling, whose density vanishes at both endpoints. While
+effective for visual generation, this middle-noise bias is undesirable for latent-action learning: noisy future
+states may still retain sufficient information for the FDM to predict future states without fully utilizing latent
+actions. We therefore emphasize high-noise 𝑡FDM, reducing information available from the noisy targets and
+5
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+encouraging the FDM to rely more strongly on latent actions. The endpoint 𝑡FDM = 1 makes this intuition
+explicit. For future state 𝑥𝑖, 𝑣⋆
+𝑖= 𝜖𝑖−𝑥𝑖. Defining ^𝑥𝑖= 𝜖𝑖−^𝑣𝑖gives ‖^𝑣𝑖−𝑣⋆
+𝑖‖2
+2 = ‖^𝑥𝑖−𝑥𝑖‖2
+2 . Thus, at pure
+noise, flow matching is equivalent to reconstructing the future latent conditioned on the clean initial state and
+latent actions.
+3.5. End-to-End Latent Action Learning
+The IDM and FDM are connected through the sampled latent actions and optimized end-to-end (Fig. 5).
+Role-specific noise sampling. Noise plays different roles in the two dynamics. For the IDM, it controls the
+visual information available for transition inference. For the FDM, it controls how much target information
+remains accessible through the noisy future states. We therefore sample their flow timesteps independently:
+𝑡IDM ∼𝜋IDM, 𝑡FDM ∼𝜋FDM. The two distributions can thus be chosen for their respective roles rather than
+inherited from the same generative training recipe. In particular, 𝜋IDM = 𝛿0 corresponds to a clean-input IDM,
+while 𝜋FDM can emphasize high-noise states as described in Sec. 3.4.
+Learning objective. We optimize the flow-matching prediction loss [35, 71] together with a KL regularizer [73,
+74] on the latent-action posterior:
+ℒ= E
+[︃
+1
+𝐾
+𝐾
+∑︁
+𝑖=1
+𝑤(𝑡FDM) ‖^𝑣𝑖−(𝜖𝑖−𝑥𝑖)‖2
+2
+]︃
++ 𝛽
+𝐾
+𝐾−1
+∑︁
+𝑖=0
+𝐷KL[𝑞𝜑(𝑧𝑖| ·) ‖ 𝒩(0, 𝐼)] .
+(3)
+Through reparameterization, gradients from the FDM propagate through the latent actions into the IDM.
+The prediction loss guides the IDM to encode transition information essential for explaining future visual
+changes, while the low-dimensional latent space and KL regularization constrain the information carried by
+the action channel.
+Inference and action transfer. While the FDM shapes the latent-action space during training, it serves as
+an action-conditioned video world model at inference. Given an initial state and inferred latent actions, we
+initialize future latents from Gaussian noise and integrate the learned flow from 𝑡= 1 to 𝑡= 0 using the Euler
+solver [35]. Actions inferred from a source video can thus condition generation from a different initial state,
+enabling zero-shot cross-context action transfer.
+4. Experiments
+We evaluate O2LaF along two questions. First, do the learned latent actions align with real controls across
+discrete navigation and continuous manipulation (Sec. 4.2)? Second, can the same actions serve as a unified
+control interface for video world model in unseen visual contexts, without target-specific adaptation (Sec. 4.3)?
+4.1. Experimental Setup
+Datasets. We evaluate O2LaF across two domains with distinct visual dynamics. For camera navigation, we
+train on MiraData [75] and evaluate on MIND [76]. For robot manipulation, we train exclusively on egocentric
+human demonstrations from EgoDex [77] and directly evaluate on in-lab GR-1 robot demonstrations [39].
+MiraData captures global scene and camera motion, whereas EgoDex focuses on fine-grained hand–object
+interactions. No action annotations are used to train the latent action models.
+Baselines. We compare with representative latent-action methods spanning the learning paradigms illustrated
+in Fig. 2. For navigation, we compare with AdaWorld [20] and Olaf-World [25], all trained on the same MiraData
+videos. For manipulation, we compare with DreamDojo [39], VideoWorld2 [23], LAPA-DINOv3 [19, 26], and
+VILLA-X [40] using their released models. Notably, O2LaF uses only EgoDex subset of DreamDojo’s large
+scale egocentric training data. We evaluate representation quality using frozen encoders under identical probing
+protocols, and action-conditioned generation through a controlled second-stage world-model comparison.
+Implementation details. Both the IDM and FDM of O2LaF are initialized from Wan2.2-TI2V-5B and
+adapted with rank-128 LoRA. The IDM uses causal video-token attention, while the FDM uses frame-causal
+attention with joint future prediction. We use a 32-D Gaussian latent action with 𝛽= 10−4 and keep
+the video VAE and text encoder frozen. For all main experiments, we use a single domain-agnostic noise
+6
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+14
+16
+50
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+1st person
+14
+16
+50
+3rd person
+# labeled videos
+Exact-match accuracy ↑
+AdaWorld
+Olaf-World
+Ours
+(a) Camera navigation on MIND.
+1 4
+16
+32
+0.0
+0.2
+0.4
+Left arm
+1 4
+16
+32
+Right arm
+# labeled episodes per task
+EEF action R 2 ↑
+DreamDojo
+LAPA-DINOv3
+Villa-X
+VideoWorld2
+Ours
+(b) Robot manipulation on In-lab EEF.
+Figure 6 | Few-shot linear probing of frozen latent actions. O2LaF consistently outperforms prior
+latent-action representations on both settings across labeled-data budgets.
+configuration: 𝜋IDM = 𝛿0, 𝜋FDM = 0.7𝜋base + 0.3𝜋high, supp(𝜋high) ⊆[0.9, 1). Here, 𝜋base is the standard shifted
+flow-time distribution, with peak flow-matching weight assigned to high-noise samples. Sec. 5.2 studies the
+broader IDM–FDM noise design space across action domains. For a fair downstream world-model evaluation,
+we train a separate bidirectional FDM for each frozen latent-action encoder, using the same pretrained
+Wan2.2-TI2V-5B checkpoint and identical training and generation protocols, thereby isolating the effect of
+latent-action representations. Additional details are provided in Appendix A.
+4.2. Latent Action Quality
+A useful latent action should make the underlying control easy to recover with little labeled supervision. We
+therefore freeze each latent-action encoder and fit lightweight linear probes [78] across increasing label budgets
+to evaluate control decodability.
+Evaluation protocol. We evaluate discrete camera control and continuous robot manipulation. On MIND,
+we predict four simultaneous ternary controls (two translation and two rotation axes) using independent,
+class-balanced logistic regression probes. We report joint exact-match accuracy, requiring all four predictions
+to be correct. For manipulation, we use DreamDojo’s In-lab Eval benchmark [39], comprising GR-1 robot
+demonstrations. We fit Ridge regression probes for wrist translation and rotation on both arms. We report
+EEF 𝑅2, averaged over translation, rotation, and both arms. Label budgets range from 1 to 50 videos for
+navigation and 1 to 32 episodes per task for manipulation.
+Results. Fig. 6 shows that O2LaF consistently improves linear decodability across domains and label budgets.
+Performance rises sharply with the first few labeled examples, indicating that control-relevant information is
+readily accessible with limited supervision. Notably, O2LaF achieves an EEF 𝑅2 of 0.277 on GR-1, compared
+with 0.149 for DreamDojo, despite training its encoder exclusively on human demonstrations without robot-
+domain adaptation, suggesting that the learned latent actions capture motion structure transferable across
+human and robot embodiments. Together, these results demonstrate that O2LaF learns latent actions that
+admit label-efficient mappings to both discrete navigation controls and continuous robot motions.
+4.3. Zero-Shot Cross-Context Action Transfer
+Beyond linear decodability, we investigate whether latent actions provide a transferable control interface
+across visual contexts and embodiments. Given a reference video, we extract its latent-action sequence and
+condition the FDM on a different target first frame, without any adaptation.
+4.3.1. Camera navigation
+Evaluation protocol. We extract actions from 24 reference trajectories (12 first-person and 12 third-person)
+and transfer them to 50 and 20 novel visual contexts, respectively, yielding 840 cross-context generations. All
+7
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+Table 1 | Zero-shot cross-context camera navigation. We report VBench imaging quality (Img. Q.) and
+temporal consistency (Temp. C.), and ViPE-based translation NRMSE and rotation RPE. Methods above
+the separator use action CFG= 3. Best and second-best results are bold and underlined, respectively.
+Method
+1st-P
+3rd-P
+Visual Quality
+Camera Motion
+Visual Quality
+Camera Motion
+Img. Q. ↑
+Temp. C. ↑
+Trans. ↓
+Rot. ↓
+Img. Q. ↑
+Temp. C. ↑
+Trans. ↓
+Rot. ↓
+AdaWorld [20]
+0.639
+0.899
+2.539
+2.055
+0.616
+0.927
+1.342
+1.217
+Olaf-World [25]
+0.690
+0.910
+1.627
+1.300
+0.648
+0.930
+0.985
+0.701
+Ours
+0.698
+0.900
+1.289
+0.786
+0.682
+0.919
+0.511
+0.330
+Ours (w/o CFG)
+0.672
+0.910
+1.364
+0.830
+0.662
+0.927
+0.513
+0.364
+(A) 1st-Person
+(B) 3rd-Person
+Reference
+AdaWorld
+Olaf-World
+Ours
+Figure 7 | Zero-shot cross-context camera navigation. O2LaF better reproduces reference camera and
+agent action while preserving the target scene.
+methods share identical references, target contexts, and generation settings. We assess camera-motion fidelity
+by estimating trajectories from reference and generated videos using ViPE [79], reporting Sim(3)-aligned
+translation NRMSE and rotation RPE. We separately evaluate visual quality using VBench [80].
+Results. Tab. 1 shows that O2LaF achieves the lowest camera-motion errors and highest imaging quality in
+both perspectives. Interestingly, latent-action CFG consistently improves camera-motion fidelity and imaging
+quality, resembling the effectiveness of text-based CFG [81]. This contrasts with prior findings that CFG
+is less effective for predefined action controls [82]. We hypothesize that the learned latent actions form a
+meaningful continuous motion manifold, enabling CFG to amplify motion-relevant conditioning and improve
+sample fidelity. Qualitatively, Fig. 7 illustrates the transfer of reference motion across distinct visual contexts.
+In first-person navigation, O2LaF reproduces the reference camera’s progressive upward reorientation, while
+baselines exhibit limited motion or inaccurate viewpoint changes. In third-person navigation, O2LaF captures
+the agent’s rightward turn and leaning posture, together with corresponding background motion, whereas
+baselines largely fail to reproduce the turn.
+4.3.2. Robot manipulation
+Evaluation protocol. We evaluate human-to-robot and robot-to-human action transfer using 85 video
+pairs spanning 20 manipulation tasks. Human videos are drawn from EgoDex, while robot videos come from
+DreamDojo’s EgoDex Eval benchmark [39], which reproduces EgoDex interactions using the GR-1 robot.
+Since the task-paired human and robot demonstrations are neither temporally nor spatially aligned, we
+evaluate direct action transfer qualitatively. For quantitative evaluation, following Garrido et al. [22], we
+measure self-reconstruction and cross-embodiment cycle consistency (𝐻→𝑅→𝐻and 𝑅→𝐻→𝑅) using
+PSNR, SSIM, and LPIPS.
+Results. Tab. 2 shows that O2LaF outperforms DreamDojo across all self-reconstruction and cross-cycle
+metrics, suggesting that the learned actions retain motion information across embodiment. Qualitatively,
+Fig. 8 illustrates that human reaching motions induce corresponding robot arm movements, while robot
+actions elicit human reaching and object-directed interactions. Notably, O2LaF preserves arm-specific motion,
+including the active arm and reaching direction, despite substantial embodiment differences. Compared with
+DreamDojo, it exhibits more faithful motion correspondence while preserving the target visual context.
+8
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+Table 2 | Cross-embodiment action transfer via cycle reconstruction. Self reconstructs the source
+video directly, while Cross-cycle reconstructs it after transferring latent actions to the opposite embodiment
+and back (𝐻→𝑅→𝐻and 𝑅→𝐻→𝑅). Best results are in bold.
+Method
+Human
+Robot
+Self
+Cross-cycle
+Self
+Cross-cycle
+PSNR↑
+SSIM↑
+LPIPS↓
+PSNR↑SSIM↑LPIPS↓
+PSNR↑SSIM↑LPIPS↓PSNR↑SSIM↑LPIPS↓
+DreamDojo [39]
+23.38
+0.871
+0.223
+22.61
+0.859
+0.244
+18.73
+0.769
+0.159
+18.35
+0.754
+0.165
+Ours
+26.72
+0.903
+0.148
+24.30
+0.878
+0.195
+19.92
+0.787
+0.140
+18.85
+0.770
+0.163
+(A) Human-to-Robot
+(B) Robot-to-Human
+Reference
+DreamDojo
+Ours
+Figure 8 | Zero-shot cross-embodiment manipulation O2LaF better preserves object-directed motion
+while adapting to the target embodiment and visual context.
+5. Understanding the Two Dynamics
+Although sharing the same pretrained video prior, the IDM and FDM serve distinct roles in latent action
+learning. We systematically investigate how their design choices shape the learned action representations and
+their utility for controllable video generation.
+5.1. Adapting Pretrained Dynamics
+Pretrained video DiTs encode rich spatiotemporal knowledge, but their representations are not explicitly
+optimized for action inference. We investigate whether this knowledge can be extracted through a lightweight
+action head or requires adapting the pretrained backbone. Since the IDM learns through predictive supervision
+from the FDM, we further study whether a stronger FDM improves the learned action representations.
+Tab. 3a shows that a frozen video DiT with a trainable action head performs substantially worse than LoRA
+adaptation, while rank-16 LoRA approaches rank-128 performance. Meanwhile, scaling the FDM from 1.3B
+to 14B consistently improves action decodability with a fixed-size IDM (Tab. 3b). These results suggest that
+effective latent-action learning benefits from both adapting pretrained representations and strengthening
+predictive supervision.
+5.2. Controlling Information Exposure
+We revisit how the information-access designs of our two dynamics shape latent-action learning.
+Temporal factorization. We investigate how the FDM’s temporal prediction structure shapes the learned
+actions. As shown in Tab. 3c, causal joint prediction substantially outperforms autoregression across both
+navigation perspectives and achieves the strongest overall probing performance.
+Table 3 | Design choices for the two dynamics. MIND joint exact-match accuracy (%, ↑) at 𝑘∈{1, 50}.
+Panels (a,c) use Wan2.2-5B, while (b) studies Wan2.1 FDM scaling with a fixed 1.3B IDM.
+(a) IDM Adaptation
+Variant
+1st-P
+3rd-P
+𝑘=1
+𝑘=50
+𝑘=1
+𝑘=50
+Head-only
+43.88
+39.33
+22.15
+44.27
+LoRA-16
+70.27
+84.73
+55.12
+93.92
+LoRA-128
+72.81
+87.95
+52.08
+94.37
+(b) FDM Scale
+IDM/FDM
+1st-P
+3rd-P
+𝑘=1
+𝑘=50
+𝑘=1
+𝑘=50
+1.3B/1.3B
+67.14
+80.76
+59.68
+89.52
+1.3B/14B
+72.72
+85.98
+61.73
+92.19
+5B/5B (ref)
+72.81
+87.95
+52.08
+94.37
+(c) FDM Factorization
+Variant
+1st-P
+3rd-P
+𝑘=1
+𝑘=50
+𝑘=1
+𝑘=50
+Bidir. joint
+72.90
+83.71
+45.54
+92.36
+Causal joint
+72.81
+87.95
+52.08
+94.37
+AR (ℎ=1)
+55.45
+70.13
+45.79
+79.49
+9
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+0.5
+0.9
+0.98
+0.995
+1.0
+tFDM
+0
+0.3
+0.5
+0.7
+0.9
+tIDM
+32.9
+62.1
+82.6
+73.5
+71.8
+34.6
+61.7
+85.3
+77.1
+74.8
+37.2
+60.8
+83.0
+76.2
+72.4
+42.1
+49.4
+82.7
+76.2
+73.7
+34.9
+53.4
+74.5
+66.2
+69.2
+1st person
+0.5
+0.9
+0.98
+0.995
+1.0
+tFDM
+0
+0.3
+0.5
+0.7
+0.9
+tIDM
+40.0
+76.6
+93.1
+89.8
+89.9
+42.3
+73.6
+93.9
+90.1
+90.2
+47.3
+72.1
+93.5
+89.6
+89.1
+38.2
+68.2
+93.5
+89.9
+89.8
+36.5
+52.0
+90.3
+84.4
+84.1
+3rd person
+40%
+60%
+80%
+Exact-match accuracy ↑
+(a) Navigation (MIND accuracy ↑, 𝑘= 50).
+0.5
+0.9
+0.98
+0.995
+1.0
+tFDM
+0
+0.3
+0.5
+0.7
+0.9
+tIDM
+0.058
+0.105
+0.189
+0.172
+0.175
+0.047
+0.126
+0.203
+0.192
+0.196
+0.038
+0.137
+0.199
+0.184
+0.200
+0.045
+0.157
+0.184
+0.188
+0.182
+0.066
+0.072
+0.162
+0.151
+0.143
+Left arm
+0.5
+0.9
+0.98
+0.995
+1.0
+tFDM
+0
+0.3
+0.5
+0.7
+0.9
+tIDM
+0.077
+0.258
+0.274
+0.265
+0.275
+0.084
+0.303
+0.302
+0.286
+0.295
+0.081
+0.353
+0.306
+0.288
+0.298
+0.103
+0.359
+0.289
+0.278
+0.276
+0.120
+0.190
+0.208
+0.214
+0.200
+Right arm
+0.00
+0.10
+0.20
+0.30
+0.40
+EEF action R 2 ↑
+(b) Manipulation (EEF 𝑅2 ↑, 𝑘= 32).
+Figure 9 | Role-specific noise levels. IDM linear probing across a 5 × 5 grid of IDM and FDM flow times.
+The non-monotonic trends reveal distinct preferred noise configurations across motion domains.
+Role-specific noise levels. Motivated by the view of diffusion noise as partial masking [83], we investigate
+how noise exposure in the two dynamics shape latent-action learning. We conduct a 5 × 5 sweep over fixed
+(𝑡IDM, 𝑡FDM) pairs across navigation and manipulation. Fig. 9 reveals three findings. First, moderate IDM
+noise often improves action decodability over clean inputs, potentially favoring higher-level, action-relevant
+features over appearance-specific details [84]. Second, low FDM noise yields poor representations, consistent
+with shortcuts through partially observed targets. However, maximal noise is not always optimal, potentially
+due to high-variance velocity targets near the noise prior [85], which weakens predictive supervision for
+the IDM. Finally, preferred noise configurations vary across domains: both navigation perspectives favor
+(𝑡IDM, 𝑡FDM) = (0.3, 0.98), whereas manipulation exhibits different optima across arms.
+5.3. Extending to Other Video Priors
+Our inverse-forward dynamics framework extends beyond generative video DiTs to other video representations.
+We explore four IDM backbones spanning distinct learning paradigms: (i) ST-Transformer [3], a spatiotemporal
+Transformer trained from scratch, (ii) VideoChat3 [38], a language-aligned video MLLM, (iii) V-JEPA2 [37], a
+self-supervised predictive video encoder, and (iv) Wan2.2 [70], a generative video DiT. We similarly adapt each
+backbone as an IDM by introducing causal temporal attention and learnable action queries, while retaining
+the same FDM design.
+Table 4 | Comparison of O2LaF IDM backbones. Color 𝑅2 measures the linear decodability of mean
+reference-frame CIELAB (𝐿/𝑎/𝑏) from latent actions. Positive values indicate appearance leakage, while
+non-positive values indicate no improvement over the mean predictor.
+IDM Backbone
+Probing
+1st-P World Model
+3rd-P World Model
+MIND ↑
+Color 𝑅2
+𝐿/ 𝑎/ 𝑏
+VBench ↑
+ViPE ↓
+VBench ↑
+ViPE ↓
+1st-P
+3rd-P
+Img.
+Temp.
+Trans.
+Rot.
+Img.
+Temp.
+Trans.
+Rot.
+ST-Transformer
+58.79
+79.70
+−0.419 / −0.190 / −0.530
+0.666
+0.901
+1.449
+1.022
+0.636
+0.924
+0.620
+0.478
+VideoChat3
+36.96
+43.86
+0.411 / −0.147 / 0.364
+–
+–
+–
+–
+–
+–
+–
+–
+V-JEPA2
+88.62
+96.14
+0.514 / 0.816 / 0.742
+0.657
+0.901
+1.349
+0.847
+0.664
+0.916
+0.439
+0.337
+Wan2.2
+87.95
+94.37
+−0.297 / 0.081 / 0.223
+0.698
+0.900
+1.289
+0.786
+0.682
+0.919
+0.511
+0.330
+(A) 1st-Person Navigation
+(B) 3rd-Person Navigation
+Reference
+Scratch
+V-JEPA 2
+Wan 2.2
+Figure 10 | Cross-context action transfer with IDM priors. V-JEPA2 exhibits source-appearance
+leakage, whereas video DiT better preserves target appearance.
+10
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
+Table 5 | Trade-offs between action learning and generation. End-to-end models vary FDM noise
+sampling (Mixed: standard and high; High: high only) and IDM gradient routing (All: all timesteps; High:
+high-noise only). Two-stage models freeze the Mixed/All IDM and compare pretrained versus E2E FDM
+initialization. Gray probing scores are shared and excluded from ranking.
+Configuration
+1st-P
+3rd-P
+Probing↑
+VBench ↑
+ViPE ↓
+Probing↑
+VBench ↑
+ViPE ↓
+FDM noise
+IDM grad.
+𝑘=1
+𝑘=50
+Img.
+Temp.
+Trans.
+Rot.
+𝑘=1
+𝑘=50
+Img.
+Temp.
+Trans.
+Rot.
+End-to-end learning (causal FDM)
+Mixed
+All
+72.81
+87.95
+0.649
+0.895
+1.937
+0.993
+52.08
+94.37
+0.654
+0.913
+0.845
+0.481
+Mixed
+High
+72.23
+86.79
+0.654
+0.885
+1.959
+0.943
+60.38
+95.11
+0.660
+0.902
+0.918
+0.484
+High
+High
+72.28
+85.76
+0.647
+0.836
+2.419
+1.168
+60.75
+94.86
+0.646
+0.853
+1.618
+0.765
+Two-stage deployment (bidirectional FDM)
+Pretrained init.
+72.81
+87.95
+0.698
+0.900
+1.289
+0.786
+52.08
+94.37
+0.682
+0.919
+0.511
+0.330
+E2E init.
+72.81
+87.95
+0.711
+0.901
+1.260
+0.725
+52.08
+94.37
+0.686
+0.919
+0.459
+0.322
+Tab. 4 reveals distinct behaviors. Notably, V-JEPA2 achieves the strongest action probing performance, yet
+its latent actions exhibit noticeable source-appearance leakage during cross-context generation (Fig. 10). Color
+probing further confirms substantially higher appearance decodability in V-JEPA2 latent actions, whereas
+Wan2.2 better preserves the target scene. We hypothesize that sharing a generative video prior between the
+IDM and FDM improves their representation alignment, facilitating more transferable generative control.
+It highlights that action probing alone does not reveal whether latent actions also encode task-irrelevant
+information that may hinder transfer. Downstream generative evaluation is therefore essential for assessing
+the transferability of learned action representations.
+5.4. Balancing Action Learning and Generation
+Jointly learning latent actions and a generative video world model is a compelling objective [24]. Yet the FDM
+faces a practical trade-off: learning informative actions requires limiting visual shortcuts, whereas high-fidelity
+generation benefits from broader noise coverage. In O2LaF, causal prediction and high-noise supervision serve
+the former objective, but compromise the latter. We investigate whether both objectives can be reconciled
+within end-to-end training.
+We first study FDM noise sampling and IDM gradient routing. Tab. 5 shows that mixed noise sampling
+substantially improves generation over high-noise-only training while maintaining comparable action probing
+performance. However, restricting IDM gradients to high-noise timesteps provides no consistent probing gains.
+Given the inherent tension, we adopt a two-stage approach [25], freezing the learned IDM and training a
+bidirectional FDM. This substantially improves generation quality. Moreover, initializing from the jointly
+trained FDM, rather than the original pretrained video DiT, further improves both visual quality and
+action-following fidelity.
+6. Conclusion
+We presented O2LaF, a self-supervised framework that repurposes a pretrained video DiT for both inverse and
+forward dynamics. By tailoring the two dynamics to their distinct roles and controlling information access,
+O2LaF learns transferable latent actions from unlabeled videos. Across navigation and robotic manipulation,
+it achieves state-of-the-art few-shot action probing and enables zero-shot action transfer across visual contexts
+and human–robot embodiments. These findings establish pretrained video generators as reusable dynamics
+priors for action discovery and controllable world modeling.
+Limitations and future work. Future work includes improving the interpretability of the learned latent-
+action space and extending video-predictive dynamics to efficient planning and closed-loop control. See
+Appendix D for further discussion.
+11
+Repurposing Video Diffusion Transformers for Self-Supervised Latent Action Learning
